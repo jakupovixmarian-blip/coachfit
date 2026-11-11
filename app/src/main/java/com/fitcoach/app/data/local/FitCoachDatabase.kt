@@ -6,6 +6,7 @@ import androidx.room.TypeConverters
 import com.fitcoach.app.data.local.dao.AiSettingsDao
 import com.fitcoach.app.data.local.dao.CheckInDao
 import com.fitcoach.app.data.local.dao.ChatDao
+import com.fitcoach.app.data.local.dao.DiaryEntryDao
 import com.fitcoach.app.data.local.dao.ExerciseDao
 import com.fitcoach.app.data.local.dao.ExercisePerformanceDao
 import com.fitcoach.app.data.local.dao.FoodDao
@@ -20,6 +21,8 @@ import com.fitcoach.app.data.local.dao.PlannedExerciseDao
 import com.fitcoach.app.data.local.dao.ProgramChangeDao
 import com.fitcoach.app.data.local.dao.ProgressDao
 import com.fitcoach.app.data.local.dao.ScientificSourceDao
+import com.fitcoach.app.data.local.dao.ShoppingItemDao
+import com.fitcoach.app.data.local.dao.SubstitutionLogDao
 import com.fitcoach.app.data.local.dao.UserPreferencesDao
 import com.fitcoach.app.data.local.dao.UserProfileDao
 import com.fitcoach.app.data.local.dao.WorkoutDayDao
@@ -30,6 +33,7 @@ import com.fitcoach.app.data.local.entity.AiProviderSettingsEntity
 import com.fitcoach.app.data.local.entity.CheckInEntity
 import com.fitcoach.app.data.local.entity.ChatMessageEntity
 import com.fitcoach.app.data.local.entity.CircumferenceRecordEntity
+import com.fitcoach.app.data.local.entity.DiaryEntryEntity
 import com.fitcoach.app.data.local.entity.ExerciseEntity
 import com.fitcoach.app.data.local.entity.ExercisePerformanceEntity
 import com.fitcoach.app.data.local.entity.FoodItemEntity
@@ -44,6 +48,8 @@ import com.fitcoach.app.data.local.entity.PlanVersionEntity
 import com.fitcoach.app.data.local.entity.ProgramChangeEntity
 import com.fitcoach.app.data.local.entity.ProgressRecordEntity
 import com.fitcoach.app.data.local.entity.ScientificSourceEntity
+import com.fitcoach.app.data.local.entity.ShoppingItemEntity
+import com.fitcoach.app.data.local.entity.SubstitutionLogEntity
 import com.fitcoach.app.data.local.entity.UserPreferencesEntity
 import com.fitcoach.app.data.local.entity.UserProfileEntity
 import com.fitcoach.app.data.local.entity.WeightRecordEntity
@@ -78,9 +84,12 @@ import com.fitcoach.app.data.local.entity.WorkoutSetEntity
         AiProviderSettingsEntity::class,
         NotificationRecordEntity::class,
         ScientificSourceEntity::class,
-        PlanVersionEntity::class
+        PlanVersionEntity::class,
+        DiaryEntryEntity::class,
+        ShoppingItemEntity::class,
+        SubstitutionLogEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -108,6 +117,9 @@ abstract class FitCoachDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
     abstract fun scientificSourceDao(): ScientificSourceDao
     abstract fun planVersionDao(): PlanVersionDao
+    abstract fun diaryEntryDao(): DiaryEntryDao
+    abstract fun shoppingItemDao(): ShoppingItemDao
+    abstract fun substitutionLogDao(): SubstitutionLogDao
 
     companion object {
         const val DB_NAME = "fitcoach.db"

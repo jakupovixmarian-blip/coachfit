@@ -8,6 +8,7 @@ import com.fitcoach.app.domain.model.ChangeDomain
 import com.fitcoach.app.domain.model.ChangeStatus
 import com.fitcoach.app.domain.model.ChatRole
 import com.fitcoach.app.domain.model.CookingTimeAvailable
+import com.fitcoach.app.domain.model.DiarySource
 import com.fitcoach.app.domain.model.DietaryPreference
 import com.fitcoach.app.domain.model.Equipment
 import com.fitcoach.app.domain.model.ExerciseCategory
@@ -20,6 +21,7 @@ import com.fitcoach.app.domain.model.MovementPattern
 import com.fitcoach.app.domain.model.MuscleGroup
 import com.fitcoach.app.domain.model.SessionStatus
 import com.fitcoach.app.domain.model.Sex
+import com.fitcoach.app.domain.model.ShoppingCategory
 import com.fitcoach.app.domain.model.SourceKind
 import com.fitcoach.app.domain.model.SplitType
 import com.fitcoach.app.domain.model.TechnicalLevel
@@ -122,4 +124,10 @@ class Converters {
 
     @TypeConverter fun movementPatternToString(v: MovementPattern): String = v.name
     @TypeConverter fun stringToMovementPattern(v: String): MovementPattern = runCatching { MovementPattern.valueOf(v) }.getOrDefault(MovementPattern.OTHER)
+
+    @TypeConverter fun diarySourceToString(v: DiarySource): String = v.name
+    @TypeConverter fun stringToDiarySource(v: String): DiarySource = runCatching { DiarySource.valueOf(v) }.getOrDefault(DiarySource.EXTRA)
+
+    @TypeConverter fun shoppingCategoryToString(v: ShoppingCategory): String = v.name
+    @TypeConverter fun stringToShoppingCategory(v: String): ShoppingCategory = runCatching { ShoppingCategory.valueOf(v) }.getOrDefault(ShoppingCategory.OTHER)
 }

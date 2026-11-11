@@ -11,6 +11,7 @@ import com.fitcoach.app.domain.model.ChangeDomain
 import com.fitcoach.app.domain.model.ChangeStatus
 import com.fitcoach.app.domain.model.ChatRole
 import com.fitcoach.app.domain.model.CookingTimeAvailable
+import com.fitcoach.app.domain.model.DiarySource
 import com.fitcoach.app.domain.model.DietaryPreference
 import com.fitcoach.app.domain.model.Equipment
 import com.fitcoach.app.domain.model.ExerciseCategory
@@ -23,6 +24,7 @@ import com.fitcoach.app.domain.model.MovementPattern
 import com.fitcoach.app.domain.model.MuscleGroup
 import com.fitcoach.app.domain.model.SessionStatus
 import com.fitcoach.app.domain.model.Sex
+import com.fitcoach.app.domain.model.ShoppingCategory
 import com.fitcoach.app.domain.model.SourceKind
 import com.fitcoach.app.domain.model.SplitType
 import com.fitcoach.app.domain.model.TechnicalLevel
@@ -503,6 +505,74 @@ data class AiProviderSettingsEntity(
     val lastTestOk: Boolean? = null,
     val lastTestMessage: String = "",
     val lastTestAt: Long? = null
+)
+
+// -------------------- DIARIO NUTRIZIONALE / SPESA / SOSTITUZIONI --------------------
+
+@Entity(
+    tableName = "diary_entries",
+    indices = [Index("dateEpochDay"), Index("planEntryId"), Index("mealSlot")]
+)
+data class DiaryEntryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val dateEpochDay: Long,
+    val mealSlot: MealSlot,
+    val time: String = "",
+    val foodItemId: Long,
+    val foodName: String,
+    val grams: Double,
+    val unit: FoodUnit = FoodUnit.RAW,
+    val kcal: Double,
+    val protein: Double,
+    val carbs: Double,
+    val fat: Double,
+    val source: DiarySource = DiarySource.EXTRA,
+    val planEntryId: Long? = null,
+    val active: Boolean = true,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+@Entity(
+    tableName = "shopping_items",
+    indices = [Index("weekStartEpochDay"), Index("foodItemId")]
+)
+data class ShoppingItemEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val weekStartEpochDay: Long,
+    val foodItemId: Long,
+    val foodName: String,
+    val category: ShoppingCategory,
+    val totalGrams: Double,
+    val unit: FoodUnit = FoodUnit.RAW,
+    val checked: Boolean = false,
+    val alreadyHave: Boolean = false,
+    val isCustom: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "substitution_log", indices = [Index("createdAt"), Index("dateEpochDay")])
+data class SubstitutionLogEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val createdAt: Long = System.currentTimeMillis(),
+    val dateEpochDay: Long,
+    val mealEntryId: Long,
+    val mealSlot: MealSlot,
+    val originalFoodId: Long,
+    val originalName: String,
+    val originalGrams: Double,
+    val newFoodId: Long,
+    val newName: String,
+    val newGrams: Double,
+    val kcalBefore: Double,
+    val kcalAfter: Double,
+    val proteinBefore: Double,
+    val proteinAfter: Double,
+    val carbsBefore: Double,
+    val carbsAfter: Double,
+    val fatBefore: Double,
+    val fatAfter: Double,
+    val status: String,
+    val note: String = ""
 )
 
 // -------------------- NOTIFICHE --------------------

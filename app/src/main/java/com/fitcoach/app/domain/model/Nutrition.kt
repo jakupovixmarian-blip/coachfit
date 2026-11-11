@@ -126,7 +126,21 @@ data class MacroTotals(
     val carbs: Double,
     val fat: Double
 ) {
+    operator fun plus(other: MacroTotals) = MacroTotals(
+        kcal = kcal + other.kcal,
+        protein = protein + other.protein,
+        carbs = carbs + other.carbs,
+        fat = fat + other.fat
+    )
+
     companion object {
         val ZERO = MacroTotals(0.0, 0.0, 0.0, 0.0)
+
+        fun of(entries: List<MealEntry>) = MacroTotals(
+            kcal = entries.sumOf { it.kcal },
+            protein = entries.sumOf { it.protein },
+            carbs = entries.sumOf { it.carbs },
+            fat = entries.sumOf { it.fat }
+        )
     }
 }

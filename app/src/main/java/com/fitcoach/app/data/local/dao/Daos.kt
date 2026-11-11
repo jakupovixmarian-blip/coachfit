@@ -11,6 +11,7 @@ import com.fitcoach.app.data.local.entity.AiProviderSettingsEntity
 import com.fitcoach.app.data.local.entity.CheckInEntity
 import com.fitcoach.app.data.local.entity.ChatMessageEntity
 import com.fitcoach.app.data.local.entity.CircumferenceRecordEntity
+import com.fitcoach.app.data.local.entity.DiaryEntryEntity
 import com.fitcoach.app.data.local.entity.ExerciseEntity
 import com.fitcoach.app.data.local.entity.ExercisePerformanceEntity
 import com.fitcoach.app.data.local.entity.FoodItemEntity
@@ -25,6 +26,8 @@ import com.fitcoach.app.data.local.entity.PlanVersionEntity
 import com.fitcoach.app.data.local.entity.ProgramChangeEntity
 import com.fitcoach.app.data.local.entity.ProgressRecordEntity
 import com.fitcoach.app.data.local.entity.ScientificSourceEntity
+import com.fitcoach.app.data.local.entity.ShoppingItemEntity
+import com.fitcoach.app.data.local.entity.SubstitutionLogEntity
 import com.fitcoach.app.data.local.entity.UserPreferencesEntity
 import com.fitcoach.app.data.local.entity.UserProfileEntity
 import com.fitcoach.app.data.local.entity.WeightRecordEntity
@@ -349,6 +352,9 @@ interface WorkoutSetDao {
     @Query("SELECT * FROM workout_sets WHERE sessionId = :sessionId ORDER BY exerciseId, setIndex")
     suspend fun getForSession(sessionId: Long): List<WorkoutSetEntity>
 
+    @Query("SELECT * FROM workout_sets WHERE exerciseId = :exerciseId ORDER BY sessionId DESC, setIndex")
+    suspend fun getForExercise(exerciseId: Long): List<WorkoutSetEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(sets: List<WorkoutSetEntity>): List<Long>
 
@@ -543,4 +549,106 @@ interface PlanVersionDao {
 
     @Query("UPDATE plan_versions SET isActive = 0")
     suspend fun clearActive()
+}
+
+@Dao
+interface DiaryEntryDao {
+    @Query("SELECT * FROM diary_entries WHERE dateEpochDay = :epochDay ORDER BY createdAt")
+    fun observeForDay(epochDay: Long): Flow<List<DiaryEntryEntity>>
+
+    @Query("SELECT * FROM diary_entries WHERE dateEpochDay = :epochDay ORDER BY createdAt")
+    suspend fun getForDay(epochDay: Long): List<DiaryEntryEntity>
+
+    @Query("SELECT * FROM diary_entries ORDER BY dateEpochDay DESC, createdAt DESC")
+    suspend fun getAll(): List<DiaryEntryEntity>
+
+    @Query("SELECT * FROM diary_entries WHERE dateEpochDay BETWEEN :from AND :to ORDER BY dateEpochDay, createdAt")
+    suspend fun getBetween(from: Long, to: Long): List<DiaryEntryEntity>
+
+    @Query("SELECT * FROM diary_entries WHERE planEntryId = :planEntryId LIMIT 1")
+    suspend fun getByPlanEntry(planEntryId: Long): DiaryEntryEntity?
+
+    @Query("SELECT * FROM diary_entries WHERE id = :id")
+    suspend fun getById(id: Long): DiaryEntryEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entry: DiaryEntryEntity): Long
+
+    @Update
+    suspend fun update(entry: DiaryEntryEntity)
+
+    @Query("UPDATE diary_entries SET active = :active WHERE id = :id")
+    suspend fun setActive(id: Long, active: Boolean)
+
+    @Query("UPDATE diary_entries SET active = :active WHERE planEntryId = :planEntryId")
+    suspend fun setActiveByPlanEntry(planEntryId: Long, active: Boolean)
+
+    @Delete
+    suspend fun delete(entry: DiaryEntryEntity)
+
+    @Query("DELETE FROM diary_entries WHERE planEntryId = :planEntryId")
+    suspend fun deleteByPlanEntry(planEntryId: Long)
+
+    @Query("DELETE FROM diary_entries WHERE dateEpochDay = :epochDay AND source = 'PLAN'")
+    suspend fun deletePlanEntriesForDay(epochDay: Long)
+}
+
+@Dao
+interface ShoppingItemDao {
+    @Query("SELECT * FROM shopping_items WHERE weekStartEpochDay = :weekStart ORDER BY category, foodName")
+    fun observeForWeek(weekStart: Long): Flow<List<ShoppingItemEntity>>
+
+    @Query("SELECT * FROM shopping_items WHERE weekStartEpochDay = :weekStart ORDER BY category, foodName")
+    suspend fun getForWeek(weekStart: Long): List<ShoppingItemEntity>
+
+    @Query("SELECT * FROM shopping_items ORDER BY weekStartEpochDay DESC, category, foodName")
+    suspend fun getAll(): List<ShoppingItemEntity>
+
+    @Query("SELECT DISTINCT weekStartEpochDay FROM shopping_items ORDER BY weekStartEpochDay DESC")
+    suspend fun getWeeks(): List<Long>
+
+    @Query("SELECT * FROM shopping_items WHERE id = :id")
+    suspend fun getById(id: Long): ShoppingItemEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(item: ShoppingItemEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(items: List<ShoppingItemEntity>): List<Long>
+
+    @Update
+    suspend fun update(item: ShoppingItemEntity)
+
+    @Query("UPDATE shopping_items SET checked = :checked WHERE id = :id")
+    suspend fun setChecked(id: Long, checked: Boolean)
+
+    @Query("UPDATE shopping_items SET alreadyHave = :alreadyHave WHERE id = :id")
+    suspend fun setAlreadyHave(id: Long, alreadyHave: Boolean)
+
+    @Query("UPDATE shopping_items SET totalGrams = :grams WHERE id = :id")
+    suspend fun setGrams(id: Long, grams: Double)
+
+    @Delete
+    suspend fun delete(item: ShoppingItemEntity)
+
+    @Query("DELETE FROM shopping_items WHERE weekStartEpochDay = :weekStart")
+    suspend fun deleteForWeek(weekStart: Long)
+
+    @Query("DELETE FROM shopping_items WHERE weekStartEpochDay = :weekStart AND isCustom = 0")
+    suspend fun deleteGeneratedForWeek(weekStart: Long)
+}
+
+@Dao
+interface SubstitutionLogDao {
+    @Query("SELECT * FROM substitution_log ORDER BY createdAt DESC")
+    fun observeAll(): Flow<List<SubstitutionLogEntity>>
+
+    @Query("SELECT * FROM substitution_log ORDER BY createdAt DESC LIMIT :limit")
+    suspend fun getRecent(limit: Int): List<SubstitutionLogEntity>
+
+    @Query("SELECT * FROM substitution_log ORDER BY createdAt DESC")
+    suspend fun getAll(): List<SubstitutionLogEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entry: SubstitutionLogEntity): Long
 }

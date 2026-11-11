@@ -4,9 +4,11 @@ import android.content.Context
 import androidx.room.Room
 import com.fitcoach.app.data.local.FitCoachDatabase
 import com.fitcoach.app.data.local.MIGRATION_1_2
+import com.fitcoach.app.data.local.MIGRATION_2_3
 import com.fitcoach.app.data.local.dao.AiSettingsDao
 import com.fitcoach.app.data.local.dao.CheckInDao
 import com.fitcoach.app.data.local.dao.ChatDao
+import com.fitcoach.app.data.local.dao.DiaryEntryDao
 import com.fitcoach.app.data.local.dao.ExerciseDao
 import com.fitcoach.app.data.local.dao.ExercisePerformanceDao
 import com.fitcoach.app.data.local.dao.FoodDao
@@ -21,6 +23,8 @@ import com.fitcoach.app.data.local.dao.PlannedExerciseDao
 import com.fitcoach.app.data.local.dao.ProgramChangeDao
 import com.fitcoach.app.data.local.dao.ProgressDao
 import com.fitcoach.app.data.local.dao.ScientificSourceDao
+import com.fitcoach.app.data.local.dao.ShoppingItemDao
+import com.fitcoach.app.data.local.dao.SubstitutionLogDao
 import com.fitcoach.app.data.local.dao.UserPreferencesDao
 import com.fitcoach.app.data.local.dao.UserProfileDao
 import com.fitcoach.app.data.local.dao.WorkoutDayDao
@@ -42,7 +46,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): FitCoachDatabase =
         Room.databaseBuilder(context, FitCoachDatabase::class.java, FitCoachDatabase.DB_NAME)
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .fallbackToDestructiveMigration()
             .build()
 
@@ -69,4 +73,7 @@ object DatabaseModule {
     @Provides fun notificationDao(db: FitCoachDatabase): NotificationDao = db.notificationDao()
     @Provides fun scientificSourceDao(db: FitCoachDatabase): ScientificSourceDao = db.scientificSourceDao()
     @Provides fun planVersionDao(db: FitCoachDatabase): PlanVersionDao = db.planVersionDao()
+    @Provides fun diaryEntryDao(db: FitCoachDatabase): DiaryEntryDao = db.diaryEntryDao()
+    @Provides fun shoppingItemDao(db: FitCoachDatabase): ShoppingItemDao = db.shoppingItemDao()
+    @Provides fun substitutionLogDao(db: FitCoachDatabase): SubstitutionLogDao = db.substitutionLogDao()
 }

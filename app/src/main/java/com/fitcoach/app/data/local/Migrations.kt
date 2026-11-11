@@ -99,3 +99,58 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_plan_versions_domain` ON `plan_versions` (`domain`)")
     }
 }
+
+/**
+ * Migrazione schema v2 -> v3.
+ *
+ * Aggiunge il diario nutrizionale (diary_entries), la lista della spesa
+ * (shopping_items) e lo storico delle sostituzioni (substitution_log). Queste
+ * tabelle sono indipendenti: nessuna perdita dei dati esistenti.
+ */
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `diary_entries` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`dateEpochDay` INTEGER NOT NULL, `mealSlot` TEXT NOT NULL, " +
+                "`time` TEXT NOT NULL DEFAULT '', `foodItemId` INTEGER NOT NULL, " +
+                "`foodName` TEXT NOT NULL, `grams` REAL NOT NULL, " +
+                "`unit` TEXT NOT NULL DEFAULT 'RAW', `kcal` REAL NOT NULL, " +
+                "`protein` REAL NOT NULL, `carbs` REAL NOT NULL, `fat` REAL NOT NULL, " +
+                "`source` TEXT NOT NULL DEFAULT 'EXTRA', `planEntryId` INTEGER, " +
+                "`active` INTEGER NOT NULL DEFAULT 1, `createdAt` INTEGER NOT NULL)"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_diary_entries_dateEpochDay` ON `diary_entries` (`dateEpochDay`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_diary_entries_planEntryId` ON `diary_entries` (`planEntryId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_diary_entries_mealSlot` ON `diary_entries` (`mealSlot`)")
+
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `shopping_items` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`weekStartEpochDay` INTEGER NOT NULL, `foodItemId` INTEGER NOT NULL, " +
+                "`foodName` TEXT NOT NULL, `category` TEXT NOT NULL, " +
+                "`totalGrams` REAL NOT NULL, `unit` TEXT NOT NULL DEFAULT 'RAW', " +
+                "`checked` INTEGER NOT NULL DEFAULT 0, `alreadyHave` INTEGER NOT NULL DEFAULT 0, " +
+                "`isCustom` INTEGER NOT NULL DEFAULT 0, `createdAt` INTEGER NOT NULL)"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_shopping_items_weekStartEpochDay` ON `shopping_items` (`weekStartEpochDay`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_shopping_items_foodItemId` ON `shopping_items` (`foodItemId`)")
+
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `substitution_log` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`createdAt` INTEGER NOT NULL, `dateEpochDay` INTEGER NOT NULL, " +
+                "`mealEntryId` INTEGER NOT NULL, `mealSlot` TEXT NOT NULL, " +
+                "`originalFoodId` INTEGER NOT NULL, `originalName` TEXT NOT NULL, " +
+                "`originalGrams` REAL NOT NULL, `newFoodId` INTEGER NOT NULL, " +
+                "`newName` TEXT NOT NULL, `newGrams` REAL NOT NULL, " +
+                "`kcalBefore` REAL NOT NULL, `kcalAfter` REAL NOT NULL, " +
+                "`proteinBefore` REAL NOT NULL, `proteinAfter` REAL NOT NULL, " +
+                "`carbsBefore` REAL NOT NULL, `carbsAfter` REAL NOT NULL, " +
+                "`fatBefore` REAL NOT NULL, `fatAfter` REAL NOT NULL, " +
+                "`status` TEXT NOT NULL, `note` TEXT NOT NULL DEFAULT '')"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_substitution_log_createdAt` ON `substitution_log` (`createdAt`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_substitution_log_dateEpochDay` ON `substitution_log` (`dateEpochDay`)")
+    }
+}

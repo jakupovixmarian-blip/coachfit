@@ -225,4 +225,48 @@ object Mappers {
         id = id, profileId = profileId, kind = kind, title = title, body = body,
         triggerTime = triggerTime, enabled = enabled, requestCode = requestCode
     )
+
+    fun DiaryEntryEntity.toDomain() = DiaryEntry(
+        id = id, dateEpochDay = dateEpochDay, mealSlot = mealSlot, time = time,
+        foodItemId = foodItemId, foodName = foodName, grams = grams, unit = unit,
+        kcal = kcal, protein = protein, carbs = carbs, fat = fat, source = source,
+        planEntryId = planEntryId, active = active, createdAt = createdAt
+    )
+
+    fun DiaryEntry.toEntity() = DiaryEntryEntity(
+        id = id, dateEpochDay = dateEpochDay, mealSlot = mealSlot, time = time,
+        foodItemId = foodItemId, foodName = foodName, grams = grams, unit = unit,
+        kcal = kcal, protein = protein, carbs = carbs, fat = fat, source = source,
+        planEntryId = planEntryId, active = active, createdAt = createdAt
+    )
+
+    fun ShoppingItemEntity.toDomain() = ShoppingItem(
+        id = id, weekStartEpochDay = weekStartEpochDay, foodItemId = foodItemId,
+        foodName = foodName, category = category, totalGrams = totalGrams, unit = unit,
+        checked = checked, alreadyHave = alreadyHave, isCustom = isCustom, createdAt = createdAt
+    )
+
+    fun ShoppingItem.toEntity() = ShoppingItemEntity(
+        id = id, weekStartEpochDay = weekStartEpochDay, foodItemId = foodItemId,
+        foodName = foodName, category = category, totalGrams = totalGrams, unit = unit,
+        checked = checked, alreadyHave = alreadyHave, isCustom = isCustom, createdAt = createdAt
+    )
+
+    fun SubstitutionLogEntity.toDomain() = SubstitutionLog(
+        id = id, createdAt = createdAt, dateEpochDay = dateEpochDay, mealEntryId = mealEntryId,
+        mealSlot = mealSlot, originalFoodId = originalFoodId, originalName = originalName,
+        originalGrams = originalGrams, newFoodId = newFoodId, newName = newName, newGrams = newGrams,
+        kcalBefore = kcalBefore, kcalAfter = kcalAfter, proteinBefore = proteinBefore,
+        proteinAfter = proteinAfter, carbsBefore = carbsBefore, carbsAfter = carbsAfter,
+        fatBefore = fatBefore, fatAfter = fatAfter, status = status, note = note
+    )
+
+    fun SubstitutionLog.toEntity() = SubstitutionLogEntity(
+        id = id, createdAt = createdAt, dateEpochDay = dateEpochDay, mealEntryId = mealEntryId,
+        mealSlot = mealSlot, originalFoodId = originalFoodId, originalName = originalName,
+        originalGrams = originalGrams, newFoodId = newFoodId, newName = newName, newGrams = newGrams,
+        kcalBefore = kcalBefore, kcalAfter = kcalAfter, proteinBefore = proteinBefore,
+        proteinAfter = proteinAfter, carbsBefore = carbsBefore, carbsAfter = carbsAfter,
+        fatBefore = fatBefore, fatAfter = fatAfter, status = status, note = note
+    )
 }
