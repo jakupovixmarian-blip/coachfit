@@ -67,6 +67,39 @@ Ogni modifica al piano si riflette automaticamente sulla spesa e sul diario.
 Il **Coach AI** riceve nel contesto anche il bilancio del giorno, il riepilogo settimanale,
 la lista della spesa e lo storico delle sostituzioni: risponde usando solo dati reali.
 
+## Anamnesi guidata e gate di generazione
+
+Prima di generare qualsiasi piano, l'utente completa un'**anamnesi guidata** una domanda
+alla volta (`AnamnesisEngine`): dati anagrafici, stile di vita, recupero, esperienza di
+allenamento, obiettivi, preferenze e vincoli alimentari, **budget mensile**. L'intervista
+valida ogni risposta, rileva le **contraddizioni** (es. frequenza dichiarata superiore ai
+giorni disponibili) e impedisce la conferma finché i dati essenziali non sono completi.
+
+La generazione dei programmi è **bloccata finché l'anamnesi non è confermata**
+(`GenerateProgramsUseCase.Result.AnamnesisNotConfirmed`): nessun piano viene costruito su
+dati incompleti. La dashboard mostra un avviso e riporta l'utente all'anamnesi finché non è
+completata. Il riepilogo confermato viene salvato e fornito anche al Coach AI.
+
+## Budget alimentare
+
+`BudgetEngine` tratta il budget come **vincolo effettivo**: il costo del piano è calcolato
+dalle **grammature reali** × **prezzo/kg** degli alimenti. L'ambito è esplicito
+(personale, condiviso tra più persone con quota pro capite, o tutta la spesa con stima
+dichiarata della quota alimentare). Se manca il prezzo di un alimento, il costo **non viene
+inventato**: la voce è segnalata come non stimabile e il totale è marcato come stima
+parziale. Quando il budget è stretto, il generatore preferisce le fonti proteiche con il
+miglior costo per grammo di proteine (calcolato, non ipotizzato).
+
+## Database alimentare progressivo
+
+`FoodSearchRepository` risolve una ricerca in ordine: **database locale** (Room) → **Open
+Food Facts** (prodotti/marche) → **USDA FoodData Central** (alimenti generici). Ciò che
+viene trovato è salvato localmente e riutilizzato, quindi una ricerca non viene ripetuta
+inutilmente. La deduplicazione avviene su nome normalizzato e su `sourceId`. Nessun valore
+nutrizionale è inventato: i risultati privi di macronutrienti vengono scartati. La ricerca è
+integrata nel flusso di **sostituzione alimentare** (Impostazioni del piano → sostituisci →
+cerca), dove ogni candidato passa comunque dal controllo preventivo vincolato.
+
 ## Motori principali (deterministici, testati)
 
 - `EnergyCalculator` – BMR (Mifflin-St Jeor / Katch-McArdle se nota la massa grassa),
@@ -104,7 +137,12 @@ la lista della spesa e lo storico delle sostituzioni: risponde usando solo dati 
   **storico delle sessioni** (volume, durata, RPE, dolore).
 - `AdaptiveEngine` + `WeightAnalyzer` – media settimanale del peso, trend, aderenza,
   performance; genera proposte strutturate (situazione, problema, dati, modifica,
-  motivazione, risultato atteso, controindicazioni).
+  motivazione, risultato atteso, controindicazioni). Include l'**analisi dell'andamento
+  per singolo esercizio** (regressione → riduzione volume, progressione solida → nessun
+  cambio): non interpreta ogni stagnazione come richiesta di più volume.
+- `BudgetEngine` – costo reale del piano da grammature × prezzo, quota pro capite per budget
+  condivisi, stima parziale dichiarata quando mancano prezzi, convenienza per grammo di
+  proteine.
 
 Separazione netta tra **motore matematico deterministico**, **motore di analisi** e
 **AI conversazionale**: l'AI interpreta e propone, non calcola né modifica i database
@@ -199,13 +237,16 @@ app/src/main/java/com/fitcoach/app/
 
 ## Test
 
-Test unitari dei motori matematici (**134 test**, 13 classi): energia (incl. NEAT da stile
+Test unitari dei motori matematici (**161 test**, 18 classi): energia (incl. NEAT da stile
 di vita), carb cycling (incl. attivazione condizionale), generazione pasti (incl. n° pasti e
 preferenza colazione), sostituzione alimentare vincolata (pollo→tonno, rifiuto oltre il
 limite calorico, sostituzione combinata, tolleranze), lista della spesa (somma alimenti
 ripetuti, categorie, conservazione spunta), diario nutrizionale (obiettivo/consumato/
 rimanente, niente doppio conteggio, extra, isolamento giorni), split, recuperi, tecniche
-d'intensità, fatica, progressive overload, analisi peso, motore adattivo.
+d'intensità, fatica, progressive overload, analisi peso, motore adattivo, **anamnesi guidata**
+(parsing risposte, gate di generazione, contraddizioni), **budget mensile** (costo reale,
+quota pro capite, stima parziale), **mappatura fonti alimentari** (Open Food Facts, USDA),
+**analisi dell'andamento per esercizio** (regressione, progressione, stabilità).
 
 ```bash
 ./gradlew :app:testDebugUnitTest

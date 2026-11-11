@@ -3,6 +3,7 @@ package com.fitcoach.app.ui.nutrition
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fitcoach.app.data.repository.FoodRepository
+import com.fitcoach.app.data.repository.FoodSearchRepository
 import com.fitcoach.app.data.repository.NutritionDiaryRepository
 import com.fitcoach.app.data.repository.NutritionRepository
 import com.fitcoach.app.data.repository.SubstitutionRepository
@@ -34,7 +35,12 @@ data class NutritionUiState(
     val substitutionEntry: MealEntry? = null,
     val substitutes: List<FoodItem> = emptyList(),
     val preview: FoodSubstitutionEngine.Result? = null,
-    val previewFood: FoodItem? = null
+    val previewFood: FoodItem? = null,
+    // Ricerca alimentare progressiva (§6)
+    val foodSearchQuery: String = "",
+    val foodSearchResults: List<FoodItem> = emptyList(),
+    val foodSearchLoading: Boolean = false,
+    val foodSearchNote: String? = null
 ) {
     val selectedDay: NutritionDay?
         get() = plan?.days?.firstOrNull { it.dayIndex == selectedDayIndex }
@@ -47,6 +53,7 @@ class NutritionViewModel @Inject constructor(
     private val foodRepository: FoodRepository,
     private val diaryRepository: NutritionDiaryRepository,
     private val substitutionRepository: SubstitutionRepository,
+    private val foodSearchRepository: FoodSearchRepository,
     private val generatePrograms: GenerateProgramsUseCase
 ) : ViewModel() {
 
@@ -134,9 +141,43 @@ class NutritionViewModel @Inject constructor(
 
     fun cancelSubstitution() {
         _state.value = _state.value.copy(
-            substitutionEntry = null, substitutes = emptyList(), preview = null, previewFood = null
+            substitutionEntry = null, substitutes = emptyList(), preview = null, previewFood = null,
+            foodSearchQuery = "", foodSearchResults = emptyList(), foodSearchNote = null
         )
     }
+
+    fun updateFoodSearch(query: String) {
+        _state.value = _state.value.copy(foodSearchQuery = query, foodSearchNote = null)
+    }
+
+    /**
+     * Ricerca progressiva (§6): prima nel database locale, poi (se non ci sono
+     * risultati) nelle fonti esterne (Open Food Facts, USDA). I risultati trovati
+     * vengono salvati localmente per gli usi futuri.
+     */
+    fun searchFoods() {
+        val query = _state.value.foodSearchQuery.trim()
+        if (query.length < 2) {
+            _state.value = _state.value.copy(
+                foodSearchResults = emptyList(),
+                foodSearchNote = "Digita almeno 2 caratteri."
+            )
+            return
+        }
+        viewModelScope.launch {
+            _state.value = _state.value.copy(foodSearchLoading = true, foodSearchNote = null)
+            val outcome = runCatching { foodSearchRepository.search(query) }.getOrNull()
+            _state.value = _state.value.copy(
+                foodSearchLoading = false,
+                foodSearchResults = outcome?.results.orEmpty(),
+                foodSearchNote = outcome?.note
+                    ?: if (outcome == null) "Ricerca non disponibile: controlla la connessione." else null
+            )
+        }
+    }
+
+    /** Verifica un alimento trovato con la ricerca come sostituto della voce corrente. */
+    fun previewSubstituteFromSearch(food: FoodItem) = previewSubstitution(food)
 
     /** Calcola il controllo preventivo per il sostituto scelto, senza applicare nulla. */
     fun previewSubstitution(substitute: FoodItem) {

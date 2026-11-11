@@ -266,6 +266,10 @@ class WorkoutRepository @Inject constructor(
     suspend fun getPerformanceFor(exerciseId: Long): List<ExercisePerformance> =
         perfDao.getForExercise(exerciseId).map { it.toDomain() }
 
+    /** Tutte le performance raggruppate per nome esercizio (per l'analisi adattiva). */
+    suspend fun getPerformanceByExercise(): Map<String, List<ExercisePerformance>> =
+        perfDao.getAll().map { it.toDomain() }.groupBy { it.exerciseName }
+
     suspend fun getLatestPerformance(exerciseId: Long): ExercisePerformance? =
         perfDao.getLatest(exerciseId)?.toDomain()
 

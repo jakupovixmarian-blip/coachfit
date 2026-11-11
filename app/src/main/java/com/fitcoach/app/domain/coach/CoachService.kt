@@ -7,6 +7,7 @@ import com.fitcoach.app.data.remote.ChatMessageDto
 import com.fitcoach.app.data.remote.SecureKeyStore
 import com.fitcoach.app.data.repository.ChangeRepository
 import com.fitcoach.app.data.repository.ChatRepository
+import com.fitcoach.app.data.repository.FoodRepository
 import com.fitcoach.app.data.repository.NutritionDiaryRepository
 import com.fitcoach.app.data.repository.NutritionRepository
 import com.fitcoach.app.data.repository.ProgressRepository
@@ -18,6 +19,7 @@ import com.fitcoach.app.domain.adaptive.WeightAnalyzer
 import com.fitcoach.app.domain.model.AiProvider
 import com.fitcoach.app.domain.model.ChatMessage
 import com.fitcoach.app.domain.model.ChatRole
+import com.fitcoach.app.domain.nutrition.BudgetEngine
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -40,6 +42,7 @@ class CoachService @Inject constructor(
     private val diaryRepository: NutritionDiaryRepository,
     private val shoppingRepository: ShoppingRepository,
     private val substitutionRepository: SubstitutionRepository,
+    private val foodRepository: FoodRepository,
     private val aiClient: AiClient,
     private val secureKeyStore: SecureKeyStore
 ) {
@@ -65,6 +68,12 @@ class CoachService @Inject constructor(
         val weekly = runCatching { diaryRepository.weeklySummary(weekStart) }.getOrNull()
         val shopping = runCatching { shoppingRepository.itemsForWeek(weekStart) }.getOrNull() ?: emptyList()
         val substitutions = runCatching { substitutionRepository.history() }.getOrNull() ?: emptyList()
+        val budgetReport = runCatching {
+            if (nutrition != null && profile != null) {
+                val foodsById = foodRepository.getAll().associateBy { it.id }
+                BudgetEngine.report(nutrition, foodsById, profile)
+            } else null
+        }.getOrNull()
 
         return CoachContext(
             profile = profile,
@@ -77,7 +86,8 @@ class CoachService @Inject constructor(
             todayBalance = todayBalance,
             weeklyNutrition = weekly,
             shoppingList = shopping,
-            substitutions = substitutions
+            substitutions = substitutions,
+            budgetReport = budgetReport
         )
     }
 

@@ -105,6 +105,28 @@ fun DashboardScreen(
             return@LazyColumn
         }
 
+        if (state.needsAnamnesis) {
+            item {
+                SectionCard {
+                    Column {
+                        SectionHeader("Anamnesi da completare", "Passaggio necessario")
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = "Prima di generare il piano alimentare e la scheda, " +
+                                "completa e conferma l'anamnesi guidata. Il coach usa questi dati " +
+                                "per personalizzare tutto il programma.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Button(onClick = { navController.navigate(Routes.ANAMNESIS) }) {
+                            Text("Completa l'anamnesi")
+                        }
+                    }
+                }
+            }
+        }
+
         item {
             SectionCard {
                 Column {

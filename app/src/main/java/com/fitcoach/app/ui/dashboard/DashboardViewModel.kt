@@ -29,6 +29,8 @@ import javax.inject.Inject
 data class DashboardUiState(
     val loading: Boolean = true,
     val hasProfile: Boolean = false,
+    val needsAnamnesis: Boolean = false,
+    val anamnesisSummary: String = "",
     val profileName: String = "",
     val goalLabel: String = "",
     val dayName: String = "",
@@ -84,6 +86,8 @@ class DashboardViewModel @Inject constructor(
             _state.value = DashboardUiState(
                 loading = false,
                 hasProfile = profile?.isComplete == true,
+                needsAnamnesis = profile?.isComplete == true && !profile.isAnamnesisReady,
+                anamnesisSummary = profile?.anamnesisSummary.orEmpty(),
                 profileName = profile?.name.orEmpty(),
                 goalLabel = profile?.goal?.label.orEmpty(),
                 dayName = today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ITALIAN)

@@ -12,6 +12,7 @@ import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WeeklyNutritionSummary
 import com.fitcoach.app.domain.model.WeightTrend
 import com.fitcoach.app.domain.model.WorkoutPlan
+import com.fitcoach.app.domain.nutrition.BudgetEngine
 
 /**
  * Fotografia strutturata dello stato del programma, usata per costruire il
@@ -33,5 +34,7 @@ data class CoachContext(
     /** Lista della spesa settimanale corrente. */
     val shoppingList: List<ShoppingItem> = emptyList(),
     /** Storico delle sostituzioni alimentari. */
-    val substitutions: List<SubstitutionLog> = emptyList()
+    val substitutions: List<SubstitutionLog> = emptyList(),
+    /** Costo del piano attivo rispetto al budget mensile (se calcolabile). */
+    val budgetReport: BudgetEngine.CostReport? = null
 )

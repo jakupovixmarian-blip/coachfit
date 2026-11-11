@@ -10,19 +10,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -213,6 +217,12 @@ fun NutritionScreen(
             substitutes = state.substitutes,
             preview = state.preview,
             previewFood = state.previewFood,
+            searchQuery = state.foodSearchQuery,
+            searchResults = state.foodSearchResults,
+            searchLoading = state.foodSearchLoading,
+            searchNote = state.foodSearchNote,
+            onSearchQueryChange = viewModel::updateFoodSearch,
+            onSearch = viewModel::searchFoods,
             onPreview = viewModel::previewSubstitution,
             onApply = viewModel::applySubstitution,
             onDismiss = viewModel::cancelSubstitution
@@ -287,6 +297,12 @@ private fun SubstitutionDialog(
     substitutes: List<FoodItem>,
     preview: FoodSubstitutionEngine.Result?,
     previewFood: FoodItem?,
+    searchQuery: String,
+    searchResults: List<FoodItem>,
+    searchLoading: Boolean,
+    searchNote: String?,
+    onSearchQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
     onPreview: (FoodItem) -> Unit,
     onApply: () -> Unit,
     onDismiss: () -> Unit
@@ -295,7 +311,7 @@ private fun SubstitutionDialog(
         onDismissRequest = onDismiss,
         title = { Text("Sostituisci \"$entryName\"") },
         text = {
-            Column {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
                 if (preview == null || previewFood == null) {
                     Text(
                         "Le quantita sono ricalcolate per mantenere calorie e macronutrienti del pasto " +
@@ -310,22 +326,49 @@ private fun SubstitutionDialog(
                         )
                     } else {
                         substitutes.forEach { food ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        food.name,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        "${food.kcalPer100g.toInt()} kcal/100g · P ${food.proteinPer100g.toInt()} · C ${food.carbsPer100g.toInt()} · G ${food.fatPer100g.toInt()}",
-                                        style = MaterialTheme.typography.bodySmall, color = TextSecondary
-                                    )
-                                }
-                                TextButton(onClick = { onPreview(food) }) { Text("Verifica") }
+                            SubstituteRow(food, onPreview)
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "Cerca un alimento",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = onSearchQueryChange,
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            placeholder = { Text("Es. yogurt greco, bresaola…") }
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Button(onClick = onSearch, enabled = !searchLoading) {
+                            if (searchLoading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                            else Text("Cerca")
+                        }
+                    }
+                    searchNote?.let {
+                        Spacer(Modifier.height(6.dp))
+                        Text(it, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                    }
+                    if (searchResults.isNotEmpty()) {
+                        Spacer(Modifier.height(8.dp))
+                        searchResults.forEach { food ->
+                            Column {
+                                Text(
+                                    food.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    "${food.source}${food.brand?.let { " · $it" } ?: ""}",
+                                    style = MaterialTheme.typography.labelSmall, color = TextSecondary
+                                )
+                                SubstituteRow(food, onPreview)
                             }
                         }
                     }
@@ -344,6 +387,27 @@ private fun SubstitutionDialog(
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Chiudi") } }
     )
+}
+
+@Composable
+private fun SubstituteRow(food: FoodItem, onPreview: (FoodItem) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                food.name,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                "${food.kcalPer100g.toInt()} kcal/100g · P ${food.proteinPer100g.toInt()} · C ${food.carbsPer100g.toInt()} · G ${food.fatPer100g.toInt()}",
+                style = MaterialTheme.typography.bodySmall, color = TextSecondary
+            )
+        }
+        TextButton(onClick = { onPreview(food) }) { Text("Verifica") }
+    }
 }
 
 @Composable

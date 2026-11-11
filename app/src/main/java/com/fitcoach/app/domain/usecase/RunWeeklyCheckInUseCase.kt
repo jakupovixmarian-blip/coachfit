@@ -112,6 +112,13 @@ class RunWeeklyCheckInUseCase @Inject constructor(
         proposals += trainingChanges.size
         if (trainingChanges.isEmpty()) notes += "Allenamento: nessun intervento necessario (${recovery.explanation})"
 
+        // 3) Analisi dell'andamento REALE delle prestazioni per esercizio.
+        val trendChanges = AdaptiveEngine.evaluateExerciseTrends(
+            workoutRepository.getPerformanceByExercise()
+        )
+        trendChanges.forEach { changeRepository.add(it) }
+        proposals += trendChanges.size
+
         return Outcome(checkIn, proposals, notes)
     }
 }

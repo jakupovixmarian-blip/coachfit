@@ -95,6 +95,16 @@ object CoachPromptBuilder {
             if (p.likedFoods.isNotEmpty()) sb.appendLine("- Alimenti graditi: ${p.likedFoods.joinToString()}")
             if (p.dislikedFoods.isNotEmpty()) sb.appendLine("- Alimenti poco graditi: ${p.dislikedFoods.joinToString()}")
             if (p.weeklyFoodBudgetEur != null) sb.appendLine("- Budget alimentare: %.0f EUR/settimana".format(p.weeklyFoodBudgetEur))
+            p.monthlyFoodBudgetEur?.let {
+                sb.appendLine(
+                    "- Budget alimentare mensile: %.0f EUR (ambito: ${p.budgetScope.label}, " +
+                        "${p.budgetPersons} persone)".format(it)
+                )
+            }
+            sb.appendLine(
+                "- Anamnesi: ${if (p.anamnesisCompleted) "confermata" else "NON confermata " +
+                    "(invita a completarla prima di proporre cambi strutturali)"}"
+            )
             if (p.dietDifficulties.isNotBlank()) sb.appendLine("- Difficolta con la dieta: ${p.dietDifficulties}")
             if (p.secondaryGoals.isNotEmpty()) sb.appendLine("- Obiettivi secondari: ${p.secondaryGoals.joinToString { it.label }}")
         }
@@ -252,6 +262,24 @@ object CoachPromptBuilder {
             sb.appendLine("LISTA DELLA SPESA SETTIMANALE (dal piano effettivo)")
             context.shoppingList.groupBy { it.category }.forEach { (cat, items) ->
                 sb.appendLine("  ${cat.label}: " + items.joinToString { "${it.foodName} ${it.totalGrams.toInt()} g" })
+            }
+        }
+
+        context.budgetReport?.let { b ->
+            sb.appendLine()
+            sb.appendLine("COSTO DEL PIANO E BUDGET")
+            sb.appendLine("- Costo stimato: %.2f EUR/settimana (%.2f EUR/mese)".format(b.weeklyCostEur, b.monthlyCostEur))
+            b.monthlyBudgetEur?.let { budget ->
+                sb.appendLine("- Budget mensile attribuibile: %.2f EUR".format(budget))
+                sb.appendLine(
+                    "- Stato: %s".format(
+                        if (b.withinBudget) "entro il budget"
+                        else "FUORI budget di %.2f EUR".format(b.overBudgetEur)
+                    )
+                )
+            } ?: sb.appendLine("- Nessun budget mensile impostato.")
+            if (b.partialEstimate) {
+                sb.appendLine("- Nota: costo parziale, ${b.unpricedFoods.size} alimenti senza prezzo noto.")
             }
         }
 

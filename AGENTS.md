@@ -33,7 +33,7 @@ Lo script `/workspace/build.sh` avvolge Gradle e imposta l'ambiente:
 
 ```bash
 /workspace/build.sh :app:compileDebugKotlin   # compilazione veloce
-/workspace/build.sh :app:testDebugUnitTest    # test unitari (134 test)
+/workspace/build.sh :app:testDebugUnitTest    # test unitari (161 test)
 /workspace/build.sh :app:assembleDebug        # APK debug
 /workspace/build.sh :app:assembleRelease      # APK release (firmabile)
 ```
@@ -50,12 +50,19 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
 - **Integrazione**: le funzionalità nutrizionali (piano, sostituzioni, spesa, diario)
   condividono lo stesso database alimentare e gli stessi identificativi del piano. Non
   creare moduli indipendenti.
-- **Room**: DB version attuale **3**. Aggiungendo entita/DAO ricordarsi di importarli in
+- **Room**: DB version attuale **4**. Aggiungendo entita/DAO ricordarsi di importarli in
   `FitCoachDatabase.kt` (un import mancante causa `[ksp] MissingType`), registrare la
-  migrazione in `Migrations.kt` e i mapper in `Mappers.kt`.
+  migrazione in `Migrations.kt` e i mapper in `Mappers.kt`. Lo schema esportato sta in
+  `app/schemas/`.
 - **UI**: usare i componenti condivisi in `ui/components` (`SectionCard`, `SectionHeader`,
   `StatTile`, `MacroBar`, `Pill`, `EmptyState`, `LoadingBox`) e i colori del tema
   (`Emerald`, `CarbsColor`, `TextSecondary`, ...). Le schermate sono `LazyColumn`.
+- **Gate di generazione**: nessun piano si genera senza anamnesi confermata
+  (`UserProfile.isAnamnesisReady`). `GenerateProgramsUseCase` ritorna
+  `Result.AnamnesisNotConfirmed`. La dashboard reindirizza all'anamnesi.
+- **Fonti esterne**: la ricerca alimentare (`FoodSearchRepository`) usa Open Food Facts e
+  USDA FoodData Central con URL completi via Retrofit `@Url`. I test di mappatura DTO stanno
+  in `data/repository/FoodSearchMappingTest.kt` (nessuna rete: parsing reale delle DTO).
 
 ## Punti chiave del motore nutrizionale
 
@@ -64,4 +71,9 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
   P/C/G 10%), blocco se si supera il limite calorico approvato, sostituzione combinata.
 - `ShoppingListEngine` — aggregazione dal piano effettivo, categorie, conservazione stato.
 - `NutritionDiaryEngine` — obiettivo/consumato/rimanente, niente doppio conteggio, extra.
-- Repository: `NutritionDiaryRepository`, `ShoppingRepository`, `SubstitutionRepository`.
+- `BudgetEngine` — costo reale del piano (grammature × prezzo/kg), ambito personale/condiviso/
+  spesa totale, stima parziale dichiarata, convenienza per grammo di proteine.
+- `AnamnesisEngine` — intervista guidata, validazione risposte, contraddizioni, riepilogo,
+  gate di generazione.
+- Repository: `NutritionDiaryRepository`, `ShoppingRepository`, `SubstitutionRepository`,
+  `FoodSearchRepository`.

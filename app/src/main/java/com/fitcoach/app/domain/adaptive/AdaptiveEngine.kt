@@ -3,6 +3,7 @@ package com.fitcoach.app.domain.adaptive
 import com.fitcoach.app.domain.model.ChangeDomain
 import com.fitcoach.app.domain.model.ChangeStatus
 import com.fitcoach.app.domain.model.CheckIn
+import com.fitcoach.app.domain.model.ExercisePerformance
 import com.fitcoach.app.domain.model.Goal
 import com.fitcoach.app.domain.model.ProgramChange
 import com.fitcoach.app.domain.model.UserProfile
@@ -181,6 +182,51 @@ object AdaptiveEngine {
                 expectedOutcome = "Nuovo mesociclo con carichi aggiornati.",
                 contraindications = "Nessuna, se le prestazioni sono in crescita puoi estendere il blocco di 1 settimana."
             )
+        }
+        return changes
+    }
+
+    /**
+     * Analizza l'andamento REALE delle prestazioni per esercizio e propone
+     * interventi mirati. Non interpreta ogni stagnazione come necessita di
+     * aumentare il volume: distingue regressione, stagnazione e under-stimulus.
+     */
+    fun evaluateExerciseTrends(
+        performancesByExercise: Map<String, List<ExercisePerformance>>
+    ): List<ProgramChange> {
+        val changes = mutableListOf<ProgramChange>()
+        performancesByExercise.forEach { (exerciseName, perfs) ->
+            if (perfs.size < 6) return@forEach
+            val ordered = perfs.sortedByDescending { it.dateEpochDay }
+            val recent = ordered.take(3).map { it.estimated1Rm ?: 0.0 }.average()
+            val previous = ordered.drop(3).take(3).map { it.estimated1Rm ?: 0.0 }.average()
+            if (previous <= 0.0) return@forEach
+            val delta = (recent - previous) / previous
+            when {
+                delta <= -0.05 -> changes += buildChange(
+                    domain = ChangeDomain.WORKOUT,
+                    title = "Calo di prestazione: $exerciseName",
+                    situation = "1RM stimato in calo del ${"%.1f".format(-delta * 100)}% nelle ultime 3 sedute.",
+                    problem = "Regressione su un esercizio chiave: possibile affaticamento accumulato.",
+                    dataUsed = "Storico 1RM stimato di $exerciseName (${perfs.size} sedute).",
+                    proposedChange = "Mantieni il carico e riduci il volume del 20-30% per 1-2 settimane " +
+                        "su questo esercizio.",
+                    rationale = "Il calo di prestazione spesso indica affaticamento, non necessita di piu volume.",
+                    expectedOutcome = "Ripresa dei carichi precedenti dopo il recupero.",
+                    contraindications = "Se il calo persiste nonostante il recupero, verifica alimentazione e sonno."
+                )
+                delta >= 0.05 -> changes += buildChange(
+                    domain = ChangeDomain.WORKOUT,
+                    title = "Progressione solida: $exerciseName",
+                    situation = "1RM stimato in crescita del ${"%.1f".format(delta * 100)}%.",
+                    problem = "Nessun problema: la progressione funziona.",
+                    dataUsed = "Storico 1RM stimato di $exerciseName.",
+                    proposedChange = "Prosegui con la double progression senza cambiare l'esercizio.",
+                    rationale = "Se il progresso e costante, modificare lo stimolo e controproducente.",
+                    expectedOutcome = "Ulteriore crescita nelle prossime settimane.",
+                    contraindications = "Nessuna."
+                )
+            }
         }
         return changes
     }
