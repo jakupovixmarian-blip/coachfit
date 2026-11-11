@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,6 +43,7 @@ import com.fitcoach.app.domain.model.FoodItem
 import com.fitcoach.app.domain.model.FoodUnit
 import com.fitcoach.app.domain.model.Meal
 import com.fitcoach.app.domain.model.MealEntry
+import com.fitcoach.app.domain.nutrition.FoodSubstitutionEngine
 import com.fitcoach.app.ui.components.EmptyState
 import com.fitcoach.app.ui.components.LoadingBox
 import com.fitcoach.app.ui.components.MacroBar
@@ -194,7 +196,12 @@ fun NutritionScreen(
 
             day.meals.forEach { meal ->
                 item {
-                    MealCard(meal = meal, onSubstitute = viewModel::startSubstitution)
+                    MealCard(
+                        meal = meal,
+                        checks = state.checks,
+                        onToggle = viewModel::toggleEntry,
+                        onSubstitute = viewModel::startSubstitution
+                    )
                 }
             }
         }
@@ -204,7 +211,10 @@ fun NutritionScreen(
         SubstitutionDialog(
             entryName = entry.foodName,
             substitutes = state.substitutes,
-            onSelect = viewModel::applySubstitution,
+            preview = state.preview,
+            previewFood = state.previewFood,
+            onPreview = viewModel::previewSubstitution,
+            onApply = viewModel::applySubstitution,
             onDismiss = viewModel::cancelSubstitution
         )
     }
@@ -213,7 +223,12 @@ fun NutritionScreen(
 }
 
 @Composable
-private fun MealCard(meal: Meal, onSubstitute: (MealEntry) -> Unit) {
+private fun MealCard(
+    meal: Meal,
+    checks: Map<Long, Long>,
+    onToggle: (MealEntry) -> Unit,
+    onSubstitute: (MealEntry) -> Unit
+) {
     SectionCard {
         Column {
             Row(
@@ -233,15 +248,17 @@ private fun MealCard(meal: Meal, onSubstitute: (MealEntry) -> Unit) {
             }
             Spacer(Modifier.height(8.dp))
             meal.entries.forEach { entry ->
+                val checked = checks.containsKey(entry.id)
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Checkbox(checked = checked, onCheckedChange = { onToggle(entry) })
                     Column(Modifier.weight(1f)) {
                         Text(
                             "${entry.foodName} · ${entry.grams.toInt()} g (${unitLabel(entry.unit)})",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = if (checked) TextSecondary else MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             "${entry.kcal.toInt()} kcal · P ${entry.protein.toInt()} · C ${entry.carbs.toInt()} · G ${entry.fat.toInt()}",
@@ -268,7 +285,10 @@ private fun MealCard(meal: Meal, onSubstitute: (MealEntry) -> Unit) {
 private fun SubstitutionDialog(
     entryName: String,
     substitutes: List<FoodItem>,
-    onSelect: (FoodItem) -> Unit,
+    preview: FoodSubstitutionEngine.Result?,
+    previewFood: FoodItem?,
+    onPreview: (FoodItem) -> Unit,
+    onApply: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -276,41 +296,109 @@ private fun SubstitutionDialog(
         title = { Text("Sostituisci \"$entryName\"") },
         text = {
             Column {
-                Text(
-                    "Le quantita sono ricalcolate per mantenere l'apporto del macro dominante.",
-                    style = MaterialTheme.typography.bodySmall, color = TextSecondary
-                )
-                Spacer(Modifier.height(12.dp))
-                if (substitutes.isEmpty()) {
+                if (preview == null || previewFood == null) {
                     Text(
-                        "Nessun sostituto compatibile con le tue restrizioni.",
-                        style = MaterialTheme.typography.bodyMedium
+                        "Le quantita sono ricalcolate per mantenere calorie e macronutrienti del pasto " +
+                            "e della giornata. Scegli un sostituto per il controllo preventivo.",
+                        style = MaterialTheme.typography.bodySmall, color = TextSecondary
                     )
-                } else {
-                    substitutes.forEach { food ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    food.name,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    "${food.kcalPer100g.toInt()} kcal/100g · P ${food.proteinPer100g.toInt()} · C ${food.carbsPer100g.toInt()} · G ${food.fatPer100g.toInt()}",
-                                    style = MaterialTheme.typography.bodySmall, color = TextSecondary
-                                )
+                    Spacer(Modifier.height(12.dp))
+                    if (substitutes.isEmpty()) {
+                        Text(
+                            "Nessun sostituto compatibile con le tue restrizioni.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    } else {
+                        substitutes.forEach { food ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        food.name,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        "${food.kcalPer100g.toInt()} kcal/100g · P ${food.proteinPer100g.toInt()} · C ${food.carbsPer100g.toInt()} · G ${food.fatPer100g.toInt()}",
+                                        style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                                    )
+                                }
+                                TextButton(onClick = { onPreview(food) }) { Text("Verifica") }
                             }
-                            TextButton(onClick = { onSelect(food) }) { Text("Scegli") }
                         }
                     }
+                } else {
+                    SubstitutionPreview(previewFood, preview)
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Chiudi") } }
+        confirmButton = {
+            if (preview != null && previewFood != null) {
+                val enabled = preview.status != FoodSubstitutionEngine.Status.INCOMPATIBLE
+                TextButton(onClick = onApply, enabled = enabled) {
+                    Text(if (enabled) "Applica" else "Non compatibile")
+                }
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Chiudi") } }
     )
+}
+
+@Composable
+private fun SubstitutionPreview(food: FoodItem, preview: FoodSubstitutionEngine.Result) {
+    val statusText = when (preview.status) {
+        FoodSubstitutionEngine.Status.COMPATIBLE -> "Compatibile"
+        FoodSubstitutionEngine.Status.COMPATIBLE_WITH_ADJUSTMENT -> "Compatibile con modifica aggiuntiva"
+        FoodSubstitutionEngine.Status.INCOMPATIBLE -> "Non compatibile con i vincoli del piano"
+    }
+    val statusColor = when (preview.status) {
+        FoodSubstitutionEngine.Status.COMPATIBLE -> Emerald
+        FoodSubstitutionEngine.Status.COMPATIBLE_WITH_ADJUSTMENT -> CarbsColor
+        FoodSubstitutionEngine.Status.INCOMPATIBLE -> CarbsColor
+    }
+    Column {
+        Text(food.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        Spacer(Modifier.height(6.dp))
+        Pill(statusText, statusColor)
+        Spacer(Modifier.height(10.dp))
+        Text("Quantità sostitutiva: ${preview.substituteGrams.toInt()} g", style = MaterialTheme.typography.bodyMedium, color = Emerald)
+        preview.addition?.let {
+            Text(
+                "Aggiungi ${it.grams.toInt()} g di ${it.food.name}",
+                style = MaterialTheme.typography.bodyMedium, color = CarbsColor
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        PreviewRow("Calorie pasto", preview.mealBefore.kcal, preview.mealAfter.kcal)
+        PreviewRow("Proteine pasto", preview.mealBefore.protein, preview.mealAfter.protein)
+        PreviewRow("Carboidrati pasto", preview.mealBefore.carbs, preview.mealAfter.carbs)
+        PreviewRow("Grassi pasto", preview.mealBefore.fat, preview.mealAfter.fat)
+        Spacer(Modifier.height(6.dp))
+        PreviewRow("Calorie giornata", preview.dayBefore.kcal, preview.dayAfter.kcal)
+        if (preview.violations.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            preview.violations.forEach {
+                Text("• $it", style = MaterialTheme.typography.bodySmall, color = CarbsColor)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewRow(label: String, before: Double, after: Double) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+        Text(
+            "${before.toInt()} → ${after.toInt()}",
+            style = MaterialTheme.typography.bodySmall,
+            color = if (kotlin.math.abs(after - before) <= kotlin.math.abs(before) * 0.05 + 1) Emerald else CarbsColor
+        )
+    }
 }
 
 private fun unitLabel(unit: FoodUnit) = when (unit) {
