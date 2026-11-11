@@ -13,15 +13,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 enum class TopLevelDestination(
     val route: String,
     val label: String,
+    val shortLabel: String,
     val icon: ImageVector
 ) {
-    DASHBOARD("dashboard", "Dashboard", Icons.Filled.Dashboard),
-    NUTRITION("nutrition", "Alimentazione", Icons.Filled.Restaurant),
-    SHOPPING("shopping", "Spesa", Icons.Filled.ShoppingCart),
-    DIARY("diary", "Diario", Icons.Filled.EventNote),
-    WORKOUT("workout", "Allenamento", Icons.Filled.FitnessCenter),
-    PROGRESS("progress", "Progressi", Icons.Filled.Insights),
-    COACH("coach", "Coach AI", Icons.Filled.AutoAwesome)
+    DASHBOARD("dashboard", "Dashboard", "Home", Icons.Filled.Dashboard),
+    NUTRITION("nutrition", "Alimentazione", "Piano", Icons.Filled.Restaurant),
+    SHOPPING("shopping", "Spesa", "Spesa", Icons.Filled.ShoppingCart),
+    DIARY("diary", "Diario", "Diario", Icons.Filled.EventNote),
+    WORKOUT("workout", "Allenamento", "Workout", Icons.Filled.FitnessCenter),
+    PROGRESS("progress", "Progressi", "Progressi", Icons.Filled.Insights),
+    COACH("coach", "Coach AI", "Coach", Icons.Filled.AutoAwesome)
 }
 
 object Routes {

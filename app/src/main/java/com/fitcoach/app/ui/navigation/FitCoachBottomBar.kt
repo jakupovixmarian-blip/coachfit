@@ -70,7 +70,7 @@ fun FitCoachBottomBar(
                 },
                 label = {
                     Text(
-                        text = destination.label,
+                        text = destination.shortLabel,
                         style = MaterialTheme.typography.labelSmall,
                         color = tint,
                         maxLines = 1
