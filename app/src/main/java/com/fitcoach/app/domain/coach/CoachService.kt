@@ -141,7 +141,9 @@ class CoachService @Inject constructor(
             provider = provider,
             baseUrl = baseUrl,
             model = model,
-            apiKey = key
+            apiKey = key,
+            temperature = settings.temperature,
+            maxTokens = settings.maxTokens
         )
     }
 

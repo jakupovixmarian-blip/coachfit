@@ -1,0 +1,136 @@
+package com.fitcoach.app.data.remote
+
+import com.fitcoach.app.domain.model.AiProvider
+import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
+import org.junit.Test
+import retrofit2.Response
+
+/**
+ * Verifica il comportamento di [AiClient]: il payload contiene un solo parametro
+ * token, e in caso di errore "parametro non supportato" esegue UN solo retry
+ * controllato con l'altro parametro.
+ */
+class AiClientTest {
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        encodeDefaults = true
+        explicitNulls = false
+    }
+
+    private class RecordingApi(
+        private val responses: MutableList<Response<ChatCompletionResponse>>,
+        val sent: MutableList<ChatCompletionRequest> = mutableListOf()
+    ) : AiApi {
+        override suspend fun chatCompletions(
+            url: String,
+            authorization: String?,
+            contentType: String,
+            referer: String?,
+            title: String?,
+            body: ChatCompletionRequest
+        ): Response<ChatCompletionResponse> {
+            sent += body
+            return responses.removeAt(0)
+        }
+    }
+
+    private fun okResponse() = Response.success(
+        ChatCompletionResponse(
+            id = "1",
+            model = "test-model",
+            choices = listOf(
+                ChatCompletionResponse.Choice(
+                    index = 0,
+                    message = ChatCompletionResponse.Message(content = kotlinx.serialization.json.JsonPrimitive("OK")),
+                    finishReason = "stop"
+                )
+            )
+        )
+    )
+
+    private fun errorResponse(code: Int, message: String): Response<ChatCompletionResponse> {
+        val body = """{"error":{"message":${'"'}$message${'"'},"type":"invalid_request_error"}}"""
+        return Response.error(code, body.toResponseBody("application/json".toMediaType()))
+    }
+
+    private fun config(provider: AiProvider, model: String) = AiProviderConfig(
+        provider = provider, baseUrl = "https://example.test/v1/", model = model, apiKey = "k"
+    )
+
+    @Test
+    fun `openai o1 invia solo max_completion_tokens`() = runTest {
+        val api = RecordingApi(mutableListOf(okResponse()))
+        val client = AiClient(api, json)
+
+        val result = client.complete(config(AiProvider.OPENAI, "o1-mini"), listOf(ChatMessageDto("user", "ciao")))
+
+        assertThat(result).isInstanceOf(AiResult.Success::class.java)
+        assertThat(api.sent).hasSize(1)
+        val body = api.sent.first()
+        assertThat(body.maxCompletionTokens).isEqualTo(1200)
+        assertThat(body.maxTokens).isNull()
+    }
+
+    @Test
+    fun `groq invia solo max_tokens`() = runTest {
+        val api = RecordingApi(mutableListOf(okResponse()))
+        val client = AiClient(api, json)
+
+        client.complete(config(AiProvider.GROQ, "llama-3.3-70b-versatile"), listOf(ChatMessageDto("user", "ciao")))
+
+        val body = api.sent.first()
+        assertThat(body.maxTokens).isEqualTo(1200)
+        assertThat(body.maxCompletionTokens).isNull()
+    }
+
+    @Test
+    fun `retry controllato quando il provider rifiuta max_tokens`() = runTest {
+        // Modello non riconosciuto come "nuovo" -> primo tentativo con max_tokens,
+        // il provider risponde con errore -> retry con max_completion_tokens.
+        val api = RecordingApi(
+            mutableListOf(
+                errorResponse(400, "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead."),
+                okResponse()
+            )
+        )
+        val client = AiClient(api, json)
+
+        val result = client.complete(config(AiProvider.OPENAI, "gpt-futuro"), listOf(ChatMessageDto("user", "ciao")))
+
+        assertThat(result).isInstanceOf(AiResult.Success::class.java)
+        assertThat(api.sent).hasSize(2)
+        assertThat(api.sent[0].maxTokens).isNotNull()
+        assertThat(api.sent[0].maxCompletionTokens).isNull()
+        assertThat(api.sent[1].maxTokens).isNull()
+        assertThat(api.sent[1].maxCompletionTokens).isNotNull()
+    }
+
+    @Test
+    fun `nessun retry se l'errore non riguarda il parametro token`() = runTest {
+        val api = RecordingApi(mutableListOf(errorResponse(401, "Invalid API key")))
+        val client = AiClient(api, json)
+
+        val result = client.complete(config(AiProvider.OPENAI, "gpt-4o-mini"), listOf(ChatMessageDto("user", "ciao")))
+
+        assertThat(result).isInstanceOf(AiResult.Failure::class.java)
+        assertThat(api.sent).hasSize(1)
+    }
+
+    @Test
+    fun `test connection usa un solo parametro token`() = runTest {
+        val api = RecordingApi(mutableListOf(okResponse()))
+        val client = AiClient(api, json)
+
+        client.testConnection(config(AiProvider.OPENAI, "o1"))
+
+        val body = api.sent.first()
+        assertThat(body.maxCompletionTokens).isEqualTo(16)
+        assertThat(body.maxTokens).isNull()
+    }
+}

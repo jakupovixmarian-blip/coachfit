@@ -7,7 +7,9 @@ data class AiProviderConfig(
     val provider: AiProvider,
     val baseUrl: String,
     val model: String,
-    val apiKey: String?
+    val apiKey: String?,
+    val temperature: Double = 0.4,
+    val maxTokens: Int = 1200
 ) {
     /** URL completo dell'endpoint Chat Completions. */
     val completionsUrl: String

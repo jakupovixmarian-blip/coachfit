@@ -1,5 +1,6 @@
 package com.fitcoach.app.data.remote
 
+import com.fitcoach.app.domain.model.AiProvider
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -8,8 +9,17 @@ import kotlinx.serialization.json.JsonElement
 data class ChatCompletionRequest(
     val model: String,
     val messages: List<ChatMessageDto>,
-    val temperature: Double = 0.4,
-    @SerialName("max_tokens") val maxTokens: Int = 1200,
+    val temperature: Double? = null,
+    /**
+     * Limite dei token generati. Il NOME del campo dipende da provider e modello:
+     * `max_tokens` (Groq/OpenRouter/DeepSeek/custom e OpenAI storici) oppure
+     * `max_completion_tokens` (modelli OpenAI recenti). Il payload ne contiene
+     * sempre UNO SOLO: i due campi sono `null` per default e vengono omessi
+     * grazie a `explicitNulls = false` nel [kotlinx.serialization.json.Json].
+     * Usa [ChatCompletionRequest.forProvider] per costruirla correttamente.
+     */
+    @SerialName("max_tokens") val maxTokens: Int? = null,
+    @SerialName("max_completion_tokens") val maxCompletionTokens: Int? = null,
     val stream: Boolean = false,
     /**
      * Alcuni provider (OpenRouter) accettano un oggetto `response_format`.
@@ -19,6 +29,45 @@ data class ChatCompletionRequest(
 ) {
     @Serializable
     data class ResponseFormat(val type: String = "json_object")
+
+    companion object {
+        /**
+         * Costruisce la richiesta scegliendo il parametro token corretto per il
+         * provider/modello. Non imposta mai entrambi i parametri.
+         */
+        fun forProvider(
+            provider: AiProvider,
+            model: String,
+            messages: List<ChatMessageDto>,
+            temperature: Double? = null,
+            maxTokens: Int? = null,
+            responseFormat: ResponseFormat? = null
+        ): ChatCompletionRequest {
+            val newParam = AiParameterPolicy.tokenParamFor(provider, model) ==
+                TokenParam.MAX_COMPLETION_TOKENS
+            return ChatCompletionRequest(
+                model = model,
+                messages = messages,
+                temperature = temperature,
+                maxTokens = if (newParam) null else maxTokens,
+                maxCompletionTokens = if (newParam) maxTokens else null,
+                responseFormat = responseFormat
+            )
+        }
+
+        /**
+         * Riscrive la richiesta usando l'altro parametro token (per il retry
+         * controllato quando il provider rifiuta il parametro inviato).
+         */
+        fun withAlternateTokenParam(request: ChatCompletionRequest): ChatCompletionRequest {
+            val value = request.maxTokens ?: request.maxCompletionTokens ?: return request
+            val currentlyNew = request.maxCompletionTokens != null
+            return request.copy(
+                maxTokens = if (currentlyNew) value else null,
+                maxCompletionTokens = if (currentlyNew) null else value
+            )
+        }
+    }
 }
 
 @Serializable

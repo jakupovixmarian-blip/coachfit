@@ -166,6 +166,12 @@ Le chiavi API sono cifrate con **EncryptedSharedPreferences** (AES-256) e **non 
 mai incluse nell'APK**. È disponibile l'opzione **backend proxy** per non tenere la chiave
 sul dispositivo.
 
+Compatibilità parametri per provider/modello: il limite dei token generati viene inviato
+come `max_tokens` (Groq, OpenRouter, DeepSeek, custom e modelli OpenAI storici) oppure come
+`max_completion_tokens` (modelli OpenAI recenti: o1/o3/o4, gpt-4.1, gpt-5). Il payload
+contiene **un solo** parametro: mai entrambi. Se il provider rifiuta il parametro inviato,
+il client esegue **un unico retry controllato** con l'altro parametro.
+
 La chat conosce profilo, piano attivo, ciclicità, scheda, storico carichi, progressi e
 modifiche precedenti. Le modifiche proposte vengono mostrate all'utente e applicate solo
 dopo conferma, tramite funzioni controllate, con possibilità di **annullamento**.
@@ -237,7 +243,7 @@ app/src/main/java/com/fitcoach/app/
 
 ## Test
 
-Test unitari dei motori matematici (**161 test**, 18 classi): energia (incl. NEAT da stile
+Test unitari dei motori matematici (**185 test**, 23 classi): energia (incl. NEAT da stile
 di vita), carb cycling (incl. attivazione condizionale), generazione pasti (incl. n° pasti e
 preferenza colazione), sostituzione alimentare vincolata (pollo→tonno, rifiuto oltre il
 limite calorico, sostituzione combinata, tolleranze), lista della spesa (somma alimenti
@@ -246,7 +252,9 @@ rimanente, niente doppio conteggio, extra, isolamento giorni), split, recuperi, 
 d'intensità, fatica, progressive overload, analisi peso, motore adattivo, **anamnesi guidata**
 (parsing risposte, gate di generazione, contraddizioni), **budget mensile** (costo reale,
 quota pro capite, stima parziale), **mappatura fonti alimentari** (Open Food Facts, USDA),
-**analisi dell'andamento per esercizio** (regressione, progressione, stabilità).
+**analisi dell'andamento per esercizio** (regressione, progressione, stabilità),
+**parametri AI per provider** (max_tokens vs max_completion_tokens, mai entrambi, retry
+controllato), **layout schermata anamnesi** (nessuna sovrapposizione, pulsante unico).
 
 ```bash
 ./gradlew :app:testDebugUnitTest

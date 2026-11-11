@@ -26,8 +26,9 @@ class AiClient @Inject constructor(
     suspend fun complete(
         config: AiProviderConfig,
         messages: List<ChatMessageDto>,
-        temperature: Double = 0.4,
-        maxTokens: Int = 1200
+        temperature: Double = config.temperature,
+        maxTokens: Int = config.maxTokens,
+        responseFormat: ChatCompletionRequest.ResponseFormat? = null
     ): AiResult {
         if (config.baseUrl.isBlank()) {
             return AiResult.Failure("Base URL non configurato. Vai in Impostazioni > Provider AI.")
@@ -39,14 +40,32 @@ class AiClient @Inject constructor(
             return AiResult.Failure("API key mancante per ${config.provider.label}.")
         }
 
-        val auth = config.apiKey?.takeIf { it.isNotBlank() }?.let { "Bearer $it" }
-        val request = ChatCompletionRequest(
+        // Costruzione del payload con il parametro token corretto per provider/modello
+        // (max_tokens oppure max_completion_tokens, mai entrambi).
+        val request = ChatCompletionRequest.forProvider(
+            provider = config.provider,
             model = config.model,
             messages = messages,
             temperature = temperature,
-            maxTokens = maxTokens
+            maxTokens = maxTokens,
+            responseFormat = responseFormat
         )
 
+        val first = sendOnce(config, request)
+        if (first is AiResult.Failure && AiParameterPolicy.isUnsupportedTokenParamError(first.message)) {
+            // Il provider ha rifiutato il parametro token inviato: un solo retry
+            // controllato con l'altro parametro, senza mai inviarli entrambi.
+            val retry = sendOnce(config, ChatCompletionRequest.withAlternateTokenParam(request))
+            if (retry is AiResult.Success) return retry
+        }
+        return first
+    }
+
+    private suspend fun sendOnce(
+        config: AiProviderConfig,
+        request: ChatCompletionRequest
+    ): AiResult {
+        val auth = config.apiKey?.takeIf { it.isNotBlank() }?.let { "Bearer $it" }
         return try {
             val response = api.chatCompletions(
                 url = config.completionsUrl,
@@ -74,7 +93,10 @@ class AiClient @Inject constructor(
                 403 -> "Accesso negato dal provider."
                 404 -> "Endpoint non trovato: verifica Base URL e modello."
                 429 -> "Troppe richieste o quota superata. Riprova tra poco."
-                else -> null
+                else -> if (AiParameterPolicy.isUnsupportedTokenParamError(detail ?: "")) {
+                    "Parametro dei token non supportato dal modello. Il client ha gia provato " +
+                        "entrambi (max_tokens/max_completion_tokens): verifica il modello configurato."
+                } else null
             }
             val message = listOfNotNull(hint, detail).joinToString(" ").ifBlank {
                 "Errore HTTP ${response.code()}."
