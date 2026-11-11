@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fitcoach.app.data.repository.ExerciseRepository
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
+import com.fitcoach.app.domain.model.ExercisePerformance
 import com.fitcoach.app.domain.model.PlannedExercise
 import com.fitcoach.app.domain.model.SessionStatus
 import com.fitcoach.app.domain.model.WorkoutDay
@@ -53,7 +54,14 @@ data class WorkoutUiState(
     val resting: Boolean = false,
     // Sostituzione esercizio.
     val substituteFor: PlannedExercise? = null,
-    val substituteOptions: List<com.fitcoach.app.domain.model.Exercise> = emptyList()
+    val substituteOptions: List<com.fitcoach.app.domain.model.Exercise> = emptyList(),
+    // Promemoria della sessione precedente per esercizio (exerciseId -> performance).
+    val lastPerformances: Map<Long, ExercisePerformance> = emptyMap(),
+    // Storico sessioni.
+    val history: List<WorkoutSession> = emptyList(),
+    val showHistory: Boolean = false,
+    // Cronometro durata sessione.
+    val sessionElapsedSeconds: Int = 0
 )
 
 @HiltViewModel
@@ -68,6 +76,7 @@ class WorkoutViewModel @Inject constructor(
     val state: StateFlow<WorkoutUiState> = _state.asStateFlow()
 
     private var restJob: kotlinx.coroutines.Job? = null
+    private var stopwatchJob: kotlinx.coroutines.Job? = null
 
     init {
         load()
@@ -79,13 +88,44 @@ class WorkoutViewModel @Inject constructor(
             val todayIndex = LocalDate.now().dayOfWeek.value - 1
             val today = plan?.days?.firstOrNull { it.dayIndex == todayIndex && !it.isRestDay }
             val session = workoutRepository.getSessionForDay(LocalDate.now().toEpochDay())
+            val lastPerformances = today?.exercises
+                ?.mapNotNull { pe ->
+                    workoutRepository.getLatestPerformance(pe.exerciseId)?.let { pe.exerciseId to it }
+                }
+                ?.toMap()
+                ?: emptyMap()
+            val history = workoutRepository.getRecentSessions(30)
             _state.value = _state.value.copy(
                 loading = false,
                 plan = plan,
                 today = today,
-                session = session
+                session = session,
+                lastPerformances = lastPerformances,
+                history = history
             )
+            syncStopwatch(session)
         }
+    }
+
+    /** Avvia/ferma il cronometro della durata sessione in base allo stato. */
+    private fun syncStopwatch(session: WorkoutSession?) {
+        stopwatchJob?.cancel()
+        if (session?.status == SessionStatus.IN_PROGRESS && session.startedAt != null) {
+            val start = session.startedAt
+            stopwatchJob = viewModelScope.launch {
+                while (true) {
+                    val elapsed = ((System.currentTimeMillis() - start) / 1000).toInt()
+                    _state.value = _state.value.copy(sessionElapsedSeconds = elapsed)
+                    kotlinx.coroutines.delay(1000)
+                }
+            }
+        } else {
+            _state.value = _state.value.copy(sessionElapsedSeconds = 0)
+        }
+    }
+
+    fun showHistory(show: Boolean) {
+        _state.value = _state.value.copy(showHistory = show)
     }
 
     fun generateWorkout() {

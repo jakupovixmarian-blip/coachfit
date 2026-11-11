@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.fitcoach.app.domain.model.ExercisePerformance
 import com.fitcoach.app.domain.model.IntensityTechnique
 import com.fitcoach.app.domain.model.PlannedExercise
 import com.fitcoach.app.domain.model.WorkoutSet
@@ -54,6 +56,7 @@ import com.fitcoach.app.ui.theme.CarbsColor
 import com.fitcoach.app.ui.theme.Emerald
 import com.fitcoach.app.ui.theme.ErrorRed
 import com.fitcoach.app.ui.theme.TextSecondary
+import java.time.LocalDate
 
 private val weekdayNames = listOf("Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica")
 
@@ -112,8 +115,13 @@ fun WorkoutScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 SectionHeader("Allenamento", plan.splitType.label)
-                IconButton(onClick = { viewModel.generateWorkout() }) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Rigenera", tint = Emerald)
+                Row {
+                    IconButton(onClick = { viewModel.showHistory(true) }) {
+                        Icon(Icons.Filled.History, contentDescription = "Storico sessioni", tint = TextSecondary)
+                    }
+                    IconButton(onClick = { viewModel.generateWorkout() }) {
+                        Icon(Icons.Filled.Refresh, contentDescription = "Rigenera", tint = Emerald)
+                    }
                 }
             }
         }
@@ -153,7 +161,8 @@ fun WorkoutScreen(
                             Pill("In corso", Emerald)
                             Spacer(Modifier.width(10.dp))
                             Text(
-                                "${session.completedSets} serie registrate · volume ${session.totalVolumeKg.toInt()} kg",
+                                "⏱ ${formatRest(state.sessionElapsedSeconds)} · " +
+                                    "${session.completedSets} serie · volume ${session.totalVolumeKg.toInt()} kg",
                                 style = MaterialTheme.typography.bodySmall, color = TextSecondary
                             )
                         }
@@ -180,6 +189,7 @@ fun WorkoutScreen(
                     ExerciseCard(
                         planned = planned,
                         loggedSets = viewModel.sessionSetsFor(planned.exerciseId),
+                        lastPerformance = state.lastPerformances[planned.exerciseId],
                         sessionActive = viewModel.isSessionActive(),
                         onAddSet = { index -> viewModel.openSetForm(planned, index) },
                         onSubstitute = { viewModel.openSubstitution(planned) }
@@ -279,7 +289,52 @@ fun WorkoutScreen(
         )
     }
 
+    if (state.showHistory) {
+        SessionHistoryDialog(
+            history = state.history,
+            onDismiss = { viewModel.showHistory(false) }
+        )
+    }
+
     SnackbarHost(snackbar)
+}
+
+@Composable
+private fun SessionHistoryDialog(
+    history: List<com.fitcoach.app.domain.model.WorkoutSession>,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Storico sessioni") },
+        text = {
+            Column {
+                if (history.isEmpty()) {
+                    Text("Nessuna sessione registrata.", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                } else {
+                    history.take(12).forEach { s ->
+                        Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                            Text(
+                                "${LocalDate.ofEpochDay(s.dateEpochDay)} · ${s.dayTitle}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                buildString {
+                                    append("${s.completedSets} serie · volume ${s.totalVolumeKg.toInt()} kg")
+                                    s.durationMinutes?.let { append(" · ${it} min") }
+                                    s.perceivedEffort?.let { append(" · RPE ${"%.1f".format(it)}") }
+                                    if (s.painReported) append(" · dolore segnalato")
+                                },
+                                style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Chiudi") } }
+    )
 }
 
 @Composable
@@ -323,6 +378,7 @@ private fun formatRest(seconds: Int): String {
 private fun ExerciseCard(
     planned: PlannedExercise,
     loggedSets: List<WorkoutSet>,
+    lastPerformance: ExercisePerformance?,
     sessionActive: Boolean,
     onAddSet: (Int) -> Unit,
     onSubstitute: () -> Unit
@@ -362,6 +418,15 @@ private fun ExerciseCard(
                 Spacer(Modifier.height(4.dp))
                 Text("Recupero: ${planned.restReason}",
                     style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            }
+            lastPerformance?.let { perf ->
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "Ultima volta: ${"%.1f".format(perf.topWeightKg)} kg × ${perf.topReps} " +
+                        "(top serie, ${perf.totalSets} serie, ${perf.totalReps} rip)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Emerald
+                )
             }
             if (planned.technique.isNotBlank()) {
                 Spacer(Modifier.height(6.dp))
