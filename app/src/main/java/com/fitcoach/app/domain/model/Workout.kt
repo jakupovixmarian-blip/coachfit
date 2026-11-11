@@ -15,7 +15,10 @@ data class Exercise(
     val targetRir: Int,
     val isUnilateral: Boolean = false,
     val substituteNames: List<String> = emptyList(),
-    val bodyweightOnly: Boolean = false
+    val bodyweightOnly: Boolean = false,
+    val movementPattern: MovementPattern = MovementPattern.OTHER,
+    /** Difficolta tecnica 1 (semplice) .. 3 (avanzata). */
+    val difficulty: Int = 1
 )
 
 /** Esercizio programmato in una giornata di allenamento. */
@@ -35,7 +38,16 @@ data class PlannedExercise(
     val targetReps: Int? = null,
     val notes: String = "",
     val technique: String = "",
-    val category: ExerciseCategory = ExerciseCategory.COMPOUND
+    val category: ExerciseCategory = ExerciseCategory.COMPOUND,
+    /** Spiegazione del perche questo esercizio e stato scelto. */
+    val selectionReason: String = "",
+    /** Spiegazione del recupero assegnato. */
+    val restReason: String = "",
+    /** Tecnica d'intensita applicata (NONE se nessuna). */
+    val intensityTechnique: IntensityTechnique = IntensityTechnique.NONE,
+    /** Spiegazione della tecnica d'intensita, se applicata. */
+    val techniqueReason: String = "",
+    val movementPattern: MovementPattern = MovementPattern.OTHER
 )
 
 data class WorkoutDay(
@@ -69,6 +81,7 @@ data class WorkoutPlan(
     val splitType: SplitType,
     val createdAt: Long = System.currentTimeMillis(),
     val isActive: Boolean = true,
+    val version: Int = 1,
     val mesocycles: List<Mesocycle> = emptyList(),
     val days: List<WorkoutDay> = emptyList(),
     val weeklyVolumePerGroup: Map<MuscleGroup, Int> = emptyMap()

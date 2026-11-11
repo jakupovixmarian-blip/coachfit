@@ -5,13 +5,21 @@ import androidx.lifecycle.viewModelScope
 import com.fitcoach.app.data.repository.PreferencesRepository
 import com.fitcoach.app.data.repository.ProgressRepository
 import com.fitcoach.app.data.repository.UserRepository
+import com.fitcoach.app.domain.model.BreakfastPreference
+import com.fitcoach.app.domain.model.CookingTimeAvailable
 import com.fitcoach.app.domain.model.DietaryPreference
 import com.fitcoach.app.domain.model.Equipment
 import com.fitcoach.app.domain.model.Goal
+import com.fitcoach.app.domain.model.Level3
+import com.fitcoach.app.domain.model.MuscleGroup
 import com.fitcoach.app.domain.model.Sex
+import com.fitcoach.app.domain.model.TechnicalLevel
 import com.fitcoach.app.domain.model.TrainingExperience
+import com.fitcoach.app.domain.model.TransportMode
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WeightRecord
+import com.fitcoach.app.domain.model.WorkShift
+import com.fitcoach.app.domain.model.WorkType
 import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,7 +32,7 @@ import javax.inject.Inject
 
 data class OnboardingUiState(
     val step: Int = 0,
-    val totalSteps: Int = 5,
+    val totalSteps: Int = 8,
     val loading: Boolean = true,
     val saving: Boolean = false,
     // Anagrafica
@@ -39,11 +47,35 @@ data class OnboardingUiState(
     val goal: Goal = Goal.RECOMP,
     val trainingDays: Int = 3,
     val equipment: Set<Equipment> = setOf(Equipment.BARBELL, Equipment.DUMBBELL, Equipment.MACHINE),
+    // Stile di vita / recupero
+    val workType: WorkType = WorkType.SEDENTARY,
+    val workShift: WorkShift = WorkShift.NONE,
+    val dailySteps: String = "",
+    val transportMode: TransportMode = TransportMode.CAR,
+    val extraSport: Int = 0,
+    val sleepHours: String = "",
+    val sleepQuality: Level3 = Level3.MEDIUM,
+    val stressLevel: Level3 = Level3.MEDIUM,
+    val recoveryCapacity: Level3 = Level3.MEDIUM,
+    // Dettagli allenamento
+    val trainingYears: String = "",
+    val technicalLevel: TechnicalLevel = TechnicalLevel.NOVICE,
+    val priorityMuscles: Set<MuscleGroup> = emptySet(),
+    val preferredExercises: String = "",
+    val dislikedExercises: String = "",
+    val unknownExercises: String = "",
+    val maxSessionMinutes: String = "",
     // Nutrizione
     val preferences: Set<DietaryPreference> = setOf(DietaryPreference.NONE),
     val excludedFoods: String = "",
     val allergies: String = "",
     val mealsPerDay: Int = 5,
+    val breakfastPreference: BreakfastPreference = BreakfastPreference.SWEET,
+    val likedFoods: String = "",
+    val dislikedFoods: String = "",
+    val cookingTime: CookingTimeAvailable = CookingTimeAvailable.MEDIUM,
+    val mealPrepPossible: Boolean = false,
+    val prefersSimpleFoods: Boolean = true,
     val budgetEur: String = "",
     // Salute
     val physicalLimitations: String = "",
@@ -81,10 +113,32 @@ class OnboardingViewModel @Inject constructor(
                     goal = existing.goal,
                     trainingDays = existing.trainingDaysPerWeek,
                     equipment = existing.availableEquipment.ifEmpty { _state.value.equipment },
+                    workType = existing.workType,
+                    workShift = existing.workShift,
+                    dailySteps = existing.dailySteps?.toString().orEmpty(),
+                    transportMode = existing.transportMode,
+                    extraSport = existing.extraSportSessionsPerWeek,
+                    sleepHours = existing.sleepHours?.let { "%.1f".format(it) }.orEmpty(),
+                    sleepQuality = existing.sleepQuality,
+                    stressLevel = existing.stressLevel,
+                    recoveryCapacity = existing.recoveryCapacity,
+                    trainingYears = existing.trainingYears?.let { "%.1f".format(it) }.orEmpty(),
+                    technicalLevel = existing.technicalLevel,
+                    priorityMuscles = existing.priorityMuscles,
+                    preferredExercises = existing.preferredExercises.joinToString(", "),
+                    dislikedExercises = existing.dislikedExercises.joinToString(", "),
+                    unknownExercises = existing.unknownExercises.joinToString(", "),
+                    maxSessionMinutes = existing.maxSessionMinutes?.toString().orEmpty(),
                     preferences = existing.dietaryPreferences.ifEmpty { _state.value.preferences },
                     excludedFoods = existing.excludedFoods.joinToString(", "),
                     allergies = existing.allergies.joinToString(", "),
                     mealsPerDay = existing.mealsPerDay,
+                    breakfastPreference = existing.breakfastPreference,
+                    likedFoods = existing.likedFoods.joinToString(", "),
+                    dislikedFoods = existing.dislikedFoods.joinToString(", "),
+                    cookingTime = existing.cookingTimeAvailable,
+                    mealPrepPossible = existing.mealPrepPossible,
+                    prefersSimpleFoods = existing.prefersSimpleFoods,
                     budgetEur = existing.weeklyFoodBudgetEur?.toString().orEmpty(),
                     physicalLimitations = existing.physicalLimitations.joinToString(", "),
                     movementsToAvoid = existing.movementsToAvoid.joinToString(", ")
@@ -116,6 +170,10 @@ class OnboardingViewModel @Inject constructor(
         s.copy(preferences = base)
     }
 
+    fun togglePriorityMuscle(m: MuscleGroup) = update { s ->
+        s.copy(priorityMuscles = if (m in s.priorityMuscles) s.priorityMuscles - m else s.priorityMuscles + m)
+    }
+
     fun finish() {
         viewModelScope.launch {
             val s = _state.value
@@ -144,13 +202,35 @@ class OnboardingViewModel @Inject constructor(
                 goal = s.goal,
                 trainingDaysPerWeek = s.trainingDays,
                 availableEquipment = s.equipment,
+                workType = s.workType,
+                workShift = s.workShift,
+                dailySteps = s.dailySteps.toIntOrNull()?.takeIf { it in 0..60000 },
+                transportMode = s.transportMode,
+                extraSportSessionsPerWeek = s.extraSport.coerceIn(0, 14),
+                sleepHours = s.sleepHours.replace(',', '.').toDoubleOrNull()?.takeIf { it in 3.0..14.0 },
+                sleepQuality = s.sleepQuality,
+                stressLevel = s.stressLevel,
+                recoveryCapacity = s.recoveryCapacity,
+                trainingYears = s.trainingYears.replace(',', '.').toDoubleOrNull()?.takeIf { it in 0.0..60.0 },
+                technicalLevel = s.technicalLevel,
+                priorityMuscles = s.priorityMuscles,
+                preferredExercises = s.preferredExercises.split(",", ";").map { it.trim() }.filter { it.isNotBlank() },
+                dislikedExercises = s.dislikedExercises.split(",", ";").map { it.trim() }.filter { it.isNotBlank() },
+                unknownExercises = s.unknownExercises.split(",", ";").map { it.trim() }.filter { it.isNotBlank() },
+                maxSessionMinutes = s.maxSessionMinutes.toIntOrNull()?.takeIf { it in 20..180 },
                 dietaryPreferences = s.preferences,
                 excludedFoods = s.excludedFoods.split(",", ";").map { it.trim() }.filter { it.isNotBlank() },
                 allergies = s.allergies.split(",", ";").map { it.trim() }.filter { it.isNotBlank() },
                 physicalLimitations = s.physicalLimitations.split(",", ";").map { it.trim() }.filter { it.isNotBlank() },
                 movementsToAvoid = s.movementsToAvoid.split(",", ";").map { it.trim() }.filter { it.isNotBlank() },
                 weeklyFoodBudgetEur = s.budgetEur.replace(',', '.').toDoubleOrNull(),
-                mealsPerDay = s.mealsPerDay
+                mealsPerDay = s.mealsPerDay,
+                breakfastPreference = s.breakfastPreference,
+                likedFoods = s.likedFoods.split(",", ";").map { it.trim() }.filter { it.isNotBlank() },
+                dislikedFoods = s.dislikedFoods.split(",", ";").map { it.trim() }.filter { it.isNotBlank() },
+                cookingTimeAvailable = s.cookingTime,
+                mealPrepPossible = s.mealPrepPossible,
+                prefersSimpleFoods = s.prefersSimpleFoods
             )
 
             _state.value = s.copy(saving = true, error = null)

@@ -22,6 +22,7 @@ import com.fitcoach.app.ui.nutrition.NutritionScreen
 import com.fitcoach.app.ui.onboarding.OnboardingScreen
 import com.fitcoach.app.ui.progress.ProgressScreen
 import com.fitcoach.app.ui.settings.AiProvidersScreen
+import com.fitcoach.app.ui.settings.KnowledgeScreen
 import com.fitcoach.app.ui.settings.NotificationSettingsScreen
 import com.fitcoach.app.ui.settings.ProfileEditScreen
 import com.fitcoach.app.ui.settings.SettingsScreen
@@ -60,6 +61,7 @@ fun FitCoachNavHost(navController: NavHostController) {
             composable(Routes.AI_PROVIDERS) { AiProvidersScreen(navController) }
             composable(Routes.NOTIFICATION_SETTINGS) { NotificationSettingsScreen(navController) }
             composable(Routes.PROFILE_EDIT) { ProfileEditScreen(navController) }
+            composable(Routes.KNOWLEDGE) { KnowledgeScreen(navController) }
         }
     }
 }

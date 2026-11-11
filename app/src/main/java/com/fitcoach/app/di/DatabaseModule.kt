@@ -3,6 +3,7 @@ package com.fitcoach.app.di
 import android.content.Context
 import androidx.room.Room
 import com.fitcoach.app.data.local.FitCoachDatabase
+import com.fitcoach.app.data.local.MIGRATION_1_2
 import com.fitcoach.app.data.local.dao.AiSettingsDao
 import com.fitcoach.app.data.local.dao.CheckInDao
 import com.fitcoach.app.data.local.dao.ChatDao
@@ -15,9 +16,11 @@ import com.fitcoach.app.data.local.dao.MesocycleDao
 import com.fitcoach.app.data.local.dao.NotificationDao
 import com.fitcoach.app.data.local.dao.NutritionDayDao
 import com.fitcoach.app.data.local.dao.NutritionPlanDao
+import com.fitcoach.app.data.local.dao.PlanVersionDao
 import com.fitcoach.app.data.local.dao.PlannedExerciseDao
 import com.fitcoach.app.data.local.dao.ProgramChangeDao
 import com.fitcoach.app.data.local.dao.ProgressDao
+import com.fitcoach.app.data.local.dao.ScientificSourceDao
 import com.fitcoach.app.data.local.dao.UserPreferencesDao
 import com.fitcoach.app.data.local.dao.UserProfileDao
 import com.fitcoach.app.data.local.dao.WorkoutDayDao
@@ -39,6 +42,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): FitCoachDatabase =
         Room.databaseBuilder(context, FitCoachDatabase::class.java, FitCoachDatabase.DB_NAME)
+            .addMigrations(MIGRATION_1_2)
             .fallbackToDestructiveMigration()
             .build()
 
@@ -63,4 +67,6 @@ object DatabaseModule {
     @Provides fun chatDao(db: FitCoachDatabase): ChatDao = db.chatDao()
     @Provides fun aiSettingsDao(db: FitCoachDatabase): AiSettingsDao = db.aiSettingsDao()
     @Provides fun notificationDao(db: FitCoachDatabase): NotificationDao = db.notificationDao()
+    @Provides fun scientificSourceDao(db: FitCoachDatabase): ScientificSourceDao = db.scientificSourceDao()
+    @Provides fun planVersionDao(db: FitCoachDatabase): PlanVersionDao = db.planVersionDao()
 }

@@ -30,12 +30,6 @@ object Routes {
     const val SETTINGS = "settings"
     const val AI_PROVIDERS = "ai_providers"
     const val NOTIFICATION_SETTINGS = "notification_settings"
-    const val FOOD_SUBSTITUTION = "food_substitution"
-    const val EXERCISE_SUBSTITUTION = "exercise_substitution"
-    const val SESSION_LOG = "session_log"
-    const val CHECKIN = "checkin"
     const val PROFILE_EDIT = "profile_edit"
-    const val CHANGE_HISTORY = "change_history"
-    const val FOOD_SEARCH = "food_search"
-    const val WORKOUT_DAY_DETAIL = "workout_day_detail"
+    const val KNOWLEDGE = "knowledge"
 }

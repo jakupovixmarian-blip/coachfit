@@ -2,7 +2,9 @@ package com.fitcoach.app.domain.nutrition
 
 import com.fitcoach.app.domain.model.Sex
 import com.fitcoach.app.domain.model.TrainingExperience
+import com.fitcoach.app.domain.model.TransportMode
 import com.fitcoach.app.domain.model.UserProfile
+import com.fitcoach.app.domain.model.WorkType
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
@@ -59,5 +61,52 @@ class EnergyCalculatorTest {
         val result = EnergyCalculator.compute(maleProfile)!!
         val factor = EnergyCalculator.activityFactor(maleProfile)
         assertThat(result.tdee).isWithin(0.001).of(result.bmr * factor)
+    }
+
+    @Test
+    fun `neat adjustment reflects lifestyle work type`() {
+        val sedentary = maleProfile.copy(workType = WorkType.SEDENTARY)
+        val heavy = maleProfile.copy(workType = WorkType.HEAVY)
+        assertThat(EnergyCalculator.neatAdjustment(heavy))
+            .isGreaterThan(EnergyCalculator.neatAdjustment(sedentary))
+    }
+
+    @Test
+    fun `more daily steps increase activity factor`() {
+        val few = maleProfile.copy(dailySteps = 2000)
+        val many = maleProfile.copy(dailySteps = 15000)
+        assertThat(EnergyCalculator.activityFactor(many))
+            .isGreaterThan(EnergyCalculator.activityFactor(few))
+    }
+
+    @Test
+    fun `walking commute increases activity factor versus car`() {
+        val car = maleProfile.copy(transportMode = TransportMode.CAR)
+        val walk = maleProfile.copy(transportMode = TransportMode.WALK)
+        assertThat(EnergyCalculator.activityFactor(walk))
+            .isGreaterThan(EnergyCalculator.activityFactor(car))
+    }
+
+    @Test
+    fun `extra sport sessions increase activity factor`() {
+        val none = maleProfile.copy(extraSportSessionsPerWeek = 0)
+        val some = maleProfile.copy(extraSportSessionsPerWeek = 3)
+        assertThat(EnergyCalculator.activityFactor(some))
+            .isGreaterThan(EnergyCalculator.activityFactor(none))
+    }
+
+    @Test
+    fun `manual activity override wins over lifestyle`() {
+        val overridden = maleProfile.copy(
+            activityFactorOverride = 1.9, workType = WorkType.SEDENTARY, dailySteps = 1000
+        )
+        assertThat(EnergyCalculator.activityFactor(overridden)).isWithin(0.0001).of(1.9)
+    }
+
+    @Test
+    fun `calorie target override sets weekly calories`() {
+        val overridden = maleProfile.copy(calorieTargetOverride = 2500.0)
+        val result = EnergyCalculator.compute(overridden)!!
+        assertThat(result.weeklyCalories).isWithin(0.001).of(17500.0)
     }
 }

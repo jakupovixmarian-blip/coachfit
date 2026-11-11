@@ -43,8 +43,10 @@ class NutritionRepository @Inject constructor(
         cycling: CarbCyclingPlan,
         generatedDays: List<MealPlanGenerator.GeneratedDay>,
         dayTypes: List<com.fitcoach.app.domain.model.CarbDayType>,
-        trainingDayIndices: List<Int>
+        trainingDayIndices: List<Int>,
+        carbCyclingApplied: Boolean = true
     ): Long = db.withTransaction {
+        val previousVersion = planDao.getActive()?.version ?: 0
         planDao.deactivateAll()
         val planId = planDao.insert(
             NutritionPlanEntity(
@@ -62,7 +64,9 @@ class NutritionRepository @Inject constructor(
                 lowCarbDays = cycling.lowDays,
                 proteinGPerKg = if (profile.weightKg != null && profile.weightKg > 0) {
                     cycling.targets.values.first().protein / profile.weightKg
-                } else 0.0
+                } else 0.0,
+                carbCyclingApplied = carbCyclingApplied,
+                version = previousVersion + 1
             )
         )
 
@@ -181,6 +185,8 @@ class NutritionRepository @Inject constructor(
             mediumCarbDays = entity.mediumCarbDays,
             lowCarbDays = entity.lowCarbDays,
             proteinGPerKg = entity.proteinGPerKg,
+            carbCyclingApplied = entity.carbCyclingApplied,
+            version = entity.version,
             days = days
         )
     }

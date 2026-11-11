@@ -1,8 +1,10 @@
 package com.fitcoach.app.domain.nutrition
 
+import com.fitcoach.app.domain.model.BreakfastPreference
 import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.FoodItem
 import com.fitcoach.app.domain.model.Goal
+import com.fitcoach.app.domain.model.MealSlot
 import com.fitcoach.app.domain.model.Sex
 import com.fitcoach.app.domain.model.TrainingExperience
 import com.fitcoach.app.domain.model.UserProfile
@@ -101,5 +103,35 @@ class MealPlanGeneratorTest {
         )
         val days = MealPlanGenerator.generate(profile, cycling, custom, dayTypes)
         assertThat(days).hasSize(7)
+    }
+
+    @Test
+    fun `respects requested number of meals per day`() {
+        val four = profile.copy(mealsPerDay = 4)
+        val days = MealPlanGenerator.generate(four, cycling, FoodSeedData.foods, dayTypes)
+        days.forEach { assertThat(it.meals.size).isEqualTo(4) }
+
+        val six = profile.copy(mealsPerDay = 6)
+        val sixDays = MealPlanGenerator.generate(six, cycling, FoodSeedData.foods, dayTypes)
+        sixDays.forEach { assertThat(it.meals.size).isEqualTo(6) }
+    }
+
+    @Test
+    fun `no breakfast preference removes the breakfast meal`() {
+        val noBreakfast = profile.copy(breakfastPreference = BreakfastPreference.NONE)
+        val days = MealPlanGenerator.generate(noBreakfast, cycling, FoodSeedData.foods, dayTypes)
+        val slots = days.flatMap { it.meals }.map { it.slot }.toSet()
+        assertThat(slots).doesNotContain(MealSlot.BREAKFAST)
+    }
+
+    @Test
+    fun `plan stays coherent across meal counts`() {
+        listOf(3, 4, 5, 6).forEach { count ->
+            val p = profile.copy(mealsPerDay = count)
+            val days = MealPlanGenerator.generate(p, cycling, FoodSeedData.foods, dayTypes)
+            days.forEach {
+                assertThat(abs(it.deviations.kcal)).isAtMost(160.0)
+            }
+        }
     }
 }

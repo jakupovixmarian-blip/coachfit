@@ -80,6 +80,23 @@ object CoachPromptBuilder {
             if (p.allergies.isNotEmpty()) sb.appendLine("- Allergie/intolleranze: ${p.allergies.joinToString()}")
             if (p.movementsToAvoid.isNotEmpty()) sb.appendLine("- Movimenti da evitare: ${p.movementsToAvoid.joinToString()}")
             if (p.physicalLimitations.isNotEmpty()) sb.appendLine("- Limitazioni fisiche: ${p.physicalLimitations.joinToString()}")
+
+            // Anamnesi estesa: stile di vita, recupero, allenamento.
+            sb.appendLine("STILE DI VITA E RECUPERO")
+            sb.appendLine("- Tipo di lavoro: ${p.workType.label} (turni: ${p.workShift.label})")
+            p.dailySteps?.let { sb.appendLine("- Passi/giorno: ~$it") }
+            sb.appendLine("- Trasporto: ${p.transportMode.label}")
+            if (p.extraSportSessionsPerWeek > 0) sb.appendLine("- Sport extra/settimana: ${p.extraSportSessionsPerWeek}")
+            sb.appendLine("- Sonno: ${p.sleepHours?.let { "%.1f h".format(it) } ?: "non indicato"} (qualita ${p.sleepQuality.label})")
+            sb.appendLine("- Stress: ${p.stressLevel.label}; Energia quotidiana: ${p.dailyEnergy.label}; Recupero: ${p.recoveryCapacity.label}")
+            if (p.priorityMuscles.isNotEmpty()) sb.appendLine("- Gruppi muscolari prioritari: ${p.priorityMuscles.joinToString { it.label }}")
+            sb.appendLine("- Livello tecnico: ${p.technicalLevel.label}; Anni di allenamento: ${p.trainingYears?.let { "%.1f".format(it) } ?: "non indicati"}")
+            sb.appendLine("- Colazione preferita: ${p.breakfastPreference.label}")
+            if (p.likedFoods.isNotEmpty()) sb.appendLine("- Alimenti graditi: ${p.likedFoods.joinToString()}")
+            if (p.dislikedFoods.isNotEmpty()) sb.appendLine("- Alimenti poco graditi: ${p.dislikedFoods.joinToString()}")
+            if (p.weeklyFoodBudgetEur != null) sb.appendLine("- Budget alimentare: %.0f EUR/settimana".format(p.weeklyFoodBudgetEur))
+            if (p.dietDifficulties.isNotBlank()) sb.appendLine("- Difficolta con la dieta: ${p.dietDifficulties}")
+            if (p.secondaryGoals.isNotEmpty()) sb.appendLine("- Obiettivi secondari: ${p.secondaryGoals.joinToString { it.label }}")
         }
 
         val np = context.nutritionPlan
@@ -98,6 +115,8 @@ object CoachPromptBuilder {
                 )
             )
             sb.appendLine("- Giornate: HIGH=${np.highCarbDays}, MEDIUM=${np.mediumCarbDays}, LOW=${np.lowCarbDays}")
+            sb.appendLine("- Carb cycling applicato: ${if (np.carbCyclingApplied) "si" else "no (distribuzione uniforme)"}")
+            sb.appendLine("- Versione piano: v${np.version}")
             sb.appendLine("- Proteine: %.1f g/kg".format(np.proteinGPerKg))
             val targets = np.days.map { it.dayType }.distinct().sortedBy { it.ordinal }
             if (targets.isNotEmpty()) {
@@ -133,9 +152,10 @@ object CoachPromptBuilder {
                 if (d.isRestDay) return@forEach
                 sb.appendLine("  - Giorno ${d.dayIndex + 1} ${d.title}:")
                 d.exercises.forEach { ex ->
+                    val tech = if (ex.intensityTechnique.name != "NONE") ", tecnica ${ex.intensityTechnique.name}" else ""
                     sb.appendLine(
                         "      ${ex.exerciseName}: ${ex.sets}x${ex.minReps}-${ex.maxReps} " +
-                            "@RIR ${ex.targetRir}, rec ${ex.restSeconds}s (id ${ex.id})"
+                            "@RIR ${ex.targetRir}, rec ${ex.restSeconds}s$tech (id ${ex.id})"
                     )
                 }
             }

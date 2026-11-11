@@ -21,8 +21,10 @@ import com.fitcoach.app.data.local.entity.NotificationRecordEntity
 import com.fitcoach.app.data.local.entity.NutritionDayEntity
 import com.fitcoach.app.data.local.entity.NutritionPlanEntity
 import com.fitcoach.app.data.local.entity.PlannedExerciseEntity
+import com.fitcoach.app.data.local.entity.PlanVersionEntity
 import com.fitcoach.app.data.local.entity.ProgramChangeEntity
 import com.fitcoach.app.data.local.entity.ProgressRecordEntity
+import com.fitcoach.app.data.local.entity.ScientificSourceEntity
 import com.fitcoach.app.data.local.entity.UserPreferencesEntity
 import com.fitcoach.app.data.local.entity.UserProfileEntity
 import com.fitcoach.app.data.local.entity.WeightRecordEntity
@@ -30,6 +32,7 @@ import com.fitcoach.app.data.local.entity.WorkoutDayEntity
 import com.fitcoach.app.data.local.entity.WorkoutPlanEntity
 import com.fitcoach.app.data.local.entity.WorkoutSessionEntity
 import com.fitcoach.app.data.local.entity.WorkoutSetEntity
+import com.fitcoach.app.domain.model.ChangeDomain
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -286,6 +289,9 @@ interface PlannedExerciseDao {
     @Query("SELECT * FROM planned_exercises WHERE workoutDayId IN (:dayIds) ORDER BY workoutDayId, orderIndex")
     suspend fun getForDays(dayIds: List<Long>): List<PlannedExerciseEntity>
 
+    @Query("SELECT * FROM planned_exercises WHERE id = :id")
+    suspend fun getById(id: Long): PlannedExerciseEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(items: List<PlannedExerciseEntity>): List<Long>
 
@@ -297,6 +303,9 @@ interface PlannedExerciseDao {
 
     @Query("UPDATE planned_exercises SET sets = :sets WHERE id = :id")
     suspend fun updateSets(id: Long, sets: Int)
+
+    @Update
+    suspend fun update(item: PlannedExerciseEntity)
 
     @Delete
     suspend fun delete(item: PlannedExerciseEntity)
@@ -495,4 +504,43 @@ interface NotificationDao {
 
     @Query("UPDATE notification_records SET triggerTime = :time WHERE id = :id")
     suspend fun setTime(id: Long, time: String)
+}
+
+@Dao
+interface ScientificSourceDao {
+    @Query("SELECT * FROM scientific_sources ORDER BY kind, topic")
+    fun observeAll(): Flow<List<ScientificSourceEntity>>
+
+    @Query("SELECT * FROM scientific_sources ORDER BY kind, topic")
+    suspend fun getAll(): List<ScientificSourceEntity>
+
+    @Query("SELECT COUNT(*) FROM scientific_sources")
+    suspend fun count(): Int
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(items: List<ScientificSourceEntity>)
+}
+
+@Dao
+interface PlanVersionDao {
+    @Query("SELECT * FROM plan_versions WHERE domain = :domain ORDER BY createdAt DESC")
+    suspend fun getForDomain(domain: ChangeDomain): List<PlanVersionEntity>
+
+    @Query("SELECT * FROM plan_versions ORDER BY createdAt DESC")
+    suspend fun getAll(): List<PlanVersionEntity>
+
+    @Query("SELECT * FROM plan_versions WHERE id = :id")
+    suspend fun getById(id: Long): PlanVersionEntity?
+
+    @Query("SELECT MAX(version) FROM plan_versions WHERE domain = :domain")
+    suspend fun latestVersion(domain: ChangeDomain): Int?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entity: PlanVersionEntity): Long
+
+    @Query("UPDATE plan_versions SET isActive = 0 WHERE domain = :domain")
+    suspend fun clearActiveForDomain(domain: ChangeDomain)
+
+    @Query("UPDATE plan_versions SET isActive = 0")
+    suspend fun clearActive()
 }

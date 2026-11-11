@@ -110,6 +110,7 @@ class NotificationScheduler @Inject constructor(
         MealSlot.LUNCH -> "E' ora di pranzo secondo il tuo piano alimentare."
         MealSlot.AFTERNOON_SNACK -> "Spuntino pomeridiano previsto dal piano."
         MealSlot.DINNER -> "E' il momento della cena prevista dal tuo piano."
+        MealSlot.EVENING_SNACK -> "Spuntino serale previsto dal piano."
     }
 
     fun scheduleDaily(

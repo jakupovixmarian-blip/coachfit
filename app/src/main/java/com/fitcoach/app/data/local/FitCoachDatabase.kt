@@ -15,9 +15,11 @@ import com.fitcoach.app.data.local.dao.MesocycleDao
 import com.fitcoach.app.data.local.dao.NotificationDao
 import com.fitcoach.app.data.local.dao.NutritionDayDao
 import com.fitcoach.app.data.local.dao.NutritionPlanDao
+import com.fitcoach.app.data.local.dao.PlanVersionDao
 import com.fitcoach.app.data.local.dao.PlannedExerciseDao
 import com.fitcoach.app.data.local.dao.ProgramChangeDao
 import com.fitcoach.app.data.local.dao.ProgressDao
+import com.fitcoach.app.data.local.dao.ScientificSourceDao
 import com.fitcoach.app.data.local.dao.UserPreferencesDao
 import com.fitcoach.app.data.local.dao.UserProfileDao
 import com.fitcoach.app.data.local.dao.WorkoutDayDao
@@ -38,8 +40,10 @@ import com.fitcoach.app.data.local.entity.NotificationRecordEntity
 import com.fitcoach.app.data.local.entity.NutritionDayEntity
 import com.fitcoach.app.data.local.entity.NutritionPlanEntity
 import com.fitcoach.app.data.local.entity.PlannedExerciseEntity
+import com.fitcoach.app.data.local.entity.PlanVersionEntity
 import com.fitcoach.app.data.local.entity.ProgramChangeEntity
 import com.fitcoach.app.data.local.entity.ProgressRecordEntity
+import com.fitcoach.app.data.local.entity.ScientificSourceEntity
 import com.fitcoach.app.data.local.entity.UserPreferencesEntity
 import com.fitcoach.app.data.local.entity.UserProfileEntity
 import com.fitcoach.app.data.local.entity.WeightRecordEntity
@@ -72,9 +76,11 @@ import com.fitcoach.app.data.local.entity.WorkoutSetEntity
         ProgramChangeEntity::class,
         ChatMessageEntity::class,
         AiProviderSettingsEntity::class,
-        NotificationRecordEntity::class
+        NotificationRecordEntity::class,
+        ScientificSourceEntity::class,
+        PlanVersionEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -100,6 +106,8 @@ abstract class FitCoachDatabase : RoomDatabase() {
     abstract fun chatDao(): ChatDao
     abstract fun aiSettingsDao(): AiSettingsDao
     abstract fun notificationDao(): NotificationDao
+    abstract fun scientificSourceDao(): ScientificSourceDao
+    abstract fun planVersionDao(): PlanVersionDao
 
     companion object {
         const val DB_NAME = "fitcoach.db"

@@ -16,12 +16,14 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -40,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.fitcoach.app.domain.model.IntensityTechnique
 import com.fitcoach.app.domain.model.PlannedExercise
 import com.fitcoach.app.domain.model.WorkoutSet
 import com.fitcoach.app.ui.components.EmptyState
@@ -159,6 +162,18 @@ fun WorkoutScreen(
             }
         }
 
+        if (state.resting) {
+            item {
+                RestTimerCard(
+                    remaining = state.restRemainingSeconds,
+                    total = state.restTotalSeconds,
+                    reason = state.restReason,
+                    onSkip = { viewModel.skipRest() },
+                    onAdd = { viewModel.addRestTime(30) }
+                )
+            }
+        }
+
         if (today != null) {
             today.exercises.forEach { planned ->
                 item {
@@ -166,7 +181,8 @@ fun WorkoutScreen(
                         planned = planned,
                         loggedSets = viewModel.sessionSetsFor(planned.exerciseId),
                         sessionActive = viewModel.isSessionActive(),
-                        onAddSet = { index -> viewModel.openSetForm(planned, index) }
+                        onAddSet = { index -> viewModel.openSetForm(planned, index) },
+                        onSubstitute = { viewModel.openSubstitution(planned) }
                     )
                 }
             }
@@ -254,7 +270,53 @@ fun WorkoutScreen(
         )
     }
 
+    state.substituteFor?.let { planned ->
+        SubstitutionDialog(
+            planned = planned,
+            options = state.substituteOptions,
+            onSelect = { viewModel.applySubstitution(it) },
+            onDismiss = { viewModel.closeSubstitution() }
+        )
+    }
+
     SnackbarHost(snackbar)
+}
+
+@Composable
+private fun RestTimerCard(
+    remaining: Int,
+    total: Int,
+    reason: String,
+    onSkip: () -> Unit,
+    onAdd: () -> Unit
+) {
+    val progress = if (total > 0) (total - remaining).toFloat() / total else 0f
+    SectionCard {
+        Column {
+            SectionHeader("Recupero", formatRest(remaining))
+            Spacer(Modifier.height(8.dp))
+            LinearProgressIndicator(
+                progress = { progress.coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth(),
+                color = Emerald
+            )
+            if (reason.isNotBlank()) {
+                Spacer(Modifier.height(6.dp))
+                Text(reason, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(onClick = onAdd, modifier = Modifier.weight(1f)) { Text("+30s") }
+                Button(onClick = onSkip, modifier = Modifier.weight(1f)) { Text("Salta") }
+            }
+        }
+    }
+}
+
+private fun formatRest(seconds: Int): String {
+    val m = seconds / 60
+    val s = seconds % 60
+    return "%d:%02d".format(m, s)
 }
 
 @Composable
@@ -262,7 +324,8 @@ private fun ExerciseCard(
     planned: PlannedExercise,
     loggedSets: List<WorkoutSet>,
     sessionActive: Boolean,
-    onAddSet: (Int) -> Unit
+    onAddSet: (Int) -> Unit,
+    onSubstitute: () -> Unit
 ) {
     SectionCard {
         Column {
@@ -287,6 +350,19 @@ private fun ExerciseCard(
                 }
                 planned.targetWeightKg?.let { Pill("%.1f kg".format(it), CarbsColor) }
             }
+            if (planned.selectionReason.isNotBlank()) {
+                Spacer(Modifier.height(6.dp))
+                Text(planned.selectionReason, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            }
+            if (planned.intensityTechnique != IntensityTechnique.NONE && planned.techniqueReason.isNotBlank()) {
+                Spacer(Modifier.height(4.dp))
+                Text(planned.techniqueReason, style = MaterialTheme.typography.bodySmall, color = Emerald)
+            }
+            if (planned.restReason.isNotBlank()) {
+                Spacer(Modifier.height(4.dp))
+                Text("Recupero: ${planned.restReason}",
+                    style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            }
             if (planned.technique.isNotBlank()) {
                 Spacer(Modifier.height(6.dp))
                 Text(planned.technique, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
@@ -310,16 +386,66 @@ private fun ExerciseCard(
                 }
             }
             Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = { onAddSet(loggedSets.size) },
-                enabled = sessionActive
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = null)
-                Spacer(Modifier.width(6.dp))
-                Text(if (sessionActive) "Registra serie ${loggedSets.size + 1}" else "Avvia la sessione")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { onAddSet(loggedSets.size) },
+                    enabled = sessionActive,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text(if (sessionActive) "Registra serie ${loggedSets.size + 1}" else "Avvia la sessione")
+                }
+                OutlinedButton(onClick = onSubstitute) {
+                    Icon(Icons.Filled.SwapHoriz, contentDescription = "Sostituisci esercizio")
+                }
             }
         }
     }
+}
+
+@Composable
+private fun SubstitutionDialog(
+    planned: PlannedExercise,
+    options: List<com.fitcoach.app.domain.model.Exercise>,
+    onSelect: (com.fitcoach.app.domain.model.Exercise) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Sostituisci ${planned.exerciseName}") },
+        text = {
+            Column {
+                Text(
+                    "Le alternative mantengono lo stimolo previsto (${planned.primaryMuscle.label}).",
+                    style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                )
+                Spacer(Modifier.height(8.dp))
+                if (options.isEmpty()) {
+                    Text("Nessuna alternativa disponibile con l'attrezzatura e le limitazioni attuali.",
+                        style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                } else {
+                    options.forEach { ex ->
+                        TextButton(
+                            onClick = { onSelect(ex) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(Modifier.fillMaxWidth()) {
+                                Text(ex.name, style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface)
+                                Text(
+                                    "${ex.primaryMuscle.label} · ${ex.minReps}-${ex.maxReps} · rec ${ex.restSeconds}s",
+                                    style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } }
+    )
 }
 
 @Composable

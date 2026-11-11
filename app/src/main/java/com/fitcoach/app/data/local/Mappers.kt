@@ -13,6 +13,23 @@ object Mappers {
         physicalLimitations = physicalLimitations, movementsToAvoid = movementsToAvoid,
         weeklyFoodBudgetEur = weeklyFoodBudgetEur, activityFactorOverride = activityFactorOverride,
         calorieTargetOverride = calorieTargetOverride, mealsPerDay = mealsPerDay,
+        workType = workType, workShift = workShift, workHoursPerDay = workHoursPerDay,
+        seatedHoursPerDay = seatedHoursPerDay, dailySteps = dailySteps, transportMode = transportMode,
+        extraSportSessionsPerWeek = extraSportSessionsPerWeek, walkingMinutesPerWeek = walkingMinutesPerWeek,
+        maxSessionMinutes = maxSessionMinutes, maxMealPrepMinutes = maxMealPrepMinutes,
+        sleepHours = sleepHours, sleepQuality = sleepQuality, bedtime = bedtime, wakeTime = wakeTime,
+        stressLevel = stressLevel, dailyEnergy = dailyEnergy, recoveryCapacity = recoveryCapacity,
+        hydrationLitersPerDay = hydrationLitersPerDay, caffeineCupsPerDay = caffeineCupsPerDay,
+        alcoholUnitsPerWeek = alcoholUnitsPerWeek, breakfastPreference = breakfastPreference,
+        likedFoods = likedFoods, dislikedFoods = dislikedFoods, dietaryRestrictions = dietaryRestrictions,
+        cookingTimeAvailable = cookingTimeAvailable, mealPrepPossible = mealPrepPossible,
+        prefersSimpleFoods = prefersSimpleFoods, dietDifficulties = dietDifficulties,
+        trainingYears = trainingYears, trainingFrequencyPerWeek = trainingFrequencyPerWeek,
+        preferredExercises = preferredExercises, dislikedExercises = dislikedExercises,
+        unknownExercises = unknownExercises, technicalLevel = technicalLevel,
+        priorityMuscles = priorityMuscles, currentLoads = decodeLoads(currentLoadsJson),
+        secondaryGoals = secondaryGoals, desiredOutcome = desiredOutcome,
+        targetTimelineWeeks = targetTimelineWeeks,
         createdAt = createdAt, updatedAt = updatedAt
     )
 
@@ -24,8 +41,39 @@ object Mappers {
         physicalLimitations = physicalLimitations, movementsToAvoid = movementsToAvoid,
         weeklyFoodBudgetEur = weeklyFoodBudgetEur, activityFactorOverride = activityFactorOverride,
         calorieTargetOverride = calorieTargetOverride, mealsPerDay = mealsPerDay,
+        workType = workType, workShift = workShift, workHoursPerDay = workHoursPerDay,
+        seatedHoursPerDay = seatedHoursPerDay, dailySteps = dailySteps, transportMode = transportMode,
+        extraSportSessionsPerWeek = extraSportSessionsPerWeek, walkingMinutesPerWeek = walkingMinutesPerWeek,
+        maxSessionMinutes = maxSessionMinutes, maxMealPrepMinutes = maxMealPrepMinutes,
+        sleepHours = sleepHours, sleepQuality = sleepQuality, bedtime = bedtime, wakeTime = wakeTime,
+        stressLevel = stressLevel, dailyEnergy = dailyEnergy, recoveryCapacity = recoveryCapacity,
+        hydrationLitersPerDay = hydrationLitersPerDay, caffeineCupsPerDay = caffeineCupsPerDay,
+        alcoholUnitsPerWeek = alcoholUnitsPerWeek, breakfastPreference = breakfastPreference,
+        likedFoods = likedFoods, dislikedFoods = dislikedFoods, dietaryRestrictions = dietaryRestrictions,
+        cookingTimeAvailable = cookingTimeAvailable, mealPrepPossible = mealPrepPossible,
+        prefersSimpleFoods = prefersSimpleFoods, dietDifficulties = dietDifficulties,
+        trainingYears = trainingYears, trainingFrequencyPerWeek = trainingFrequencyPerWeek,
+        preferredExercises = preferredExercises, dislikedExercises = dislikedExercises,
+        unknownExercises = unknownExercises, technicalLevel = technicalLevel,
+        priorityMuscles = priorityMuscles, currentLoadsJson = encodeLoads(currentLoads),
+        secondaryGoals = secondaryGoals, desiredOutcome = desiredOutcome,
+        targetTimelineWeeks = targetTimelineWeeks,
         createdAt = createdAt, updatedAt = System.currentTimeMillis()
     )
+
+    /** Carichi attuali serializzati come "nomeEsercizio=kg;...". */
+    fun encodeLoads(loads: Map<String, Double>): String =
+        loads.entries.joinToString(";") { "${it.key}=${it.value}" }
+
+    fun decodeLoads(raw: String): Map<String, Double> =
+        if (raw.isBlank()) emptyMap()
+        else raw.split(";").mapNotNull { part ->
+            val idx = part.lastIndexOf('=')
+            if (idx <= 0) null
+            else part.substring(0, idx).trim().let { k ->
+                part.substring(idx + 1).trim().toDoubleOrNull()?.let { v -> k to v }
+            }
+        }.toMap()
 
     fun FoodItemEntity.toDomain() = FoodItem(
         id = id, name = name, category = category, kcalPer100g = kcalPer100g,
@@ -45,14 +93,16 @@ object Mappers {
         id = id, name = name, primaryMuscle = primaryMuscle, secondaryMuscles = secondaryMuscles,
         category = category, equipment = equipment, technique = technique, defaultSets = defaultSets,
         minReps = minReps, maxReps = maxReps, restSeconds = restSeconds, targetRir = targetRir,
-        isUnilateral = isUnilateral, substituteNames = substituteNames, bodyweightOnly = bodyweightOnly
+        isUnilateral = isUnilateral, substituteNames = substituteNames, bodyweightOnly = bodyweightOnly,
+        movementPattern = movementPattern, difficulty = difficulty
     )
 
     fun Exercise.toEntity() = ExerciseEntity(
         name = name, primaryMuscle = primaryMuscle, secondaryMuscles = secondaryMuscles,
         category = category, equipment = equipment, technique = technique, defaultSets = defaultSets,
         minReps = minReps, maxReps = maxReps, restSeconds = restSeconds, targetRir = targetRir,
-        isUnilateral = isUnilateral, substituteNames = substituteNames, bodyweightOnly = bodyweightOnly
+        isUnilateral = isUnilateral, substituteNames = substituteNames, bodyweightOnly = bodyweightOnly,
+        movementPattern = movementPattern, difficulty = difficulty
     )
 
     fun WorkoutDayEntity.toDomain(exercises: List<PlannedExercise>) = WorkoutDay(
@@ -65,7 +115,9 @@ object Mappers {
         primaryMuscle = primaryMuscle, orderIndex = orderIndex, sets = sets, minReps = minReps,
         maxReps = maxReps, restSeconds = restSeconds, targetRir = targetRir,
         targetWeightKg = targetWeightKg, targetReps = targetReps, notes = notes,
-        technique = technique, category = category
+        technique = technique, category = category, selectionReason = selectionReason,
+        restReason = restReason, intensityTechnique = intensityTechnique,
+        techniqueReason = techniqueReason, movementPattern = movementPattern
     )
 
     fun WorkoutSetEntity.toDomain() = WorkoutSet(

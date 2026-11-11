@@ -111,4 +111,45 @@ class CarbCyclingEngineTest {
         val minFat = 80.0 * CarbCyclingEngine.MIN_FAT_G_PER_KG
         plan.targets.values.forEach { assertThat(it.fat).isAtLeast(minFat - 1.0) }
     }
+
+    @Test
+    fun `carb cycling not applied for maintenance goal`() {
+        val maintenance = profile.copy(goal = Goal.MAINTENANCE)
+        assertThat(CarbCyclingEngine.shouldApplyCarbCycling(maintenance)).isFalse()
+    }
+
+    @Test
+    fun `carb cycling not applied with too few training days`() {
+        val fewDays = profile.copy(trainingDaysPerWeek = 2, goal = Goal.CUT)
+        assertThat(CarbCyclingEngine.shouldApplyCarbCycling(fewDays)).isFalse()
+    }
+
+    @Test
+    fun `carb cycling applied for recomposition with enough training`() {
+        assertThat(CarbCyclingEngine.shouldApplyCarbCycling(profile)).isTrue()
+    }
+
+    @Test
+    fun `uniform plan has a single target and no cycling`() {
+        val plan = CarbCyclingEngine.buildUniform(profile, energy)
+        assertThat(plan.targets).hasSize(1)
+        assertThat(plan.applied).isFalse()
+        assertThat(plan.highDays).isEqualTo(0)
+        assertThat(plan.lowDays).isEqualTo(0)
+        assertThat(plan.mediumDays).isEqualTo(7)
+    }
+
+    @Test
+    fun `cycling plan reports applied true`() {
+        val plan = CarbCyclingEngine.build(profile, energy)
+        assertThat(plan.applied).isTrue()
+    }
+
+    @Test
+    fun `strength goal has a valid weekly balance`() {
+        val strength = profile.copy(goal = Goal.STRENGTH)
+        val strengthEnergy = EnergyCalculator.compute(strength)!!
+        val plan = CarbCyclingEngine.build(strength, strengthEnergy)
+        assertThat(plan.isValid).isTrue()
+    }
 }

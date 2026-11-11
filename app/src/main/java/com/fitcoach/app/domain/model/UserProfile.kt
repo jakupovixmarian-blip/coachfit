@@ -25,11 +25,73 @@ data class UserProfile(
     val activityFactorOverride: Double? = null,
     val calorieTargetOverride: Double? = null,
     val mealsPerDay: Int = 5,
+
+    // ---- Stile di vita ----
+    val workType: WorkType = WorkType.SEDENTARY,
+    val workShift: WorkShift = WorkShift.NONE,
+    val workHoursPerDay: Double? = null,
+    val seatedHoursPerDay: Double? = null,
+    val dailySteps: Int? = null,
+    val transportMode: TransportMode = TransportMode.CAR,
+    val extraSportSessionsPerWeek: Int = 0,
+    val walkingMinutesPerWeek: Int = 0,
+    val maxSessionMinutes: Int? = null,
+    val maxMealPrepMinutes: Int? = null,
+
+    // ---- Recupero e abitudini ----
+    val sleepHours: Double? = null,
+    val sleepQuality: Level3 = Level3.MEDIUM,
+    val bedtime: String = "",
+    val wakeTime: String = "",
+    val stressLevel: Level3 = Level3.MEDIUM,
+    val dailyEnergy: Level3 = Level3.MEDIUM,
+    val recoveryCapacity: Level3 = Level3.MEDIUM,
+    val hydrationLitersPerDay: Double? = null,
+    val caffeineCupsPerDay: Int? = null,
+    val alcoholUnitsPerWeek: Int? = null,
+
+    // ---- Alimentazione e preferenze ----
+    val breakfastPreference: BreakfastPreference = BreakfastPreference.SWEET,
+    val likedFoods: List<String> = emptyList(),
+    val dislikedFoods: List<String> = emptyList(),
+    val dietaryRestrictions: List<String> = emptyList(),
+    val cookingTimeAvailable: CookingTimeAvailable = CookingTimeAvailable.MEDIUM,
+    val mealPrepPossible: Boolean = false,
+    val prefersSimpleFoods: Boolean = true,
+    val dietDifficulties: String = "",
+
+    // ---- Esperienza di allenamento (dettagli) ----
+    val trainingYears: Double? = null,
+    val trainingFrequencyPerWeek: Int? = null,
+    val preferredExercises: List<String> = emptyList(),
+    val dislikedExercises: List<String> = emptyList(),
+    val unknownExercises: List<String> = emptyList(),
+    val technicalLevel: TechnicalLevel = TechnicalLevel.NOVICE,
+    val priorityMuscles: Set<MuscleGroup> = emptySet(),
+    val currentLoads: Map<String, Double> = emptyMap(),
+
+    // ---- Obiettivi estesi ----
+    val secondaryGoals: Set<Goal> = emptySet(),
+    val desiredOutcome: String = "",
+    val targetTimelineWeeks: Int? = null,
+
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 ) {
     val isComplete: Boolean
         get() = ageYears != null && heightCm != null && weightKg != null
+
+    /**
+     * Dati indispensabili per generare programmi personalizzati. Se mancano,
+     * non viene generato un piano definitivo (evita piani su dati incompleti).
+     */
+    val missingEssentialData: List<String>
+        get() = buildList {
+            if (ageYears == null) add("età")
+            if (heightCm == null) add("altezza")
+            if (weightKg == null) add("peso")
+            if (trainingDaysPerWeek <= 0) add("giorni di allenamento")
+        }
 
     val bmi: Double?
         get() {

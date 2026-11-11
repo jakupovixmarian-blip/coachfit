@@ -1,5 +1,6 @@
 package com.fitcoach.app.domain.nutrition
 
+import com.fitcoach.app.domain.model.BreakfastPreference
 import com.fitcoach.app.domain.model.CarbCyclingPlan
 import com.fitcoach.app.domain.model.CarbDayTarget
 import com.fitcoach.app.domain.model.CarbDayType
@@ -25,10 +26,10 @@ import kotlin.math.roundToInt
  */
 object MealPlanGenerator {
 
-    /** Ripartizione dei macro sui 5 pasti (frazione di P, C, F). */
-    private data class SlotShare(val slot: MealSlot, val p: Double, val c: Double, val f: Double)
+    /** Ripartizione dei macro sui pasti (frazione di P, C, F). */
+    data class SlotShare(val slot: MealSlot, val p: Double, val c: Double, val f: Double)
 
-    private val defaultShares = listOf(
+    private val fiveMealShares = listOf(
         SlotShare(MealSlot.BREAKFAST, 0.20, 0.25, 0.30),
         SlotShare(MealSlot.MORNING_SNACK, 0.15, 0.10, 0.10),
         SlotShare(MealSlot.LUNCH, 0.30, 0.30, 0.25),
@@ -36,12 +37,56 @@ object MealPlanGenerator {
         SlotShare(MealSlot.DINNER, 0.20, 0.25, 0.25)
     )
 
-    /** Ripartizione per 3 pasti (colazione, pranzo, cena). */
+    private val sixMealShares = listOf(
+        SlotShare(MealSlot.BREAKFAST, 0.18, 0.22, 0.26),
+        SlotShare(MealSlot.MORNING_SNACK, 0.13, 0.10, 0.10),
+        SlotShare(MealSlot.LUNCH, 0.27, 0.28, 0.24),
+        SlotShare(MealSlot.AFTERNOON_SNACK, 0.14, 0.12, 0.10),
+        SlotShare(MealSlot.DINNER, 0.18, 0.20, 0.22),
+        SlotShare(MealSlot.EVENING_SNACK, 0.10, 0.08, 0.08)
+    )
+
+    private val fourMealShares = listOf(
+        SlotShare(MealSlot.BREAKFAST, 0.25, 0.28, 0.30),
+        SlotShare(MealSlot.LUNCH, 0.35, 0.34, 0.30),
+        SlotShare(MealSlot.AFTERNOON_SNACK, 0.12, 0.10, 0.10),
+        SlotShare(MealSlot.DINNER, 0.28, 0.28, 0.30)
+    )
+
     private val threeMealShares = listOf(
         SlotShare(MealSlot.BREAKFAST, 0.30, 0.30, 0.30),
         SlotShare(MealSlot.LUNCH, 0.40, 0.40, 0.35),
         SlotShare(MealSlot.DINNER, 0.30, 0.30, 0.35)
     )
+
+    fun sharesFor(mealsPerDay: Int): List<SlotShare> = when (mealsPerDay.coerceIn(3, 6)) {
+        3 -> threeMealShares
+        4 -> fourMealShares
+        6 -> sixMealShares
+        else -> fiveMealShares
+    }
+
+    /**
+     * Risolve i pasti effettivi. Se l'utente non fa colazione, il pasto viene
+     * rimosso e le sue quote macro sono ridistribuite proporzionalmente sugli
+     * altri pasti (il piano resta completo e coerente).
+     */
+    private fun resolveShares(profile: UserProfile): List<SlotShare> {
+        val base = sharesFor(profile.mealsPerDay)
+        if (profile.breakfastPreference != BreakfastPreference.NONE) return base
+        val withoutBreakfast = base.filter { it.slot != MealSlot.BREAKFAST }
+        if (withoutBreakfast.isEmpty()) return base
+        val bf = base.firstOrNull { it.slot == MealSlot.BREAKFAST } ?: return base
+        val total = withoutBreakfast.sumOf { it.p } + withoutBreakfast.sumOf { it.c } + withoutBreakfast.sumOf { it.f }
+        if (total <= 0.0) return withoutBreakfast
+        return withoutBreakfast.map { s ->
+            s.copy(
+                p = s.p + s.p / total * bf.p,
+                c = s.c + s.c / total * bf.c,
+                f = s.f + s.f / total * bf.f
+            )
+        }
+    }
 
     data class GeneratedMeal(
         val slot: MealSlot,
@@ -71,7 +116,37 @@ object MealPlanGenerator {
         val fats: List<FoodItem>,
         val veggies: List<FoodItem>,
         val fruits: List<FoodItem>,
-        val dairy: List<FoodItem>
+        val dairy: List<FoodItem>,
+        /** Fonti proteiche adatte a una colazione dolce (latticini proteici, whey). */
+        val sweetBreakfastProteins: List<FoodItem>,
+        /** Fonti proteiche adatte a una colazione salata (uova, salumi magri). */
+        val savoryBreakfastProteins: List<FoodItem>,
+        /** Carboidrati da colazione (cereali da colazione, pane, frutta). */
+        val breakfastCarbs: List<FoodItem>
+    )
+
+    /** Alimenti proteici economici (budget contenuto). */
+    private val economyProteins = setOf(
+        "Uovo intero di gallina", "Albume d'uovo", "Petto di pollo", "Fesa di tacchino",
+        "Merluzzo", "Nasello", "Tonno in scatola al naturale", "Yogurt bianco magro",
+        "Fiocchi di latte (cottage)", "Lenticchie secche (crude)", "Ceci secchi (crudi)",
+        "Fagioli secchi (crudi)", "Fagioli cannellini cotti", "Ceci cotti", "Tofu"
+    )
+
+    /** Alimenti proteici costosi, da evitare con budget contenuto. */
+    private val premiumProteins = setOf(
+        "Salmone", "Orata", "Branzino", "Gamberi", "Bresaola", "Prosciutto crudo sgrassato"
+    )
+
+    /** Carboidrati "semplici" per chi preferisce alimenti facili da preparare. */
+    private val simpleCarbs = setOf(
+        "Riso bianco (crudo)", "Riso basmati (crudo)", "Pasta di semola (cruda)",
+        "Pane bianco", "Pane integrale", "Patate", "Patate dolci", "Fiocchi d'avena"
+    )
+
+    /** Cereali da colazione (piu adatti a una colazione dolce). */
+    private val breakfastCereals = setOf(
+        "Fiocchi d'avena", "Fette biscottate", "Pane bianco", "Pane integrale"
     )
 
     /** Densita minima di carboidrati (g/100g) per la fonte glucidica. */
@@ -122,14 +197,31 @@ object MealPlanGenerator {
         // I legumi non compaiono come fonte glucidica principale se esistono cereali/tuberi,
         // perche apportano anche proteine che sbilanciano il pasto.
         val carbsPool = denseCarbs.filter { it.category != "Legumi" }
+        val allCarbsFallback = carbsPool.ifEmpty { denseCarbs }.ifEmpty { allCarbs }
+
+        // Pool specifici per la colazione. Le fonti proteiche devono essere
+        // MAGRE: includere frutta secca (55 g grassi/100 g) sbilancerebbe grassi
+        // e calorie del pasto quando si calcolano i grammi per il target proteico.
+        val dairyProtein = byCat("Latticini").filter { it.proteinPer100g >= 5 && it.fatPer100g <= LEAN_PROTEIN_MAX_FAT }
+        val whey = byCat("Integratori")
+        val sweetProteins = (dairyProtein + whey)
+            .sortedByDescending { it.proteinPer100g }
+        val savoryProteins = (byCat("Uova") + byCat("Salumi") +
+            byCat("Carne").filter { it.fatPer100g <= 10 } + byCat("Pesce").filter { it.fatPer100g <= 8 })
+            .sortedByDescending { it.proteinPer100g }
+        val bCarbs = allowed.filter { it.name in breakfastCereals && it.carbsPer100g >= MIN_CARB_DENSITY }
+            .ifEmpty { allCarbsFallback }
 
         return FoodBank(
             proteins = primaryProteins,
-            carbs = carbsPool.ifEmpty { denseCarbs }.ifEmpty { allCarbs },
+            carbs = allCarbsFallback,
             fats = denseFats.ifEmpty { allFats },
             veggies = byCat("Verdura"),
             fruits = byCat("Frutta"),
-            dairy = byCat("Latticini")
+            dairy = byCat("Latticini"),
+            sweetBreakfastProteins = sweetProteins.ifEmpty { primaryProteins },
+            savoryBreakfastProteins = savoryProteins.ifEmpty { primaryProteins },
+            breakfastCarbs = bCarbs
         )
     }
 
@@ -141,14 +233,14 @@ object MealPlanGenerator {
         startDayIndex: Int = 0
     ): List<GeneratedDay> {
         val allowed = FoodFilter.allowedFoods(foodDatabase, profile)
-        val bank = buildBank(allowed)
-        val shares = if (profile.mealsPerDay <= 3) threeMealShares else defaultShares
+        val bank = applyPreferences(buildBank(allowed), profile)
+        val shares = resolveShares(profile)
 
         return (0 until 7).map { d ->
             val type = dayTypes.getOrElse(d) { CarbDayType.MEDIUM }
             val target = cycling.targets[type] ?: cycling.targets[CarbDayType.MEDIUM]!!
             val meals = shares.mapIndexed { i, share ->
-                buildMeal(share, target, bank, i, d)
+                buildMeal(share, target, bank, i, d, profile)
             }
             val actual = MacroTotals(
                 kcal = meals.sumOf { it.kcal },
@@ -177,27 +269,82 @@ object MealPlanGenerator {
         }
     }
 
+    /**
+     * Applica le preferenze alimentari (budget, gradimento, semplicita) ai pool
+     * di alimenti. Non rimuove mai l'intera categoria: se un filtro svuota un pool,
+     * il pool originale viene mantenuto per garantire un piano completo.
+     */
+    private fun applyPreferences(bank: FoodBank, profile: UserProfile): FoodBank {
+        fun filter(pool: List<FoodItem>, pred: (FoodItem) -> Boolean): List<FoodItem> =
+            pool.filter(pred).ifEmpty { pool }
+
+        val disliked = profile.dislikedFoods.map { it.lowercase() }
+        val liked = profile.likedFoods.map { it.lowercase() }
+        val lowBudget = profile.weeklyFoodBudgetEur?.let { it < 70.0 } ?: false
+
+        fun score(f: FoodItem): Int {
+            var s = 0
+            if (liked.any { f.name.lowercase().contains(it) }) s -= 10
+            if (disliked.any { f.name.lowercase().contains(it) }) s += 100
+            if (lowBudget && f.name in premiumProteins) s += 50
+            if (lowBudget && f.name in economyProteins) s -= 5
+            if (profile.prefersSimpleFoods && f.name in simpleCarbs) s -= 3
+            return s
+        }
+
+        fun order(pool: List<FoodItem>): List<FoodItem> = pool.sortedBy { score(it) }
+
+        return bank.copy(
+            proteins = order(filter(bank.proteins) { f -> disliked.none { f.name.lowercase().contains(it) } }),
+            carbs = order(filter(bank.carbs) { f -> disliked.none { f.name.lowercase().contains(it) } }),
+            fats = order(bank.fats),
+            veggies = order(bank.veggies),
+            fruits = order(bank.fruits),
+            sweetBreakfastProteins = order(bank.sweetBreakfastProteins),
+            savoryBreakfastProteins = order(bank.savoryBreakfastProteins),
+            breakfastCarbs = order(bank.breakfastCarbs)
+        )
+    }
+
     private fun buildMeal(
         share: SlotShare,
         target: CarbDayTarget,
         bank: FoodBank,
         mealIndex: Int,
-        dayIndex: Int
+        dayIndex: Int,
+        profile: UserProfile
     ): GeneratedMeal {
         val pTarget = target.protein * share.p
         val cTarget = target.carbs * share.c
         val fTarget = target.fat * share.f
         val entries = mutableListOf<MealEntry>()
 
+        val isBreakfast = share.slot == MealSlot.BREAKFAST
+        // La preferenza dolce/salata decide il tipo di colazione; BOTH alterna sui giorni.
+        val sweetBreakfast = when (profile.breakfastPreference) {
+            BreakfastPreference.SWEET -> true
+            BreakfastPreference.SAVORY -> false
+            BreakfastPreference.BOTH -> dayIndex % 2 == 0
+            BreakfastPreference.NONE -> true // colazione disattivata a monte
+        }
+
         // 0) Verdura o frutta: quantita fissa ragionevole, contata nei macro del pasto.
-        if (mealIndex % 2 == 0) {
+        if (isBreakfast) {
+            // Colazione dolce -> frutta; colazione salata -> verdura.
+            if (sweetBreakfast) {
+                pick(bank.fruits, dayIndex + mealIndex)?.let { entries += entry(it, 100.0) }
+            } else {
+                pick(bank.veggies, dayIndex + mealIndex)?.let { entries += entry(it, 100.0) }
+            }
+        } else if (mealIndex % 2 == 0) {
             pick(bank.veggies, dayIndex + mealIndex)?.let { entries += entry(it, 150.0) }
         } else {
             pick(bank.fruits, dayIndex + mealIndex)?.let { entries += entry(it, 120.0) }
         }
 
-        // 1) Fonte di carboidrati: grammi per il target glucidico residuo.
-        val carbItem = pick(bank.carbs, dayIndex * 3 + mealIndex)
+        // 1) Fonte di carboidrati.
+        val carbPool = if (isBreakfast) bank.breakfastCarbs else bank.carbs
+        val carbItem = pick(carbPool, dayIndex * 3 + mealIndex)
         val carbsAlready = entries.sumOf { it.carbs }
         val remainingCarbs = (cTarget - carbsAlready).coerceAtLeast(0.0)
         if (carbItem != null && remainingCarbs >= 5.0) {
@@ -205,9 +352,11 @@ object MealPlanGenerator {
             entries += entry(carbItem, grams)
         }
 
-        // 2) Proteina principale: grammi per il target proteico residuo,
-        //    tenendo conto delle proteine gia apportate da verdura/frutta e carboidrati.
-        val protein = pick(bank.proteins, dayIndex * 5 + mealIndex)
+        // 2) Proteina principale (pool coerente con la preferenza colazione).
+        val proteinPool = if (isBreakfast) {
+            if (sweetBreakfast) bank.sweetBreakfastProteins else bank.savoryBreakfastProteins
+        } else bank.proteins
+        val protein = pick(proteinPool, dayIndex * 5 + mealIndex)
         val proteinAlready = entries.sumOf { it.protein }
         val remainingProtein = (pTarget - proteinAlready).coerceAtLeast(0.0)
         if (protein != null && remainingProtein > 1.0) {

@@ -360,6 +360,44 @@ object ExerciseSeedData {
         targetRir = rir,
         isUnilateral = unilateral,
         substituteNames = subs,
-        bodyweightOnly = bodyweight
+        bodyweightOnly = bodyweight,
+        movementPattern = inferPattern(name, primary),
+        difficulty = inferDifficulty(name, category)
     )
+
+    /**
+     * Inferisce il pattern di movimento dal nome dell'esercizio. Il pattern e
+     * usato dal motore per bilanciare i movimenti nella sessione (evitare
+     * sovrapposizioni) e per la spiegazione della scelta.
+     */
+    fun inferPattern(name: String, primary: MuscleGroup): com.fitcoach.app.domain.model.MovementPattern {
+        val n = name.lowercase()
+        return when {
+            n.contains("panca") || n.contains("chest press") || n.contains("croci") || n.contains("pectoral") -> com.fitcoach.app.domain.model.MovementPattern.HORIZONTAL_PUSH
+            n.contains("lento") || n.contains("military") || n.contains("arnold") || n.contains("alzate") || n.contains("tirate al mento") -> com.fitcoach.app.domain.model.MovementPattern.VERTICAL_PUSH
+            n.contains("trazioni") || n.contains("lat machine") || n.contains("pull-down") || n.contains("pulldown") -> com.fitcoach.app.domain.model.MovementPattern.VERTICAL_PULL
+            n.contains("rematore") || n.contains("pulley") || n.contains("row") -> com.fitcoach.app.domain.model.MovementPattern.HORIZONTAL_PULL
+            n.contains("squat") || n.contains("leg press") || n.contains("affondi") -> if (n.contains("affondi")) com.fitcoach.app.domain.model.MovementPattern.LUNGE else com.fitcoach.app.domain.model.MovementPattern.SQUAT
+            n.contains("stacco") || n.contains("good morning") || n.contains("hip thrust") || n.contains("ponte") -> if (n.contains("hip thrust") || n.contains("ponte")) com.fitcoach.app.domain.model.MovementPattern.HIP_EXTENSION else com.fitcoach.app.domain.model.MovementPattern.HINGE
+            n.contains("leg curl") || n.contains("femorali") -> com.fitcoach.app.domain.model.MovementPattern.KNEE_FLEXION
+            n.contains("leg extension") -> com.fitcoach.app.domain.model.MovementPattern.KNEE_FLEXION
+            n.contains("calf") || n.contains("polpacc") -> com.fitcoach.app.domain.model.MovementPattern.CALF_RAISE
+            n.contains("curl") && primary == MuscleGroup.BICEPS -> com.fitcoach.app.domain.model.MovementPattern.ELBOW_FLEXION
+            (n.contains("french") || n.contains("push-down") || n.contains("pushdown") || n.contains("estensioni") || n.contains("dip")) && primary == MuscleGroup.TRICEPS -> com.fitcoach.app.domain.model.MovementPattern.ELBOW_EXTENSION
+            n.contains("alzate laterali") || n.contains("alzate posteriori") || n.contains("reverse fly") -> com.fitcoach.app.domain.model.MovementPattern.SHOULDER_ABDUCTION
+            n.contains("crunch") || n.contains("plank") || n.contains("ab") -> com.fitcoach.app.domain.model.MovementPattern.CORE_FLEXION
+            else -> com.fitcoach.app.domain.model.MovementPattern.OTHER
+        }
+    }
+
+    /** Difficolta tecnica 1..3: i multiarticolari con bilanciere sono i piu esigenti. */
+    private fun inferDifficulty(name: String, category: ExerciseCategory): Int {
+        val n = name.lowercase()
+        return when {
+            n.contains("stacco") || n.contains("squat") || n.contains("good morning") ||
+                n.contains("trazioni") || n.contains("dip") -> 3
+            category == ExerciseCategory.COMPOUND -> 2
+            else -> 1
+        }
+    }
 }

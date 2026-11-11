@@ -79,6 +79,8 @@ data class NutritionPlan(
     val mediumCarbDays: Int,
     val lowCarbDays: Int,
     val proteinGPerKg: Double,
+    val carbCyclingApplied: Boolean = true,
+    val version: Int = 1,
     val days: List<NutritionDay> = emptyList()
 )
 
@@ -113,7 +115,9 @@ data class CarbCyclingPlan(
     val weeklyCarbs: Double,
     val weeklyFat: Double,
     val warnings: List<String> = emptyList(),
-    val isValid: Boolean = true
+    val isValid: Boolean = true,
+    /** True se il carb cycling e stato applicato, false se si usa distribuzione uniforme. */
+    val applied: Boolean = true
 )
 
 data class MacroTotals(

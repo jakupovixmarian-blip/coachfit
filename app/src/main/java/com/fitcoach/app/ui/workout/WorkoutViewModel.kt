@@ -45,7 +45,15 @@ data class WorkoutUiState(
     val finishDialog: Boolean = false,
     val sleepQuality: Int = 3,
     val perceivedEffort: String = "7",
-    val painNotes: String = ""
+    val painNotes: String = "",
+    // Cronometro di recupero.
+    val restRemainingSeconds: Int = 0,
+    val restTotalSeconds: Int = 0,
+    val restReason: String = "",
+    val resting: Boolean = false,
+    // Sostituzione esercizio.
+    val substituteFor: PlannedExercise? = null,
+    val substituteOptions: List<com.fitcoach.app.domain.model.Exercise> = emptyList()
 )
 
 @HiltViewModel
@@ -58,6 +66,8 @@ class WorkoutViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(WorkoutUiState())
     val state: StateFlow<WorkoutUiState> = _state.asStateFlow()
+
+    private var restJob: kotlinx.coroutines.Job? = null
 
     init {
         load()
@@ -212,7 +222,54 @@ class WorkoutViewModel @Inject constructor(
                 _state.value = _state.value.copy(message = "Serie registrata.")
             }
             _state.value = _state.value.copy(form = null)
+            // Avvia il cronometro di recupero consigliato per l'esercizio.
+            startRest(form.planned.restSeconds, form.planned.restReason)
             load()
+        }
+    }
+
+    /** Avvia il cronometro di recupero con la durata consigliata dal motore. */
+    fun startRest(seconds: Int, reason: String) {
+        if (seconds <= 0) return
+        restJob?.cancel()
+        _state.value = _state.value.copy(
+            restRemainingSeconds = seconds,
+            restTotalSeconds = seconds,
+            restReason = reason,
+            resting = true
+        )
+        restJob = viewModelScope.launch {
+            var remaining = seconds
+            while (remaining > 0) {
+                kotlinx.coroutines.delay(1000)
+                remaining -= 1
+                _state.value = _state.value.copy(restRemainingSeconds = remaining)
+            }
+            _state.value = _state.value.copy(resting = false, restRemainingSeconds = 0)
+        }
+    }
+
+    fun skipRest() {
+        restJob?.cancel()
+        _state.value = _state.value.copy(resting = false, restRemainingSeconds = 0)
+    }
+
+    fun addRestTime(seconds: Int) {
+        if (!_state.value.resting) return
+        val newRemaining = _state.value.restRemainingSeconds + seconds
+        restJob?.cancel()
+        _state.value = _state.value.copy(
+            restRemainingSeconds = newRemaining,
+            restTotalSeconds = maxOf(_state.value.restTotalSeconds, newRemaining)
+        )
+        restJob = viewModelScope.launch {
+            var remaining = newRemaining
+            while (remaining > 0) {
+                kotlinx.coroutines.delay(1000)
+                remaining -= 1
+                _state.value = _state.value.copy(restRemainingSeconds = remaining)
+            }
+            _state.value = _state.value.copy(resting = false, restRemainingSeconds = 0)
         }
     }
 
@@ -255,6 +312,39 @@ class WorkoutViewModel @Inject constructor(
 
     fun consumeMessage() {
         _state.value = _state.value.copy(message = null)
+    }
+
+    /** Apre la scelta di un esercizio sostitutivo, calcolando le alternative. */
+    fun openSubstitution(planned: PlannedExercise) {
+        viewModelScope.launch {
+            val all = exerciseRepository.getAll()
+            val current = all.firstOrNull { it.id == planned.exerciseId }
+            val profile = userRepository.get()
+            val options = if (current != null && profile != null) {
+                WorkoutPlanBuilder.findSubstitutes(current, all, profile)
+            } else {
+                emptyList()
+            }
+            _state.value = _state.value.copy(substituteFor = planned, substituteOptions = options)
+        }
+    }
+
+    fun closeSubstitution() {
+        _state.value = _state.value.copy(substituteFor = null, substituteOptions = emptyList())
+    }
+
+    /** Applica la sostituzione mantenendo lo stimolo previsto dall'esercizio originale. */
+    fun applySubstitution(replacement: com.fitcoach.app.domain.model.Exercise) {
+        viewModelScope.launch {
+            val planned = _state.value.substituteFor ?: return@launch
+            workoutRepository.substituteExercisePreservingStimulus(planned.id, replacement)
+            _state.value = _state.value.copy(
+                substituteFor = null,
+                substituteOptions = emptyList(),
+                message = "${planned.exerciseName} sostituito con ${replacement.name}."
+            )
+            load()
+        }
     }
 
     fun sessionSetsFor(exerciseId: Long): List<WorkoutSet> =

@@ -11,6 +11,7 @@ import com.fitcoach.app.data.local.entity.WorkoutDayEntity
 import com.fitcoach.app.data.local.entity.WorkoutPlanEntity
 import com.fitcoach.app.data.local.entity.WorkoutSessionEntity
 import com.fitcoach.app.data.local.entity.WorkoutSetEntity
+import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.ExercisePerformance
 import com.fitcoach.app.domain.model.Mesocycle
 import com.fitcoach.app.domain.model.MuscleGroup
@@ -56,13 +57,15 @@ class WorkoutRepository @Inject constructor(
         built: WorkoutPlanBuilder.BuiltPlan,
         mesocycleWeeks: Int = 6
     ): Long = db.withTransaction {
+        val previousVersion = planDao.getActive()?.version ?: 0
         planDao.deactivateAll()
         val planId = planDao.insert(
             WorkoutPlanEntity(
                 profileId = profile.id,
                 name = "Scheda ${built.splitType.label}",
                 splitType = built.splitType,
-                isActive = true
+                isActive = true,
+                version = previousVersion + 1
             )
         )
         val meso = PeriodizationEngine.defaultMesocycle(planId, profile, mesocycleWeeks)
@@ -105,7 +108,12 @@ class WorkoutRepository @Inject constructor(
                             restSeconds = pe.restSeconds,
                             targetRir = pe.targetRir,
                             technique = pe.technique,
-                            category = pe.category
+                            category = pe.category,
+                            selectionReason = pe.selectionReason,
+                            restReason = pe.restReason,
+                            intensityTechnique = pe.intensityTechnique,
+                            techniqueReason = pe.techniqueReason,
+                            movementPattern = pe.movementPattern
                         )
                     }
                 )
@@ -133,6 +141,27 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun substituteExercise(plannedId: Long, exerciseId: Long, name: String, technique: String) =
         plannedDao.substituteExercise(plannedId, exerciseId, name, technique)
+
+    /**
+     * Sostituisce un esercizio mantenendo, quando possibile, lo stimolo previsto
+     * (serie, range ripetizioni, recupero, RIR, categoria, tecnica d'intensita).
+     */
+    suspend fun substituteExercisePreservingStimulus(plannedId: Long, replacement: Exercise) {
+        val current = plannedDao.getById(plannedId) ?: return
+        plannedDao.update(
+            current.copy(
+                exerciseId = replacement.id,
+                exerciseName = replacement.name,
+                primaryMuscle = replacement.primaryMuscle,
+                technique = replacement.technique,
+                category = replacement.category,
+                movementPattern = replacement.movementPattern,
+                minReps = replacement.minReps,
+                maxReps = replacement.maxReps,
+                targetRir = replacement.targetRir
+            )
+        )
+    }
 
     suspend fun updateTarget(plannedId: Long, weight: Double?, reps: Int?) =
         plannedDao.updateTarget(plannedId, weight, reps)
@@ -268,6 +297,7 @@ class WorkoutRepository @Inject constructor(
             splitType = entity.splitType,
             createdAt = entity.createdAt,
             isActive = entity.isActive,
+            version = entity.version,
             mesocycles = mesos.map {
                 Mesocycle(
                     id = it.id, planId = it.planId, name = it.name, focus = it.focus,

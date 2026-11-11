@@ -1,6 +1,7 @@
 package com.fitcoach.app.domain.workout
 
 import com.fitcoach.app.domain.model.Exercise
+import com.fitcoach.app.domain.model.ExerciseCategory
 import com.fitcoach.app.domain.model.MuscleGroup
 import com.fitcoach.app.domain.model.SplitType
 import com.fitcoach.app.domain.model.TrainingExperience
@@ -111,60 +112,130 @@ object SplitGenerator {
     }
 
     /**
-     * Numero di esercizi per sessione in base a esperienza e durata disponibile.
+     * Numero di esercizi per sessione in base a esperienza, durata disponibile e
+     * numero di gruppi muscolari della giornata.
+     *
+     * Se l'utente indica una durata massima, il numero di esercizi viene limitato
+     * in modo che la sessione (serie x (esecuzione + recupero)) resti entro il tempo.
      */
-    fun exercisesPerSession(experience: TrainingExperience, groupsInDay: Int): Int {
+    fun exercisesPerSession(
+        experience: TrainingExperience,
+        groupsInDay: Int,
+        maxSessionMinutes: Int? = null
+    ): Int {
         val base = when (experience) {
             TrainingExperience.BEGINNER -> 5
             TrainingExperience.INTERMEDIATE -> 6
             TrainingExperience.ADVANCED -> 7
         }
-        return base.coerceAtMost(4 + groupsInDay).coerceAtLeast(4)
+        val byGroups = base.coerceAtMost(4 + groupsInDay).coerceAtLeast(4)
+        if (maxSessionMinutes == null) return byGroups
+        // Stima prudente: ~5 min per esercizio (serie + recuperi + setup).
+        val byTime = (maxSessionMinutes / 5).coerceIn(3, 9)
+        return minOf(byGroups, byTime).coerceAtLeast(3)
     }
 
     /**
-     * Seleziona gli esercizi per una giornata, privilegiando i multiarticolari
-     * per primi, filtrando per attrezzatura e limitazioni dell'utente.
+     * Seleziona gli esercizi per una giornata con logica biomeccanica:
+     *  - rispetta attrezzatura, limitazioni, esercizi non conosciuti/non graditi;
+     *  - privilegia gli esercizi preferiti e i gruppi muscolari prioritari;
+     *  - bilancia i pattern di movimento (evita 3 spinte orizzontali identiche);
+     *  - adatta la difficolta al livello tecnico;
+     *  - assegna piu esercizi ai gruppi prioritari.
+     *
+     * Ritorna anche la motivazione della scelta per ogni esercizio.
+     */
+    fun selectExercisesDetailed(
+        groups: Set<MuscleGroup>,
+        all: List<Exercise>,
+        profile: UserProfile,
+        count: Int
+    ): List<SelectedExercise> {
+        val equipment = profile.availableEquipment.ifEmpty { null }
+        val excluded = profile.movementsToAvoid.map { it.lowercase() }
+        val disliked = profile.dislikedExercises.map { it.lowercase() }
+        val unknown = profile.unknownExercises.map { it.lowercase() }
+        val preferred = profile.preferredExercises.map { it.lowercase() }
+        val maxDifficulty = when (profile.technicalLevel) {
+            com.fitcoach.app.domain.model.TechnicalLevel.NOVICE -> 2
+            com.fitcoach.app.domain.model.TechnicalLevel.COMPETENT -> 3
+            com.fitcoach.app.domain.model.TechnicalLevel.PROFICIENT -> 3
+        }
+
+        val usable = all.filter { ex ->
+            (ex.primaryMuscle in groups || ex.secondaryMuscles.any { it in groups }) &&
+                (equipment == null || ex.bodyweightOnly || ex.equipment.isEmpty() ||
+                    ex.equipment.any { it in equipment }) &&
+                excluded.none { ex.name.lowercase().contains(it) || ex.primaryMuscle.label.lowercase().contains(it) } &&
+                disliked.none { ex.name.lowercase().contains(it) } &&
+                unknown.none { ex.name.lowercase().contains(it) } &&
+                ex.difficulty <= maxDifficulty
+        }
+
+        val priorities = profile.priorityMuscles
+        val scored = usable.sortedWith(
+            compareByDescending<Exercise> { preferred.any { p -> it.name.lowercase().contains(p) } }
+                .thenByDescending { it.primaryMuscle in priorities }
+                .thenByDescending { it.category == ExerciseCategory.COMPOUND }
+                .thenByDescending { it.primaryMuscle in groups }
+                .thenBy { it.difficulty }
+        )
+
+        val selected = mutableListOf<SelectedExercise>()
+        val perGroup = mutableMapOf<MuscleGroup, Int>()
+        val perPattern = mutableMapOf<com.fitcoach.app.domain.model.MovementPattern, Int>()
+        for (ex in scored) {
+            if (selected.size >= count) break
+            val groupCount = perGroup[ex.primaryMuscle] ?: 0
+            val maxPerGroup = if (ex.primaryMuscle in priorities) 3
+            else if (ex.primaryMuscle.isLargeGroup) 3 else 2
+            if (groupCount >= maxPerGroup) continue
+            // Evita piu di 2 esercizi con lo stesso pattern di movimento.
+            val patternCount = perPattern[ex.movementPattern] ?: 0
+            if (ex.movementPattern != com.fitcoach.app.domain.model.MovementPattern.OTHER &&
+                patternCount >= 2
+            ) continue
+
+            selected += SelectedExercise(ex, reasonFor(ex, profile, groups))
+            perGroup[ex.primaryMuscle] = groupCount + 1
+            perPattern[ex.movementPattern] = patternCount + 1
+        }
+        return selected
+    }
+
+    /** Costruisce la motivazione della scelta di un esercizio. */
+    private fun reasonFor(
+        ex: Exercise,
+        profile: UserProfile,
+        groups: Set<MuscleGroup>
+    ): String {
+        val parts = mutableListOf<String>()
+        parts += when (ex.category) {
+            ExerciseCategory.COMPOUND -> "multiarticolare: massimo stimolo complessivo e transfer"
+            ExerciseCategory.ISOLATION -> "isolamento: enfasi mirata su ${ex.primaryMuscle.label.lowercase()}"
+            ExerciseCategory.BODYWEIGHT -> "a corpo libero: adatto all'attrezzatura disponibile"
+        }
+        if (profile.preferredExercises.any { ex.name.lowercase().contains(it.lowercase()) }) {
+            parts += "esercizio che preferisci"
+        }
+        if (ex.primaryMuscle in profile.priorityMuscles) {
+            parts += "gruppo muscolare prioritario"
+        }
+        parts += "pattern: ${ex.movementPattern.label.lowercase()}"
+        if (ex.difficulty >= 3) parts += "richiede tecnica consolidata"
+        return parts.joinToString("; ")
+    }
+
+    data class SelectedExercise(val exercise: Exercise, val reason: String)
+
+    /**
+     * Seleziona gli esercizi per una giornata (versione semplificata, usata dai
+     * test e dai casi che non richiedono la motivazione).
      */
     fun selectExercises(
         groups: Set<MuscleGroup>,
         all: List<Exercise>,
         profile: UserProfile,
         count: Int
-    ): List<Exercise> {
-        val equipment = profile.availableEquipment.ifEmpty { null }
-        val excluded = profile.movementsToAvoid.map { it.lowercase() }
-
-        val usable = all.filter { ex ->
-            // Deve colpire almeno un gruppo della giornata.
-            (ex.primaryMuscle in groups || ex.secondaryMuscles.any { it in groups }) &&
-                // Attrezzatura disponibile (o esercizio a corpo libero).
-                (equipment == null || ex.bodyweightOnly ||
-                    ex.equipment.isEmpty() || ex.equipment.any { it in equipment }) &&
-                // Limitazioni fisiche
-                excluded.none { ex.name.lowercase().contains(it) || ex.primaryMuscle.label.lowercase().contains(it) }
-        }
-
-        // Priorita: multiarticolari che colpiscono il gruppo primario della giornata.
-        val sorted = usable.sortedWith(
-            compareByDescending<Exercise> { it.category == com.fitcoach.app.domain.model.ExerciseCategory.COMPOUND }
-                .thenByDescending { it.primaryMuscle in groups }
-        )
-
-        // Evita duplicati dello stesso movimento e bilancia i gruppi.
-        val selected = mutableListOf<Exercise>()
-        val perGroup = mutableMapOf<MuscleGroup, Int>()
-        for (ex in sorted) {
-            if (selected.size >= count) break
-            val groupCount = perGroup[ex.primaryMuscle] ?: 0
-            val maxPerGroup = when {
-                ex.primaryMuscle.isLargeGroup -> 3
-                else -> 2
-            }
-            if (groupCount >= maxPerGroup) continue
-            selected += ex
-            perGroup[ex.primaryMuscle] = groupCount + 1
-        }
-        return selected
-    }
+    ): List<Exercise> = selectExercisesDetailed(groups, all, profile, count).map { it.exercise }
 }

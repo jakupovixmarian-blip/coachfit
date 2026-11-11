@@ -5,21 +5,31 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.fitcoach.app.domain.model.AiProvider
+import com.fitcoach.app.domain.model.BreakfastPreference
 import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.ChangeDomain
 import com.fitcoach.app.domain.model.ChangeStatus
 import com.fitcoach.app.domain.model.ChatRole
+import com.fitcoach.app.domain.model.CookingTimeAvailable
 import com.fitcoach.app.domain.model.DietaryPreference
 import com.fitcoach.app.domain.model.Equipment
 import com.fitcoach.app.domain.model.ExerciseCategory
 import com.fitcoach.app.domain.model.FoodUnit
 import com.fitcoach.app.domain.model.Goal
+import com.fitcoach.app.domain.model.IntensityTechnique
+import com.fitcoach.app.domain.model.Level3
 import com.fitcoach.app.domain.model.MealSlot
+import com.fitcoach.app.domain.model.MovementPattern
 import com.fitcoach.app.domain.model.MuscleGroup
 import com.fitcoach.app.domain.model.SessionStatus
 import com.fitcoach.app.domain.model.Sex
+import com.fitcoach.app.domain.model.SourceKind
 import com.fitcoach.app.domain.model.SplitType
+import com.fitcoach.app.domain.model.TechnicalLevel
 import com.fitcoach.app.domain.model.TrainingExperience
+import com.fitcoach.app.domain.model.TransportMode
+import com.fitcoach.app.domain.model.WorkShift
+import com.fitcoach.app.domain.model.WorkType
 
 // -------------------- PROFILO --------------------
 
@@ -45,6 +55,56 @@ data class UserProfileEntity(
     val activityFactorOverride: Double? = null,
     val calorieTargetOverride: Double? = null,
     val mealsPerDay: Int = 5,
+
+    // Stile di vita
+    val workType: WorkType = WorkType.SEDENTARY,
+    val workShift: WorkShift = WorkShift.NONE,
+    val workHoursPerDay: Double? = null,
+    val seatedHoursPerDay: Double? = null,
+    val dailySteps: Int? = null,
+    val transportMode: TransportMode = TransportMode.CAR,
+    val extraSportSessionsPerWeek: Int = 0,
+    val walkingMinutesPerWeek: Int = 0,
+    val maxSessionMinutes: Int? = null,
+    val maxMealPrepMinutes: Int? = null,
+
+    // Recupero e abitudini
+    val sleepHours: Double? = null,
+    val sleepQuality: Level3 = Level3.MEDIUM,
+    val bedtime: String = "",
+    val wakeTime: String = "",
+    val stressLevel: Level3 = Level3.MEDIUM,
+    val dailyEnergy: Level3 = Level3.MEDIUM,
+    val recoveryCapacity: Level3 = Level3.MEDIUM,
+    val hydrationLitersPerDay: Double? = null,
+    val caffeineCupsPerDay: Int? = null,
+    val alcoholUnitsPerWeek: Int? = null,
+
+    // Alimentazione e preferenze
+    val breakfastPreference: BreakfastPreference = BreakfastPreference.SWEET,
+    val likedFoods: List<String> = emptyList(),
+    val dislikedFoods: List<String> = emptyList(),
+    val dietaryRestrictions: List<String> = emptyList(),
+    val cookingTimeAvailable: CookingTimeAvailable = CookingTimeAvailable.MEDIUM,
+    val mealPrepPossible: Boolean = false,
+    val prefersSimpleFoods: Boolean = true,
+    val dietDifficulties: String = "",
+
+    // Esperienza di allenamento (dettagli)
+    val trainingYears: Double? = null,
+    val trainingFrequencyPerWeek: Int? = null,
+    val preferredExercises: List<String> = emptyList(),
+    val dislikedExercises: List<String> = emptyList(),
+    val unknownExercises: List<String> = emptyList(),
+    val technicalLevel: TechnicalLevel = TechnicalLevel.NOVICE,
+    val priorityMuscles: Set<MuscleGroup> = emptySet(),
+    val currentLoadsJson: String = "",
+
+    // Obiettivi estesi
+    val secondaryGoals: Set<Goal> = emptySet(),
+    val desiredOutcome: String = "",
+    val targetTimelineWeeks: Int? = null,
+
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
@@ -105,7 +165,9 @@ data class NutritionPlanEntity(
     val highCarbDays: Int,
     val mediumCarbDays: Int,
     val lowCarbDays: Int,
-    val proteinGPerKg: Double
+    val proteinGPerKg: Double,
+    val carbCyclingApplied: Boolean = true,
+    val version: Int = 1
 )
 
 @Entity(
@@ -189,7 +251,9 @@ data class ExerciseEntity(
     val targetRir: Int,
     val isUnilateral: Boolean = false,
     val substituteNames: List<String> = emptyList(),
-    val bodyweightOnly: Boolean = false
+    val bodyweightOnly: Boolean = false,
+    val movementPattern: MovementPattern = MovementPattern.OTHER,
+    val difficulty: Int = 1
 )
 
 @Entity(tableName = "workout_plans")
@@ -199,7 +263,8 @@ data class WorkoutPlanEntity(
     val name: String,
     val splitType: SplitType,
     val createdAt: Long = System.currentTimeMillis(),
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val version: Int = 1
 )
 
 @Entity(
@@ -269,7 +334,12 @@ data class PlannedExerciseEntity(
     val targetReps: Int? = null,
     val notes: String = "",
     val technique: String = "",
-    val category: ExerciseCategory = ExerciseCategory.COMPOUND
+    val category: ExerciseCategory = ExerciseCategory.COMPOUND,
+    val selectionReason: String = "",
+    val restReason: String = "",
+    val intensityTechnique: IntensityTechnique = IntensityTechnique.NONE,
+    val techniqueReason: String = "",
+    val movementPattern: MovementPattern = MovementPattern.OTHER
 )
 
 @Entity(tableName = "workout_sessions", indices = [Index("dateEpochDay"), Index("workoutDayId")])
@@ -447,4 +517,45 @@ data class NotificationRecordEntity(
     val triggerTime: String,
     val enabled: Boolean = true,
     val requestCode: Int = 0
+)
+
+// -------------------- FONTI SCIENTIFICHE --------------------
+
+/**
+ * Base di conoscenza delle fonti. Ogni voce distingue il tipo di evidenza e
+ * la regola derivata applicata dai motori. Nessuna citazione inventata: le voci
+ * derivano da linee guida ufficiali, revisioni sistematiche, studi o articoli
+ * tecnico-divulgativi, con indicazione dei limiti di applicabilita.
+ */
+@Entity(tableName = "scientific_sources", indices = [Index(value = ["url"], unique = true)])
+data class ScientificSourceEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val kind: SourceKind,
+    val title: String,
+    val authors: String = "",
+    val organization: String = "",
+    val url: String,
+    val publishedDate: String = "",
+    val lastUpdated: String = "",
+    val topic: String,
+    val evidence: String,
+    val derivedRule: String,
+    val applicabilityLimits: String = ""
+)
+
+// -------------------- STORICO VERSIONI PIANI --------------------
+
+/** Snapshot immutabile di una versione di piano (nutrizione o allenamento). */
+@Entity(tableName = "plan_versions", indices = [Index("createdAt"), Index("domain")])
+data class PlanVersionEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val profileId: Long = 1L,
+    val domain: ChangeDomain,
+    val planId: Long,
+    val version: Int,
+    val createdAt: Long = System.currentTimeMillis(),
+    val label: String,
+    val reason: String,
+    val snapshotJson: String,
+    val isActive: Boolean = false
 )

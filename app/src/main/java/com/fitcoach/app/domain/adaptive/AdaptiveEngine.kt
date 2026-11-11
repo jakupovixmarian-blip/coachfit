@@ -190,6 +190,7 @@ object AdaptiveEngine {
         Goal.RECOMP -> -0.25
         Goal.HYPERTROPHY -> 0.3
         Goal.MAINTENANCE -> 0.0
+        Goal.STRENGTH -> 0.15
     }
 
     private fun buildChange(

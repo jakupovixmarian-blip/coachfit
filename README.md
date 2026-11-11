@@ -44,16 +44,34 @@ Solo la chat AI richiede Internet.
 ## Motori principali (deterministici, testati)
 
 - `EnergyCalculator` – BMR (Mifflin-St Jeor / Katch-McArdle se nota la massa grassa),
-  TDEE, target calorico, distribuzione macro, bilancio settimanale.
+  TDEE, target calorico, distribuzione macro, bilancio settimanale. Il fattore di attività
+  parte dai giorni di allenamento e viene **corretto dal NEAT reale** (tipo di lavoro,
+  passi giornalieri, mezzo di trasporto, camminate pianificate, sport aggiuntivi).
 - `CarbCyclingEngine` – assegnazione giorni HIGH/MEDIUM/LOW con verifica di coerenza
-  calorie/macro e bilancio settimanale (nessun deficit estremo nei giorni LOW).
+  calorie/macro e bilancio settimanale (nessun deficit estremo nei giorni LOW). Il carb
+  cycling viene **applicato solo quando è giustificato** dal profilo (obiettivo e numero di
+  allenamenti); altrimenti si usa una distribuzione uniforme con motivazione esplicita.
 - `MealPlanGenerator` – piano di 7 giorni, grammature, crudo/cotto, totali pasto e
-  sostituzioni con quantità ricalcolate.
-- `WorkoutPlanBuilder` + `SplitGenerator` – split Upper/Lower, Push/Pull/Legs, Full Body,
-  volume settimanale per gruppo.
-- `ProgressiveOverloadEngine` – **double progression**: mantiene il carico e sale di
-  ripetizioni fino al top del range, poi incrementa il carico. Non aumenta il carico in
-  caso di dolore, tecnica scorretta o RIR insufficiente.
+  sostituzioni con quantità ricalcolate. Gestisce **3/4/5/6 pasti**, la **preferenza
+  colazione dolce/salata/entrambe** (o nessuna colazione), budget, semplicità e alimenti
+  graditi/non graditi.
+- `SplitGenerator` – split Full Body, Upper/Lower, Push/Pull/Legs, frequenza e volume
+  settimanale per gruppo muscolare.
+- `WorkoutPlanBuilder` – selezione esercizi guidata da attrezzatura, limitazioni, esercizi
+  preferiti/non graditi/non conosciuti, gruppi prioritari e durata massima di sessione;
+  ogni scelta è **motivata**.
+- `RestCalculator` – recuperi **individualizzati** (non più valori fissi): categoria
+  esercizio, obiettivo, RIR, carico relativo, esperienza, fatica accumulata e tecniche
+  d'intensità, con motivazione.
+- `IntensityTechniquesEngine` – decide **se e quando** applicare tecniche d'intensità
+  (drop set, rest-pause, myo-reps, superset, back-off, cluster, cedimento, eccentriche),
+  con motivazione e motivo per cui le tecniche più avanzate NON vengono usate.
+- `PeriodizationEngine` + `ProgressiveOverloadEngine` – **double progression**: mantiene il
+  carico e sale di ripetizioni fino al top del range, poi incrementa il carico. Non aumenta
+  il carico in caso di dolore, tecnica scorretta o RIR insufficiente.
+- `FatigueManager` – valuta calo di prestazioni, stagnazione, volume settimanale, qualità
+  del recupero (sonno/RPE), dolore; non interpreta ogni stagnazione come richiesta di più
+  volume.
 - `AdaptiveEngine` + `WeightAnalyzer` – media settimanale del peso, trend, aderenza,
   performance; genera proposte strutturate (situazione, problema, dati, modifica,
   motivazione, risultato atteso, controindicazioni).
@@ -61,6 +79,14 @@ Solo la chat AI richiede Internet.
 Separazione netta tra **motore matematico deterministico**, **motore di analisi** e
 **AI conversazionale**: l'AI interpreta e propone, non calcola né modifica i database
 direttamente.
+
+## Base di conoscenza
+
+Le indicazioni applicate dai motori sono tracciate in `ScientificSourceSeedData`: ogni
+voce ha fonte (linea guida ufficiale, revisione sistematica, studio, articolo tecnico),
+titolo, autori, data, URL verificabile, evidenza, **regola derivata** e **limiti di
+applicabilità**. La schermata Impostazioni → Fonti e versioni mostra le fonti e lo
+**storico delle versioni dei piani** (ogni rigenerazione salva uno snapshot immutabile).
 
 ## AI configurabile
 
@@ -143,8 +169,10 @@ app/src/main/java/com/fitcoach/app/
 
 ## Test
 
-Test unitari dei motori matematici (67 test): energia, carb cycling, generazione pasti,
-split, progressive overload, analisi peso, motore adattivo.
+Test unitari dei motori matematici (**106 test**, 10 classi): energia (incl. NEAT da stile
+di vita), carb cycling (incl. attivazione condizionale), generazione pasti (incl. n° pasti e
+preferenza colazione), split, recuperi, tecniche d'intensità, fatica, progressive overload,
+analisi peso, motore adattivo.
 
 ```bash
 ./gradlew :app:testDebugUnitTest
@@ -153,6 +181,8 @@ split, progressive overload, analisi peso, motore adattivo.
 ## Documentazione
 
 - `docs/ROADMAP.md` – roadmap tecnica, decisioni architetturali, fasi.
+- `docs/REVISIONE.md` – report tecnico della revisione scientifica: carenze rilevate nel
+  codice e piano di correzione per fase.
 
 ## Avvertenza
 

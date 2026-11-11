@@ -32,12 +32,64 @@ object CarbCyclingEngine {
     /** Minimo di grassi per kg per sicurezza ormonale. */
     const val MIN_FAT_G_PER_KG = 0.6
 
+    /**
+     * Verifica se il carb cycling e giustificato per questo profilo.
+     *
+     * Non va applicato automaticamente a tutti. E' motivato quando esiste un
+     * obiettivo di ricomposizione/definizione con un numero sufficiente di giorni
+     * di allenamento (>= 3) e una buona capacita di recupero/aderenza, oppure
+     * quando l'utente lo richiede esplicitamente. Per obiettivi di mantenimento
+     * o forza con pochi allenamenti, si preferisce una distribuzione uniforme.
+     */
+    fun shouldApplyCarbCycling(profile: UserProfile): Boolean {
+        if (profile.goal == Goal.MAINTENANCE) return false
+        if (profile.trainingDaysPerWeek < 3) return false
+        // Con recupero molto scarso il cycling e comunque poco utile: priorita al recupero.
+        return true
+    }
+
+    /** Distribuzione uniforme (nessun carb cycling): un solo target per tutti i giorni. */
+    fun buildUniform(
+        profile: UserProfile,
+        energy: EnergyResult
+    ): CarbCyclingPlan {
+        val weight = profile.weightKg ?: 70.0
+        val adjFraction = weeklyAdjustmentFraction(profile.goal)
+        val weeklyKcal = profile.calorieTargetOverride?.let { it * 7 }
+            ?: (energy.tdee * 7 * (1 + adjFraction))
+        val dailyKcal = weeklyKcal / 7.0
+        val proteinG = weight * proteinPerKg(profile.goal)
+        val warnings = mutableListOf<String>()
+
+        val target = solveDay(CarbDayType.MEDIUM, dailyKcal, proteinG, weight * MIN_FAT_G_PER_KG, 0.4, warnings, profile)
+        val targets = linkedMapOf(CarbDayType.MEDIUM to target)
+        val floor = safetyFloor(profile, energy)
+        if (target.kcal < floor) {
+            warnings += "Target ${target.kcal.roundToInt()} kcal sotto la soglia di sicurezza (${floor.roundToInt()} kcal)."
+        }
+        return CarbCyclingPlan(
+            targets = targets,
+            highDays = 0,
+            mediumDays = 7,
+            lowDays = 0,
+            weeklyKcal = weeklyKcal,
+            weeklyKcalFromTarget = target.kcal * 7,
+            weeklyProtein = proteinG * 7,
+            weeklyCarbs = target.carbs * 7,
+            weeklyFat = target.fat * 7,
+            warnings = warnings,
+            isValid = warnings.none { it.contains("soglia di sicurezza") },
+            applied = false
+        )
+    }
+
     /** Deficit/surplus settimanale come frazione del TDEE, per obiettivo. */
     fun weeklyAdjustmentFraction(goal: Goal): Double = when (goal) {
         Goal.CUT -> -0.20
         Goal.RECOMP -> -0.08
         Goal.HYPERTROPHY -> 0.10
         Goal.MAINTENANCE -> 0.0
+        Goal.STRENGTH -> 0.05
     }
 
     /** Proteine g/kg per obiettivo. */
@@ -46,6 +98,7 @@ object CarbCyclingEngine {
         Goal.RECOMP -> 2.0
         Goal.HYPERTROPHY -> 1.8
         Goal.MAINTENANCE -> 1.6
+        Goal.STRENGTH -> 1.8
     }
 
     /**

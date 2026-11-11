@@ -2,9 +2,12 @@ package com.fitcoach.app.domain.workout
 
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.ExerciseCategory
+import com.fitcoach.app.domain.model.IntensityTechnique
+import com.fitcoach.app.domain.model.Level3
 import com.fitcoach.app.domain.model.MuscleGroup
 import com.fitcoach.app.domain.model.PlannedExercise
 import com.fitcoach.app.domain.model.SplitType
+import com.fitcoach.app.domain.model.TrainingExperience
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WorkoutDay
 
@@ -30,14 +33,16 @@ object WorkoutPlanBuilder {
         profile: UserProfile,
         exercises: List<Exercise>,
         trainingDayIndices: List<Int> = defaultTrainingDays(profile.trainingDaysPerWeek),
-        splitTypeOverride: SplitType? = null
+        splitTypeOverride: SplitType? = null,
+        fatigueSeverity: Int = 0
     ): BuiltPlan {
         val splitType = splitTypeOverride ?: SplitGenerator.recommendSplit(profile)
         val notes = mutableListOf<String>()
 
         val splitWeek = SplitGenerator.buildWeek(splitType, trainingDayIndices, profile.experience)
-        val weeklySetsTarget = SplitGenerator.weeklySetsPerGroup(profile.experience)
         val volume = mutableMapOf<MuscleGroup, Int>()
+        // Distribuiamo prima il volume per giorno per sapere quanti set per gruppo.
+        val trainingDayCount = splitWeek.count { !it.isRest }
 
         val days = splitWeek.map { day ->
             if (day.isRest) {
@@ -47,26 +52,54 @@ object WorkoutPlanBuilder {
                     isRestDay = true
                 )
             } else {
-                val count = SplitGenerator.exercisesPerSession(profile.experience, day.muscleGroups.size)
-                val selected = SplitGenerator.selectExercises(
+                val count = SplitGenerator.exercisesPerSession(
+                    profile.experience, day.muscleGroups.size, profile.maxSessionMinutes
+                )
+                val selected = SplitGenerator.selectExercisesDetailed(
                     day.muscleGroups, exercises, profile, count
                 )
                 if (selected.isEmpty()) {
                     notes += "Nessun esercizio compatibile per ${day.title}: verifica l'attrezzatura disponibile."
                 }
-                val planned = selected.mapIndexed { i, ex ->
+                val planned = selected.mapIndexed { i, sel ->
+                    val ex = sel.exercise
+                    val sets = setsForExercise(profile, ex, trainingDayCount, day.muscleGroups.size)
+                    val isLast = i == selected.lastIndex
+                    val fatigue = fatigueSeverity
+                    val technique = IntensityTechniquesEngine.decide(
+                        exercise = ex,
+                        profile = profile,
+                        isLastExerciseOfSession = isLast,
+                        weeklySetsForGroup = (volume[ex.primaryMuscle] ?: 0) + sets,
+                        fatigueSeverity = fatigue
+                    )
+                    val rest = RestCalculator.decide(
+                        category = ex.category,
+                        goal = profile.goal,
+                        targetRir = ex.targetRir,
+                        loadRatio = loadRatioFor(profile, ex),
+                        experience = profile.experience,
+                        fatigueSeverity = fatigue,
+                        technique = technique.technique
+                    )
                     PlannedExercise(
                         exerciseId = ex.id,
                         exerciseName = ex.name,
                         primaryMuscle = ex.primaryMuscle,
                         orderIndex = i,
-                        sets = setsForExercise(ex, weeklySetsTarget, day.muscleGroups.size, selected.size),
+                        sets = sets,
                         minReps = ex.minReps,
                         maxReps = ex.maxReps,
-                        restSeconds = ex.restSeconds,
+                        restSeconds = rest.seconds,
                         targetRir = ex.targetRir,
                         technique = ex.technique,
-                        category = ex.category
+                        category = ex.category,
+                        selectionReason = sel.reason,
+                        restReason = rest.reason,
+                        intensityTechnique = technique.technique,
+                        techniqueReason = if (technique.technique != IntensityTechnique.NONE)
+                            technique.reason else "",
+                        movementPattern = ex.movementPattern
                     )
                 }
                 planned.forEach { pe ->
@@ -84,21 +117,53 @@ object WorkoutPlanBuilder {
         if (profile.availableEquipment.isEmpty()) {
             notes += "Nessuna attrezzatura selezionata: sono stati privilegiati esercizi a corpo libero."
         }
+        // Nota sul volume per i gruppi prioritari.
+        if (profile.priorityMuscles.isNotEmpty()) {
+            val prio = profile.priorityMuscles.joinToString { it.label }
+            notes += "Volume aumentato per i gruppi prioritari: $prio."
+        }
 
         return BuiltPlan(splitType, days, volume, notes)
     }
 
+    /** Rapporto tra carico attuale dichiarato e carico tipico (per stimare l'intensita). */
+    private fun loadRatioFor(profile: UserProfile, ex: Exercise): Double {
+        val declared = profile.currentLoads.entries
+            .firstOrNull { ex.name.lowercase().contains(it.key.lowercase()) }?.value ?: return 1.0
+        // Nessun riferimento assoluto: usiamo il carico per ripetizione come proxy.
+        return when {
+            declared <= 0 -> 1.0
+            declared > 100 -> 1.1
+            declared < 20 -> 0.85
+            else -> 1.0
+        }
+    }
+
+    /**
+     * Serie per esercizio, individualizzate su esperienza, volume target del gruppo
+     * e numero di esercizi nella sessione. Il volume non e fisso per tutti.
+     */
     private fun setsForExercise(
+        profile: UserProfile,
         ex: Exercise,
-        weeklyTarget: Int,
-        groupsInDay: Int,
-        exercisesInDay: Int
+        trainingDayCount: Int,
+        groupsInDay: Int
     ): Int {
         val base = ex.defaultSets
-        // Se il volume target e alto e ci sono pochi esercizi, aggiungi una serie.
-        val adjusted = if (weeklyTarget >= 16 && exercisesInDay <= 5) base + 1 else base
-        // Non eccedere 5 serie per esercizio.
-        return adjusted.coerceIn(2, 5)
+        val priority = ex.primaryMuscle in profile.priorityMuscles
+        // Esperienza e capacita di recupero modulano il volume.
+        val experienceAdj = when (profile.experience) {
+            TrainingExperience.BEGINNER -> -1
+            TrainingExperience.INTERMEDIATE -> 0
+            TrainingExperience.ADVANCED -> if (ex.category == ExerciseCategory.COMPOUND) 1 else 0
+        }
+        val recoveryAdj = when (profile.recoveryCapacity) {
+            Level3.LOW -> -1
+            Level3.MEDIUM -> 0
+            Level3.HIGH -> 0
+        }
+        val priorityAdj = if (priority) 1 else 0
+        return (base + experienceAdj + recoveryAdj + priorityAdj).coerceIn(2, 5)
     }
 
     fun defaultTrainingDays(daysPerWeek: Int): List<Int> {
@@ -132,7 +197,11 @@ object WorkoutPlanBuilder {
         val byName = usable.associateBy { it.name }
         val explicit = exercise.substituteNames.mapNotNull { byName[it] }
         val sameCategory = usable.filter { it.category == exercise.category }
-        return (explicit + sameCategory).distinctBy { it.id }.take(4)
+        // Fallback: se non c'e nulla con la stessa categoria (es. multiarticolare
+        // senza alternative multiarticolari), usa qualsiasi esercizio dello stesso
+        // gruppo muscolare per mantenere lo stimolo.
+        val sameMuscleFallback = if (explicit.isEmpty() && sameCategory.isEmpty()) usable else emptyList()
+        return (explicit + sameCategory + sameMuscleFallback).distinctBy { it.id }.take(4)
     }
 
     fun categoryLabel(category: ExerciseCategory): String = when (category) {

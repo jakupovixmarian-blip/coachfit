@@ -27,11 +27,19 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.fitcoach.app.domain.model.BreakfastPreference
+import com.fitcoach.app.domain.model.CookingTimeAvailable
 import com.fitcoach.app.domain.model.DietaryPreference
 import com.fitcoach.app.domain.model.Equipment
 import com.fitcoach.app.domain.model.Goal
+import com.fitcoach.app.domain.model.Level3
+import com.fitcoach.app.domain.model.MuscleGroup
 import com.fitcoach.app.domain.model.Sex
+import com.fitcoach.app.domain.model.TechnicalLevel
 import com.fitcoach.app.domain.model.TrainingExperience
+import com.fitcoach.app.domain.model.TransportMode
+import com.fitcoach.app.domain.model.WorkShift
+import com.fitcoach.app.domain.model.WorkType
 import com.fitcoach.app.ui.components.LoadingBox
 import com.fitcoach.app.ui.components.SectionCard
 import com.fitcoach.app.ui.components.SectionHeader
@@ -104,9 +112,12 @@ fun OnboardingScreen(
             when (state.step) {
                 0 -> item { StepAnagrafica(state, viewModel) }
                 1 -> item { StepObiettivo(state, viewModel) }
-                2 -> item { StepAttrezzatura(state, viewModel) }
-                3 -> item { StepNutrizione(state, viewModel) }
-                4 -> item { StepSalute(state, viewModel) }
+                2 -> item { StepStileVita(state, viewModel) }
+                3 -> item { StepAttrezzatura(state, viewModel) }
+                4 -> item { StepDettagliAllenamento(state, viewModel) }
+                5 -> item { StepNutrizione(state, viewModel) }
+                6 -> item { StepSalute(state, viewModel) }
+                7 -> item { StepRiepilogo(state) }
             }
 
             state.error?.let {
@@ -279,6 +290,28 @@ private fun StepNutrizione(state: OnboardingUiState, vm: OnboardingViewModel) {
                 value = state.allergies, onValueChange = { v -> vm.update { it.copy(allergies = v) } },
                 label = { Text("Allergie / intolleranze") }, modifier = Modifier.fillMaxWidth()
             )
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = state.likedFoods, onValueChange = { v -> vm.update { it.copy(likedFoods = v) } },
+                label = { Text("Alimenti che ti piacciono") }, modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = state.dislikedFoods, onValueChange = { v -> vm.update { it.copy(dislikedFoods = v) } },
+                label = { Text("Alimenti che NON ti piacciono") }, modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(12.dp))
+            Text("Colazione preferita", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                BreakfastPreference.entries.forEach { bp ->
+                    FilterChip(
+                        selected = state.breakfastPreference == bp,
+                        onClick = { vm.update { it.copy(breakfastPreference = bp) } },
+                        label = { Text(bp.label) }
+                    )
+                }
+            }
             Spacer(Modifier.height(12.dp))
             Text("Pasti al giorno", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
             Spacer(Modifier.height(6.dp))
@@ -292,10 +325,222 @@ private fun StepNutrizione(state: OnboardingUiState, vm: OnboardingViewModel) {
                 }
             }
             Spacer(Modifier.height(12.dp))
+            Text("Tempo per cucinare", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CookingTimeAvailable.entries.forEach { ct ->
+                    FilterChip(
+                        selected = state.cookingTime == ct,
+                        onClick = { vm.update { it.copy(cookingTime = ct) } },
+                        label = { Text(ct.label) }
+                    )
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                FilterChip(
+                    selected = state.mealPrepPossible,
+                    onClick = { vm.update { it.copy(mealPrepPossible = !it.mealPrepPossible) } },
+                    label = { Text("Posso preparare i pasti in anticipo (meal prep)") }
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            FilterChip(
+                selected = state.prefersSimpleFoods,
+                onClick = { vm.update { it.copy(prefersSimpleFoods = !it.prefersSimpleFoods) } },
+                label = { Text("Preferisco alimenti semplici da preparare") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(12.dp))
             OutlinedTextField(
                 value = state.budgetEur, onValueChange = { v -> vm.update { it.copy(budgetEur = v) } },
                 label = { Text("Budget settimanale € (facolt.)") }, singleLine = true,
                 modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun StepStileVita(state: OnboardingUiState, vm: OnboardingViewModel) {
+    SectionCard {
+        Column {
+            SectionHeader("Stile di vita e recupero", "Migliora la stima del dispendio energetico")
+            Spacer(Modifier.height(12.dp))
+            Text("Tipo di lavoro", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            Spacer(Modifier.height(6.dp))
+            WorkType.entries.forEach { wt ->
+                FilterChip(
+                    selected = state.workType == wt,
+                    onClick = { vm.update { it.copy(workType = wt) } },
+                    label = { Text(wt.label) },
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Text("Turni di lavoro", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                WorkShift.entries.forEach { ws ->
+                    FilterChip(
+                        selected = state.workShift == ws,
+                        onClick = { vm.update { it.copy(workShift = ws) } },
+                        label = { Text(ws.label) }
+                    )
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = state.dailySteps,
+                    onValueChange = { v -> vm.update { it.copy(dailySteps = v.filter(Char::isDigit)) } },
+                    label = { Text("Passi/giorno") }, singleLine = true, modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = state.sleepHours,
+                    onValueChange = { v -> vm.update { it.copy(sleepHours = v) } },
+                    label = { Text("Ore di sonno") }, singleLine = true, modifier = Modifier.weight(1f)
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Text("Trasporto abituale", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TransportMode.entries.forEach { tm ->
+                    FilterChip(
+                        selected = state.transportMode == tm,
+                        onClick = { vm.update { it.copy(transportMode = tm) } },
+                        label = { Text(tm.label) }
+                    )
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Text("Qualita del sonno", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            Spacer(Modifier.height(6.dp))
+            Level3Chips(state.sleepQuality) { v -> vm.update { it.copy(sleepQuality = v) } }
+            Spacer(Modifier.height(12.dp))
+            Text("Livello di stress", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            Spacer(Modifier.height(6.dp))
+            Level3Chips(state.stressLevel) { v -> vm.update { it.copy(stressLevel = v) } }
+            Spacer(Modifier.height(12.dp))
+            Text("Capacita di recupero percepita", style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary)
+            Spacer(Modifier.height(6.dp))
+            Level3Chips(state.recoveryCapacity) { v -> vm.update { it.copy(recoveryCapacity = v) } }
+        }
+    }
+}
+
+@Composable
+private fun StepDettagliAllenamento(state: OnboardingUiState, vm: OnboardingViewModel) {
+    SectionCard {
+        Column {
+            SectionHeader("Dettagli allenamento", "Personalizza la scheda")
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = state.trainingYears,
+                    onValueChange = { v -> vm.update { it.copy(trainingYears = v) } },
+                    label = { Text("Anni di allenamento") }, singleLine = true, modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = state.maxSessionMinutes,
+                    onValueChange = { v -> vm.update { it.copy(maxSessionMinutes = v.filter(Char::isDigit)) } },
+                    label = { Text("Durata max seduta (min)") }, singleLine = true, modifier = Modifier.weight(1f)
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Text("Livello tecnico", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            Spacer(Modifier.height(6.dp))
+            TechnicalLevel.entries.forEach { tl ->
+                FilterChip(
+                    selected = state.technicalLevel == tl,
+                    onClick = { vm.update { it.copy(technicalLevel = tl) } },
+                    label = { Text(tl.label) },
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Text("Gruppi muscolari prioritari", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            Spacer(Modifier.height(6.dp))
+            MuscleGroup.entries.forEach { mg ->
+                FilterChip(
+                    selected = mg in state.priorityMuscles,
+                    onClick = { vm.togglePriorityMuscle(mg) },
+                    label = { Text(mg.label) },
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = state.preferredExercises,
+                onValueChange = { v -> vm.update { it.copy(preferredExercises = v) } },
+                label = { Text("Esercizi che preferisci") }, modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = state.dislikedExercises,
+                onValueChange = { v -> vm.update { it.copy(dislikedExercises = v) } },
+                label = { Text("Esercizi che NON ti piacciono") }, modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = state.unknownExercises,
+                onValueChange = { v -> vm.update { it.copy(unknownExercises = v) } },
+                label = { Text("Esercizi che non conosci") }, modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun StepRiepilogo(state: OnboardingUiState) {
+    SectionCard {
+        Column {
+            SectionHeader("Riepilogo", "Controlla i dati prima di generare i programmi")
+            Spacer(Modifier.height(12.dp))
+            val rows = listOf(
+                "Nome" to state.name.ifBlank { "-" },
+                "Eta" to "${state.age} anni",
+                "Altezza" to "${state.heightCm} cm",
+                "Peso" to "${state.weightKg} kg",
+                "Obiettivo" to state.goal.label,
+                "Esperienza" to state.experience.label,
+                "Giorni/settimana" to "${state.trainingDays}",
+                "Lavoro" to state.workType.label,
+                "Sonno" to "${state.sleepHours.ifBlank { "-" }} h (${state.sleepQuality.label})",
+                "Recupero" to state.recoveryCapacity.label,
+                "Pasti/giorno" to "${state.mealsPerDay}",
+                "Colazione" to state.breakfastPreference.label,
+                "Allergie" to state.allergies.ifBlank { "nessuna" },
+                "Limitazioni" to state.physicalLimitations.ifBlank { "nessuna" }
+            )
+            rows.forEach { (k, v) ->
+                Row(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
+                    Text(k, style = MaterialTheme.typography.bodySmall, color = TextSecondary,
+                        modifier = Modifier.weight(1f))
+                    Text(v, style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1.4f))
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "Premi «Genera programmi» per creare piano alimentare e scheda. " +
+                    "Potrai modificare ogni parametro in seguito.",
+                style = MaterialTheme.typography.bodySmall, color = TextSecondary
+            )
+        }
+    }
+}
+
+@Composable
+private fun Level3Chips(value: Level3, onSelect: (Level3) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Level3.entries.forEach { l ->
+            FilterChip(
+                selected = value == l,
+                onClick = { onSelect(l) },
+                label = { Text(l.label) }
             )
         }
     }

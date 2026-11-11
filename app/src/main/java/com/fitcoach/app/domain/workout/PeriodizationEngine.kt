@@ -83,6 +83,7 @@ object PeriodizationEngine {
             Goal.CUT -> "Definizione (mantenimento forza)"
             Goal.RECOMP -> "Ricomposizione"
             Goal.MAINTENANCE -> "Mantenimento"
+            Goal.STRENGTH -> "Forza"
         }
         return Mesocycle(
             planId = planId,

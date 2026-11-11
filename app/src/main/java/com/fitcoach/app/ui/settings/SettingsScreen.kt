@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
@@ -97,6 +98,22 @@ fun SettingsScreen(
                     title = "Notifiche",
                     subtitle = "Pasti, allenamento, idratazione",
                     onClick = { navController.navigate(Routes.NOTIFICATION_SETTINGS) }
+                )
+            }
+            item {
+                SettingsRow(
+                    icon = Icons.Filled.MenuBook,
+                    title = "Fonti e versioni",
+                    subtitle = "Basi scientifiche e storico dei piani",
+                    onClick = { navController.navigate(Routes.KNOWLEDGE) }
+                )
+            }
+            item {
+                SettingsRow(
+                    icon = Icons.Filled.Person,
+                    title = "Anamnesi completa",
+                    subtitle = "Modifica stile di vita, recupero, alimentazione, allenamento",
+                    onClick = { navController.navigate(Routes.ONBOARDING) }
                 )
             }
 

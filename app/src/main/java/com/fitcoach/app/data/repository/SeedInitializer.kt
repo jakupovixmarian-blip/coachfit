@@ -4,7 +4,9 @@ import com.fitcoach.app.data.local.Mappers.toEntity
 import com.fitcoach.app.data.local.dao.ExerciseDao
 import com.fitcoach.app.data.local.dao.FoodDao
 import com.fitcoach.app.data.local.dao.NotificationDao
+import com.fitcoach.app.data.local.dao.ScientificSourceDao
 import com.fitcoach.app.data.local.entity.NotificationRecordEntity
+import com.fitcoach.app.domain.knowledge.ScientificSourceSeedData
 import com.fitcoach.app.domain.model.MealSlot
 import com.fitcoach.app.domain.nutrition.FoodSeedData
 import com.fitcoach.app.domain.workout.ExerciseSeedData
@@ -12,14 +14,15 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Popola il database con alimenti ed esercizi al primo avvio.
+ * Popola il database con alimenti, esercizi e fonti scientifiche al primo avvio.
  * I dati seed non vengono mai sovrascritti se gia presenti (idempotente).
  */
 @Singleton
 class SeedInitializer @Inject constructor(
     private val foodDao: FoodDao,
     private val exerciseDao: ExerciseDao,
-    private val notificationDao: NotificationDao
+    private val notificationDao: NotificationDao,
+    private val scientificSourceDao: ScientificSourceDao
 ) {
     suspend fun seedIfNeeded() {
         if (foodDao.count() == 0) {
@@ -30,6 +33,9 @@ class SeedInitializer @Inject constructor(
         }
         if (notificationDao.getAll().isEmpty()) {
             notificationDao.insertAll(defaultNotifications())
+        }
+        if (scientificSourceDao.count() == 0) {
+            scientificSourceDao.insertAll(ScientificSourceSeedData.sources)
         }
     }
 
