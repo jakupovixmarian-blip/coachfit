@@ -2,10 +2,14 @@ package com.fitcoach.app.domain.coach
 
 import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.ChatMessage
+import com.fitcoach.app.domain.model.DailyBalance
 import com.fitcoach.app.domain.model.ExercisePerformance
 import com.fitcoach.app.domain.model.NutritionPlan
 import com.fitcoach.app.domain.model.ProgramChange
+import com.fitcoach.app.domain.model.ShoppingItem
+import com.fitcoach.app.domain.model.SubstitutionLog
 import com.fitcoach.app.domain.model.UserProfile
+import com.fitcoach.app.domain.model.WeeklyNutritionSummary
 import com.fitcoach.app.domain.model.WeightTrend
 import com.fitcoach.app.domain.model.WorkoutPlan
 
@@ -21,5 +25,13 @@ data class CoachContext(
     val recentPerformances: List<ExercisePerformance>,
     val weightTrend: WeightTrend?,
     val recentChanges: List<ProgramChange>,
-    val history: List<ChatMessage>
+    val history: List<ChatMessage>,
+    /** Bilancio del giorno corrente (obiettivo/consumato/rimanente). */
+    val todayBalance: DailyBalance? = null,
+    /** Riepilogo settimanale dei consumi reali. */
+    val weeklyNutrition: WeeklyNutritionSummary? = null,
+    /** Lista della spesa settimanale corrente. */
+    val shoppingList: List<ShoppingItem> = emptyList(),
+    /** Storico delle sostituzioni alimentari. */
+    val substitutions: List<SubstitutionLog> = emptyList()
 )

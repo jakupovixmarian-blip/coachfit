@@ -192,6 +192,69 @@ object CoachPromptBuilder {
             }
         }
 
+        context.todayBalance?.let { b ->
+            sb.appendLine()
+            sb.appendLine("DIARIO NUTRIZIONALE - OGGI (obiettivo / consumato / rimanente)")
+            sb.appendLine(
+                "- Calorie: %.0f / %.0f / %s kcal".format(
+                    b.targetKcal, b.consumedKcal,
+                    if (b.kcalExceeded > 0.5) "+%.0f eccedenti".format(b.kcalExceeded)
+                    else "%.0f rimanenti".format(b.remainingKcal)
+                )
+            )
+            sb.appendLine(
+                "- Proteine: %.0f / %.0f / %s g".format(
+                    b.targetProtein, b.consumedProtein,
+                    if (b.proteinExceeded > 0.5) "+%.0f eccedenti".format(b.proteinExceeded)
+                    else "%.0f rimanenti".format(b.remainingProtein)
+                )
+            )
+            sb.appendLine(
+                "- Carboidrati: %.0f / %.0f / %s g".format(
+                    b.targetCarbs, b.consumedCarbs,
+                    if (b.carbsExceeded > 0.5) "+%.0f eccedenti".format(b.carbsExceeded)
+                    else "%.0f rimanenti".format(b.remainingCarbs)
+                )
+            )
+            sb.appendLine(
+                "- Grassi: %.0f / %.0f / %s g".format(
+                    b.targetFat, b.consumedFat,
+                    if (b.fatExceeded > 0.5) "+%.0f eccedenti".format(b.fatExceeded)
+                    else "%.0f rimanenti".format(b.remainingFat)
+                )
+            )
+        }
+
+        context.weeklyNutrition?.let { w ->
+            sb.appendLine()
+            sb.appendLine("RIEPILOGO NUTRIZIONALE SETTIMANALE (consumi reali)")
+            sb.appendLine("- Giorni registrati: ${w.daysTracked}")
+            sb.appendLine("- Media calorie: %.0f kcal (previste %.0f)".format(w.avgKcal, w.avgPlannedKcal))
+            sb.appendLine("- Media P %.0f g | C %.0f g | G %.0f g".format(w.avgProtein, w.avgCarbs, w.avgFat))
+            sb.appendLine("- Aderenza media: %.0f%%; giorni in target: ${w.daysOnTarget}".format(w.avgAdherencePercent))
+            sb.appendLine("- Differenza previsto/consumato: %+.0f kcal".format(w.kcalDifference))
+            sb.appendLine("- Alimenti extra registrati: ${w.extraEntries}")
+        }
+
+        if (context.substitutions.isNotEmpty()) {
+            sb.appendLine()
+            sb.appendLine("SOSTITUZIONI ALIMENTARI RECENTI")
+            context.substitutions.take(10).forEach { s ->
+                sb.appendLine(
+                    "- ${s.originalName} ${s.originalGrams.toInt()} g -> ${s.newName} ${s.newGrams.toInt()} g " +
+                        "(${s.status}; P ${s.proteinBefore.toInt()}->${s.proteinAfter.toInt()} g)"
+                )
+            }
+        }
+
+        if (context.shoppingList.isNotEmpty()) {
+            sb.appendLine()
+            sb.appendLine("LISTA DELLA SPESA SETTIMANALE (dal piano effettivo)")
+            context.shoppingList.groupBy { it.category }.forEach { (cat, items) ->
+                sb.appendLine("  ${cat.label}: " + items.joinToString { "${it.foodName} ${it.totalGrams.toInt()} g" })
+            }
+        }
+
         return sb.toString()
     }
 }

@@ -7,8 +7,11 @@ import com.fitcoach.app.data.remote.ChatMessageDto
 import com.fitcoach.app.data.remote.SecureKeyStore
 import com.fitcoach.app.data.repository.ChangeRepository
 import com.fitcoach.app.data.repository.ChatRepository
+import com.fitcoach.app.data.repository.NutritionDiaryRepository
 import com.fitcoach.app.data.repository.NutritionRepository
 import com.fitcoach.app.data.repository.ProgressRepository
+import com.fitcoach.app.data.repository.ShoppingRepository
+import com.fitcoach.app.data.repository.SubstitutionRepository
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
 import com.fitcoach.app.domain.adaptive.WeightAnalyzer
@@ -34,6 +37,9 @@ class CoachService @Inject constructor(
     private val progressRepository: ProgressRepository,
     private val changeRepository: ChangeRepository,
     private val chatRepository: ChatRepository,
+    private val diaryRepository: NutritionDiaryRepository,
+    private val shoppingRepository: ShoppingRepository,
+    private val substitutionRepository: SubstitutionRepository,
     private val aiClient: AiClient,
     private val secureKeyStore: SecureKeyStore
 ) {
@@ -53,6 +59,13 @@ class CoachService @Inject constructor(
             ?.take(15)
             ?: emptyList()
 
+        val today = NutritionDiaryRepository.todayEpochDay()
+        val weekStart = NutritionDiaryRepository.weekStart(today)
+        val todayBalance = runCatching { diaryRepository.balanceForDay(today) }.getOrNull()
+        val weekly = runCatching { diaryRepository.weeklySummary(weekStart) }.getOrNull()
+        val shopping = runCatching { shoppingRepository.itemsForWeek(weekStart) }.getOrNull() ?: emptyList()
+        val substitutions = runCatching { substitutionRepository.history() }.getOrNull() ?: emptyList()
+
         return CoachContext(
             profile = profile,
             nutritionPlan = nutrition,
@@ -60,7 +73,11 @@ class CoachService @Inject constructor(
             recentPerformances = recentPerf,
             weightTrend = if (weights.isEmpty()) null else WeightAnalyzer.trend(weights),
             recentChanges = changes.sortedByDescending { it.createdAt },
-            history = history
+            history = history,
+            todayBalance = todayBalance,
+            weeklyNutrition = weekly,
+            shoppingList = shopping,
+            substitutions = substitutions
         )
     }
 
