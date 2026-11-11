@@ -27,3 +27,6 @@ keystore.properties
 
 # Kotlin
 .kotlin/
+
+# Build artifacts / dist
+/dist/
