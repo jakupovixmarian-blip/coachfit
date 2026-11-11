@@ -37,9 +37,35 @@ Solo la chat AI richiede Internet.
 ## Interfaccia
 
 - Dark mode predefinita, nero/antracite con accento verde smeraldo.
-- Bottom bar: **Dashboard · Alimentazione · Allenamento · Progressi · Coach AI**.
+- Bottom bar: **Dashboard · Piano · Spesa · Diario · Workout · Progressi · Coach**.
 - La dashboard mostra giorno, tipo di giornata (HIGH/MEDIUM/LOW), calorie, macro,
   pasti previsti, allenamento del giorno, prossima notifica e stato progressi.
+
+## Sistema nutrizionale integrato
+
+Le quattro funzionalità (piano, spesa, sostituzioni, diario) condividono lo **stesso
+database alimentare** e gli **stessi identificativi** del piano: non sono moduli separati.
+Ogni modifica al piano si riflette automaticamente sulla spesa e sul diario.
+
+- **Piano alimentare** (`MealPlanGenerator`) – 7 giorni con grammature, crudo/cotto,
+  alternative equivalenti, target calorico/macro coerenti e verificati matematicamente.
+- **Sostituzione vincolata** (`FoodSubstitutionEngine`) – non sostituisce mai "a parità di
+  grammi": calcola la quantità del sostituto sul macro dominante e verifica calorie e
+  macro del **pasto** e della **giornata** entro tolleranze configurabili (default: kcal 5%,
+  P/C/G 10%). Blocca le sostituzioni che superano il limite calorico approvato. Se un solo
+  alimento non basta, propone una **sostituzione combinata** (sostituto + alimento di
+  riequilibrio) calcolata matematicamente, mostrando il controllo preventivo (prima/dopo).
+- **Lista della spesa** (`ShoppingListEngine`) – aggregata dal piano effettivo (es. pollo
+  lun 150 g + mar 200 g = 350 g in una voce), per categoria merceologica, con spunta,
+  "già in casa", aggiunta manuale, modifica quantità, avanzamento, condivisione e storico
+  settimanale. Una sostituzione aggiorna la lista e segnala gli stati spuntati invalidati.
+- **Diario nutrizionale** (`NutritionDiaryEngine`) – spunta degli alimenti del piano,
+  alimenti extra fuori piano registrati fedelmente, modifica quantità, spostamento tra
+  pasti. Mostra **Obiettivo / Consumato / Rimanente** distinti (con eccedenze esplicite),
+  niente doppio conteggio, isolamento tra giorni e riepilogo settimanale sui consumi reali.
+
+Il **Coach AI** riceve nel contesto anche il bilancio del giorno, il riepilogo settimanale,
+la lista della spesa e lo storico delle sostituzioni: risponde usando solo dati reali.
 
 ## Motori principali (deterministici, testati)
 
@@ -72,6 +98,10 @@ Solo la chat AI richiede Internet.
 - `FatigueManager` – valuta calo di prestazioni, stagnazione, volume settimanale, qualità
   del recupero (sonno/RPE), dolore; non interpreta ogni stagnazione come richiesta di più
   volume.
+- **Sessione guidata** – cronometro della durata sessione, **cronometro di recupero**
+  (con la durata consigliata dal motore), registrazione carico/ripetizioni/RIR per ogni
+  serie, promemoria dell'**ultima volta** per esercizio (top serie, serie, ripetizioni) e
+  **storico delle sessioni** (volume, durata, RPE, dolore).
 - `AdaptiveEngine` + `WeightAnalyzer` – media settimanale del peso, trend, aderenza,
   performance; genera proposte strutturate (situazione, problema, dati, modifica,
   motivazione, risultato atteso, controindicazioni).
@@ -169,10 +199,13 @@ app/src/main/java/com/fitcoach/app/
 
 ## Test
 
-Test unitari dei motori matematici (**106 test**, 10 classi): energia (incl. NEAT da stile
+Test unitari dei motori matematici (**134 test**, 13 classi): energia (incl. NEAT da stile
 di vita), carb cycling (incl. attivazione condizionale), generazione pasti (incl. n° pasti e
-preferenza colazione), split, recuperi, tecniche d'intensità, fatica, progressive overload,
-analisi peso, motore adattivo.
+preferenza colazione), sostituzione alimentare vincolata (pollo→tonno, rifiuto oltre il
+limite calorico, sostituzione combinata, tolleranze), lista della spesa (somma alimenti
+ripetuti, categorie, conservazione spunta), diario nutrizionale (obiettivo/consumato/
+rimanente, niente doppio conteggio, extra, isolamento giorni), split, recuperi, tecniche
+d'intensità, fatica, progressive overload, analisi peso, motore adattivo.
 
 ```bash
 ./gradlew :app:testDebugUnitTest
