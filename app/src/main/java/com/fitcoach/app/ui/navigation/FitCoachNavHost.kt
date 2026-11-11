@@ -18,6 +18,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.fitcoach.app.ui.coach.CoachScreen
 import com.fitcoach.app.ui.dashboard.DashboardScreen
+import com.fitcoach.app.ui.diary.DiaryScreen
 import com.fitcoach.app.ui.nutrition.NutritionScreen
 import com.fitcoach.app.ui.onboarding.OnboardingScreen
 import com.fitcoach.app.ui.progress.ProgressScreen
@@ -26,6 +27,7 @@ import com.fitcoach.app.ui.settings.KnowledgeScreen
 import com.fitcoach.app.ui.settings.NotificationSettingsScreen
 import com.fitcoach.app.ui.settings.ProfileEditScreen
 import com.fitcoach.app.ui.settings.SettingsScreen
+import com.fitcoach.app.ui.shopping.ShoppingScreen
 import com.fitcoach.app.ui.workout.WorkoutScreen
 
 @Composable
@@ -53,6 +55,8 @@ fun FitCoachNavHost(navController: NavHostController) {
         ) {
             composable(Routes.DASHBOARD) { DashboardScreen(navController) }
             composable(Routes.NUTRITION) { NutritionScreen(navController) }
+            composable(Routes.SHOPPING) { ShoppingScreen(navController) }
+            composable(Routes.DIARY) { DiaryScreen(navController) }
             composable(Routes.WORKOUT) { WorkoutScreen(navController) }
             composable(Routes.PROGRESS) { ProgressScreen(navController) }
             composable(Routes.COACH) { CoachScreen(navController) }
