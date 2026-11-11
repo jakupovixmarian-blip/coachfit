@@ -46,6 +46,37 @@ fun AnamnesisScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
+    AnamnesisContent(
+        state = state,
+        onNavigateDashboard = { navController.navigate(Routes.DASHBOARD) },
+        onOpenSummary = viewModel::openSummary,
+        onCloseSummary = viewModel::closeSummary,
+        onConfirm = viewModel::confirm,
+        onSubmit = viewModel::submit,
+        onBack = viewModel::goBack,
+        onSkip = viewModel::skip,
+        onToggleOption = viewModel::toggleOption,
+        onUpdateInput = viewModel::updateInput
+    )
+}
+
+/**
+ * Contenuto della schermata, senza dipendenze da ViewModel/Navigazione: cosi e
+ * renderizzabile in isolamento (test/anteprime) e verificabile visivamente.
+ */
+@Composable
+internal fun AnamnesisContent(
+    state: AnamnesisUiState,
+    onNavigateDashboard: () -> Unit,
+    onOpenSummary: () -> Unit,
+    onCloseSummary: () -> Unit,
+    onConfirm: () -> Unit,
+    onSubmit: () -> Unit,
+    onBack: () -> Unit,
+    onSkip: () -> Unit,
+    onToggleOption: (String, Boolean) -> Unit,
+    onUpdateInput: (String) -> Unit
+) {
     if (state.loading) {
         LoadingBox(Modifier.fillMaxSize())
         return
@@ -77,97 +108,105 @@ fun AnamnesisScreen(
         }
         if (state.contradictions.isNotEmpty()) {
             SectionCard {
-                Text("Incongruenze rilevate", fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.error)
-                state.contradictions.forEach { c ->
-                    Text("· $c", style = MaterialTheme.typography.bodySmall,
+                Column {
+                    Text("Incongruenze rilevate", fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.error)
+                    state.contradictions.forEach { c ->
+                        Text("· $c", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         }
 
         if (state.confirmed && state.current == null) {
             SectionCard {
-                Text("Anamnesi confermata", fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary)
-                Text(
-                    "Ora puoi generare alimentazione e allenamento dalla Dashboard o dalle " +
-                        "rispettive sezioni.",
-                    style = MaterialTheme.typography.bodySmall, color = TextSecondary
-                )
-                Spacer(Modifier.height(8.dp))
-                Button(onClick = { navController.navigate(Routes.DASHBOARD) },
-                    modifier = Modifier.fillMaxWidth()) { Text("Vai alla Dashboard") }
-                OutlinedButton(onClick = { viewModel.openSummary() },
-                    modifier = Modifier.fillMaxWidth()) { Text("Rivedi il riepilogo") }
+                Column {
+                    Text("Anamnesi confermata", fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Ora puoi generare alimentazione e allenamento dalla Dashboard o dalle " +
+                            "rispettive sezioni.",
+                        style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Button(onClick = onNavigateDashboard,
+                        modifier = Modifier.fillMaxWidth()) { Text("Vai alla Dashboard") }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(onClick = onOpenSummary,
+                        modifier = Modifier.fillMaxWidth()) { Text("Rivedi il riepilogo") }
+                }
             }
         }
 
         val q = state.current
         if (q != null && !state.showSummary) {
             SectionCard {
-                Text(q.section.uppercase(), style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.height(4.dp))
-                Text(q.prompt, style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground)
-                if (q.hint.isNotBlank()) {
-                    Text(q.hint, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                }
-                Spacer(Modifier.height(12.dp))
+                Column {
+                    Text(q.section.uppercase(), style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.height(4.dp))
+                    Text(q.prompt, style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground)
+                    if (q.hint.isNotBlank()) {
+                        Text(q.hint, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                    }
+                    Spacer(Modifier.height(12.dp))
 
-                when (q.kind) {
-                    AnamnesisEngine.Kind.CHOICE -> {
-                        q.options.forEach { opt ->
-                            FilterChip(
-                                selected = state.selected.contains(opt),
-                                onClick = { viewModel.toggleOption(opt, multi = false) },
-                                label = { Text(opt) },
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                    when (q.kind) {
+                        AnamnesisEngine.Kind.CHOICE -> {
+                            q.options.forEach { opt ->
+                                FilterChip(
+                                    selected = state.selected.contains(opt),
+                                    onClick = { onToggleOption(opt, false) },
+                                    label = { Text(opt) },
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                                )
+                            }
+                        }
+                        AnamnesisEngine.Kind.MULTI -> {
+                            q.options.forEach { opt ->
+                                FilterChip(
+                                    selected = state.selected.contains(opt),
+                                    onClick = { onToggleOption(opt, true) },
+                                    label = { Text(opt) },
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                                )
+                            }
+                        }
+                        AnamnesisEngine.Kind.BOOL -> {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                FilterChip(
+                                    selected = state.input.equals("Si", true),
+                                    onClick = { onUpdateInput("Si") }, label = { Text("Sì") }
+                                )
+                                FilterChip(
+                                    selected = state.input.equals("No", true),
+                                    onClick = { onUpdateInput("No") }, label = { Text("No") }
+                                )
+                            }
+                        }
+                        else -> {
+                            OutlinedTextField(
+                                value = state.input,
+                                onValueChange = onUpdateInput,
+                                singleLine = q.kind != AnamnesisEngine.Kind.TEXT,
+                                label = { Text(labelFor(q)) },
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
-                    AnamnesisEngine.Kind.MULTI -> {
-                        q.options.forEach { opt ->
-                            FilterChip(
-                                selected = state.selected.contains(opt),
-                                onClick = { viewModel.toggleOption(opt, multi = true) },
-                                label = { Text(opt) },
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
-                            )
-                        }
-                    }
-                    AnamnesisEngine.Kind.BOOL -> {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FilterChip(
-                                selected = state.input.equals("Si", true),
-                                onClick = { viewModel.updateInput("Si") }, label = { Text("Sì") }
-                            )
-                            FilterChip(
-                                selected = state.input.equals("No", true),
-                                onClick = { viewModel.updateInput("No") }, label = { Text("No") }
-                            )
-                        }
-                    }
-                    else -> {
-                        OutlinedTextField(
-                            value = state.input,
-                            onValueChange = { viewModel.updateInput(it) },
-                            singleLine = q.kind != AnamnesisEngine.Kind.TEXT,
-                            label = { Text(labelFor(q)) },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
 
-                Spacer(Modifier.height(12.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { viewModel.goBack() }) { Text("Indietro") }
-                    if (!q.required) {
-                        OutlinedButton(onClick = { viewModel.skip() }) { Text("Salta") }
-                    }
-                    Button(onClick = { viewModel.submit() }, modifier = Modifier.weight(1f)) {
-                        Text("Avanti")
+                    Spacer(Modifier.height(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = onBack) { Text("Indietro") }
+                        if (!q.required) {
+                            OutlinedButton(onClick = onSkip) { Text("Salta") }
+                        }
+                        Button(onClick = onSubmit, modifier = Modifier.weight(1f)) {
+                            Text("Avanti")
+                        }
                     }
                 }
             }
@@ -175,29 +214,31 @@ fun AnamnesisScreen(
 
         if (state.showSummary || (state.current == null && !state.confirmed)) {
             SectionCard {
-                Text("Riepilogo anamnesi", style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                Spacer(Modifier.height(8.dp))
-                Text(state.summary.ifBlank { AnamnesisEngine.summary(state.profile) },
-                    style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                Spacer(Modifier.height(12.dp))
-                if (state.missingRequired.isNotEmpty()) {
-                    Text("Domande obbligatorie mancanti:", fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.error)
-                    state.missingRequired.forEach {
-                        Text("· $it", style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error)
-                    }
+                Column {
+                    Text("Riepilogo anamnesi", style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                     Spacer(Modifier.height(8.dp))
-                }
-                Button(
-                    onClick = { viewModel.confirm() },
-                    enabled = state.missingRequired.isEmpty(),
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Conferma anamnesi") }
-                if (state.showSummary) {
-                    OutlinedButton(onClick = { viewModel.closeSummary() },
-                        modifier = Modifier.fillMaxWidth()) { Text("Torna alle domande") }
+                    Text(state.summary.ifBlank { AnamnesisEngine.summary(state.profile) },
+                        style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                    Spacer(Modifier.height(12.dp))
+                    if (state.missingRequired.isNotEmpty()) {
+                        Text("Domande obbligatorie mancanti:", fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error)
+                        state.missingRequired.forEach {
+                            Text("· $it", style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error)
+                        }
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    Button(
+                        onClick = onConfirm,
+                        enabled = state.missingRequired.isEmpty(),
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Conferma anamnesi") }
+                    if (state.showSummary) {
+                        OutlinedButton(onClick = onCloseSummary,
+                            modifier = Modifier.fillMaxWidth()) { Text("Torna alle domande") }
+                    }
                 }
             }
         }
