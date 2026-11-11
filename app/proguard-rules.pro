@@ -27,3 +27,11 @@
 
 # Hilt / Dagger
 -dontwarn dagger.hilt.**
+
+# Tink / errorprone (transitive da security-crypto)
+-dontwarn com.google.errorprone.annotations.CanIgnoreReturnValue
+-dontwarn com.google.errorprone.annotations.CheckReturnValue
+-dontwarn com.google.errorprone.annotations.Immutable
+-dontwarn com.google.errorprone.annotations.RestrictedApi
+-dontwarn com.google.crypto.tink.**
+-keep class com.google.crypto.tink.** { *; }

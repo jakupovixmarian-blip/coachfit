@@ -93,3 +93,33 @@ AGP 8.7.3 · Kotlin 2.0.21 · KSP 2.0.21-1.0.28 · Compose BOM 2024.12.01 · Roo
 - Controlli allergie/intolleranze/limitazioni negli algoritmi.
 - Blocco deficit estremi (floor calorico) e volumi irragionevoli.
 - Validazione matematica calorie/macro su ogni piano.
+
+## 6. Stato di avanzamento (aggiornato)
+
+Tutte le fasi 1–7 sono state implementate e verificate con build e test.
+
+**Layer aggiunti oltre alla FASE 1-2-3 iniziale:**
+- `domain/coach/`: `CoachAction`, `CoachContext`, `CoachPromptBuilder`, `CoachActionParser`,
+  `CoachService` — contesto strutturato e azioni controllate.
+- `data/repository/CoachActionExecutor.kt`: applica le 5 azioni proposte in modo
+  transazionale, con payload di rollback per l'annullamento.
+- `domain/usecase/`: `GenerateProgramsUseCase`, `RunWeeklyCheckInUseCase`.
+- `data/remote/`: `AiApi`, `AiClient`, `AiProviderConfig`, `SecureKeyStore` (chiavi cifrate),
+  `di/NetworkModule`.
+- `data/repository/ExportRepository.kt`: export CSV (peso, circonferenze, sedute, carichi,
+  check-in) e JSON completo.
+- UI completa: `dashboard`, `nutrition`, `workout`, `progress`, `coach`, `onboarding`,
+  `settings` (provider AI, notifiche, profilo, export) + `components` (inclusi i grafici
+  Canvas) + `navigation` (NavHost + bottom bar).
+
+**Verifiche:**
+- `./gradlew :app:testDebugUnitTest` → 67 test, 0 fallimenti (7 classi di test sui motori).
+- `./gradlew :app:assembleDebug` → APK debug generato (`app/build/outputs/apk/debug/app-debug.apk`).
+- `./gradlew :app:assembleRelease` → release firmabile (firma attiva se `keystore.properties` presente).
+
+**Nota sui grafici:** al posto di Vico (alpha) è stato implementato un grafico a linee con
+Compose Canvas: nessuna dipendenza esterna, pienamente offline e con etichette leggibili.
+
+**Nota backup:** l'export (CSV/JSON) copre il requisito di esportazione; il backup/ripristino
+completo del database può essere esteso riutilizzando `ExportRepository` e la serializzazione
+Room già presente.

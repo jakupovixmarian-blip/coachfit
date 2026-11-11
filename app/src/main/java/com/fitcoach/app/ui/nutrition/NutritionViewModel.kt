@@ -1,0 +1,156 @@
+package com.fitcoach.app.ui.nutrition
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.fitcoach.app.data.repository.FoodRepository
+import com.fitcoach.app.data.repository.NutritionRepository
+import com.fitcoach.app.data.repository.UserRepository
+import com.fitcoach.app.domain.model.CarbDayType
+import com.fitcoach.app.domain.model.FoodItem
+import com.fitcoach.app.domain.model.MealEntry
+import com.fitcoach.app.domain.model.NutritionDay
+import com.fitcoach.app.domain.model.NutritionPlan
+import com.fitcoach.app.domain.nutrition.FoodFilter
+import com.fitcoach.app.domain.nutrition.MealPlanGenerator
+import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
+import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+data class NutritionUiState(
+    val loading: Boolean = true,
+    val plan: NutritionPlan? = null,
+    val selectedDayIndex: Int = 0,
+    val message: String? = null,
+    val generating: Boolean = false,
+    // Sostituzione alimentare
+    val substitutionEntry: MealEntry? = null,
+    val substitutes: List<FoodItem> = emptyList()
+) {
+    val selectedDay: NutritionDay?
+        get() = plan?.days?.firstOrNull { it.dayIndex == selectedDayIndex }
+}
+
+@HiltViewModel
+class NutritionViewModel @Inject constructor(
+    private val userRepository: UserRepository,
+    private val nutritionRepository: NutritionRepository,
+    private val foodRepository: FoodRepository,
+    private val generatePrograms: GenerateProgramsUseCase
+) : ViewModel() {
+
+    private val _state = MutableStateFlow(NutritionUiState())
+    val state: StateFlow<NutritionUiState> = _state.asStateFlow()
+
+    init {
+        load()
+    }
+
+    fun load() {
+        viewModelScope.launch {
+            val plan = nutritionRepository.getActivePlan()
+            _state.value = _state.value.copy(
+                loading = false,
+                plan = plan,
+                selectedDayIndex = _state.value.selectedDayIndex.coerceIn(0, 6)
+            )
+        }
+    }
+
+    fun selectDay(index: Int) {
+        _state.value = _state.value.copy(selectedDayIndex = index.coerceIn(0, 6))
+    }
+
+    fun generatePlan() {
+        viewModelScope.launch {
+            val profile = userRepository.get()
+            if (profile == null || !profile.isComplete) {
+                _state.value = _state.value.copy(message = "Completa prima il profilo.")
+                return@launch
+            }
+            _state.value = _state.value.copy(generating = true, message = null)
+            val result = generatePrograms(
+                profile = profile,
+                trainingDayIndices = WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek),
+                regenerateNutrition = true,
+                regenerateWorkout = false
+            )
+            val message = when (result) {
+                is GenerateProgramsUseCase.Result.Success -> "Piano alimentare generato."
+                is GenerateProgramsUseCase.Result.MissingData ->
+                    "Dati mancanti: ${result.missing.joinToString()}."
+                is GenerateProgramsUseCase.Result.Error -> result.message
+            }
+            val plan = nutritionRepository.getActivePlan()
+            _state.value = _state.value.copy(generating = false, plan = plan, message = message)
+        }
+    }
+
+    fun startSubstitution(entry: MealEntry) {
+        viewModelScope.launch {
+            val profile = userRepository.get() ?: return@launch
+            val all = foodRepository.getAll()
+            val original = all.firstOrNull { it.id == entry.foodItemId }
+                ?: all.firstOrNull { it.name == entry.foodName }
+            val subs = if (original != null) {
+                FoodFilter.findSubstitutes(original, all, profile)
+            } else {
+                FoodFilter.allowedFoods(all, profile).take(6)
+            }
+            _state.value = _state.value.copy(substitutionEntry = entry, substitutes = subs)
+        }
+    }
+
+    fun cancelSubstitution() {
+        _state.value = _state.value.copy(substitutionEntry = null, substitutes = emptyList())
+    }
+
+    fun applySubstitution(substitute: FoodItem) {
+        viewModelScope.launch {
+            val entry = _state.value.substitutionEntry ?: return@launch
+            val all = foodRepository.getAll()
+            val original = all.firstOrNull { it.id == entry.foodItemId }
+                ?: all.firstOrNull { it.name == entry.foodName }
+            val grams = if (original != null) {
+                MealPlanGenerator.substituteGrams(original, entry.grams, substitute)
+            } else {
+                entry.grams
+            }
+            val factor = grams / 100.0
+            nutritionRepository.replaceEntryWithFood(
+                entryId = entry.id,
+                newFoodId = substitute.id,
+                newFoodName = substitute.name,
+                grams = grams,
+                kcal = substitute.kcalPer100g * factor,
+                protein = substitute.proteinPer100g * factor,
+                carbs = substitute.carbsPer100g * factor,
+                fat = substitute.fatPer100g * factor
+            )
+            _state.value = _state.value.copy(
+                substitutionEntry = null,
+                substitutes = emptyList(),
+                message = "Sostituzione applicata: ${substitute.name} (${grams.toInt()} g)."
+            )
+            load()
+        }
+    }
+
+    fun confirmMeal(mealId: Long, confirmed: Boolean) {
+        viewModelScope.launch {
+            nutritionRepository.confirmMeal(mealId, confirmed)
+            _state.value = _state.value.copy(
+                message = if (confirmed) "Pasto confermato." else "Conferma rimossa."
+            )
+            load()
+        }
+    }
+
+    fun consumeMessage() {
+        _state.value = _state.value.copy(message = null)
+    }
+}

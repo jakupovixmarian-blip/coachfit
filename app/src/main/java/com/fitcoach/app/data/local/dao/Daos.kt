@@ -133,6 +133,9 @@ interface NutritionDayDao {
     @Query("UPDATE nutrition_days SET targetKcal = :kcal, targetProtein = :protein, targetCarbs = :carbs, targetFat = :fat WHERE id = :id")
     suspend fun updateTargets(id: Long, kcal: Double, protein: Double, carbs: Double, fat: Double)
 
+    @Query("UPDATE nutrition_days SET workoutDayIndex = :workoutDayIndex WHERE id = :id")
+    suspend fun updateWorkoutDayIndex(id: Long, workoutDayIndex: Int?)
+
     @Query("DELETE FROM nutrition_days WHERE planId = :planId")
     suspend fun deleteForPlan(planId: Long)
 }
@@ -144,6 +147,9 @@ interface MealDao {
 
     @Query("SELECT * FROM meals WHERE nutritionDayId = :dayId ORDER BY time")
     suspend fun getForDay(dayId: Long): List<MealEntity>
+
+    @Query("SELECT * FROM meals WHERE id = :id")
+    suspend fun getById(id: Long): MealEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(meals: List<MealEntity>): List<Long>
@@ -289,6 +295,9 @@ interface PlannedExerciseDao {
     @Query("UPDATE planned_exercises SET exerciseId = :exerciseId, exerciseName = :name, technique = :technique WHERE id = :id")
     suspend fun substituteExercise(id: Long, exerciseId: Long, name: String, technique: String)
 
+    @Query("UPDATE planned_exercises SET sets = :sets WHERE id = :id")
+    suspend fun updateSets(id: Long, sets: Int)
+
     @Delete
     suspend fun delete(item: PlannedExerciseEntity)
 }
@@ -300,6 +309,9 @@ interface WorkoutSessionDao {
 
     @Query("SELECT * FROM workout_sessions ORDER BY dateEpochDay DESC LIMIT :limit")
     suspend fun getRecent(limit: Int): List<WorkoutSessionEntity>
+
+    @Query("SELECT * FROM workout_sessions ORDER BY dateEpochDay DESC")
+    suspend fun getAll(): List<WorkoutSessionEntity>
 
     @Query("SELECT * FROM workout_sessions WHERE dateEpochDay = :epochDay ORDER BY id DESC LIMIT 1")
     suspend fun getForDay(epochDay: Long): WorkoutSessionEntity?
@@ -348,6 +360,9 @@ interface ExercisePerformanceDao {
 
     @Query("SELECT * FROM exercise_performance ORDER BY dateEpochDay DESC")
     fun observeAll(): Flow<List<ExercisePerformanceEntity>>
+
+    @Query("SELECT * FROM exercise_performance ORDER BY dateEpochDay DESC")
+    suspend fun getAll(): List<ExercisePerformanceEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(perf: ExercisePerformanceEntity): Long
