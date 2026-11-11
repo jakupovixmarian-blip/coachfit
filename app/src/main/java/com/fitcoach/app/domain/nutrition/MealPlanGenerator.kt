@@ -167,6 +167,23 @@ object MealPlanGenerator {
     /** Numero massimo di fonti proteiche principali (varieta senza perdere densita). */
     private const val MAX_PRIMARY_PROTEINS = 8
 
+    /** Sotto questa quota mensile pro capite il budget e considerato "stretto". */
+    private const val MONTHLY_BUDGET_TIGHT_EUR = 220.0
+
+    /**
+     * Rango di convenienza (0 = migliore) degli alimenti con prezzo noto, per
+     * costo per grammo di proteine. Serve a preferire le fonti economiche quando
+     * il budget e stretto. Alimenti senza prezzo restano fuori (nessun dato inventato).
+     */
+    private fun profileCostRanks(allowed: List<FoodItem>): Map<String, Double> {
+        val priced = allowed.mapNotNull { f ->
+            BudgetEngine.costPerProteinGram(f)?.let { f.name to it }
+        }.sortedBy { it.second }
+        if (priced.isEmpty()) return emptyMap()
+        val n = priced.size
+        return priced.mapIndexed { i, (name, _) -> name to (i.toDouble() / n) }.toMap()
+    }
+
     private fun buildBank(allowed: List<FoodItem>): FoodBank {
         fun byCat(vararg cats: String) = allowed.filter { it.category in cats }
         val allCarbs = byCat("Cereali", "Tuberi")
@@ -233,7 +250,7 @@ object MealPlanGenerator {
         startDayIndex: Int = 0
     ): List<GeneratedDay> {
         val allowed = FoodFilter.allowedFoods(foodDatabase, profile)
-        val bank = applyPreferences(buildBank(allowed), profile)
+        val bank = applyPreferences(buildBank(allowed), profile, allowed)
         val shares = resolveShares(profile)
 
         return (0 until 7).map { d ->
@@ -274,13 +291,22 @@ object MealPlanGenerator {
      * di alimenti. Non rimuove mai l'intera categoria: se un filtro svuota un pool,
      * il pool originale viene mantenuto per garantire un piano completo.
      */
-    private fun applyPreferences(bank: FoodBank, profile: UserProfile): FoodBank {
+    private fun applyPreferences(bank: FoodBank, profile: UserProfile, allowed: List<FoodItem>): FoodBank {
         fun filter(pool: List<FoodItem>, pred: (FoodItem) -> Boolean): List<FoodItem> =
             pool.filter(pred).ifEmpty { pool }
 
         val disliked = profile.dislikedFoods.map { it.lowercase() }
         val liked = profile.likedFoods.map { it.lowercase() }
         val lowBudget = profile.weeklyFoodBudgetEur?.let { it < 70.0 } ?: false
+        // Budget mensile: se la quota alimentare attribuibile all'utente e bassa,
+        // privilegiamo le fonti proteiche con miglior costo per grammo di proteine.
+        val monthlyQuota = BudgetEngine.attributableBudget(profile)
+        val tightBudget = monthlyQuota != null && monthlyQuota < MONTHLY_BUDGET_TIGHT_EUR
+        val costRank: Map<String, Double> = if (tightBudget) {
+            profileCostRanks(allowed)
+        } else {
+            emptyMap()
+        }
 
         fun score(f: FoodItem): Int {
             var s = 0
@@ -288,6 +314,7 @@ object MealPlanGenerator {
             if (disliked.any { f.name.lowercase().contains(it) }) s += 100
             if (lowBudget && f.name in premiumProteins) s += 50
             if (lowBudget && f.name in economyProteins) s -= 5
+            if (tightBudget && f.name in costRank) s += (costRank.getValue(f.name) * 40).toInt()
             if (profile.prefersSimpleFoods && f.name in simpleCarbs) s -= 3
             return s
         }

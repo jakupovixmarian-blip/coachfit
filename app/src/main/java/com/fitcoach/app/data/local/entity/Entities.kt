@@ -6,6 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.fitcoach.app.domain.model.AiProvider
 import com.fitcoach.app.domain.model.BreakfastPreference
+import com.fitcoach.app.domain.model.BudgetScope
 import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.ChangeDomain
 import com.fitcoach.app.domain.model.ChangeStatus
@@ -107,6 +108,16 @@ data class UserProfileEntity(
     val desiredOutcome: String = "",
     val targetTimelineWeeks: Int? = null,
 
+    // Budget mensile
+    val monthlyFoodBudgetEur: Double? = null,
+    val budgetScope: BudgetScope = BudgetScope.PERSONAL_ONLY,
+    val budgetPersons: Int = 1,
+
+    // Anamnesi (gate di generazione)
+    val anamnesisCompleted: Boolean = false,
+    val anamnesisConfirmedAt: Long? = null,
+    val anamnesisSummary: String = "",
+
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
@@ -134,7 +145,14 @@ data class UserPreferencesEntity(
 
 // -------------------- NUTRIZIONE --------------------
 
-@Entity(tableName = "food_database", indices = [Index(value = ["name"], unique = true)])
+@Entity(
+    tableName = "food_database",
+    indices = [
+        Index(value = ["name"], unique = true),
+        Index(value = ["normalizedName"]),
+        Index(value = ["sourceId"])
+    ]
+)
 data class FoodItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
@@ -148,7 +166,19 @@ data class FoodItemEntity(
     val source: String,
     val isCustom: Boolean = false,
     val tags: List<String> = emptyList(),
-    val substituteNames: List<String> = emptyList()
+    val substituteNames: List<String> = emptyList(),
+    /** ID nella fonte esterna (codice OFF, fdcId USDA). Null per alimenti seed/creati a mano. */
+    val sourceId: String? = null,
+    /** Nome normalizzato per il riconoscimento duplicati. */
+    val normalizedName: String = "",
+    /** Marca commerciale (prodotti Open Food Facts). */
+    val brand: String? = null,
+    /** Prezzo indicativo EUR/kg. Null = non noto (il costo non viene inventato). */
+    val pricePerKgEur: Double? = null,
+    /** Timestamp di acquisizione (da fonte esterna) in millis. 0 per seed. */
+    val acquiredAt: Long = 0,
+    /** Timestamp di ultimo aggiornamento in millis. 0 per seed. */
+    val updatedAt: Long = 0
 )
 
 @Entity(tableName = "nutrition_plans")

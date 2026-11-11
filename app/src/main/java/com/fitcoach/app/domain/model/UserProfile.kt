@@ -26,6 +26,14 @@ data class UserProfile(
     val calorieTargetOverride: Double? = null,
     val mealsPerDay: Int = 5,
 
+    // ---- Budget mensile ----
+    /** Budget alimentare mensile in EUR (il vincolo effettivo richiesto dalla spec). */
+    val monthlyFoodBudgetEur: Double? = null,
+    /** Ambito del budget: personale, condiviso o totale. */
+    val budgetScope: BudgetScope = BudgetScope.PERSONAL_ONLY,
+    /** Numero di persone coperte dal budget (>=1). */
+    val budgetPersons: Int = 1,
+
     // ---- Stile di vita ----
     val workType: WorkType = WorkType.SEDENTARY,
     val workShift: WorkShift = WorkShift.NONE,
@@ -75,11 +83,57 @@ data class UserProfile(
     val desiredOutcome: String = "",
     val targetTimelineWeeks: Int? = null,
 
+    // ---- Anamnesi (gate di generazione) ----
+    /** True quando l'anamnesi guidata e stata completata e confermata dall'utente. */
+    val anamnesisCompleted: Boolean = false,
+    /** Timestamp della conferma dell'anamnesi (null se non confermata). */
+    val anamnesisConfirmedAt: Long? = null,
+    /** Riepilogo testuale dell'anamnesi mostrato e confermato dall'utente. */
+    val anamnesisSummary: String = "",
+
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 ) {
     val isComplete: Boolean
         get() = ageYears != null && heightCm != null && weightKg != null
+
+    /**
+     * Anamnesi pronta: la generazione dei programmi e consentita solo dopo la
+     * conferma esplicita dell'anamnesi (spec. §3.7). I dati essenziali devono
+     * essere presenti e non devono esserci contraddizioni bloccanti.
+     */
+    val isAnamnesisReady: Boolean
+        get() = anamnesisCompleted && missingEssentialData.isEmpty()
+
+    /** Contraddizioni rilevate nell'anamnesi (da correggere prima di confermare). */
+    val anamnesisContradictions: List<String>
+        get() = buildList {
+            val days = trainingDaysPerWeek
+            if (days > 7) add("I giorni di allenamento non possono superare 7.")
+            val freq = trainingFrequencyPerWeek
+            if (freq != null && freq > days && days > 0) {
+                add("La frequenza dichiarata ($freq) supera i giorni disponibili ($days).")
+            }
+            val age = ageYears
+            if (age != null && age < 14) add("Età inferiore a 14 anni: richiedere supervisione medica.")
+            val sleep = sleepHours
+            if (sleep != null && sleep <= 0) add("Le ore di sonno devono essere positive.")
+            val bf = bodyFatPercent
+            if (bf != null && (bf < 3 || bf > 60)) add("Percentuale di massa grassa fuori intervallo plausibile.")
+        }
+
+    /** Campi dell'anamnesi ancora mancanti (oltre ai dati essenziali). */
+    val missingAnamnesisData: List<String>
+        get() = buildList {
+            addAll(missingEssentialData)
+            if (goal == null) add("obiettivo")
+            if (availableEquipment.isEmpty()) add("attrezzatura")
+            if (breakfastPreference == BreakfastPreference.SWEET && likedFoods.isEmpty() &&
+                dislikedFoods.isEmpty()
+            ) {
+                // informativo, non bloccante
+            }
+        }
 
     /**
      * Dati indispensabili per generare programmi personalizzati. Se mancano,

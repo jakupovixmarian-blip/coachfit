@@ -91,11 +91,14 @@ class ProfileEditViewModel @Inject constructor(
             val message = if (_state.value.regenerate) {
                 when (val result = generatePrograms(
                     profile = updated,
-                    trainingDayIndices = WorkoutPlanBuilder.defaultTrainingDays(updated.trainingDaysPerWeek)
+                    trainingDayIndices = WorkoutPlanBuilder.defaultTrainingDays(updated.trainingDaysPerWeek),
+                    requireAnamnesis = false
                 )) {
                     is GenerateProgramsUseCase.Result.Success -> "Profilo aggiornato e programmi rigenerati."
                     is GenerateProgramsUseCase.Result.MissingData ->
                         "Profilo salvato, ma dati mancanti: ${result.missing.joinToString()}."
+                    is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed ->
+                        "Profilo salvato. Completa l'anamnesi per rigenerare i programmi."
                     is GenerateProgramsUseCase.Result.Error -> "Profilo salvato. ${result.message}"
                 }
             } else {

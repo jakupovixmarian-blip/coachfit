@@ -27,6 +27,7 @@ enum class TopLevelDestination(
 
 object Routes {
     const val ONBOARDING = "onboarding"
+    const val ANAMNESIS = "anamnesis"
     const val DASHBOARD = "dashboard"
     const val NUTRITION = "nutrition"
     const val SHOPPING = "shopping"

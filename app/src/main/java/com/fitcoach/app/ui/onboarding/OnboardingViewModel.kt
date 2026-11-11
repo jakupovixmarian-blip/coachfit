@@ -6,6 +6,7 @@ import com.fitcoach.app.data.repository.PreferencesRepository
 import com.fitcoach.app.data.repository.ProgressRepository
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.domain.model.BreakfastPreference
+import com.fitcoach.app.domain.model.BudgetScope
 import com.fitcoach.app.domain.model.CookingTimeAvailable
 import com.fitcoach.app.domain.model.DietaryPreference
 import com.fitcoach.app.domain.model.Equipment
@@ -20,6 +21,7 @@ import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WeightRecord
 import com.fitcoach.app.domain.model.WorkShift
 import com.fitcoach.app.domain.model.WorkType
+import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
 import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -77,6 +79,9 @@ data class OnboardingUiState(
     val mealPrepPossible: Boolean = false,
     val prefersSimpleFoods: Boolean = true,
     val budgetEur: String = "",
+    val monthlyBudgetEur: String = "",
+    val budgetScope: BudgetScope = BudgetScope.PERSONAL_ONLY,
+    val budgetPersons: Int = 1,
     // Salute
     val physicalLimitations: String = "",
     val movementsToAvoid: String = "",
@@ -224,6 +229,13 @@ class OnboardingViewModel @Inject constructor(
                 physicalLimitations = s.physicalLimitations.split(",", ";").map { it.trim() }.filter { it.isNotBlank() },
                 movementsToAvoid = s.movementsToAvoid.split(",", ";").map { it.trim() }.filter { it.isNotBlank() },
                 weeklyFoodBudgetEur = s.budgetEur.replace(',', '.').toDoubleOrNull(),
+                monthlyFoodBudgetEur = s.monthlyBudgetEur.replace(',', '.').toDoubleOrNull()
+                    ?.takeIf { it > 0 },
+                budgetScope = s.budgetScope,
+                budgetPersons = s.budgetPersons.coerceAtLeast(1),
+                anamnesisCompleted = false,
+                anamnesisConfirmedAt = null,
+                anamnesisSummary = "",
                 mealsPerDay = s.mealsPerDay,
                 breakfastPreference = s.breakfastPreference,
                 likedFoods = s.likedFoods.split(",", ";").map { it.trim() }.filter { it.isNotBlank() },
@@ -240,23 +252,9 @@ class OnboardingViewModel @Inject constructor(
                 WeightRecord(dateEpochDay = LocalDate.now().toEpochDay(), weightKg = weight)
             )
 
-            val result = generatePrograms(
-                profile = profile,
-                trainingDayIndices = WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek)
-            )
-            when (result) {
-                is GenerateProgramsUseCase.Result.Success -> {
-                    _state.value = _state.value.copy(
-                        saving = false, finished = true, warnings = result.warnings
-                    )
-                }
-                is GenerateProgramsUseCase.Result.MissingData ->
-                    _state.value = _state.value.copy(
-                        saving = false, error = "Dati mancanti: ${result.missing.joinToString()}."
-                    )
-                is GenerateProgramsUseCase.Result.Error ->
-                    _state.value = _state.value.copy(saving = false, error = result.message)
-            }
+            // La generazione dei programmi avviene SOLO dopo la conferma
+            // dell'anamnesi guidata (spec. §3.7): qui salviamo il profilo di base.
+            _state.value = _state.value.copy(saving = false, finished = true)
         }
     }
 }

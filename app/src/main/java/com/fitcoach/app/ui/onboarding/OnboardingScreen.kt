@@ -28,6 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.fitcoach.app.domain.model.BreakfastPreference
+import com.fitcoach.app.domain.model.BudgetScope
 import com.fitcoach.app.domain.model.CookingTimeAvailable
 import com.fitcoach.app.domain.model.DietaryPreference
 import com.fitcoach.app.domain.model.Equipment
@@ -70,7 +71,8 @@ fun OnboardingScreen(
                 color = MaterialTheme.colorScheme.onBackground)
             Spacer(Modifier.height(10.dp))
             Text(
-                "Piano alimentare e scheda di allenamento generati.",
+                "Ora completiamo l'anamnesi guidata: il coach ti farà alcune domande " +
+                    "di approfondimento prima di generare alimentazione e allenamento.",
                 style = MaterialTheme.typography.bodyMedium, color = TextSecondary
             )
             if (state.warnings.isNotEmpty()) {
@@ -80,10 +82,10 @@ fun OnboardingScreen(
                 }
             }
             Spacer(Modifier.height(20.dp))
-            Button(onClick = { navController.navigate(Routes.DASHBOARD) {
+            Button(onClick = { navController.navigate(Routes.ANAMNESIS) {
                 popUpTo(Routes.ONBOARDING) { inclusive = true }
             } }) {
-                Text("Vai alla dashboard")
+                Text("Inizia l'anamnesi guidata")
             }
         }
         return
@@ -147,7 +149,7 @@ fun OnboardingScreen(
                 Text(
                     when {
                         state.saving -> "Generazione..."
-                        state.step == state.totalSteps - 1 -> "Genera programmi"
+                        state.step == state.totalSteps - 1 -> "Salva profilo"
                         else -> "Avanti"
                     }
                 )
@@ -357,6 +359,42 @@ private fun StepNutrizione(state: OnboardingUiState, vm: OnboardingViewModel) {
                 label = { Text("Budget settimanale € (facolt.)") }, singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = state.monthlyBudgetEur,
+                onValueChange = { v -> vm.update { it.copy(monthlyBudgetEur = v) } },
+                label = { Text("Budget alimentare mensile € (facolt.)") }, singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                "Il budget mensile è un vincolo reale: FitCoach calcola il costo del piano " +
+                    "e lo riformula se supera il budget.",
+                style = MaterialTheme.typography.bodySmall, color = TextSecondary
+            )
+            Spacer(Modifier.height(8.dp))
+            Text("A cosa si riferisce il budget?", style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary)
+            Spacer(Modifier.height(4.dp))
+            BudgetScope.entries.forEach { scope ->
+                FilterChip(
+                    selected = state.budgetScope == scope,
+                    onClick = { vm.update { it.copy(budgetScope = scope) } },
+                    label = { Text(scope.label) },
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Persone coperte dal budget: ", style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary)
+                OutlinedButton(onClick = {
+                    vm.update { it.copy(budgetPersons = (it.budgetPersons - 1).coerceAtLeast(1)) }
+                }) { Text("−") }
+                Text("  ${state.budgetPersons}  ", color = MaterialTheme.colorScheme.onBackground)
+                OutlinedButton(onClick = {
+                    vm.update { it.copy(budgetPersons = (it.budgetPersons + 1).coerceAtMost(12)) }
+                }) { Text("+") }
+            }
         }
     }
 }

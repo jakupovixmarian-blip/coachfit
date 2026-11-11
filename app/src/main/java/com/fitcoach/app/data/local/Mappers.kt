@@ -30,6 +30,10 @@ object Mappers {
         priorityMuscles = priorityMuscles, currentLoads = decodeLoads(currentLoadsJson),
         secondaryGoals = secondaryGoals, desiredOutcome = desiredOutcome,
         targetTimelineWeeks = targetTimelineWeeks,
+        monthlyFoodBudgetEur = monthlyFoodBudgetEur, budgetScope = budgetScope,
+        budgetPersons = budgetPersons,
+        anamnesisCompleted = anamnesisCompleted, anamnesisConfirmedAt = anamnesisConfirmedAt,
+        anamnesisSummary = anamnesisSummary,
         createdAt = createdAt, updatedAt = updatedAt
     )
 
@@ -58,6 +62,10 @@ object Mappers {
         priorityMuscles = priorityMuscles, currentLoadsJson = encodeLoads(currentLoads),
         secondaryGoals = secondaryGoals, desiredOutcome = desiredOutcome,
         targetTimelineWeeks = targetTimelineWeeks,
+        monthlyFoodBudgetEur = monthlyFoodBudgetEur, budgetScope = budgetScope,
+        budgetPersons = budgetPersons,
+        anamnesisCompleted = anamnesisCompleted, anamnesisConfirmedAt = anamnesisConfirmedAt,
+        anamnesisSummary = anamnesisSummary,
         createdAt = createdAt, updatedAt = System.currentTimeMillis()
     )
 
@@ -79,14 +87,19 @@ object Mappers {
         id = id, name = name, category = category, kcalPer100g = kcalPer100g,
         proteinPer100g = proteinPer100g, carbsPer100g = carbsPer100g, fatPer100g = fatPer100g,
         fiberPer100g = fiberPer100g, defaultUnit = defaultUnit, source = source,
-        isCustom = isCustom, tags = tags, substituteNames = substituteNames
+        isCustom = isCustom, tags = tags, substituteNames = substituteNames,
+        sourceId = sourceId, brand = brand, pricePerKgEur = pricePerKgEur
     )
 
     fun FoodItem.toEntity() = FoodItemEntity(
         id = id, name = name, category = category, kcalPer100g = kcalPer100g,
         proteinPer100g = proteinPer100g, carbsPer100g = carbsPer100g, fatPer100g = fatPer100g,
         fiberPer100g = fiberPer100g, defaultUnit = defaultUnit, source = source,
-        isCustom = isCustom, tags = tags, substituteNames = substituteNames
+        isCustom = isCustom, tags = tags, substituteNames = substituteNames,
+        sourceId = sourceId, normalizedName = normalizedName, brand = brand,
+        pricePerKgEur = pricePerKgEur,
+        acquiredAt = if (sourceId != null) System.currentTimeMillis() else 0L,
+        updatedAt = System.currentTimeMillis()
     )
 
     fun ExerciseEntity.toDomain() = Exercise(

@@ -3,6 +3,7 @@ package com.fitcoach.app.data.local
 import androidx.room.TypeConverter
 import com.fitcoach.app.domain.model.AiProvider
 import com.fitcoach.app.domain.model.BreakfastPreference
+import com.fitcoach.app.domain.model.BudgetScope
 import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.ChangeDomain
 import com.fitcoach.app.domain.model.ChangeStatus
@@ -67,6 +68,10 @@ class Converters {
 
     @TypeConverter fun carbDayToString(v: CarbDayType): String = v.name
     @TypeConverter fun stringToCarbDay(v: String): CarbDayType = CarbDayType.valueOf(v)
+
+    @TypeConverter fun budgetScopeToString(v: BudgetScope): String = v.name
+    @TypeConverter fun stringToBudgetScope(v: String): BudgetScope =
+        runCatching { BudgetScope.valueOf(v) }.getOrDefault(BudgetScope.PERSONAL_ONLY)
 
     @TypeConverter fun mealSlotToString(v: MealSlot): String = v.name
     @TypeConverter fun stringToMealSlot(v: String): MealSlot = MealSlot.valueOf(v)

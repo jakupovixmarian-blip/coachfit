@@ -177,6 +177,14 @@ enum class MealSlot(val label: String, val defaultTime: String) {
 
 enum class FoodUnit { RAW, COOKED, AS_SOLD }
 
+/** Ambito del budget alimentare: solo la persona o l'intera spesa familiare. */
+enum class BudgetScope(val label: String) {
+    PERSONAL_ONLY("Solo la mia alimentazione"),
+    SHARED_FOOD("Spesa alimentare condivisa"),
+    WHOLE_SHOPPING("Tutta la spesa (alimentare e non)")
+}
+
+
 enum class ChatRole { USER, ASSISTANT, SYSTEM }
 
 enum class AiProvider(val label: String, val defaultBaseUrl: String, val defaultModel: String) {

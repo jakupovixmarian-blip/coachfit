@@ -50,4 +50,14 @@ object NetworkModule {
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
             .create(AiApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideFoodApi(client: OkHttpClient, json: Json): com.fitcoach.app.data.remote.FoodApi =
+        Retrofit.Builder()
+            .baseUrl("https://world.openfoodfacts.org/") // sostituito da @Url a ogni chiamata
+            .client(client)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(com.fitcoach.app.data.remote.FoodApi::class.java)
 }

@@ -96,12 +96,15 @@ class NutritionViewModel @Inject constructor(
                 profile = profile,
                 trainingDayIndices = WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek),
                 regenerateNutrition = true,
-                regenerateWorkout = false
+                regenerateWorkout = false,
+                requireAnamnesis = false
             )
             val message = when (result) {
                 is GenerateProgramsUseCase.Result.Success -> "Piano alimentare generato."
                 is GenerateProgramsUseCase.Result.MissingData ->
                     "Dati mancanti: ${result.missing.joinToString()}."
+                is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed ->
+                    "Completa l'anamnesi guidata prima di generare."
                 is GenerateProgramsUseCase.Result.Error -> result.message
             }
             val plan = nutritionRepository.getActivePlan()

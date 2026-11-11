@@ -140,11 +140,14 @@ class WorkoutViewModel @Inject constructor(
                 profile = profile,
                 trainingDayIndices = WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek),
                 regenerateNutrition = false,
-                regenerateWorkout = true
+                regenerateWorkout = true,
+                requireAnamnesis = false
             )
             val message = when (result) {
                 is GenerateProgramsUseCase.Result.Success -> "Scheda generata."
                 is GenerateProgramsUseCase.Result.MissingData -> "Dati mancanti: ${result.missing.joinToString()}."
+                is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed ->
+                    "Completa l'anamnesi guidata prima di generare."
                 is GenerateProgramsUseCase.Result.Error -> result.message
             }
             _state.value = _state.value.copy(generating = false, message = message)

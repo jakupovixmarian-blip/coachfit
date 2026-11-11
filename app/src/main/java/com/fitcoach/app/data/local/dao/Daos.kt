@@ -79,8 +79,23 @@ interface FoodDao {
     @Query("SELECT * FROM food_database WHERE name = :name LIMIT 1")
     suspend fun getByName(name: String): FoodItemEntity?
 
+    @Query("SELECT * FROM food_database WHERE normalizedName = :normalizedName LIMIT 1")
+    suspend fun getByNormalizedName(normalizedName: String): FoodItemEntity?
+
+    @Query("SELECT * FROM food_database WHERE sourceId = :sourceId LIMIT 1")
+    suspend fun getBySourceId(sourceId: String): FoodItemEntity?
+
     @Query("SELECT * FROM food_database WHERE name LIKE '%' || :query || '%' OR category LIKE '%' || :query || '%' ORDER BY name")
     suspend fun search(query: String): List<FoodItemEntity>
+
+    @Query(
+        "SELECT * FROM food_database WHERE normalizedName LIKE '%' || :query || '%' " +
+            "OR lower(name) LIKE '%' || :query || '%' OR lower(brand) LIKE '%' || :query || '%' ORDER BY name"
+    )
+    suspend fun searchNormalized(query: String): List<FoodItemEntity>
+
+    @Query("SELECT * FROM food_database WHERE isCustom = 1 ORDER BY name")
+    fun observeCustom(): Flow<List<FoodItemEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(items: List<FoodItemEntity>)

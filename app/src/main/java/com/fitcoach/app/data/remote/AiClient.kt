@@ -83,8 +83,23 @@ class AiClient @Inject constructor(
         }
         val body = response.body()
             ?: return AiResult.Failure("Risposta vuota dal provider.", response.code())
+        body.error?.message?.let { return AiResult.Failure(it, response.code()) }
+
+        val message = body.choices.firstOrNull()?.message
+        // Rifiuto esplicito del modello (policy di sicurezza del provider).
+        message?.refusal?.takeIf { it.isNotBlank() }?.let {
+            return AiResult.Failure("Il modello ha rifiutato la richiesta: $it", response.code())
+        }
         val content = body.content
-            ?: return AiResult.Failure(body.error?.message ?: "Il provider non ha restituito contenuto.")
+        if (content.isNullOrBlank()) {
+            val reason = when (body.finishReason) {
+                "length" -> "Risposta troncata: aumenta i token massimi o accorcia la richiesta."
+                "content_filter" -> "Contenuto filtrato dal provider."
+                null -> "Il provider non ha restituito contenuto."
+                else -> "Il provider ha restituito una risposta vuota (${body.finishReason})."
+            }
+            return AiResult.Failure(reason, response.code())
+        }
         return AiResult.Success(content.trim(), body.model)
     }
 

@@ -24,6 +24,18 @@ class FoodRepository @Inject constructor(
     suspend fun search(query: String): List<FoodItem> =
         if (query.isBlank()) getAll() else dao.search(query).map { it.toDomain() }
 
+    suspend fun searchNormalized(query: String): List<FoodItem> =
+        if (query.isBlank()) getAll() else dao.searchNormalized(query).map { it.toDomain() }
+
+    /** Alimenti creati o importati dall'utente ("I miei alimenti"). */
+    val customFoodsFlow: Flow<List<FoodItem>> =
+        dao.observeCustom().map { list -> list.map { it.toDomain() } }
+
+    suspend fun getByNormalizedName(name: String): FoodItem? =
+        dao.getByNormalizedName(com.fitcoach.app.domain.model.FoodItem.normalizeName(name))?.toDomain()
+
+    suspend fun getBySourceId(sourceId: String): FoodItem? = dao.getBySourceId(sourceId)?.toDomain()
+
     suspend fun addCustom(item: FoodItem): Long = dao.insert(item.toEntity())
 
     suspend fun count(): Int = dao.count()

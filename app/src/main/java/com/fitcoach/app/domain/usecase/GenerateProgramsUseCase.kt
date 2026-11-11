@@ -7,6 +7,7 @@ import com.fitcoach.app.data.repository.PlanVersionRepository
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
 import com.fitcoach.app.domain.model.UserProfile
+import com.fitcoach.app.domain.nutrition.BudgetEngine
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.MealPlanGenerator
@@ -34,6 +35,8 @@ class GenerateProgramsUseCase @Inject constructor(
             val warnings: List<String>
         ) : Result
         data class MissingData(val missing: List<String>) : Result
+        /** Anamnesi non completata/confermata: la generazione e bloccata (spec. §3.7). */
+        data class AnamnesisNotConfirmed(val missing: List<String>, val contradictions: List<String>) : Result
         data class Error(val message: String) : Result
     }
 
@@ -41,8 +44,15 @@ class GenerateProgramsUseCase @Inject constructor(
         profile: UserProfile,
         trainingDayIndices: List<Int> = WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek),
         regenerateNutrition: Boolean = true,
-        regenerateWorkout: Boolean = true
+        regenerateWorkout: Boolean = true,
+        requireAnamnesis: Boolean = true
     ): Result {
+        if (requireAnamnesis && !profile.isAnamnesisReady) {
+            return Result.AnamnesisNotConfirmed(
+                missing = profile.missingAnamnesisData,
+                contradictions = profile.anamnesisContradictions
+            )
+        }
         val missing = buildList {
             if (profile.ageYears == null) add("eta")
             if (profile.heightCm == null) add("altezza")
@@ -103,6 +113,22 @@ class GenerateProgramsUseCase @Inject constructor(
                     if (carbCyclingApplied) "Piano generato con carb cycling."
                     else "Piano generato con distribuzione uniforme dei carboidrati."
                 )
+                // Vincolo di budget: se il costo del piano supera il budget mensile
+                // attribuibile, viene segnalato (il costo e sempre visibile all'utente).
+                val foodsById = foods.associateBy { it.id }
+                val budget = BudgetEngine.report(plan, foodsById, profile)
+                if (budget.monthlyBudgetEur != null) {
+                    warnings += "Costo stimato del piano: ${BudgetEngine.formatEur(budget.monthlyCostEur)}/mese " +
+                        "(budget ${BudgetEngine.formatEur(budget.monthlyBudgetEur)})."
+                    if (!budget.withinBudget) {
+                        warnings += "Il piano supera il budget di " +
+                            "${BudgetEngine.formatEur(budget.overBudgetEur)}/mese: verifica le porzioni " +
+                            "o aggiorna il budget."
+                    }
+                    if (budget.partialEstimate) {
+                        warnings += "Alcuni alimenti non hanno un prezzo noto: il costo e una stima per difetto."
+                    }
+                }
             }
         }
 

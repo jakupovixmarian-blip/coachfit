@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import com.fitcoach.app.ui.anamnesis.AnamnesisScreen
 import com.fitcoach.app.ui.coach.CoachScreen
 import com.fitcoach.app.ui.dashboard.DashboardScreen
 import com.fitcoach.app.ui.diary.DiaryScreen
@@ -61,6 +62,7 @@ fun FitCoachNavHost(navController: NavHostController) {
             composable(Routes.PROGRESS) { ProgressScreen(navController) }
             composable(Routes.COACH) { CoachScreen(navController) }
             composable(Routes.ONBOARDING) { OnboardingScreen(navController) }
+            composable(Routes.ANAMNESIS) { AnamnesisScreen(navController) }
             composable(Routes.SETTINGS) { SettingsScreen(navController) }
             composable(Routes.AI_PROVIDERS) { AiProvidersScreen(navController) }
             composable(Routes.NOTIFICATION_SETTINGS) { NotificationSettingsScreen(navController) }

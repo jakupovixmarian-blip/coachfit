@@ -15,8 +15,30 @@ data class FoodItem(
     val isCustom: Boolean = false,
     val tags: List<String> = emptyList(),
     /** Sostituti suggeriti per nome (mappati a FoodItem a runtime). */
-    val substituteNames: List<String> = emptyList()
-)
+    val substituteNames: List<String> = emptyList(),
+    /** Identificativo nella fonte esterna (es. codice Open Food Facts, fdcId USDA). */
+    val sourceId: String? = null,
+    /** Marca commerciale, se presente (prodotti Open Food Facts). */
+    val brand: String? = null,
+    /**
+     * Prezzo indicativo in EUR per kg. Puo essere null quando non disponibile:
+     * in quel caso il costo non viene inventato ma segnalato come non stimabile.
+     */
+    val pricePerKgEur: Double? = null
+) {
+    /** Nome normalizzato per il riconoscimento duplicati (minuscolo, senza accenti/spazi doppi). */
+    val normalizedName: String get() = normalizeName(name)
+
+    companion object {
+        fun normalizeName(raw: String): String = raw.lowercase()
+            .replace(Regex("[àáâãä]"), "a").replace(Regex("[èéêë]"), "e")
+            .replace(Regex("[ìíîï]"), "i").replace(Regex("[òóôõö]"), "o")
+            .replace(Regex("[ùúûü]"), "u")
+            .replace(Regex("[^a-z0-9]+"), " ")
+            .trim()
+    }
+}
+
 
 /** Alimento quantificato all'interno di un pasto. */
 data class MealEntry(

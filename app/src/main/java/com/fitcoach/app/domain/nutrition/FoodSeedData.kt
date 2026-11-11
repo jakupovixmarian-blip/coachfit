@@ -19,7 +19,7 @@ object FoodSeedData {
     const val SRC_CREA = "CREA – Tabelle di composizione degli alimenti"
     const val SRC_USDA = "USDA FoodData Central"
 
-    val foods: List<FoodItem> = listOf(
+    private val rawFoods: List<FoodItem> = listOf(
         // ---------- Fonti proteiche ----------
         f("Petto di pollo", "Carne", 110.0, 23.3, 0.0, 1.5, SRC_CREA,
             subs = listOf("Fesa di tacchino", "Merluzzo", "Tonno al naturale")),
@@ -176,6 +176,52 @@ object FoodSeedData {
         f("Fagiolini", "Verdura", 31.0, 1.8, 7.0, 0.2, SRC_CREA,
             subs = listOf("Broccoli"))
     )
+
+
+    /**
+     * Prezzi indicativi in EUR/kg (stima dichiarata, non un dato di mercato in
+     * tempo reale). Servono al BudgetEngine: quando un alimento non ha prezzo,
+     * il costo NON viene inventato ma segnalato come non stimabile.
+     */
+    private val priceTableEurPerKg: Map<String, Double> = mapOf(
+        "Petto di pollo" to 8.90, "Fesa di tacchino" to 11.50, "Lonza di maiale" to 8.50,
+        "Fesa di manzo" to 13.90, "Carne macinata di manzo (magra)" to 9.90,
+        "Uovo intero di gallina" to 4.20, "Albume d'uovo" to 6.50,
+        "Merluzzo" to 9.50, "Nasello" to 7.90, "Platessa" to 8.50, "Orata" to 12.90,
+        "Branzino" to 13.50, "Salmone" to 16.90, "Gamberi" to 15.90,
+        "Tonno in scatola al naturale" to 12.90, "Bresaola" to 29.90,
+        "Prosciutto crudo sgrassato" to 24.90,
+        "Latte parzialmente scremato" to 1.20, "Latte scremato" to 1.10,
+        "Yogurt bianco magro" to 2.90, "Yogurt greco 0% grassi" to 6.90,
+        "Fiocchi di latte (cottage)" to 5.90, "Ricotta vaccina" to 5.50,
+        "Proteine del siero (whey, polvere)" to 22.00, "Proteine vegetali (polvere)" to 24.00,
+        "Lenticchie secche (crude)" to 2.80, "Ceci secchi (crudi)" to 2.60,
+        "Fagioli secchi (crudi)" to 2.70, "Fagioli cannellini cotti" to 1.60,
+        "Ceci cotti" to 1.60, "Tofu" to 8.90, "Tempeh" to 12.90, "Seitan" to 9.90,
+        "Bevanda di soia non zuccherata" to 1.40,
+        "Riso bianco (crudo)" to 2.20, "Riso basmati (crudo)" to 3.20,
+        "Riso integrale (crudo)" to 2.80, "Pasta di semola (cruda)" to 1.60,
+        "Pasta integrale (cruda)" to 2.10, "Cous cous (crudo)" to 3.50,
+        "Pane bianco" to 2.90, "Pane integrale" to 3.40, "Fette biscottate" to 3.90,
+        "Fiocchi d'avena" to 2.40, "Polenta (farina di mais cruda)" to 2.10,
+        "Patate" to 1.20, "Patate dolci" to 2.50,
+        "Mela" to 2.20, "Pera" to 2.50, "Banana" to 1.90, "Arance" to 1.80,
+        "Kiwi" to 3.20, "Fragole" to 6.90, "Mirtilli" to 12.90,
+        "Broccoli" to 2.90, "Cavolfiore" to 2.20, "Spinaci" to 3.90, "Zucchine" to 1.90,
+        "Carote" to 1.40, "Peperoni" to 3.20, "Pomodori" to 2.50,
+        "Insalata lattuga" to 3.20, "Rucola" to 6.90, "Funghi champignon" to 4.50,
+        "Fagiolini" to 3.90,
+        "Olio extravergine d'oliva" to 9.90, "Olio di semi" to 3.20,
+        "Burro d'arachidi (100% arachidi)" to 12.90,
+        "Mandorle" to 14.90, "Noci" to 16.90, "Nocciole" to 15.90, "Semi di lino" to 8.90,
+        "Avocado" to 8.90
+    )
+
+    /**
+     * Alimenti seed con prezzo applicato dove disponibile. Il prezzo non viene
+     * mai inventato: gli alimenti non presenti nella tabella restano senza prezzo.
+     */
+    val foods: List<FoodItem> = rawFoods.map { it.copy(pricePerKgEur = priceTableEurPerKg[it.name]) }
 
     private fun f(
         name: String,

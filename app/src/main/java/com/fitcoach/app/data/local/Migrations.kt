@@ -154,3 +154,40 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_substitution_log_dateEpochDay` ON `substitution_log` (`dateEpochDay`)")
     }
 }
+
+/**
+ * Migrazione schema v3 -> v4.
+ *
+ * Aggiunge: budget mensile e gate anamnesi al profilo; campi di provenienza,
+ * deduplicazione e prezzo al database alimentare (per la ricerca progressiva
+ * su fonti esterne e il motore del budget). Nessun dato esistente viene perso.
+ */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // --- user_profile: budget mensile + anamnesi ---
+        db.execSQL("ALTER TABLE user_profile ADD COLUMN monthlyFoodBudgetEur REAL")
+        db.execSQL("ALTER TABLE user_profile ADD COLUMN budgetScope TEXT NOT NULL DEFAULT 'PERSONAL_ONLY'")
+        db.execSQL("ALTER TABLE user_profile ADD COLUMN budgetPersons INTEGER NOT NULL DEFAULT 1")
+        db.execSQL("ALTER TABLE user_profile ADD COLUMN anamnesisCompleted INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE user_profile ADD COLUMN anamnesisConfirmedAt INTEGER")
+        db.execSQL("ALTER TABLE user_profile ADD COLUMN anamnesisSummary TEXT NOT NULL DEFAULT ''")
+
+        // --- food_database: provenienza, dedup, prezzo ---
+        db.execSQL("ALTER TABLE food_database ADD COLUMN sourceId TEXT")
+        db.execSQL("ALTER TABLE food_database ADD COLUMN normalizedName TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE food_database ADD COLUMN brand TEXT")
+        db.execSQL("ALTER TABLE food_database ADD COLUMN pricePerKgEur REAL")
+        db.execSQL("ALTER TABLE food_database ADD COLUMN acquiredAt INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE food_database ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+
+        // Backfill del nome normalizzato per gli alimenti esistenti.
+        db.execSQL(
+            "UPDATE food_database SET normalizedName = " +
+                "trim(replace(replace(replace(replace(replace(replace(lower(name), " +
+                "'à','a'),'è','e'),'é','e'),'ì','i'),'ò','o'),'ù','u')) " +
+                "WHERE normalizedName = ''"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_food_database_normalizedName` ON `food_database` (`normalizedName`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_food_database_sourceId` ON `food_database` (`sourceId`)")
+    }
+}
