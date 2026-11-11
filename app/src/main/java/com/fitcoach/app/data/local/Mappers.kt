@@ -1,0 +1,176 @@
+package com.fitcoach.app.data.local
+
+import com.fitcoach.app.data.local.entity.*
+import com.fitcoach.app.domain.model.*
+
+object Mappers {
+
+    fun UserProfileEntity.toDomain() = UserProfile(
+        id = id, name = name, ageYears = ageYears, sex = sex, heightCm = heightCm,
+        weightKg = weightKg, bodyFatPercent = bodyFatPercent, experience = experience,
+        goal = goal, trainingDaysPerWeek = trainingDaysPerWeek, availableEquipment = availableEquipment,
+        dietaryPreferences = dietaryPreferences, excludedFoods = excludedFoods, allergies = allergies,
+        physicalLimitations = physicalLimitations, movementsToAvoid = movementsToAvoid,
+        weeklyFoodBudgetEur = weeklyFoodBudgetEur, activityFactorOverride = activityFactorOverride,
+        calorieTargetOverride = calorieTargetOverride, mealsPerDay = mealsPerDay,
+        createdAt = createdAt, updatedAt = updatedAt
+    )
+
+    fun UserProfile.toEntity() = UserProfileEntity(
+        id = id, name = name, ageYears = ageYears, sex = sex, heightCm = heightCm,
+        weightKg = weightKg, bodyFatPercent = bodyFatPercent, experience = experience,
+        goal = goal, trainingDaysPerWeek = trainingDaysPerWeek, availableEquipment = availableEquipment,
+        dietaryPreferences = dietaryPreferences, excludedFoods = excludedFoods, allergies = allergies,
+        physicalLimitations = physicalLimitations, movementsToAvoid = movementsToAvoid,
+        weeklyFoodBudgetEur = weeklyFoodBudgetEur, activityFactorOverride = activityFactorOverride,
+        calorieTargetOverride = calorieTargetOverride, mealsPerDay = mealsPerDay,
+        createdAt = createdAt, updatedAt = System.currentTimeMillis()
+    )
+
+    fun FoodItemEntity.toDomain() = FoodItem(
+        id = id, name = name, category = category, kcalPer100g = kcalPer100g,
+        proteinPer100g = proteinPer100g, carbsPer100g = carbsPer100g, fatPer100g = fatPer100g,
+        fiberPer100g = fiberPer100g, defaultUnit = defaultUnit, source = source,
+        isCustom = isCustom, tags = tags, substituteNames = substituteNames
+    )
+
+    fun FoodItem.toEntity() = FoodItemEntity(
+        id = id, name = name, category = category, kcalPer100g = kcalPer100g,
+        proteinPer100g = proteinPer100g, carbsPer100g = carbsPer100g, fatPer100g = fatPer100g,
+        fiberPer100g = fiberPer100g, defaultUnit = defaultUnit, source = source,
+        isCustom = isCustom, tags = tags, substituteNames = substituteNames
+    )
+
+    fun ExerciseEntity.toDomain() = Exercise(
+        id = id, name = name, primaryMuscle = primaryMuscle, secondaryMuscles = secondaryMuscles,
+        category = category, equipment = equipment, technique = technique, defaultSets = defaultSets,
+        minReps = minReps, maxReps = maxReps, restSeconds = restSeconds, targetRir = targetRir,
+        isUnilateral = isUnilateral, substituteNames = substituteNames, bodyweightOnly = bodyweightOnly
+    )
+
+    fun Exercise.toEntity() = ExerciseEntity(
+        name = name, primaryMuscle = primaryMuscle, secondaryMuscles = secondaryMuscles,
+        category = category, equipment = equipment, technique = technique, defaultSets = defaultSets,
+        minReps = minReps, maxReps = maxReps, restSeconds = restSeconds, targetRir = targetRir,
+        isUnilateral = isUnilateral, substituteNames = substituteNames, bodyweightOnly = bodyweightOnly
+    )
+
+    fun WorkoutDayEntity.toDomain(exercises: List<PlannedExercise>) = WorkoutDay(
+        id = id, mesocycleId = mesocycleId, dayIndex = dayIndex, title = title,
+        muscleGroups = muscleGroups, exercises = exercises, isRestDay = isRestDay
+    )
+
+    fun PlannedExerciseEntity.toDomain() = PlannedExercise(
+        id = id, workoutDayId = workoutDayId, exerciseId = exerciseId, exerciseName = exerciseName,
+        primaryMuscle = primaryMuscle, orderIndex = orderIndex, sets = sets, minReps = minReps,
+        maxReps = maxReps, restSeconds = restSeconds, targetRir = targetRir,
+        targetWeightKg = targetWeightKg, targetReps = targetReps, notes = notes,
+        technique = technique, category = category
+    )
+
+    fun WorkoutSetEntity.toDomain() = WorkoutSet(
+        id = id, sessionId = sessionId, exerciseId = exerciseId, exerciseName = exerciseName,
+        setIndex = setIndex, plannedReps = plannedReps, actualReps = actualReps, weightKg = weightKg,
+        rir = rir, rpe = rpe, completed = completed, isWarmup = isWarmup, notes = notes
+    )
+
+    fun WorkoutSet.toEntity() = WorkoutSetEntity(
+        id = id, sessionId = sessionId, exerciseId = exerciseId, exerciseName = exerciseName,
+        setIndex = setIndex, plannedReps = plannedReps, actualReps = actualReps, weightKg = weightKg,
+        rir = rir, rpe = rpe, completed = completed, isWarmup = isWarmup, notes = notes
+    )
+
+    fun WeightRecordEntity.toDomain() = WeightRecord(
+        id = id, profileId = profileId, dateEpochDay = dateEpochDay, weightKg = weightKg,
+        bodyFatPercent = bodyFatPercent, note = note
+    )
+
+    fun WeightRecord.toEntity() = WeightRecordEntity(
+        id = id, profileId = profileId, dateEpochDay = dateEpochDay, weightKg = weightKg,
+        bodyFatPercent = bodyFatPercent, note = note
+    )
+
+    fun CircumferenceRecordEntity.toDomain() = CircumferenceRecord(
+        id = id, profileId = profileId, dateEpochDay = dateEpochDay, site = site, valueCm = valueCm
+    )
+
+    fun CircumferenceRecord.toEntity() = CircumferenceRecordEntity(
+        id = id, profileId = profileId, dateEpochDay = dateEpochDay, site = site, valueCm = valueCm
+    )
+
+    fun ProgressRecordEntity.toDomain() = ProgressRecord(
+        id = id, profileId = profileId, dateEpochDay = dateEpochDay, caloriesConsumed = caloriesConsumed,
+        protein = protein, carbs = carbs, fat = fat, dietAdherencePercent = dietAdherencePercent,
+        trainingVolumeKg = trainingVolumeKg, note = note
+    )
+
+    fun ProgressRecord.toEntity() = ProgressRecordEntity(
+        id = id, profileId = profileId, dateEpochDay = dateEpochDay, caloriesConsumed = caloriesConsumed,
+        protein = protein, carbs = carbs, fat = fat, dietAdherencePercent = dietAdherencePercent,
+        trainingVolumeKg = trainingVolumeKg, note = note
+    )
+
+    fun CheckInEntity.toDomain() = CheckIn(
+        id = id, profileId = profileId, weekStartEpochDay = weekStartEpochDay, createdAt = createdAt,
+        avgWeightKg = avgWeightKg, weightTrendKgPerWeek = weightTrendKgPerWeek, avgCalories = avgCalories,
+        dietAdherencePercent = dietAdherencePercent, trainingSessionsCompleted = trainingSessionsCompleted,
+        trainingSessionsPlanned = trainingSessionsPlanned, performanceTrend = performanceTrend,
+        sleepQualityAvg = sleepQualityAvg, painNotes = painNotes, summary = summary
+    )
+
+    fun CheckIn.toEntity() = CheckInEntity(
+        id = id, profileId = profileId, weekStartEpochDay = weekStartEpochDay, createdAt = createdAt,
+        avgWeightKg = avgWeightKg, weightTrendKgPerWeek = weightTrendKgPerWeek, avgCalories = avgCalories,
+        dietAdherencePercent = dietAdherencePercent, trainingSessionsCompleted = trainingSessionsCompleted,
+        trainingSessionsPlanned = trainingSessionsPlanned, performanceTrend = performanceTrend,
+        sleepQualityAvg = sleepQualityAvg, painNotes = painNotes, summary = summary
+    )
+
+    fun ProgramChangeEntity.toDomain() = ProgramChange(
+        id = id, profileId = profileId, createdAt = createdAt, domain = domain, status = status,
+        title = title, situation = situation, problem = problem, dataUsed = dataUsed,
+        proposedChange = proposedChange, rationale = rationale, expectedOutcome = expectedOutcome,
+        contraindications = contraindications, payloadJson = payloadJson,
+        revertPayloadJson = revertPayloadJson, appliedAt = appliedAt, source = source
+    )
+
+    fun ProgramChange.toEntity() = ProgramChangeEntity(
+        id = id, profileId = profileId, createdAt = createdAt, domain = domain, status = status,
+        title = title, situation = situation, problem = problem, dataUsed = dataUsed,
+        proposedChange = proposedChange, rationale = rationale, expectedOutcome = expectedOutcome,
+        contraindications = contraindications, payloadJson = payloadJson,
+        revertPayloadJson = revertPayloadJson, appliedAt = appliedAt, source = source
+    )
+
+    fun ChatMessageEntity.toDomain() = ChatMessage(
+        id = id, profileId = profileId, role = role, content = content, createdAt = createdAt,
+        pendingChangeId = pendingChangeId, isError = isError
+    )
+
+    fun ChatMessage.toEntity() = ChatMessageEntity(
+        id = id, profileId = profileId, role = role, content = content, createdAt = createdAt,
+        pendingChangeId = pendingChangeId, isError = isError
+    )
+
+    fun AiProviderSettingsEntity.toDomain() = AiProviderSettings(
+        id = id, provider = provider, baseUrl = baseUrl, model = model, useBackendProxy = useBackendProxy,
+        backendBaseUrl = backendBaseUrl, temperature = temperature, maxTokens = maxTokens,
+        lastTestOk = lastTestOk, lastTestMessage = lastTestMessage, lastTestAt = lastTestAt
+    )
+
+    fun AiProviderSettings.toEntity() = AiProviderSettingsEntity(
+        id = id, provider = provider, baseUrl = baseUrl, model = model, useBackendProxy = useBackendProxy,
+        backendBaseUrl = backendBaseUrl, temperature = temperature, maxTokens = maxTokens,
+        lastTestOk = lastTestOk, lastTestMessage = lastTestMessage, lastTestAt = lastTestAt
+    )
+
+    fun NotificationRecordEntity.toDomain() = NotificationRecord(
+        id = id, profileId = profileId, kind = kind, title = title, body = body,
+        triggerTime = triggerTime, enabled = enabled, requestCode = requestCode
+    )
+
+    fun NotificationRecord.toEntity() = NotificationRecordEntity(
+        id = id, profileId = profileId, kind = kind, title = title, body = body,
+        triggerTime = triggerTime, enabled = enabled, requestCode = requestCode
+    )
+}

@@ -1,0 +1,128 @@
+package com.fitcoach.app.domain.model
+
+/** Voce del database alimentare con valori nutrizionali per 100 g (fonte dichiarata). */
+data class FoodItem(
+    val id: Long = 0,
+    val name: String,
+    val category: String,
+    val kcalPer100g: Double,
+    val proteinPer100g: Double,
+    val carbsPer100g: Double,
+    val fatPer100g: Double,
+    val fiberPer100g: Double = 0.0,
+    val defaultUnit: FoodUnit = FoodUnit.RAW,
+    val source: String,
+    val isCustom: Boolean = false,
+    val tags: List<String> = emptyList(),
+    /** Sostituti suggeriti per nome (mappati a FoodItem a runtime). */
+    val substituteNames: List<String> = emptyList()
+)
+
+/** Alimento quantificato all'interno di un pasto. */
+data class MealEntry(
+    val id: Long = 0,
+    val mealId: Long = 0,
+    val foodItemId: Long,
+    val foodName: String,
+    val grams: Double,
+    val unit: FoodUnit,
+    val kcal: Double,
+    val protein: Double,
+    val carbs: Double,
+    val fat: Double
+)
+
+data class Meal(
+    val id: Long = 0,
+    val nutritionDayId: Long = 0,
+    val slot: MealSlot,
+    val time: String,
+    val entries: List<MealEntry> = emptyList()
+) {
+    val kcal: Double get() = entries.sumOf { it.kcal }
+    val protein: Double get() = entries.sumOf { it.protein }
+    val carbs: Double get() = entries.sumOf { it.carbs }
+    val fat: Double get() = entries.sumOf { it.fat }
+}
+
+data class NutritionDay(
+    val id: Long = 0,
+    val planId: Long = 0,
+    val dayIndex: Int, // 0..6
+    val dayType: CarbDayType,
+    val targetKcal: Double,
+    val targetProtein: Double,
+    val targetCarbs: Double,
+    val targetFat: Double,
+    val meals: List<Meal> = emptyList(),
+    val workoutDayIndex: Int? = null
+) {
+    val actualKcal: Double get() = meals.sumOf { it.kcal }
+    val actualProtein: Double get() = meals.sumOf { it.protein }
+    val actualCarbs: Double get() = meals.sumOf { it.carbs }
+    val actualFat: Double get() = meals.sumOf { it.fat }
+}
+
+data class NutritionPlan(
+    val id: Long = 0,
+    val profileId: Long = 1L,
+    val name: String,
+    val createdAt: Long = System.currentTimeMillis(),
+    val isActive: Boolean = true,
+    val bmr: Double,
+    val tdee: Double,
+    val weeklyCalories: Double,
+    val weeklyKcalBalance: Double,
+    val bmrFormula: String,
+    val tdeeFormula: String,
+    val highCarbDays: Int,
+    val mediumCarbDays: Int,
+    val lowCarbDays: Int,
+    val proteinGPerKg: Double,
+    val days: List<NutritionDay> = emptyList()
+)
+
+/** Risultato dei calcoli energetici (valori stimati, non misurati). */
+data class EnergyResult(
+    val bmr: Double,
+    val tdee: Double,
+    val bmrFormula: String,
+    val tdeeFormula: String,
+    val leanMassKg: Double?,
+    val weeklyCalories: Double,
+    val notes: List<String> = emptyList()
+)
+
+/** Target per una tipologia di giornata. */
+data class CarbDayTarget(
+    val type: CarbDayType,
+    val kcal: Double,
+    val protein: Double,
+    val carbs: Double,
+    val fat: Double
+)
+
+data class CarbCyclingPlan(
+    val targets: Map<CarbDayType, CarbDayTarget>,
+    val highDays: Int,
+    val mediumDays: Int,
+    val lowDays: Int,
+    val weeklyKcal: Double,
+    val weeklyKcalFromTarget: Double,
+    val weeklyProtein: Double,
+    val weeklyCarbs: Double,
+    val weeklyFat: Double,
+    val warnings: List<String> = emptyList(),
+    val isValid: Boolean = true
+)
+
+data class MacroTotals(
+    val kcal: Double,
+    val protein: Double,
+    val carbs: Double,
+    val fat: Double
+) {
+    companion object {
+        val ZERO = MacroTotals(0.0, 0.0, 0.0, 0.0)
+    }
+}
