@@ -185,9 +185,10 @@ class WorkoutViewModel @Inject constructor(
     fun openSetForm(planned: PlannedExercise, setIndex: Int) {
         viewModelScope.launch {
             val lastPerf = workoutRepository.getLatestPerformance(planned.exerciseId)
-            val lastSets = _state.value.session?.sets
-                ?.filter { it.exerciseId == planned.exerciseId }
-                ?: emptyList()
+            val lastSets = lastPerf?.let { performance ->
+                workoutRepository.getSessionById(performance.sessionId)?.sets
+                    ?.filter { it.exerciseId == planned.exerciseId }
+            }.orEmpty()
             val lastWeight = lastPerf?.topWeightKg ?: planned.targetWeightKg ?: 0.0
             val decision = if (lastPerf != null) {
                 ProgressiveOverloadEngine.decide(

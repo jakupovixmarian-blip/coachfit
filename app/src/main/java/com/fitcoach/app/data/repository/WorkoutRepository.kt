@@ -198,6 +198,11 @@ class WorkoutRepository @Inject constructor(
     suspend fun getRecentSessions(limit: Int = 20): List<WorkoutSession> =
         sessionDao.getRecent(limit).map { it.toDomainWithSets() }
 
+    suspend fun getSessionById(id: Long): WorkoutSession? {
+        val entity = sessionDao.getById(id) ?: return null
+        return entity.toDomainWithSets()
+    }
+
     val sessionsFlow: Flow<List<WorkoutSession>> = sessionDao.observeAll().map { list ->
         list.map { it.toDomainWithSets() }
     }
