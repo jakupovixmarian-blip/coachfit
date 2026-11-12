@@ -182,6 +182,7 @@ data class UserPreferences(
     val weightReminderTime: String = "07:00",
     val notificationsEnabled: Boolean = true,
     val deferMinutes: Int = 15,
+    val coachAuthorizationMode: CoachAuthorizationMode = CoachAuthorizationMode.CONFIRMATION,
     val locale: String = "it",
     val unitsMetric: Boolean = true
 )

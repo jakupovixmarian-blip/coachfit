@@ -41,6 +41,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.fitcoach.app.ui.components.SectionCard
+import com.fitcoach.app.domain.model.CoachAuthorizationMode
 import com.fitcoach.app.ui.components.SectionHeader
 import com.fitcoach.app.ui.navigation.Routes
 import com.fitcoach.app.ui.theme.Emerald
@@ -50,10 +51,12 @@ import com.fitcoach.app.ui.theme.TextSecondary
 fun SettingsScreen(
     navController: NavHostController,
     exportViewModel: ExportViewModel = hiltViewModel(),
-    backupViewModel: BackupViewModel = hiltViewModel()
+    backupViewModel: BackupViewModel = hiltViewModel(),
+    coachAuthorizationViewModel: CoachAuthorizationViewModel = hiltViewModel()
 ) {
     val exportState by exportViewModel.state.collectAsStateWithLifecycle()
     val backupState by backupViewModel.state.collectAsStateWithLifecycle()
+    val coachAuthorizationState by coachAuthorizationViewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val restoreLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -69,6 +72,12 @@ fun SettingsScreen(
         backupState.message?.let {
             snackbar.showSnackbar(it)
             backupViewModel.consumeMessage()
+        }
+    }
+    LaunchedEffect(coachAuthorizationState.message) {
+        coachAuthorizationState.message?.let {
+            snackbar.showSnackbar(it)
+            coachAuthorizationViewModel.consumeMessage()
         }
     }
 
@@ -128,6 +137,22 @@ fun SettingsScreen(
                     subtitle = "Modifica stile di vita, recupero, alimentazione, allenamento",
                     onClick = { navController.navigate(Routes.ONBOARDING) }
                 )
+            }
+
+            item {
+                SectionCard(modifier = Modifier.fillMaxWidth()) {
+                    Column {
+                        SectionHeader("Modalità Coach AI", coachAuthorizationState.mode.description)
+                        Spacer(Modifier.height(8.dp))
+                        CoachAuthorizationMode.entries.forEach { mode ->
+                            OutlinedButton(
+                                onClick = { coachAuthorizationViewModel.setMode(mode) },
+                                enabled = mode != coachAuthorizationState.mode,
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text(if (mode == coachAuthorizationState.mode) "✓ ${mode.label}" else mode.label) }
+                        }
+                    }
+                }
             }
 
             item {

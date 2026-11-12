@@ -1,5 +1,12 @@
 package com.fitcoach.app.domain.model
 
+enum class CoachAuthorizationMode(val label: String, val description: String) {
+    CONSULTATIVE("Consulenziale", "Il coach analizza e propone. Nulla viene applicato automaticamente."),
+    ADAPTIVE("Adattiva", "Aggiustamenti ordinari autorizzati possono essere applicati automaticamente."),
+    CONFIRMATION("Con conferma", "Le modifiche richiedono sempre la tua approvazione.")
+}
+
+
 data class WeightRecord(
     val id: Long = 0,
     val profileId: Long = 1L,

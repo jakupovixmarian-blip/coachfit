@@ -1,4 +1,17 @@
 package com.fitcoach.app.ui.progress
+import android.graphics.BitmapFactory
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,6 +27,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -27,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -52,6 +69,19 @@ fun ProgressScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val deleteCandidate = remember { mutableStateOf<com.fitcoach.app.domain.model.ProgressPhoto?>(null) }
+    val photoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
+            viewModel.addPhoto(it.toString())
+        }
+    }
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -160,6 +190,52 @@ fun ProgressScreen(
             }
         }
 
+
+        item {
+            SectionCard {
+                Column {
+                    SectionHeader("Fotografie progresso", "Salvate localmente · nessun invio automatico all'AI")
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = { photoLauncher.launch(arrayOf("image/*")) }) { Text("Aggiungi fotografia") }
+                    if (state.photos.isEmpty()) {
+                        Spacer(Modifier.height(6.dp))
+                        Text("Nessuna fotografia registrata.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                    } else {
+                        state.photos.forEach { photo ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                PhotoThumbnail(photo.uri)
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        LocalDate.ofEpochDay(photo.capturedAt / 86_400_000L).format(dayFmt),
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("Consenso AI", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                        Switch(
+                                            checked = photo.consentForAi,
+                                            onCheckedChange = { viewModel.setPhotoAiConsent(photo, it) }
+                                        )
+                                    }
+                                }
+                                TextButton(onClick = { deleteCandidate.value = photo }) { Text("Elimina") }
+                            }
+                        }
+                        if (state.photos.size >= 2) {
+                            Spacer(Modifier.height(6.dp))
+                            Text("Confronto ultime due date", style = MaterialTheme.typography.labelLarge)
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                state.photos.take(2).forEach { PhotoThumbnail(it.uri, Modifier.weight(1f)) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         state.trend?.let { trend ->
             item {
                 SectionCard {
@@ -225,5 +301,42 @@ fun ProgressScreen(
         }
     }
 
+    deleteCandidate.value?.let { photo ->
+        AlertDialog(
+            onDismissRequest = { deleteCandidate.value = null },
+            title = { Text("Eliminare fotografia?") },
+            text = { Text("La fotografia verrà rimossa dal registro locale.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deletePhoto(photo)
+                    deleteCandidate.value = null
+                }) { Text("Elimina") }
+            },
+            dismissButton = { TextButton(onClick = { deleteCandidate.value = null }) { Text("Annulla") } }
+        )
+    }
+
     SnackbarHost(snackbar)
+}
+
+@Composable
+private fun PhotoThumbnail(uri: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val bitmap by produceState<android.graphics.Bitmap?>(initialValue = null, uri) {
+        value = withContext(Dispatchers.IO) {
+            runCatching {
+                context.contentResolver.openInputStream(android.net.Uri.parse(uri))?.use(BitmapFactory::decodeStream)
+            }.getOrNull()
+        }
+    }
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap!!.asImageBitmap(),
+            contentDescription = "Fotografia progresso",
+            contentScale = ContentScale.Crop,
+            modifier = modifier.size(84.dp)
+        )
+    } else {
+        Text("Foto non disponibile", modifier = modifier.padding(8.dp), color = TextSecondary)
+    }
 }

@@ -6,6 +6,7 @@ import com.fitcoach.app.data.repository.ApplyResult
 import com.fitcoach.app.data.repository.ChangeRepository
 import com.fitcoach.app.data.repository.ChatRepository
 import com.fitcoach.app.data.repository.CoachActionExecutor
+import com.fitcoach.app.data.repository.PreferencesRepository
 import com.fitcoach.app.domain.coach.CoachService
 import com.fitcoach.app.domain.model.AiProvider
 import com.fitcoach.app.domain.model.AiProviderSettings
@@ -35,6 +36,7 @@ data class CoachUiState(
 class CoachViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val changeRepository: ChangeRepository,
+    private val preferencesRepository: PreferencesRepository,
     private val coachService: CoachService,
     private val actionExecutor: CoachActionExecutor
 ) : ViewModel() {
@@ -93,8 +95,20 @@ class CoachViewModel @Inject constructor(
 
             reply.proposedAction?.let { action ->
                 val changeId = actionExecutor.registerProposal(action)
-                val change = changeRepository.getById(changeId)
-                _state.value = _state.value.copy(pendingChange = change)
+                val mode = preferencesRepository.getOrCreate().coachAuthorizationMode
+                val ordinary = action.action in setOf(
+                    com.fitcoach.app.domain.coach.CoachAction.ACTION_ADJUST_CALORIES,
+                    com.fitcoach.app.domain.coach.CoachAction.ACTION_SUBSTITUTE_FOOD
+                )
+                if (mode == com.fitcoach.app.domain.model.CoachAuthorizationMode.ADAPTIVE && ordinary) {
+                    when (val result = actionExecutor.apply(changeId)) {
+                        is ApplyResult.Applied -> _state.value = _state.value.copy(message = "Applicata automaticamente: ${result.message}")
+                        is ApplyResult.Failed -> _state.value = _state.value.copy(message = result.message)
+                        else -> Unit
+                    }
+                } else {
+                    _state.value = _state.value.copy(pendingChange = changeRepository.getById(changeId))
+                }
             }
 
             _state.value = _state.value.copy(sending = false)

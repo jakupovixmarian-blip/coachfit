@@ -230,3 +230,16 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_progress_photos_capturedAt` ON `progress_photos` (`capturedAt`)")
     }
 }
+
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE user_preferences ADD COLUMN coachAuthorizationMode TEXT NOT NULL DEFAULT 'CONFIRMATION'")
+    }
+}
+
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS `free_session_exercises` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sessionId` INTEGER NOT NULL, `exerciseId` INTEGER NOT NULL, `exerciseName` TEXT NOT NULL, `primaryMuscle` TEXT NOT NULL, `orderIndex` INTEGER NOT NULL, `sets` INTEGER NOT NULL, `minReps` INTEGER NOT NULL, `maxReps` INTEGER NOT NULL, `restSeconds` INTEGER NOT NULL, `targetRir` INTEGER NOT NULL, `technique` TEXT NOT NULL, `category` TEXT NOT NULL, `movementPattern` TEXT NOT NULL)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_free_session_exercises_sessionId` ON `free_session_exercises` (`sessionId`)")
+    }
+}

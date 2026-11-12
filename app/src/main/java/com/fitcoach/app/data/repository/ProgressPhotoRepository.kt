@@ -31,6 +31,11 @@ class ProgressPhotoRepository @Inject constructor(private val db: FitCoachDataba
         )
     }
 
+
+    suspend fun setAiConsent(photo: ProgressPhoto, enabled: Boolean) {
+        db.progressPhotoDao().setConsent(photo.id, enabled)
+    }
+
     private fun ProgressPhotoEntity.toDomain() = ProgressPhoto(
         id = id, uri = uri, capturedAt = capturedAt, pose = pose, note = note, consentForAi = consentForAi
     )

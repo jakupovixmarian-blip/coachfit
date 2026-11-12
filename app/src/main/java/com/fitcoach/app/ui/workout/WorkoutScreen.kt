@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -149,9 +150,15 @@ fun WorkoutScreen(
                     Spacer(Modifier.height(10.dp))
                     if (today == null) {
                         Text(
-                            "Nessuna seduta programmata per oggi. Recupera e preparati alla prossima.",
+                            "Nessuna seduta programmata per oggi. Puoi recuperare oppure iniziare una sessione libera.",
                             style = MaterialTheme.typography.bodyMedium, color = TextSecondary
                         )
+                        Spacer(Modifier.height(8.dp))
+                        Button(onClick = viewModel::startFreeSession) {
+                            Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Inizia sessione libera")
+                        }
                     } else if (session?.status == com.fitcoach.app.domain.model.SessionStatus.COMPLETED) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.Check, contentDescription = null, tint = Emerald)
@@ -168,6 +175,12 @@ fun WorkoutScreen(
                             Icon(Icons.Filled.PlayArrow, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
                             Text("Riprendi sessione")
+                        }
+                        if (today?.id == 0L) {
+                            Spacer(Modifier.height(6.dp))
+                            OutlinedButton(onClick = viewModel::convertFreeSessionToRoutine) {
+                                Text("Trasforma in routine")
+                            }
                         }
                     } else if (session == null) {
                         Button(onClick = { viewModel.startSession() }) {
@@ -389,14 +402,32 @@ private fun SessionHistoryDialog(
 @Composable
 private fun WorkoutCalendarDialog(
     days: List<WorkoutDay>,
-    onMove: (Long, Int) -> Unit,
+    onMove: (Long, Int, Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val permanent = remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Calendario allenamenti") },
         text = {
-            LazyColumn {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Modifica stabile", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            if (permanent.value) "Aggiorna la programmazione futura" else "Solo settimana corrente",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                    Switch(checked = permanent.value, onCheckedChange = { permanent.value = it })
+                }
+                Spacer(Modifier.height(8.dp))
+                LazyColumn {
                 items(days.size) { index ->
                     val day = days[index]
                     Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
@@ -416,12 +447,13 @@ private fun WorkoutCalendarDialog(
                         ) {
                             weekdayNames.forEachIndexed { targetIndex, label ->
                                 TextButton(
-                                    onClick = { onMove(day.id, targetIndex) },
+                                    onClick = { onMove(day.id, targetIndex, permanent.value) },
                                     enabled = targetIndex != day.dayIndex
                                 ) { Text(label.take(2)) }
                             }
                         }
                     }
+                }
                 }
             }
         },

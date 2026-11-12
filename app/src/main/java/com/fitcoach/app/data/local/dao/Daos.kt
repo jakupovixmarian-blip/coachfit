@@ -32,6 +32,7 @@ import com.fitcoach.app.data.local.entity.UserPreferencesEntity
 import com.fitcoach.app.data.local.entity.UserProfileEntity
 import com.fitcoach.app.data.local.entity.WeightRecordEntity
 import com.fitcoach.app.data.local.entity.WorkoutDayEntity
+import com.fitcoach.app.data.local.entity.FreeSessionExerciseEntity
 import com.fitcoach.app.data.local.entity.WorkoutPlanEntity
 import com.fitcoach.app.data.local.entity.WorkoutSessionEntity
 import com.fitcoach.app.data.local.entity.WorkoutSetEntity
@@ -333,6 +334,25 @@ interface PlannedExerciseDao {
     suspend fun delete(item: PlannedExerciseEntity)
 }
 
+
+@Dao
+interface FreeSessionExerciseDao {
+    @Query("SELECT * FROM free_session_exercises WHERE sessionId = :sessionId ORDER BY orderIndex")
+    suspend fun getForSession(sessionId: Long): List<FreeSessionExerciseEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(item: FreeSessionExerciseEntity): Long
+
+    @Query("DELETE FROM free_session_exercises WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
+    @Query("UPDATE free_session_exercises SET sets = :sets, minReps = :minReps, maxReps = :maxReps, restSeconds = :restSeconds, targetRir = :targetRir, technique = :technique WHERE id = :id")
+    suspend fun updateTemplate(id: Long, sets: Int, minReps: Int, maxReps: Int, restSeconds: Int, targetRir: Int, technique: String): Int
+
+    @Query("UPDATE free_session_exercises SET exerciseId = :exerciseId, exerciseName = :name, primaryMuscle = :primaryMuscle, minReps = :minReps, maxReps = :maxReps, targetRir = :targetRir, technique = :technique, category = :category, movementPattern = :movementPattern WHERE id = :id")
+    suspend fun substitute(id: Long, exerciseId: Long, name: String, primaryMuscle: com.fitcoach.app.domain.model.MuscleGroup, minReps: Int, maxReps: Int, targetRir: Int, technique: String, category: com.fitcoach.app.domain.model.ExerciseCategory, movementPattern: com.fitcoach.app.domain.model.MovementPattern): Int
+}
+
 @Dao
 interface WorkoutSessionDao {
     @Query("SELECT * FROM workout_sessions ORDER BY dateEpochDay DESC")
@@ -412,6 +432,9 @@ interface WorkoutScheduleOverrideDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: com.fitcoach.app.data.local.entity.WorkoutScheduleOverrideEntity): Long
+
+    @Query("DELETE FROM workout_schedule_overrides WHERE workoutDayId = :dayId AND weekStartEpochDay = :weekStart AND permanent = 0")
+    suspend fun deleteTemporary(dayId: Long, weekStart: Long)
 }
 
 @Dao
@@ -421,6 +444,9 @@ interface ProgressPhotoDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: com.fitcoach.app.data.local.entity.ProgressPhotoEntity): Long
+
+    @Query("UPDATE progress_photos SET consentForAi = :consent WHERE id = :id")
+    suspend fun setConsent(id: Long, consent: Boolean)
 
     @Delete
     suspend fun delete(item: com.fitcoach.app.data.local.entity.ProgressPhotoEntity)

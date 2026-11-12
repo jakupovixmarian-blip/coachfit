@@ -94,7 +94,13 @@ class WorkoutViewModel @Inject constructor(
             val todayIndex = LocalDate.now().dayOfWeek.value - 1
             val today = plan?.days?.firstOrNull { it.dayIndex == todayIndex && !it.isRestDay }
             val session = workoutRepository.getSessionForDay(LocalDate.now().toEpochDay())
-            val lastPerformances = today?.exercises
+            val freeExercises = if (session?.workoutDayId == null && session != null) {
+                workoutRepository.getFreeExercises(session.id)
+            } else emptyList()
+            val effectiveToday = if (session?.workoutDayId == null && session != null) {
+                WorkoutDay(id = 0L, dayIndex = todayIndex, title = "Allenamento libero", exercises = freeExercises)
+            } else today
+            val lastPerformances = effectiveToday?.exercises
                 ?.mapNotNull { pe ->
                     workoutRepository.getLatestPerformance(pe.exerciseId)?.let { pe.exerciseId to it }
                 }
@@ -104,7 +110,7 @@ class WorkoutViewModel @Inject constructor(
             _state.value = _state.value.copy(
                 loading = false,
                 plan = plan,
-                today = today,
+                today = effectiveToday,
                 session = session,
                 lastPerformances = lastPerformances,
                 history = history
@@ -147,12 +153,20 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
-    fun moveWorkout(dayId: Long, newDayIndex: Int) {
+    fun moveWorkout(dayId: Long, newDayIndex: Int, permanent: Boolean) {
         viewModelScope.launch {
-            if (workoutRepository.moveWorkoutDay(dayId, newDayIndex)) {
-                _state.value = _state.value.copy(message = "Calendario aggiornato senza rigenerare la scheda.")
+            val today = LocalDate.now().toEpochDay()
+            val weekStart = today - Math.floorMod(today + 3, 7)
+            if (workoutRepository.saveScheduleOverride(dayId, newDayIndex, weekStart, permanent)) {
+                _state.value = _state.value.copy(message = if (permanent) {
+                    "Programmazione futura aggiornata."
+                } else {
+                    "Solo la settimana corrente è stata aggiornata."
+                })
                 showCalendar(true)
                 load()
+            } else {
+                _state.value = _state.value.copy(message = "Spostamento non disponibile: controlla i conflitti.")
             }
         }
     }
@@ -177,8 +191,14 @@ class WorkoutViewModel @Inject constructor(
     fun addExerciseToToday(exercise: com.fitcoach.app.domain.model.Exercise) {
         viewModelScope.launch {
             val day = _state.value.today
+            if (day?.id == 0L && _state.value.session != null) {
+                workoutRepository.addExerciseToFreeSession(_state.value.session!!.id, exercise)
+                _state.value = _state.value.copy(message = "${exercise.name} aggiunto alla sessione libera.", showLibrary = false)
+                load()
+                return@launch
+            }
             if (day == null) {
-                _state.value = _state.value.copy(message = "Non puoi aggiungere esercizi a un giorno di riposo.")
+                _state.value = _state.value.copy(message = "Avvia prima una sessione libera o una seduta programmata.")
                 return@launch
             }
             if (workoutRepository.addExerciseToDay(day.id, exercise)) {
@@ -248,7 +268,15 @@ class WorkoutViewModel @Inject constructor(
     fun startSession() {
         viewModelScope.launch {
             val day = _state.value.today ?: return@launch
-            workoutRepository.startSession(day, LocalDate.now().toEpochDay())
+            if (day.id == 0L) workoutRepository.startFreeSession(LocalDate.now().toEpochDay())
+            else workoutRepository.startSession(day, LocalDate.now().toEpochDay())
+            load()
+        }
+    }
+
+    fun startFreeSession() {
+        viewModelScope.launch {
+            workoutRepository.startFreeSession(LocalDate.now().toEpochDay())
             load()
         }
     }
@@ -265,7 +293,8 @@ class WorkoutViewModel @Inject constructor(
                     _state.value = _state.value.copy(message = "Nessuna seduta programmata per oggi.")
                     return@launch
                 }
-                workoutRepository.startSession(day, LocalDate.now().toEpochDay())
+                if (day.id == 0L) workoutRepository.startFreeSession(LocalDate.now().toEpochDay())
+                else workoutRepository.startSession(day, LocalDate.now().toEpochDay())
                 load()
             }
             openSetForm(planned, sessionSetsFor(planned.exerciseId).size)
@@ -460,6 +489,17 @@ class WorkoutViewModel @Inject constructor(
                 message = "Allenamento completato. Ottimo lavoro!"
             )
             load()
+        }
+    }
+
+    fun convertFreeSessionToRoutine() {
+        viewModelScope.launch {
+            val session = _state.value.session ?: return@launch
+            val converted = workoutRepository.convertFreeSessionToRoutine(session.id)
+            _state.value = _state.value.copy(
+                message = if (converted) "Sessione convertita in una routine." else "Impossibile convertire: serve una giornata di riposo disponibile e almeno un esercizio."
+            )
+            if (converted) load()
         }
     }
 

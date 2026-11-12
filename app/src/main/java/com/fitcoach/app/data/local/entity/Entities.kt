@@ -141,6 +141,7 @@ data class UserPreferencesEntity(
     val weightReminderTime: String = "07:00",
     val notificationsEnabled: Boolean = true,
     val deferMinutes: Int = 15,
+    val coachAuthorizationMode: String = "CONFIRMATION",
     val locale: String = "it",
     val unitsMetric: Boolean = true
 )
@@ -373,6 +374,25 @@ data class PlannedExerciseEntity(
     val restReason: String = "",
     val intensityTechnique: IntensityTechnique = IntensityTechnique.NONE,
     val techniqueReason: String = "",
+    val movementPattern: MovementPattern = MovementPattern.OTHER
+)
+
+
+@Entity(tableName = "free_session_exercises", indices = [Index("sessionId")])
+data class FreeSessionExerciseEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val sessionId: Long,
+    val exerciseId: Long,
+    val exerciseName: String,
+    val primaryMuscle: MuscleGroup,
+    val orderIndex: Int,
+    val sets: Int,
+    val minReps: Int,
+    val maxReps: Int,
+    val restSeconds: Int,
+    val targetRir: Int,
+    val technique: String = "",
+    val category: ExerciseCategory = ExerciseCategory.COMPOUND,
     val movementPattern: MovementPattern = MovementPattern.OTHER
 )
 

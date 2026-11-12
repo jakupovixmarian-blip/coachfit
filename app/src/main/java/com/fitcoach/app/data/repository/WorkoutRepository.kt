@@ -5,6 +5,7 @@ import com.fitcoach.app.data.local.FitCoachDatabase
 import com.fitcoach.app.data.local.Mappers.toDomain
 import com.fitcoach.app.data.local.Mappers.toEntity
 import com.fitcoach.app.data.local.entity.ExercisePerformanceEntity
+import com.fitcoach.app.data.local.entity.FreeSessionExerciseEntity
 import com.fitcoach.app.data.local.entity.MesocycleEntity
 import com.fitcoach.app.data.local.entity.PlannedExerciseEntity
 import com.fitcoach.app.data.local.entity.WorkoutDayEntity
@@ -28,6 +29,7 @@ import com.fitcoach.app.domain.workout.ProgressiveOverloadEngine
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,6 +41,7 @@ class WorkoutRepository @Inject constructor(
     private val mesoDao = db.mesocycleDao()
     private val dayDao = db.workoutDayDao()
     private val plannedDao = db.plannedExerciseDao()
+    private val freeExerciseDao = db.freeSessionExerciseDao()
     private val sessionDao = db.workoutSessionDao()
     private val setDao = db.workoutSetDao()
     private val perfDao = db.exercisePerformanceDao()
@@ -129,7 +132,7 @@ class WorkoutRepository @Inject constructor(
         return day.toDomain(planned.map { it.toDomain() })
     }
 
-    suspend fun getActiveDays(): List<WorkoutDay> {
+    suspend fun getActiveDays(weekStartEpochDay: Long? = null): List<WorkoutDay> {
         val plan = planDao.getActive() ?: return emptyList()
         val mesos = mesoDao.getForPlan(plan.id)
         if (mesos.isEmpty()) return emptyList()
@@ -137,7 +140,11 @@ class WorkoutRepository @Inject constructor(
         val days = dayDao.getForMesocycles(mesoIds)
         val planned = plannedDao.getForDays(days.map { it.id })
         val byDay = planned.groupBy { it.workoutDayId }
-        return days.map { it.toDomain(byDay[it.id]?.map { p -> p.toDomain() } ?: emptyList()) }
+        val base = days.map { it.toDomain(byDay[it.id]?.map { p -> p.toDomain() } ?: emptyList()) }
+        val week = weekStartEpochDay ?: LocalDate.now().toEpochDay().let { it - Math.floorMod(it + 3, 7) }
+        val overrides = scheduleOverrideDao.getForWeek(week).filter { !it.permanent }
+        val targets = overrides.associate { it.workoutDayId to it.targetDayIndex }
+        return base.map { day -> day.copy(dayIndex = targets[day.id] ?: day.dayIndex) }
     }
 
     suspend fun substituteExercise(plannedId: Long, exerciseId: Long, name: String, technique: String) =
@@ -148,20 +155,35 @@ class WorkoutRepository @Inject constructor(
      * (serie, range ripetizioni, recupero, RIR, categoria, tecnica d'intensita).
      */
     suspend fun substituteExercisePreservingStimulus(plannedId: Long, replacement: Exercise) {
-        val current = plannedDao.getById(plannedId) ?: return
-        plannedDao.update(
-            current.copy(
+        val current = plannedDao.getById(plannedId)
+        if (current != null) {
+            plannedDao.update(
+                current.copy(
+                    exerciseId = replacement.id,
+                    exerciseName = replacement.name,
+                    primaryMuscle = replacement.primaryMuscle,
+                    technique = replacement.technique,
+                    category = replacement.category,
+                    movementPattern = replacement.movementPattern,
+                    minReps = replacement.minReps,
+                    maxReps = replacement.maxReps,
+                    targetRir = replacement.targetRir
+                )
+            )
+        } else {
+            freeExerciseDao.substitute(
+                id = plannedId,
                 exerciseId = replacement.id,
-                exerciseName = replacement.name,
+                name = replacement.name,
                 primaryMuscle = replacement.primaryMuscle,
-                technique = replacement.technique,
-                category = replacement.category,
-                movementPattern = replacement.movementPattern,
                 minReps = replacement.minReps,
                 maxReps = replacement.maxReps,
-                targetRir = replacement.targetRir
+                targetRir = replacement.targetRir,
+                technique = replacement.technique,
+                category = replacement.category,
+                movementPattern = replacement.movementPattern
             )
-        )
+        }
     }
 
     /** Sposta una seduta nel calendario senza rigenerare il piano. */
@@ -190,6 +212,24 @@ class WorkoutRepository @Inject constructor(
         val mesocycle = mesoDao.getForPlan(planDao.getActive()?.id ?: 0L).firstOrNull { it.id == day.mesocycleId }
             ?: return@withTransaction false
         val plan = planDao.getById(mesocycle.planId) ?: return@withTransaction false
+        val sibling = dayDao.getForMesocycle(day.mesocycleId)
+            .firstOrNull { it.dayIndex == targetDayIndex && it.id != dayId }
+        if (!permanent) {
+            scheduleOverrideDao.deleteTemporary(dayId, weekStartEpochDay)
+            sibling?.let { scheduleOverrideDao.deleteTemporary(it.id, weekStartEpochDay) }
+            sibling?.let {
+                scheduleOverrideDao.insert(
+                    com.fitcoach.app.data.local.entity.WorkoutScheduleOverrideEntity(
+                        planId = plan.id,
+                        workoutDayId = it.id,
+                        weekStartEpochDay = weekStartEpochDay,
+                        targetDayIndex = day.dayIndex,
+                        permanent = false,
+                        note = "Scambio settimana corrente"
+                    )
+                )
+            }
+        }
         scheduleOverrideDao.insert(
             com.fitcoach.app.data.local.entity.WorkoutScheduleOverrideEntity(
                 planId = plan.id,
@@ -238,6 +278,7 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun removeExercise(plannedId: Long) {
         plannedDao.getById(plannedId)?.let { plannedDao.delete(it) }
+        freeExerciseDao.deleteById(plannedId)
     }
 
     suspend fun updateExerciseTemplate(
@@ -249,10 +290,15 @@ class WorkoutRepository @Inject constructor(
         targetRir: Int,
         technique: com.fitcoach.app.domain.model.IntensityTechnique
     ): Boolean {
-        val current = plannedDao.getById(plannedId) ?: return false
+        val current = plannedDao.getById(plannedId)
         if (sets !in 1..20 || minReps !in 1..50 || maxReps !in minReps..50 ||
             restSeconds !in 15..900 || targetRir !in 0..5
         ) return false
+        if (current == null) {
+            return freeExerciseDao.updateTemplate(
+                plannedId, sets, minReps, maxReps, restSeconds, targetRir, technique.name
+            ) > 0
+        }
         plannedDao.update(
             current.copy(
                 sets = sets,
@@ -296,6 +342,100 @@ class WorkoutRepository @Inject constructor(
             )
         )
     }
+
+
+    suspend fun startFreeSession(epochDay: Long): Long {
+        val existing = sessionDao.getForDay(epochDay)
+        if (existing != null) {
+            if (existing.status == SessionStatus.COMPLETED) {
+                sessionDao.update(existing.copy(status = SessionStatus.IN_PROGRESS, completedAt = null))
+            }
+            return existing.id
+        }
+        return sessionDao.insert(
+            WorkoutSessionEntity(
+                planId = planDao.getActive()?.id ?: 0L,
+                workoutDayId = null,
+                dayTitle = "Allenamento libero",
+                dateEpochDay = epochDay,
+                status = SessionStatus.IN_PROGRESS,
+                startedAt = System.currentTimeMillis()
+            )
+        )
+    }
+
+    suspend fun getFreeExercises(sessionId: Long): List<PlannedExercise> =
+        freeExerciseDao.getForSession(sessionId).map { it.toPlannedExercise() }
+
+    suspend fun addExerciseToFreeSession(sessionId: Long, exercise: Exercise): PlannedExercise {
+        val current = freeExerciseDao.getForSession(sessionId)
+        val item = FreeSessionExerciseEntity(
+            sessionId = sessionId,
+            exerciseId = exercise.id,
+            exerciseName = exercise.name,
+            primaryMuscle = exercise.primaryMuscle,
+            orderIndex = current.size,
+            sets = exercise.defaultSets,
+            minReps = exercise.minReps,
+            maxReps = exercise.maxReps,
+            restSeconds = exercise.restSeconds,
+            targetRir = exercise.targetRir,
+            technique = exercise.technique,
+            category = exercise.category,
+            movementPattern = exercise.movementPattern
+        )
+        val id = freeExerciseDao.insert(item)
+        return item.copy(id = id).toPlannedExercise()
+    }
+
+    suspend fun convertFreeSessionToRoutine(sessionId: Long): Boolean = db.withTransaction {
+        val exercises = freeExerciseDao.getForSession(sessionId)
+        if (exercises.isEmpty()) return@withTransaction false
+        val plan = planDao.getActive() ?: return@withTransaction false
+        val meso = mesoDao.getForPlan(plan.id).firstOrNull() ?: return@withTransaction false
+        val rest = dayDao.getForMesocycle(meso.id).firstOrNull { it.isRestDay }
+            ?: return@withTransaction false
+        val newDayId = dayDao.insertAll(listOf(rest.copy(title = "Routine da sessione libera", isRestDay = false))).first()
+        plannedDao.insertAll(exercises.map {
+            PlannedExerciseEntity(
+                workoutDayId = newDayId,
+                exerciseId = it.exerciseId,
+                exerciseName = it.exerciseName,
+                primaryMuscle = it.primaryMuscle,
+                orderIndex = it.orderIndex,
+                sets = it.sets,
+                minReps = it.minReps,
+                maxReps = it.maxReps,
+                restSeconds = it.restSeconds,
+                targetRir = it.targetRir,
+                technique = it.technique,
+                category = it.category,
+                selectionReason = "Convertito da sessione libera.",
+                restReason = "Recupero standard dell'esercizio.",
+                movementPattern = it.movementPattern
+            )
+        })
+        true
+    }
+
+    private fun FreeSessionExerciseEntity.toPlannedExercise() = PlannedExercise(
+        id = id,
+        workoutDayId = -sessionId,
+        exerciseId = exerciseId,
+        exerciseName = exerciseName,
+        primaryMuscle = primaryMuscle,
+        orderIndex = orderIndex,
+        sets = sets,
+        minReps = minReps,
+        maxReps = maxReps,
+        restSeconds = restSeconds,
+        targetRir = targetRir,
+        technique = technique,
+        category = category,
+        movementPattern = movementPattern,
+        selectionReason = "Aggiunto durante una sessione libera.",
+        restReason = "Recupero standard dell'esercizio."
+    )
 
     suspend fun getSessionForDay(epochDay: Long): WorkoutSession? {
         val entity = sessionDao.getForDay(epochDay) ?: return null

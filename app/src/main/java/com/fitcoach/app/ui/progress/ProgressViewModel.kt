@@ -2,12 +2,14 @@ package com.fitcoach.app.ui.progress
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fitcoach.app.data.repository.ProgressPhotoRepository
 import com.fitcoach.app.data.repository.ProgressRepository
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
 import com.fitcoach.app.domain.adaptive.WeightAnalyzer
 import com.fitcoach.app.domain.model.CheckIn
 import com.fitcoach.app.domain.model.CircumferenceRecord
+import com.fitcoach.app.domain.model.ProgressPhoto
 import com.fitcoach.app.domain.model.WeightRecord
 import com.fitcoach.app.domain.model.WeightTrend
 import com.fitcoach.app.domain.usecase.RunWeeklyCheckInUseCase
@@ -15,6 +17,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
@@ -29,6 +32,7 @@ data class ProgressUiState(
     val trend: WeightTrend? = null,
     val latestCheckIn: CheckIn? = null,
     val volumeBySession: List<VolumePoint> = emptyList(),
+    val photos: List<ProgressPhoto> = emptyList(),
     val message: String? = null,
     val weightInput: String = "",
     val bfInput: String = "",
@@ -39,6 +43,7 @@ data class ProgressUiState(
 @HiltViewModel
 class ProgressViewModel @Inject constructor(
     private val progressRepository: ProgressRepository,
+    private val photoRepository: ProgressPhotoRepository,
     private val workoutRepository: WorkoutRepository,
     private val userRepository: UserRepository,
     private val runWeeklyCheckIn: RunWeeklyCheckInUseCase
@@ -55,6 +60,7 @@ class ProgressViewModel @Inject constructor(
         viewModelScope.launch {
             val weights = progressRepository.getWeights()
             val circumferences = progressRepository.getCircumferences()
+            val photos = photoRepository.photos.first()
             val sessions = workoutRepository.getRecentSessions(limit = 60)
             val checkIn = progressRepository.getLatestCheckIn()
             _state.value = _state.value.copy(
@@ -62,6 +68,7 @@ class ProgressViewModel @Inject constructor(
                 weights = weights,
                 circumferences = circumferences,
                 trend = if (weights.size >= 2) WeightAnalyzer.trend(weights) else null,
+                photos = photos,
                 latestCheckIn = checkIn,
                 volumeBySession = sessions
                     .filter { it.status == com.fitcoach.app.domain.model.SessionStatus.COMPLETED }
@@ -137,6 +144,33 @@ class ProgressViewModel @Inject constructor(
                 circumferenceCmInput = "",
                 message = "Misura registrata: $site %.1f cm.".format(cm)
             )
+            load()
+        }
+    }
+
+
+    fun addPhoto(uri: String) {
+        viewModelScope.launch {
+            photoRepository.add(uri, System.currentTimeMillis(), pose = "", note = "", consentForAi = false)
+            _state.value = _state.value.copy(message = "Foto salvata solo sul dispositivo.")
+            load()
+        }
+    }
+
+    fun deletePhoto(photo: ProgressPhoto) {
+        viewModelScope.launch {
+            photoRepository.delete(photo)
+            _state.value = _state.value.copy(message = "Foto eliminata.")
+            load()
+        }
+    }
+
+    fun setPhotoAiConsent(photo: ProgressPhoto, enabled: Boolean) {
+        viewModelScope.launch {
+            photoRepository.setAiConsent(photo, enabled)
+            _state.value = _state.value.copy(message = if (enabled) {
+                "Consenso AI attivato solo per questa foto."
+            } else "Consenso AI revocato.")
             load()
         }
     }

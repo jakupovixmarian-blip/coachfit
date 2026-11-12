@@ -323,4 +323,35 @@ class NutritionChainIntegrationTest {
         assertThat(workoutRepository.getDay(day.id)!!.exercises.any { it.id == added.id }).isFalse()
     }
 
+
+    @Test
+    fun `override temporaneo scambia le sedute solo nella settimana corrente`() = runTest {
+        generatePrograms(profile, regenerateNutrition = false, regenerateWorkout = true, requireAnamnesis = false)
+        val days = workoutRepository.getActiveDays().sortedBy { it.dayIndex }
+        val source = days.first { !it.isRestDay }
+        val targetIndex = (source.dayIndex + 1) % 7
+        val originalTarget = days.first { it.dayIndex == targetIndex }
+        val weekStart = 2_000L
+
+        assertThat(workoutRepository.saveScheduleOverride(source.id, targetIndex, weekStart, permanent = false)).isTrue()
+        val current = workoutRepository.getActiveDays(weekStart)
+        assertThat(current.first { it.id == source.id }.dayIndex).isEqualTo(targetIndex)
+        assertThat(current.first { it.id == originalTarget.id }.dayIndex).isEqualTo(source.dayIndex)
+        assertThat(workoutRepository.getActiveDays(weekStart + 7).first { it.id == source.id }.dayIndex)
+            .isEqualTo(source.dayIndex)
+    }
+
+    @Test
+    fun `sessione libera persiste esercizi e supporta rimozione`() = runTest {
+        val sessionId = workoutRepository.startFreeSession(3_000L)
+        val exercise = exerciseRepository.getAll().first()
+        val added = workoutRepository.addExerciseToFreeSession(sessionId, exercise)
+
+        assertThat(workoutRepository.getFreeExercises(sessionId)).containsExactly(added)
+        assertThat(workoutRepository.updateExerciseTemplate(added.id, 4, 8, 12, 90, 2, com.fitcoach.app.domain.model.IntensityTechnique.NONE)).isTrue()
+        workoutRepository.removeExercise(added.id)
+        assertThat(workoutRepository.getFreeExercises(sessionId)).isEmpty()
+    }
+
+
 }

@@ -2,6 +2,7 @@ package com.fitcoach.app.data.repository
 
 import com.fitcoach.app.data.local.dao.UserPreferencesDao
 import com.fitcoach.app.data.local.entity.UserPreferencesEntity
+import com.fitcoach.app.domain.model.CoachAuthorizationMode
 import com.fitcoach.app.domain.model.MealSchedule
 import com.fitcoach.app.domain.model.MealSlot
 import com.fitcoach.app.domain.model.UserPreferences
@@ -46,6 +47,8 @@ class PreferencesRepository @Inject constructor(
         weightReminderTime = weightReminderTime,
         notificationsEnabled = notificationsEnabled,
         deferMinutes = deferMinutes,
+        coachAuthorizationMode = runCatching { CoachAuthorizationMode.valueOf(coachAuthorizationMode) }
+            .getOrDefault(CoachAuthorizationMode.CONFIRMATION),
         locale = locale,
         unitsMetric = unitsMetric
     )
@@ -66,6 +69,7 @@ class PreferencesRepository @Inject constructor(
         weightReminderTime = weightReminderTime,
         notificationsEnabled = notificationsEnabled,
         deferMinutes = deferMinutes,
+        coachAuthorizationMode = coachAuthorizationMode.name,
         locale = locale,
         unitsMetric = unitsMetric
     )

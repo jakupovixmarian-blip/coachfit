@@ -24,7 +24,7 @@ Sviluppato per fasi verificabili. Ogni fase è stata compilata e testata.
 
 - **Kotlin**, **Jetpack Compose**, **Material 3**
 - **MVVM + Clean Architecture** (domain / data / ui)
-- **Room** (23 entità, DAO, migrazioni, schema esportato; DB v6)
+- **Room** (24 entità, DAO, migrazioni, schema esportato; DB v9)
 - **Coroutines / Flow**, **WorkManager**, **AlarmManager** (notifiche esatte)
 - **DataStore** per le impostazioni, **Hilt** per la dependency injection
 - **Retrofit / OkHttp + kotlinx.serialization** per le API AI
@@ -173,8 +173,12 @@ contiene **un solo** parametro: mai entrambi. Se il provider rifiuta il parametr
 il client esegue **un unico retry controllato** con l'altro parametro.
 
 La chat conosce profilo, piano attivo, ciclicità, scheda, storico carichi, progressi e
-modifiche precedenti. Le modifiche proposte vengono mostrate all'utente e applicate solo
-dopo conferma, tramite funzioni controllate, con possibilità di **annullamento**.
+modifiche precedenti. Le modifiche proposte passano sempre da funzioni controllate e sono
+registrate con possibilità di **annullamento**. In Impostazioni → Modalità Coach AI l'utente
+sceglie tra **Consulenziale**, **Adattiva** (solo aggiustamenti ordinari autorizzati) e
+**Con conferma** (modifiche sempre approvate manualmente). Cambiare modalità è persistente;
+le modifiche significative, come deload o sostituzioni esercizio, restano sempre soggette a
+conferma.
 
 ## Notifiche
 
