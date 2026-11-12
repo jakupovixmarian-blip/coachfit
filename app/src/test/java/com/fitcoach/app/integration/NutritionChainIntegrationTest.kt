@@ -288,6 +288,7 @@ class NutritionChainIntegrationTest {
 
             // Ora genera il piano: il ViewModel deve reagire e popolare la lista.
             generatePrograms(profile, regenerateNutrition = true, regenerateWorkout = false, requireAnamnesis = false)
+            shoppingRepository.regenerate(NutritionDiaryRepository.weekStart(NutritionDiaryRepository.todayEpochDay()))
             vm.load()
             advanceUntilIdle()
 

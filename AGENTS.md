@@ -48,6 +48,7 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
   (`CoachActionExecutor`).
 - `DiaryViewModel` pubblica subito la lettura Room e osserva `observeForDay`: il diario deve aggiornarsi anche se l'utente spunta un pasto da Alimentazione prima di aprire Diario. `NutritionDiaryRepository.togglePlanEntry` mantiene una sola voce per coppia piano/data e usa `active` per il consumo effettivo.
 - Il calendario allenamenti usa le sette `WorkoutDayEntity` (incluse quelle di riposo): `WorkoutRepository.moveWorkoutDay` scambia gli indici senza creare una nuova scheda.
+- `AiProgramGenerationService` avvia la generazione online dopo la conferma dell'anamnesi: costruisce il contesto completo, richiede il contratto JSON, tenta una correzione per JSON invalido e salva solo dopo la validazione di macro, calorie, alimenti, esercizi, attrezzatura e calendario. Se il provider è assente o la proposta non è valida, non usa fallback silenziosi.
 - **Nessun dato inventato**: i valori nutrizionali vengono da `FoodSeedData` (CREA/USDA).
 - **Integrazione**: le funzionalità nutrizionali (piano, sostituzioni, spesa, diario)
   condividono lo stesso database alimentare e gli stessi identificativi del piano. Non

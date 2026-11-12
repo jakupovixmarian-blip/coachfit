@@ -52,6 +52,7 @@ fun AnamnesisScreen(
         onOpenSummary = viewModel::openSummary,
         onCloseSummary = viewModel::closeSummary,
         onConfirm = viewModel::confirm,
+        onRetryGeneration = viewModel::retryGeneration,
         onSubmit = viewModel::submit,
         onBack = viewModel::goBack,
         onSkip = viewModel::skip,
@@ -71,6 +72,7 @@ internal fun AnamnesisContent(
     onOpenSummary: () -> Unit,
     onCloseSummary: () -> Unit,
     onConfirm: () -> Unit,
+    onRetryGeneration: () -> Unit = {},
     onSubmit: () -> Unit,
     onBack: () -> Unit,
     onSkip: () -> Unit,
@@ -135,9 +137,16 @@ internal fun AnamnesisContent(
                         LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            "Calcolo target, piano di 7 giorni e scheda personalizzata...",
+                            "Il Coach AI costruisce il JSON; i motori verificano calorie, macro, volume e vincoli...",
                             style = MaterialTheme.typography.labelSmall, color = TextSecondary
                         )
+                    }
+                    if (state.error != null && !state.generatingPrograms) {
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = onRetryGeneration,
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text("Riprova generazione AI") }
                     }
                     state.generationWarnings.forEach { warning ->
                         Spacer(Modifier.height(4.dp))

@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
 import com.fitcoach.app.domain.model.UserProfile
-import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
+import com.fitcoach.app.domain.coach.AiProgramGenerationService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,7 +41,7 @@ data class AnamnesisUiState(
 @HiltViewModel
 class AnamnesisViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val generatePrograms: GenerateProgramsUseCase
+    private val aiProgramGeneration: AiProgramGenerationService
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AnamnesisUiState())
@@ -129,7 +129,7 @@ class AnamnesisViewModel @Inject constructor(
 
     fun closeSummary() { _state.value = _state.value.copy(showSummary = false) }
 
-    /** Conferma l'anamnesi: da qui in poi la generazione e consentita. */
+    /** Conferma l'anamnesi e avvia una generazione reale tramite il provider AI configurato. */
     fun confirm() {
         val profile = _state.value.profile
         if (AnamnesisEngine.missingRequired(profile).isNotEmpty()) {
@@ -156,44 +156,39 @@ class AnamnesisViewModel @Inject constructor(
             updatedAt = System.currentTimeMillis()
         )
         viewModelScope.launch {
-            _state.value = _state.value.copy(
-                profile = confirmed,
-                confirmed = true,
-                showSummary = false,
-                error = null,
-                generatingPrograms = true,
-                generationMessage = "Anamnesi confermata. Generazione locale del percorso in corso...",
-                generationWarnings = emptyList()
-            )
             userRepository.save(confirmed)
-            val result = runCatching {
-                generatePrograms(profile = confirmed, requireAnamnesis = true)
-            }.getOrElse { error ->
-                GenerateProgramsUseCase.Result.Error(
-                    error.message ?: "Errore inatteso durante la generazione."
-                )
-            }
-            when (result) {
-                is GenerateProgramsUseCase.Result.Success -> _state.value = _state.value.copy(
-                    generatingPrograms = false,
-                    generationMessage = "Percorso creato: piano alimentare di 7 giorni e scheda salvati.",
-                    generationWarnings = result.warnings
-                )
-                is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed -> _state.value = _state.value.copy(
-                    generatingPrograms = false,
-                    generationMessage = "Generazione bloccata: l'anamnesi non risulta pronta.",
-                    error = (result.missing + result.contradictions).joinToString(" ")
-                )
-                is GenerateProgramsUseCase.Result.MissingData -> _state.value = _state.value.copy(
-                    generatingPrograms = false,
-                    generationMessage = "Mancano dati essenziali: ${result.missing.joinToString()}."
-                )
-                is GenerateProgramsUseCase.Result.Error -> _state.value = _state.value.copy(
-                    generatingPrograms = false,
-                    generationMessage = "Generazione non completata.",
-                    error = result.message
-                )
-            }
+            runAiGeneration(confirmed)
+        }
+    }
+
+    /** Permette di riprovare quando il provider era offline o ha restituito JSON invalido. */
+    fun retryGeneration() {
+        val profile = _state.value.profile
+        if (!profile.isAnamnesisReady || _state.value.generatingPrograms) return
+        viewModelScope.launch { runAiGeneration(profile) }
+    }
+
+    private suspend fun runAiGeneration(profile: UserProfile) {
+        _state.value = _state.value.copy(
+            profile = profile,
+            confirmed = true,
+            showSummary = false,
+            error = null,
+            generatingPrograms = true,
+            generationMessage = "Anamnesi confermata. Il Coach AI sta generando il percorso...",
+            generationWarnings = emptyList()
+        )
+        when (val result = aiProgramGeneration.generate(profile)) {
+            is AiProgramGenerationService.Result.Success -> _state.value = _state.value.copy(
+                generatingPrograms = false,
+                generationMessage = "Percorso generato dal Coach AI e validato: piano alimentare di 7 giorni e scheda salvati.",
+                generationWarnings = result.warnings
+            )
+            is AiProgramGenerationService.Result.Failure -> _state.value = _state.value.copy(
+                generatingPrograms = false,
+                generationMessage = "Generazione AI non completata. Nessun programma è stato salvato.",
+                error = result.message
+            )
         }
     }
 
