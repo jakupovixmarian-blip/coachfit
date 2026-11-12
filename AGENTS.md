@@ -42,7 +42,7 @@ Lo script `/workspace/build.sh` avvolge Gradle e imposta l'ambiente:
 
 ```bash
 /workspace/build.sh :app:compileDebugKotlin   # compilazione veloce
-/workspace/build.sh :app:testDebugUnitTest    # test unitari (185 test)
+/workspace/build.sh :app:testDebugUnitTest    # test unitari (223 test all'ultimo run)
 /workspace/build.sh :app:assembleDebug        # APK debug
 /workspace/build.sh :app:assembleRelease      # APK release (firmabile)
 ```
