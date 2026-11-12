@@ -31,6 +31,7 @@ import dev.fitcoach.app.domain.model.MeasurementType
 import dev.fitcoach.app.ui.components.BarChart
 import dev.fitcoach.app.ui.components.ChipSelector
 import dev.fitcoach.app.ui.components.FitCard
+import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.KeyValueRow
 import dev.fitcoach.app.ui.components.LabeledField
 import dev.fitcoach.app.ui.components.NumberField
@@ -49,7 +50,7 @@ fun ProgressScreen(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item { Text("Progressi", style = MaterialTheme.typography.headlineSmall) }
+        item { ScreenHeader("Progressi", "Misure e andamento nel tempo") }
 
         item {
             FitCard {

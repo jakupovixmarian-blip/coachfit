@@ -39,6 +39,7 @@ import dev.fitcoach.app.core.util.DateUtils
 import dev.fitcoach.app.domain.model.SessionStatus
 import dev.fitcoach.app.domain.model.WorkoutSession
 import dev.fitcoach.app.ui.components.FitCard
+import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.SectionTitle
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -53,7 +54,7 @@ fun CalendarScreen(viewModel: CalendarViewModel = hiltViewModel()) {
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item { Text("Calendario", style = MaterialTheme.typography.headlineSmall) }
+        item { ScreenHeader("Calendario", "Sedute e pasti giorno per giorno") }
 
         item {
             FitCard {

@@ -45,10 +45,15 @@ import dev.fitcoach.app.core.util.Format
 import dev.fitcoach.app.domain.model.Exercise
 import dev.fitcoach.app.domain.model.LoggedSet
 import dev.fitcoach.app.ui.components.FitCard
+import dev.fitcoach.app.ui.components.HeroCard
 import dev.fitcoach.app.ui.components.KeyValueRow
 import dev.fitcoach.app.ui.components.LabeledField
 import dev.fitcoach.app.ui.components.NumberField
+import dev.fitcoach.app.ui.components.ProgressTrack
+import dev.fitcoach.app.ui.components.RestTimerRing
 import dev.fitcoach.app.ui.components.SectionTitle
+import dev.fitcoach.app.ui.components.StatTile
+import dev.fitcoach.app.ui.components.Tag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,32 +95,61 @@ fun WorkoutSessionScreen(
         ) {
             Column(Modifier.padding(horizontal = 16.dp)) {
                 if (timerState.active || timerState.stopwatchActive) {
-                    FitCard {
-                        Column {
+                    HeroCard {
+                        Column(
+                            Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            SectionTitle(
+                                if (timerState.stopwatchActive) "Cronometro" else "Recupero",
+                                Modifier.align(Alignment.Start)
+                            )
                             if (timerState.stopwatchActive) {
-                                Text("Cronometro: ${timerState.elapsedSeconds}s", style = MaterialTheme.typography.titleMedium)
+                                RestTimerRing(
+                                    remainingSeconds = timerState.elapsedSeconds,
+                                    totalSeconds = timerState.elapsedSeconds,
+                                    size = 132.dp
+                                )
                             } else {
-                                Text("Recupero: ${timerState.remainingSeconds}s", style = MaterialTheme.typography.titleMedium)
+                                RestTimerRing(
+                                    remainingSeconds = timerState.remainingSeconds,
+                                    totalSeconds = timerState.totalSeconds
+                                )
                             }
-                            Text(timerState.exerciseName, style = MaterialTheme.typography.bodyMedium)
                             Spacer(Modifier.height(6.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                timerState.exerciseName,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 OutlinedButton(
                                     onClick = { RestTimerService.adjust(context, -15) },
-                                    enabled = !timerState.stopwatchActive
+                                    enabled = !timerState.stopwatchActive,
+                                    modifier = Modifier.weight(1f)
                                 ) { Text("-15s") }
                                 OutlinedButton(
                                     onClick = { RestTimerService.adjust(context, 15) },
-                                    enabled = !timerState.stopwatchActive
+                                    enabled = !timerState.stopwatchActive,
+                                    modifier = Modifier.weight(1f)
                                 ) { Text("+15s") }
                                 OutlinedButton(
                                     onClick = {
                                         if (timerState.running) RestTimerService.pause(context)
                                         else RestTimerService.resume(context)
-                                    }
+                                    },
+                                    modifier = Modifier.weight(1f)
                                 ) { Text(if (timerState.running) "Pausa" else "Riprendi") }
-                                OutlinedButton(onClick = { RestTimerService.skip(context) }) { Text("Salta") }
                             }
+                            Spacer(Modifier.height(8.dp))
+                            OutlinedButton(
+                                onClick = { RestTimerService.skip(context) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text("Salta recupero") }
                         }
                     }
                     Spacer(Modifier.height(8.dp))
@@ -128,16 +162,19 @@ fun WorkoutSessionScreen(
                         } else 0f
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("Serie effettive", style = MaterialTheme.typography.bodyMedium)
-                            Text("${state.effectiveSets}/${state.plannedTotalSets}", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "${state.effectiveSets}/${state.plannedTotalSets}",
+                                style = MaterialTheme.typography.titleSmall
+                            )
                         }
-                        Spacer(Modifier.height(4.dp))
-                        LinearProgressIndicator(
-                            progress = { progress.coerceIn(0f, 1f) },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        KeyValueRow("Volume totale", Format.kg(state.totalVolumeKg))
-                        KeyValueRow("Esercizi", state.blocks.size.toString())
+                        Spacer(Modifier.height(6.dp))
+                        ProgressTrack(progress)
+                        Spacer(Modifier.height(14.dp))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            StatTile("Volume", Format.kg(state.totalVolumeKg), accent = MaterialTheme.colorScheme.primary)
+                            StatTile("Esercizi", state.blocks.size.toString())
+                            StatTile("Serie", state.effectiveSets.toString())
+                        }
                         Spacer(Modifier.height(8.dp))
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(onClick = { showAddExercise = true }, modifier = Modifier.weight(1f)) {
@@ -167,11 +204,14 @@ fun WorkoutSessionScreen(
                             ) {
                                 Column(Modifier.weight(1f)) {
                                     Text(block.exercise.name, style = MaterialTheme.typography.titleMedium)
-                                    Text(
-                                        "${block.exercise.primaryMuscle.label} - ${block.exercise.equipment.label}",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Tag(block.exercise.primaryMuscle.label)
+                                        Tag(
+                                            block.exercise.equipment.label,
+                                            color = MaterialTheme.colorScheme.tertiary
+                                        )
+                                    }
                                 }
                                 IconButton(onClick = { viewModel.addSet(block) }) {
                                     Icon(Icons.Filled.Add, contentDescription = "Aggiungi serie")

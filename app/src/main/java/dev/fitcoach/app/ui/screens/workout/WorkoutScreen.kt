@@ -25,7 +25,10 @@ import dev.fitcoach.app.core.util.DateUtils
 import dev.fitcoach.app.ui.components.EmptyState
 import dev.fitcoach.app.ui.components.FitCard
 import dev.fitcoach.app.ui.components.KeyValueRow
+import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.SectionTitle
+import dev.fitcoach.app.ui.components.StatTile
+import dev.fitcoach.app.ui.components.Tag
 
 @Composable
 fun WorkoutScreen(
@@ -44,7 +47,7 @@ fun WorkoutScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Allenamento", style = MaterialTheme.typography.headlineSmall)
+        ScreenHeader("Allenamento", "Programma, sedute e progressione")
 
         state.inProgressSession?.let { session ->
             FitCard {
@@ -86,15 +89,25 @@ fun WorkoutScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    KeyValueRow("Sedute", state.dayCount.toString())
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                        StatTile("Sedute", state.dayCount.toString(), accent = MaterialTheme.colorScheme.primary)
+                        StatTile("Esercizi", state.program.sumOf { it.exercises.size }.toString())
+                        StatTile("Serie", state.program.sumOf { it.totalSets }.toString())
+                    }
+                    Spacer(Modifier.height(4.dp))
                     state.program.forEach { day ->
                         Spacer(Modifier.height(10.dp))
-                        Text(day.routine.dayLabel.ifBlank { day.routine.name }, style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            "${day.exercises.size} esercizi - ${day.totalSets} serie",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        ) {
+                            Text(
+                                day.routine.dayLabel.ifBlank { day.routine.name },
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Tag("${day.exercises.size} esercizi · ${day.totalSets} serie")
+                        }
                         day.exercises.forEach { re ->
                             val ex = state.exercisesById[re.exerciseId]
                             TextButton(onClick = { onOpenExercise(re.exerciseId) }) {

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -42,8 +43,12 @@ import dev.fitcoach.app.ui.components.EmptyState
 import dev.fitcoach.app.ui.components.FitCard
 import dev.fitcoach.app.ui.components.KeyValueRow
 import dev.fitcoach.app.ui.components.NumberField
+import dev.fitcoach.app.ui.components.ProgressTrack
 import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.SectionTitle
+import dev.fitcoach.app.ui.components.StatTile
+import dev.fitcoach.app.ui.theme.BlueAccent
+import dev.fitcoach.app.ui.theme.VioletAccent
 
 private val DAY_NAMES = listOf("Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom")
 
@@ -96,19 +101,35 @@ fun PlanScreen(
         FitCard {
             Column {
                 SectionTitle("Totali giorno ${DAY_NAMES.getOrElse(state.selectedDayIndex) { "" }}")
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(Format.kcal(totals.kcal), style = MaterialTheme.typography.titleLarge)
+                Row(verticalAlignment = androidx.compose.ui.Alignment.Bottom) {
+                    Text(totals.kcal.toInt().toString(), style = MaterialTheme.typography.displaySmall)
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "kcal",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
                     if (plan.targetKcal > 0) {
+                        Spacer(Modifier.weight(1f))
                         Text(
                             "target ${Format.kcal(plan.targetKcal)}",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 6.dp)
                         )
                     }
                 }
-                KeyValueRow("Proteine", Format.grams(totals.protein))
-                KeyValueRow("Carboidrati", Format.grams(totals.carbs))
-                KeyValueRow("Grassi", Format.grams(totals.fat))
+                if (plan.targetKcal > 0) {
+                    Spacer(Modifier.height(8.dp))
+                    ProgressTrack((totals.kcal / plan.targetKcal).toFloat())
+                }
+                Spacer(Modifier.height(14.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    StatTile("Proteine", Format.grams(totals.protein), accent = MaterialTheme.colorScheme.primary)
+                    StatTile("Carboidrati", Format.grams(totals.carbs), accent = BlueAccent)
+                    StatTile("Grassi", Format.grams(totals.fat), accent = VioletAccent)
+                }
                 Spacer(Modifier.height(8.dp))
                 Button(onClick = onOpenDiary, modifier = Modifier.fillMaxWidth()) { Text("Registra nel diario") }
                 Spacer(Modifier.height(8.dp))

@@ -34,6 +34,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fitcoach.app.ui.components.ChatBubble
 import dev.fitcoach.app.ui.components.FitCard
+import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.SectionTitle
 
 @Composable
@@ -60,7 +61,7 @@ fun AnamnesiScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            Text("Anamnesi con l'agente AI", style = MaterialTheme.typography.headlineSmall)
+            ScreenHeader("Anamnesi con l'agente", "Rispondi alle domande: costruisco il tuo profilo")
             Spacer(Modifier.height(4.dp))
             Text(
                 "Il tuo coach raccoglie i dati con una conversazione. Niente moduli: rispondi e lui compila il profilo.",

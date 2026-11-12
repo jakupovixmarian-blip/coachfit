@@ -25,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fitcoach.app.core.util.Format
 import dev.fitcoach.app.ui.components.ChipSelector
 import dev.fitcoach.app.ui.components.FitCard
+import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.KeyValueRow
 import dev.fitcoach.app.ui.components.LabeledField
 import dev.fitcoach.app.ui.components.NumberField
@@ -56,7 +57,7 @@ fun SettingsScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Impostazioni", style = MaterialTheme.typography.headlineSmall)
+        ScreenHeader("Impostazioni", "Dati, backup e configurazione AI")
 
         FitCard {
             Column {

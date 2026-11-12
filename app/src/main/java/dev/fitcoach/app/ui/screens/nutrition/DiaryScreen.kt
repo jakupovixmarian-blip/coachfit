@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,7 +21,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -41,9 +41,14 @@ import dev.fitcoach.app.domain.model.DiaryEntry
 import dev.fitcoach.app.domain.model.MealSlot
 import dev.fitcoach.app.ui.components.EmptyState
 import dev.fitcoach.app.ui.components.FitCard
+import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.KeyValueRow
 import dev.fitcoach.app.ui.components.NumberField
+import dev.fitcoach.app.ui.components.ProgressTrack
 import dev.fitcoach.app.ui.components.SectionTitle
+import dev.fitcoach.app.ui.components.StatTile
+import dev.fitcoach.app.ui.theme.BlueAccent
+import dev.fitcoach.app.ui.theme.VioletAccent
 
 @Composable
 fun DiaryScreen(viewModel: DiaryViewModel = hiltViewModel()) {
@@ -54,7 +59,7 @@ fun DiaryScreen(viewModel: DiaryViewModel = hiltViewModel()) {
     val totals = state.totals
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Diario alimentare", style = MaterialTheme.typography.headlineSmall)
+        ScreenHeader("Diario alimentare", "Cosa hai mangiato oggi")
         Spacer(Modifier.height(8.dp))
 
         FitCard {
@@ -85,31 +90,41 @@ fun DiaryScreen(viewModel: DiaryViewModel = hiltViewModel()) {
                 Spacer(Modifier.height(10.dp))
 
                 val target = state.targetKcal
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(Format.kcal(totals.kcal), style = MaterialTheme.typography.titleLarge)
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(totals.kcal.toInt().toString(), style = MaterialTheme.typography.displaySmall)
+                    Spacer(Modifier.width(6.dp))
                     Text(
-                        target?.let { "obiettivo ${Format.kcal(it)}" } ?: "obiettivo non calcolabile",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        "kcal",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 6.dp)
                     )
                 }
+                Text(
+                    target?.let { "obiettivo ${Format.kcal(it)}" } ?: "obiettivo non calcolabile",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 if (target != null && target > 0) {
+                    Spacer(Modifier.height(8.dp))
+                    ProgressTrack((totals.kcal / target).toFloat())
                     Spacer(Modifier.height(6.dp))
-                    LinearProgressIndicator(
-                        progress = { (totals.kcal / target).toFloat().coerceIn(0f, 1f) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(4.dp))
                     Text(
                         "Rimanenti ${Format.kcal((target - totals.kcal).coerceAtLeast(0.0))}",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Spacer(Modifier.height(8.dp))
-                KeyValueRow("Proteine", macroWithTarget(totals.protein, state.targetProtein))
-                KeyValueRow("Carboidrati", macroWithTarget(totals.carbs, state.targetCarbs))
-                KeyValueRow("Grassi", macroWithTarget(totals.fat, state.targetFat))
+                Spacer(Modifier.height(14.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    StatTile("Proteine", Format.grams(totals.protein), accent = MaterialTheme.colorScheme.primary)
+                    StatTile("Carboidrati", Format.grams(totals.carbs), accent = BlueAccent)
+                    StatTile("Grassi", Format.grams(totals.fat), accent = VioletAccent)
+                }
+                Spacer(Modifier.height(10.dp))
+                KeyValueRow("Target proteine", state.targetProtein?.let { Format.grams(it) } ?: "-")
+                KeyValueRow("Target carboidrati", state.targetCarbs?.let { Format.grams(it) } ?: "-")
+                KeyValueRow("Target grassi", state.targetFat?.let { Format.grams(it) } ?: "-")
             }
         }
 
@@ -225,6 +240,3 @@ fun DiaryScreen(viewModel: DiaryViewModel = hiltViewModel()) {
         }
     }
 }
-
-private fun macroWithTarget(value: Double, target: Double?): String =
-    if (target != null) "${Format.grams(value)} / ${Format.grams(target)}" else Format.grams(value)

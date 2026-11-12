@@ -36,6 +36,7 @@ import dev.fitcoach.app.core.util.DateUtils
 import dev.fitcoach.app.core.util.Format
 import dev.fitcoach.app.ui.components.EmptyState
 import dev.fitcoach.app.ui.components.FitCard
+import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.KeyValueRow
 import dev.fitcoach.app.ui.components.LabeledField
 import dev.fitcoach.app.ui.components.NumberField
@@ -47,7 +48,7 @@ fun ShoppingScreen(viewModel: ShoppingViewModel = hiltViewModel()) {
     var showAdd by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Lista della spesa", style = MaterialTheme.typography.headlineSmall)
+        ScreenHeader("Lista della spesa", "Somma degli alimenti del piano")
         Spacer(Modifier.height(8.dp))
 
         FitCard {

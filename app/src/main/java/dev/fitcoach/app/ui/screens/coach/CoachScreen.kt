@@ -30,6 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fitcoach.app.ui.components.ChatBubble
 import dev.fitcoach.app.ui.components.FitCard
+import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.KeyValueRow
 import dev.fitcoach.app.ui.components.SectionTitle
 
@@ -55,7 +56,7 @@ fun CoachScreen(
         Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text("Coach AI", style = MaterialTheme.typography.headlineSmall)
+        ScreenHeader("Coach AI", "Parla con l'agente: anamnesi, scheda, piano")
 
         FitCard {
             Column {
