@@ -24,6 +24,8 @@ data class CalendarUiState(
     val selectedDate: LocalDate = DateUtils.today(),
     val sessions: List<WorkoutSession> = emptyList(),
     val activeRoutine: Routine? = null,
+    /** Every session of the active program, so the user can pick which day to add. */
+    val program: List<Routine> = emptyList(),
     val message: String? = null
 ) {
     fun sessionsOn(date: LocalDate): List<WorkoutSession> =
@@ -50,8 +52,8 @@ class CalendarViewModel @Inject constructor(
     init {
         reload()
         viewModelScope.launch {
-            routineRepository.observeActive().collect { routine ->
-                _state.update { it.copy(activeRoutine = routine) }
+            routineRepository.observeActiveProgram().collect { program ->
+                _state.update { it.copy(program = program, activeRoutine = program.firstOrNull()) }
             }
         }
     }
@@ -80,15 +82,20 @@ class CalendarViewModel @Inject constructor(
 
     fun selectDate(date: LocalDate) = _state.update { it.copy(selectedDate = date) }
 
-    /** Adds an extra session on the selected date. */
-    fun addExtraSession() {
+    /**
+     * Adds a session on the selected date. When a routine of the program is given,
+     * the session keeps that routine's real name and exercises.
+     */
+    fun addSession(routineId: Long? = null) {
         viewModelScope.launch {
             val date = _state.value.selectedDate
-            val routine = routineRepository.getActive()
+            val routine = routineId?.let { id -> routineRepository.getById(id) }
+                ?: routineRepository.getActiveProgram().firstOrNull()
+                ?: routineRepository.getActive()
             sessionRepository.createSession(
                 WorkoutSession(
                     routineId = routine?.id,
-                    name = routine?.name ?: "Seduta extra",
+                    name = routine?.dayLabel?.ifBlank { routine.name } ?: "Seduta extra",
                     dateEpochDay = date.toEpochDay(),
                     startedAt = DateUtils.nowMillis(),
                     status = SessionStatus.PLANNED

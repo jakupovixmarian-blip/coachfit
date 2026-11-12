@@ -113,6 +113,7 @@ fun HomeScreen(
                 SectionTitle("Allenamento")
                 KeyValueRow("Programma attivo", state.routine?.name ?: "Nessuno")
                 KeyValueRow("Sedute completate questa settimana", state.weeklySessions.toString())
+                KeyValueRow("Volume settimanale", Format.kg(state.weeklyVolumeKg))
                 KeyValueRow("Ultima seduta", state.lastSession?.name ?: "Nessuna registrata")
                 Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {

@@ -5,10 +5,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fitcoach.app.core.util.DateUtils
 import dev.fitcoach.app.domain.model.Exercise
-import dev.fitcoach.app.domain.model.ExperienceLevel
-import dev.fitcoach.app.domain.model.Goal
-import dev.fitcoach.app.domain.model.MovementPattern
-import dev.fitcoach.app.domain.model.MuscleGroup
 import dev.fitcoach.app.domain.model.Routine
 import dev.fitcoach.app.domain.model.RoutineExercise
 import dev.fitcoach.app.domain.model.SessionStatus
@@ -17,24 +13,35 @@ import dev.fitcoach.app.domain.repository.ExerciseRepository
 import dev.fitcoach.app.domain.repository.ProfileRepository
 import dev.fitcoach.app.domain.repository.RoutineRepository
 import dev.fitcoach.app.domain.repository.SessionRepository
+import dev.fitcoach.app.domain.usecase.GeneratedProgram
+import dev.fitcoach.app.domain.usecase.ProgramGenerator
+import dev.fitcoach.app.domain.usecase.ProgramValidator
 import dev.fitcoach.app.domain.usecase.ProgressionEngine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class ProgramDayUi(
+    val routine: Routine,
+    val exercises: List<RoutineExercise>,
+    val totalSets: Int
+)
+
 data class WorkoutHomeState(
-    val routine: Routine? = null,
-    val routineExercises: List<RoutineExercise> = emptyList(),
+    val program: List<ProgramDayUi> = emptyList(),
     val exercisesById: Map<Long, Exercise> = emptyMap(),
     val allExercises: List<Exercise> = emptyList(),
     val inProgressSession: WorkoutSession? = null,
     val recentSessions: List<WorkoutSession> = emptyList(),
     val suggestions: Map<Long, String> = emptyMap(),
-    val message: String? = null
-)
+    val message: String? = null,
+    val generationWarnings: List<String> = emptyList()
+) {
+    val dayCount: Int get() = program.size
+    val isSingleRoutine: Boolean get() = program.size == 1
+}
 
 @HiltViewModel
 class WorkoutViewModel @Inject constructor(
@@ -46,6 +53,7 @@ class WorkoutViewModel @Inject constructor(
 
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
+    private val _warnings = MutableStateFlow<List<String>>(emptyList())
     private val reload = MutableStateFlow(0)
     private val _suggestions = MutableStateFlow<Map<Long, String>>(emptyMap())
 
@@ -53,195 +61,144 @@ class WorkoutViewModel @Inject constructor(
     val state: StateFlow<WorkoutHomeState> = _state.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            combine(
-                combine(routineRepository.observeActive(), reload) { routine, _ -> routine },
-                exerciseRepository.observeAll(),
-                sessionRepository.observeSessions(),
-                _message,
-                _suggestions
-            ) { routine, exercises, sessions, msg, suggestions ->
-                WorkoutHomeState(
-                    routine = routine,
-                    exercisesById = exercises.associateBy { it.id },
-                    allExercises = exercises,
-                    inProgressSession = sessions.firstOrNull { it.status == SessionStatus.IN_PROGRESS },
-                    recentSessions = sessions.filter { it.status == SessionStatus.COMPLETED }.take(8),
-                    suggestions = suggestions,
-                    message = msg
-                )
-            }.collect { partial ->
-                val routineExercises = partial.routine?.let { routineRepository.getExercises(it.id) } ?: emptyList()
-                _state.value = partial.copy(routineExercises = routineExercises)
-            }
-        }
-        viewModelScope.launch {
-            combine(routineRepository.observeActive(), reload) { routine, _ -> routine }.collect {
-                refreshSuggestions()
-            }
-        }
+        viewModelScope.launch { reload.collect { refresh() } }
     }
 
-    fun dismissMessage() { _message.value = null }
+    private suspend fun refresh() {
+        val exercises = exerciseRepository.getAll()
+        val exercisesById = exercises.associateBy { it.id }
+        val routines = routineRepository.getActiveProgram()
+            .ifEmpty { routineRepository.getActive()?.let { listOf(it) }.orEmpty() }
 
-    private suspend fun refreshSuggestions() {
-        val routine = routineRepository.getActive() ?: run {
-            _suggestions.value = emptyMap()
-            return
+        val program = routines.map { routine ->
+            val items = routineRepository.getExercises(routine.id)
+            ProgramDayUi(routine = routine, exercises = items, totalSets = items.sumOf { it.targetSets })
         }
-        val result = mutableMapOf<Long, String>()
-        routineRepository.getExercises(routine.id).forEach { re ->
+        val sessions = sessionRepository.getAll()
+
+        val suggestions = mutableMapOf<Long, String>()
+        program.flatMap { it.exercises }.forEach { re ->
             val history = sessionRepository.historyFor(re.exerciseId)
-            result[re.exerciseId] = ProgressionEngine.suggest(re, history).reason
+            suggestions[re.exerciseId] = ProgressionEngine.suggest(re, history).reason
         }
-        _suggestions.value = result
+
+        _state.value = WorkoutHomeState(
+            program = program,
+            exercisesById = exercisesById,
+            allExercises = exercises,
+            inProgressSession = sessions.firstOrNull { it.status == SessionStatus.IN_PROGRESS },
+            recentSessions = sessions.filter { it.status == SessionStatus.COMPLETED }.take(8),
+            suggestions = suggestions,
+            message = _message.value,
+            generationWarnings = _warnings.value
+        )
     }
 
-    /** Creates a routine from the profile: splits by available days, respects equipment and injuries. */
-    fun generateRoutine() {
+    fun dismissMessage() {
+        _message.value = null
+        _state.value = _state.value.copy(message = null)
+    }
+
+    fun dismissWarnings() {
+        _warnings.value = emptyList()
+        _state.value = _state.value.copy(generationWarnings = emptyList())
+    }
+
+    /**
+     * Builds a program from the onboarding data: exactly one session per declared
+     * training day, each with its own split and its own volume budget, then plans
+     * those sessions on distinct days of the coming week.
+     */
+    fun generateProgram() {
         viewModelScope.launch {
             val profile = profileRepository.getProfile()
-            val days = (profile?.availableDays ?: 3).coerceIn(2, 6)
-            val availableEquipment = profile?.equipment.orEmpty()
-                .split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet()
-            val injuries = profile?.injuries.orEmpty().lowercase()
-            val exercises = exerciseRepository.getAll().filter { ex ->
-                !ex.isCustom
-            }.filter { ex ->
-                availableEquipment.isEmpty() || availableEquipment.contains(ex.equipment.name)
-            }.filter { ex ->
-                !isContraindicated(ex, injuries)
-            }
-            if (exercises.isEmpty()) {
-                _message.value = "Nessun esercizio compatibile con attrezzatura e limitazioni dichiarate"
+            if (profile == null) {
+                _message.value = "Completa prima l'anamnesi per generare il programma."
                 return@launch
             }
-            val split = buildSplit(days)
-            val sessionMinutes = profile?.sessionMinutes ?: 60
-            val level = profile?.experience ?: ExperienceLevel.BEGINNER
-            val targetSets = when (level) {
-                ExperienceLevel.BEGINNER -> 2
-                ExperienceLevel.INTERMEDIATE -> 3
-                ExperienceLevel.ADVANCED -> 4
-            }
-            val restSeconds = when (profile?.goal) {
-                Goal.STRENGTH -> 180
-                Goal.MUSCLE_GAIN -> 120
-                Goal.FAT_LOSS -> 60
-                else -> 90
-            }
-            val perSession = (sessionMinutes / 10).coerceIn(4, 8)
-
-            val routineName = "Programma ${days} giorni"
-            val routine = Routine(name = routineName, description = "Generato dai dati di anamnesi", isActive = false)
-            val routineExercises = mutableListOf<RoutineExercise>()
-
-            split.forEach { (dayIndex, muscleGroups) ->
-                val dayExercises = pickForGroups(exercises, muscleGroups, perSession)
-                dayExercises.forEachIndexed { index, ex ->
-                    routineExercises += RoutineExercise(
-                        routineId = 0L,
-                        exerciseId = ex.id,
-                        orderIndex = dayIndex * 100 + index,
-                        targetSets = targetSets,
-                        targetRepsMin = if (ex.pattern == MovementPattern.ISOLATION) 10 else 6,
-                        targetRepsMax = if (ex.pattern == MovementPattern.ISOLATION) 15 else 10,
-                        targetRir = if (level == ExperienceLevel.BEGINNER) 3 else 2,
-                        restSeconds = restSeconds,
-                        notes = "Giorno ${dayIndex + 1}"
-                    )
-                }
-            }
-
-            if (routineExercises.isEmpty()) {
-                _message.value = "Non e stato possibile costruire la scheda con i dati attuali"
+            val catalog = exerciseRepository.getAll()
+            if (catalog.isEmpty()) {
+                _message.value = "Archivio esercizi vuoto: riapri l'app per completare il caricamento."
                 return@launch
             }
-            val id = routineRepository.saveRoutineWithExercises(routine, routineExercises)
-            routineRepository.setActive(id)
-            _message.value = "Programma creato: $days giorni, ${routineExercises.size} esercizi"
+            val generated: GeneratedProgram = ProgramGenerator.generate(profile, catalog)
+            if (generated.days.isEmpty()) {
+                _message.value = "Nessun esercizio compatibile con attrezzatura e limitazioni dichiarate."
+                return@launch
+            }
+            val requested = (profile.availableDays ?: 3).coerceIn(1, 6)
+            if (generated.days.size < requested) {
+                _message.value =
+                    "Generati ${generated.days.size} giorni su $requested: l'attrezzatura dichiarata non copre tutti i gruppi."
+            }
+
+            val programName = "Programma ${generated.days.size} giorni"
+            val (routines, allExercises) = ProgramGenerator.toRoutines(
+                programId = 0L,
+                programName = programName,
+                program = generated,
+                createdAt = DateUtils.nowMillis()
+            )
+            val perRoutine = generated.days.map { day -> day.exercises.size }
+            val exercisesByRoutine = mutableListOf<List<RoutineExercise>>()
+            var cursor = 0
+            perRoutine.forEach { count ->
+                exercisesByRoutine += allExercises.subList(cursor, cursor + count)
+                cursor += count
+            }
+
+            val ids = routineRepository.saveProgram(programName, routines, exercisesByRoutine)
+            planWeek(ids, generated)
+
+            val blocking = ProgramValidator.validate(generated.days).blockingIssues
+            _warnings.value = generated.warnings
+            _message.value = buildString {
+                append("Programma creato: ${generated.days.size} sedute, ")
+                append("${generated.exerciseCount} esercizi, ${generated.totalSets} serie totali.")
+                if (blocking.isNotEmpty()) append(" Controlla gli avvisi.")
+            }
             reload.value = reload.value + 1
         }
     }
 
-    private fun buildSplit(days: Int): Map<Int, List<MuscleGroup>> = when (days) {
-        2 -> mapOf(
-            0 to listOf(MuscleGroup.CHEST, MuscleGroup.BACK, MuscleGroup.SHOULDERS, MuscleGroup.BICEPS, MuscleGroup.TRICEPS),
-            1 to listOf(MuscleGroup.QUADS, MuscleGroup.HAMSTRINGS, MuscleGroup.GLUTES, MuscleGroup.CALVES, MuscleGroup.CORE)
-        )
-        3 -> mapOf(
-            0 to listOf(MuscleGroup.CHEST, MuscleGroup.SHOULDERS, MuscleGroup.TRICEPS),
-            1 to listOf(MuscleGroup.BACK, MuscleGroup.BICEPS, MuscleGroup.CORE),
-            2 to listOf(MuscleGroup.QUADS, MuscleGroup.HAMSTRINGS, MuscleGroup.GLUTES, MuscleGroup.CALVES)
-        )
-        4 -> mapOf(
-            0 to listOf(MuscleGroup.CHEST, MuscleGroup.TRICEPS),
-            1 to listOf(MuscleGroup.BACK, MuscleGroup.BICEPS),
-            2 to listOf(MuscleGroup.QUADS, MuscleGroup.CALVES, MuscleGroup.CORE),
-            3 to listOf(MuscleGroup.SHOULDERS, MuscleGroup.HAMSTRINGS, MuscleGroup.GLUTES)
-        )
-        5 -> mapOf(
-            0 to listOf(MuscleGroup.CHEST, MuscleGroup.TRICEPS),
-            1 to listOf(MuscleGroup.BACK, MuscleGroup.BICEPS),
-            2 to listOf(MuscleGroup.QUADS, MuscleGroup.CALVES),
-            3 to listOf(MuscleGroup.SHOULDERS, MuscleGroup.CORE),
-            4 to listOf(MuscleGroup.HAMSTRINGS, MuscleGroup.GLUTES)
-        )
-        else -> mapOf(
-            0 to listOf(MuscleGroup.CHEST, MuscleGroup.TRICEPS),
-            1 to listOf(MuscleGroup.BACK, MuscleGroup.BICEPS),
-            2 to listOf(MuscleGroup.QUADS, MuscleGroup.CALVES),
-            3 to listOf(MuscleGroup.SHOULDERS, MuscleGroup.CORE),
-            4 to listOf(MuscleGroup.HAMSTRINGS, MuscleGroup.GLUTES),
-            5 to listOf(MuscleGroup.CARDIO, MuscleGroup.CORE, MuscleGroup.FULL_BODY)
-        )
-    }
-
-    private fun pickForGroups(
-        exercises: List<Exercise>,
-        groups: List<MuscleGroup>,
-        limit: Int
-    ): List<Exercise> {
-        val picked = mutableListOf<Exercise>()
-        val usedNames = mutableSetOf<String>()
-        // Prefer one exercise per group first (balanced), then fill up.
-        groups.forEach { group ->
-            exercises.firstOrNull { it.primaryMuscle == group && usedNames.add(it.name) }?.let { picked += it }
-        }
-        exercises.filter { it.primaryMuscle in groups }
-            .sortedBy { if (it.pattern == MovementPattern.ISOLATION) 1 else 0 }
-            .forEach { ex ->
-                if (picked.size < limit && usedNames.add(ex.name)) picked += ex
-            }
-        return picked.take(limit)
-    }
-
-    private fun isContraindicated(exercise: Exercise, injuries: String): Boolean {
-        if (injuries.isBlank()) return false
-        val rules = mapOf(
-            "spalla" to setOf(MuscleGroup.SHOULDERS, MuscleGroup.CHEST),
-            "ginocchio" to setOf(MuscleGroup.QUADS, MuscleGroup.CALVES),
-            "schiena" to setOf(MuscleGroup.BACK),
-            "lombare" to setOf(MuscleGroup.BACK, MuscleGroup.HAMSTRINGS, MuscleGroup.GLUTES),
-            "gomito" to setOf(MuscleGroup.BICEPS, MuscleGroup.TRICEPS),
-            "caviglia" to setOf(MuscleGroup.CALVES)
-        )
-        return rules.any { (keyword, groups) ->
-            injuries.contains(keyword) && (exercise.primaryMuscle in groups || exercise.secondaryMuscles.any { it in groups })
+    /**
+     * Assigns every session of the program to a distinct day of the coming week,
+     * so the calendar shows A, B, C and D instead of a single generic entry.
+     */
+    private suspend fun planWeek(routineIds: List<Long>, generated: GeneratedProgram) {
+        val start = DateUtils.startOfWeek()
+        val days = generated.days
+        if (days.isEmpty()) return
+        val spacing = (7 / days.size).coerceAtLeast(1)
+        days.forEachIndexed { index, day ->
+            val routineId = routineIds.getOrNull(index) ?: return@forEachIndexed
+            val offset = (index * spacing).coerceAtMost(6)
+            val date = start.plusDays(offset.toLong())
+            sessionRepository.createSession(
+                WorkoutSession(
+                    routineId = routineId,
+                    name = day.label,
+                    dateEpochDay = date.toEpochDay(),
+                    startedAt = DateUtils.nowMillis(),
+                    status = SessionStatus.PLANNED
+                )
+            )
         }
     }
 
-    fun startSession() {
+    fun startSession(routineId: Long? = null) {
         viewModelScope.launch {
             val existing = sessionRepository.getInProgress()
             if (existing != null) {
-                _message.value = "Esiste gia una seduta in corso"
+                _message.value = "Esiste gia una seduta in corso: riprendila o concludila."
                 return@launch
             }
-            val routine = routineRepository.getActive()
+            val routine = routineId?.let { routineRepository.getById(it) }
+                ?: routineRepository.getActiveProgram().firstOrNull()
+                ?: routineRepository.getActive()
             val session = WorkoutSession(
                 routineId = routine?.id,
-                name = routine?.name ?: "Seduta libera",
+                name = routine?.dayLabel?.ifBlank { routine.name } ?: "Seduta libera",
                 dateEpochDay = DateUtils.today().toEpochDay(),
                 startedAt = DateUtils.nowMillis(),
                 status = SessionStatus.IN_PROGRESS

@@ -98,8 +98,12 @@ fun Exercise.toEntity() = ExerciseEntity(
     equipment.name, pattern.name, execution, setup, commonMistakes, isCustom, isFavorite
 )
 
-fun RoutineEntity.toDomain() = Routine(id, name, description, isActive, createdAt)
-fun Routine.toEntity() = RoutineEntity(id, name, description, isActive, createdAt)
+fun RoutineEntity.toDomain() = Routine(
+    id, name, description, isActive, createdAt, programId, dayIndex, dayLabel
+)
+fun Routine.toEntity() = RoutineEntity(
+    id, name, description, isActive, createdAt, programId, dayIndex, dayLabel
+)
 
 fun RoutineExerciseEntity.toDomain() = RoutineExercise(
     id, routineId, exerciseId, orderIndex, targetSets, targetRepsMin, targetRepsMax, targetRir, restSeconds, notes

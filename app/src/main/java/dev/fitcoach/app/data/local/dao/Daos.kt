@@ -147,6 +147,21 @@ interface RoutineDao {
     @Query("SELECT * FROM routine WHERE id = :id")
     suspend fun getById(id: Long): RoutineEntity?
 
+    @Query("SELECT * FROM routine WHERE programId = :programId AND programId != 0 ORDER BY dayIndex ASC")
+    fun observeProgram(programId: Long): Flow<List<RoutineEntity>>
+
+    @Query("SELECT * FROM routine WHERE programId = :programId AND programId != 0 ORDER BY dayIndex ASC")
+    suspend fun getProgram(programId: Long): List<RoutineEntity>
+
+    @Query("SELECT programId FROM routine WHERE isActive = 1 AND programId != 0 LIMIT 1")
+    suspend fun getActiveProgramId(): Long?
+
+    @Query("SELECT programId FROM routine WHERE isActive = 1 AND programId != 0 LIMIT 1")
+    fun observeActiveProgramId(): Flow<Long?>
+
+    @Query("SELECT COALESCE(MAX(programId), 0) FROM routine")
+    suspend fun maxProgramId(): Long
+
     @Query("SELECT * FROM routine")
     suspend fun getAll(): List<RoutineEntity>
 
@@ -161,6 +176,9 @@ interface RoutineDao {
 
     @Query("DELETE FROM routine WHERE id = :id")
     suspend fun delete(id: Long)
+
+    @Query("DELETE FROM routine WHERE programId = :programId AND programId != 0")
+    suspend fun deleteProgram(programId: Long)
 
     @Query("DELETE FROM routine")
     suspend fun clear()
@@ -224,6 +242,9 @@ interface SessionDao {
 
     @Query("DELETE FROM workout_session WHERE id = :id")
     suspend fun delete(id: Long)
+
+    @Query("DELETE FROM workout_session WHERE routineId IN (:routineIds) AND status = 'PLANNED'")
+    suspend fun deletePlannedForRoutines(routineIds: List<Long>)
 
     @Query("DELETE FROM workout_session")
     suspend fun clear()

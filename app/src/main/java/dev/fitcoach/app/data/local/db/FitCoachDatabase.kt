@@ -2,6 +2,8 @@ package dev.fitcoach.app.data.local.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.room.TypeConverters
 import dev.fitcoach.app.data.local.dao.AiConfigDao
 import dev.fitcoach.app.data.local.dao.CoachDao
@@ -58,7 +60,7 @@ import dev.fitcoach.app.data.local.entity.WorkoutSessionEntity
         CoachProposalEntity::class,
         AiConfigEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -83,5 +85,18 @@ abstract class FitCoachDatabase : RoomDatabase() {
 
     companion object {
         const val NAME = "fitcoach.db"
+
+        /**
+         * Adds the program grouping columns to the routine table. Existing rows
+         * keep programId = 0, so they remain standalone single sessions.
+         */
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE routine ADD COLUMN programId INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE routine ADD COLUMN dayIndex INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE routine ADD COLUMN dayLabel TEXT NOT NULL DEFAULT ''")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_routine_programId ON routine(programId)")
+            }
+        }
     }
 }

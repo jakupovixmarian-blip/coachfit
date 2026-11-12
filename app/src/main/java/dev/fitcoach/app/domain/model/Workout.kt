@@ -58,5 +58,25 @@ data class Routine(
     val name: String,
     val description: String = "",
     val isActive: Boolean = false,
-    val createdAt: Long = 0L
-)
+    val createdAt: Long = 0L,
+    /**
+     * Groups the routines that belong to the same program. 0 means a standalone
+     * routine created by hand, which is always a single session.
+     */
+    val programId: Long = 0L,
+    /** Position of this session inside its program, used for ordering. */
+    val dayIndex: Int = 0,
+    /** Short label of the session, e.g. "Upper 1" or "Spinta". */
+    val dayLabel: String = ""
+) {
+    val isPartOfProgram: Boolean get() = programId != 0L
+}
+
+/** A program is the set of sessions generated for a user, ordered by day. */
+data class WorkoutProgram(
+    val programId: Long,
+    val routines: List<Routine>
+) {
+    val sessions: List<Routine> get() = routines.sortedBy { it.dayIndex }
+    val dayCount: Int get() = routines.size
+}

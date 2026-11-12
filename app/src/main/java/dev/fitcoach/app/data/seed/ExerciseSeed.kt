@@ -204,6 +204,63 @@ object ExerciseSeed {
             "Escursione parziale, rimbalzo sul fondo."
         ),
 
+        ex(
+            "Squat a corpo libero", MuscleGroup.QUADS, listOf(MuscleGroup.GLUTES, MuscleGroup.HAMSTRINGS, MuscleGroup.CORE),
+            Equipment.BODYWEIGHT, MovementPattern.SQUAT,
+            "Piedi larghezza spalle, punte leggermente esterne, braccia avanti per equilibrio.",
+            "Scendi controllando con le ginocchia in linea con le punte, risali spingendo a terra.",
+            "Talloni che si alzano, ginocchia che collassano verso l'interno, schiena che si flette."
+        ),
+        ex(
+            "Affondi a corpo libero", MuscleGroup.QUADS, listOf(MuscleGroup.GLUTES, MuscleGroup.HAMSTRINGS),
+            Equipment.BODYWEIGHT, MovementPattern.LUNGE,
+            "In piedi, mani ai fianchi o davanti, sguardo avanti.",
+            "Fai un passo avanti e scendi col ginocchio posteriore, risali spingendo col piede avanti.",
+            "Passo troppo corto, ginocchio che supera eccessivamente la punta, busto che cade."
+        ),
+        ex(
+            "Ponte glutei", MuscleGroup.GLUTES, listOf(MuscleGroup.HAMSTRINGS),
+            Equipment.BODYWEIGHT, MovementPattern.HINGE,
+            "Sdraiato supino, ginocchia piegate, piedi a terra larghezza bacino.",
+            "Spingi le anche verso l'alto contraendo i glutei, scendi controllando.",
+            "Iperestensione lombare, spinta con le punte dei piedi."
+        ),
+        ex(
+            "Calf raise a corpo libero", MuscleGroup.CALVES, emptyList(),
+            Equipment.BODYWEIGHT, MovementPattern.ISOLATION,
+            "In piedi su un gradino, avampiede appoggiato, talloni liberi di scendere.",
+            "Sali il piu possibile sulle punte, scendi in allungamento controllato.",
+            "Escursione parziale, rimbalzo sul fondo."
+        ),
+        ex(
+            "Rematore con manubrio", MuscleGroup.BACK, listOf(MuscleGroup.BICEPS, MuscleGroup.FOREARMS),
+            Equipment.DUMBBELL, MovementPattern.HORIZONTAL_PULL,
+            "Un ginocchio e una mano sulla panca, schiena neutra, manubrio a braccio disteso.",
+            "Tira il manubrio verso il fianco guidando con il gomito, scendi controllando.",
+            "Ruotare il busto, tirare con il bicipite, escursione parziale."
+        ),
+        ex(
+            "Stacco rumeno con manubri", MuscleGroup.HAMSTRINGS, listOf(MuscleGroup.GLUTES, MuscleGroup.BACK),
+            Equipment.DUMBBELL, MovementPattern.HINGE,
+            "In piedi, manubri davanti alle cosce, ginocchia leggermente flesse.",
+            "Spingi le anche indietro scendendo con la schiena neutra, risali contraendo i glutei.",
+            "Flettere le ginocchia come in uno squat, schiena che si curva."
+        ),
+        ex(
+            "Estensioni per tricipiti con manubrio", MuscleGroup.TRICEPS, emptyList(),
+            Equipment.DUMBBELL, MovementPattern.ISOLATION,
+            "Seduto o in piedi, manubrio sopra la testa impugnato a due mani.",
+            "Fletti i gomiti portando il manubrio dietro la testa, estendi senza muovere le spalle.",
+            "Gomiti che si aprono, movimento delle spalle, carico eccessivo."
+        ),
+        ex(
+            "Curl con elastici", MuscleGroup.BICEPS, listOf(MuscleGroup.FOREARMS),
+            Equipment.BAND, MovementPattern.ISOLATION,
+            "In piedi sull'elastico, gomiti lungo i fianchi, presa supina.",
+            "Fletti i gomiti portando le mani verso le spalle, torna controllando.",
+            "Dondolare il busto, gomiti che si spostano in avanti."
+        ),
+
         // ---- CORE ----
         ex(
             "Plank", MuscleGroup.CORE, emptyList(),

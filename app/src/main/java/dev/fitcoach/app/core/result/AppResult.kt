@@ -12,6 +12,8 @@ sealed class AppError(override val message: String, override val cause: Throwabl
     class Timeout(message: String = "Tempo di risposta scaduto", cause: Throwable? = null) : AppError(message, cause)
     class InsufficientCredits(message: String = "Crediti insufficienti", cause: Throwable? = null) : AppError(message, cause)
     class InvalidResponse(message: String = "Risposta non valida dal provider", cause: Throwable? = null) : AppError(message, cause)
+    class ModelMissing(message: String = "Modello non disponibile", cause: Throwable? = null) : AppError(message, cause)
+    class Truncated(message: String = "Risposta troncata dal modello", cause: Throwable? = null) : AppError(message, cause)
     class Validation(message: String, cause: Throwable? = null) : AppError(message, cause)
     class NotFound(message: String = "Elemento non trovato", cause: Throwable? = null) : AppError(message, cause)
     class Unknown(message: String = "Errore imprevisto", cause: Throwable? = null) : AppError(message, cause)

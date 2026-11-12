@@ -15,8 +15,11 @@ import dev.fitcoach.app.data.seed.FoodSeed
 import dev.fitcoach.app.data.seed.ExerciseSeed
 import dev.fitcoach.app.domain.model.*
 import dev.fitcoach.app.domain.repository.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -90,12 +93,14 @@ class ExerciseRepositoryImpl @Inject constructor(
     override suspend fun deleteCustom(id: Long) = dao.deleteCustom(id)
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class RoutineRepositoryImpl @Inject constructor(
     private val db: FitCoachDatabase
 ) : RoutineRepository {
     private val dao = db.routineDao()
     private val exDao = db.routineExerciseDao()
+    private val sessionDao = db.sessionDao()
 
     override fun observeRoutines(): Flow<List<Routine>> = dao.observeAll().map { list -> list.map { it.toDomain() } }
     override fun observeActive(): Flow<Routine?> = dao.observeActive().map { it?.toDomain() }
@@ -124,8 +129,12 @@ class RoutineRepositoryImpl @Inject constructor(
 
     override suspend fun setActive(routineId: Long) {
         db.withTransaction {
+            val routine = dao.getById(routineId) ?: return@withTransaction
+            // Every session of a program is active by definition: activating one
+            // must not deactivate its sibling days.
+            if (routine.programId != 0L) return@withTransaction
             dao.deactivateAll()
-            dao.getById(routineId)?.let { dao.update(it.copy(isActive = true)) }
+            dao.update(routine.copy(isActive = true))
         }
     }
 
@@ -134,6 +143,59 @@ class RoutineRepositoryImpl @Inject constructor(
             exDao.deleteForRoutine(routineId)
             dao.delete(routineId)
         }
+    }
+
+    override fun observeActiveProgram(): Flow<List<Routine>> =
+        dao.observeActiveProgramId().flatMapLatest { programId ->
+            if (programId == null || programId == 0L) {
+                flowOf(emptyList())
+            } else {
+                dao.observeProgram(programId).map { list -> list.map { it.toDomain() } }
+            }
+        }
+
+    override suspend fun getActiveProgram(): List<Routine> {
+        val programId = dao.getActiveProgramId() ?: return emptyList()
+        return dao.getProgram(programId).map { it.toDomain() }
+    }
+
+    override suspend fun getProgram(programId: Long): List<Routine> =
+        dao.getProgram(programId).map { it.toDomain() }
+
+    override suspend fun saveProgram(
+        programName: String,
+        routines: List<Routine>,
+        exercisesByRoutineIndex: List<List<RoutineExercise>>
+    ): List<Long> = db.withTransaction {
+        // Deactivate and drop whatever program was active before, together with
+        // the sessions it had planned but not yet performed.
+        val previousProgramId = dao.getActiveProgramId()
+        if (previousProgramId != null && previousProgramId != 0L) {
+            dao.deactivateAll()
+            val staleRoutines = dao.getProgram(previousProgramId).map { it.id }
+            if (staleRoutines.isNotEmpty()) sessionDao.deletePlannedForRoutines(staleRoutines)
+            dao.deleteProgram(previousProgramId)
+        }
+        val programId = dao.maxProgramId() + 1
+        val createdIds = mutableListOf<Long>()
+        routines.forEachIndexed { index, routine ->
+            val routineId = dao.insert(
+                routine.copy(
+                    id = 0L,
+                    name = routine.name,
+                    programId = programId,
+                    dayIndex = index,
+                    dayLabel = routine.name,
+                    isActive = true,
+                    createdAt = DateUtils.nowMillis()
+                ).toEntity()
+            )
+            createdIds += routineId
+            exercisesByRoutineIndex.getOrNull(index).orEmpty().forEachIndexed { orderIndex, item ->
+                exDao.insert(item.copy(id = 0L, routineId = routineId, orderIndex = orderIndex).toEntity())
+            }
+        }
+        createdIds
     }
 
     override suspend fun duplicate(routineId: Long): Long? = db.withTransaction {

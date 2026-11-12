@@ -42,11 +42,20 @@ data class SessionUiState(
     val blocks: List<SessionExerciseBlock> = emptyList(),
     val loading: Boolean = true,
     val message: String? = null,
-    val finished: Boolean = false
+    val finished: Boolean = false,
+    /** Set when the user asked to close a session with no recorded set. */
+    val confirmEmptyFinish: Boolean = false
 ) {
     val totalVolumeKg: Double get() = blocks.sumOf { it.volumeKg }
     val totalSets: Int get() = blocks.sumOf { it.completedSets }
+
+    /** Sets that carry real data: a weight and reps recorded and marked done. */
+    val effectiveSets: Int get() = blocks.sumOf { block ->
+        block.sets.count { it.completed && it.reps != null && it.reps!! > 0 }
+    }
+
     val plannedTotalSets: Int get() = blocks.sumOf { it.plannedSets }
+    val hasRecordedWork: Boolean get() = effectiveSets > 0
 }
 
 @HiltViewModel
@@ -190,18 +199,40 @@ class WorkoutSessionViewModel @Inject constructor(
         }
     }
 
-    fun finishSession(notes: String) {
+    /**
+     * Closes the session. A session with no effective set is never silently marked
+     * as completed: the caller must pass [force] after an explicit confirmation.
+     */
+    fun finishSession(notes: String, force: Boolean = false) {
         viewModelScope.launch {
             val session = _state.value.session ?: return@launch
+            if (!_state.value.hasRecordedWork && !force) {
+                _state.update {
+                    it.copy(
+                        confirmEmptyFinish = true,
+                        message = "Nessuna serie registrata: conferma di voler chiudere una seduta vuota."
+                    )
+                }
+                return@launch
+            }
             val updated = session.copy(
                 status = SessionStatus.COMPLETED,
                 finishedAt = DateUtils.nowMillis(),
                 notes = notes
             )
             sessionRepository.updateSession(updated)
-            _state.update { it.copy(session = updated, message = "Seduta salvata", finished = true) }
+            _state.update {
+                it.copy(
+                    session = updated,
+                    message = if (_state.value.hasRecordedWork) "Seduta salvata" else "Seduta vuota salvata",
+                    finished = true,
+                    confirmEmptyFinish = false
+                )
+            }
         }
     }
+
+    fun cancelEmptyFinish() = _state.update { it.copy(confirmEmptyFinish = false, message = null) }
 
     fun discardSession() {
         viewModelScope.launch {

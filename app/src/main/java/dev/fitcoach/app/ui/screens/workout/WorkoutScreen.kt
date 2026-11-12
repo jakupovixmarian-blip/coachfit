@@ -59,21 +59,42 @@ fun WorkoutScreen(
             }
         }
 
+        state.generationWarnings.takeIf { it.isNotEmpty() }?.let { warnings ->
+            FitCard {
+                Column {
+                    SectionTitle("Controllo del programma")
+                    warnings.forEach { warning ->
+                        Text(
+                            "- $warning",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    TextButton(onClick = { viewModel.dismissWarnings() }) { Text("Ho capito") }
+                }
+            }
+        }
+
         FitCard {
             Column {
                 SectionTitle("Programma attivo")
-                if (state.routine == null) {
+                if (state.program.isEmpty()) {
                     Text(
                         "Nessun programma. Generane uno dai tuoi dati oppure crealo manualmente.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    KeyValueRow("Nome", state.routine!!.name)
-                    KeyValueRow("Esercizi", state.routineExercises.size.toString())
-                    if (state.routineExercises.isNotEmpty()) {
-                        Spacer(Modifier.height(6.dp))
-                        state.routineExercises.take(8).forEach { re ->
+                    KeyValueRow("Sedute", state.dayCount.toString())
+                    state.program.forEach { day ->
+                        Spacer(Modifier.height(10.dp))
+                        Text(day.routine.dayLabel.ifBlank { day.routine.name }, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "${day.exercises.size} esercizi - ${day.totalSets} serie",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        day.exercises.forEach { re ->
                             val ex = state.exercisesById[re.exerciseId]
                             TextButton(onClick = { onOpenExercise(re.exerciseId) }) {
                                 Text(
@@ -82,23 +103,21 @@ fun WorkoutScreen(
                                 )
                             }
                         }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { viewModel.startSession(day.routine.id) },
+                                modifier = Modifier.weight(1f),
+                                enabled = state.inProgressSession == null
+                            ) { Text("Inizia ${day.routine.dayLabel.ifBlank { day.routine.name }}") }
+                            OutlinedButton(
+                                onClick = { onOpenRoutine(day.routine.id) },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("Modifica") }
+                        }
                     }
                 }
-                Spacer(Modifier.height(10.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = { viewModel.startSession() },
-                        modifier = Modifier.weight(1f),
-                        enabled = state.inProgressSession == null
-                    ) { Text("Inizia seduta") }
-                    OutlinedButton(
-                        onClick = { state.routine?.let { onOpenRoutine(it.id) } },
-                        modifier = Modifier.weight(1f),
-                        enabled = state.routine != null
-                    ) { Text("Modifica scheda") }
-                }
-                Spacer(Modifier.height(6.dp))
-                OutlinedButton(onClick = { viewModel.generateRoutine() }, modifier = Modifier.fillMaxWidth()) {
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(onClick = { viewModel.generateProgram() }, modifier = Modifier.fillMaxWidth()) {
                     Text("Genera programma dai dati")
                 }
             }
@@ -108,7 +127,7 @@ fun WorkoutScreen(
             FitCard {
                 Column {
                     SectionTitle("Suggerimenti di progressione")
-                    state.suggestions.forEach { (exerciseId, reason) ->
+                    state.suggestions.entries.take(8).forEach { (exerciseId, reason) ->
                         val name = state.exercisesById[exerciseId]?.name ?: "Esercizio"
                         Spacer(Modifier.height(4.dp))
                         Text(name, style = MaterialTheme.typography.titleMedium)

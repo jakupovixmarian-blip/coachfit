@@ -144,8 +144,24 @@ fun CalendarScreen(viewModel: CalendarViewModel = hiltViewModel()) {
                         }
                     }
                     Spacer(Modifier.height(10.dp))
-                    Button(onClick = { viewModel.addExtraSession() }, modifier = Modifier.fillMaxWidth()) {
-                        Text("Aggiungi seduta in questa data")
+                    if (state.program.isEmpty()) {
+                        Button(onClick = { viewModel.addSession() }, modifier = Modifier.fillMaxWidth()) {
+                            Text("Aggiungi seduta in questa data")
+                        }
+                    } else {
+                        Text(
+                            "Aggiungi una seduta del programma in questa data:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        state.program.forEach { routine ->
+                            OutlinedButton(
+                                onClick = { viewModel.addSession(routine.id) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(routine.dayLabel.ifBlank { routine.name })
+                            }
+                        }
                     }
                 }
             }

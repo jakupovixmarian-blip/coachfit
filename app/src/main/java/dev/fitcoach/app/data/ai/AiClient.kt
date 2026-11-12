@@ -2,6 +2,7 @@ package dev.fitcoach.app.data.ai
 
 import dev.fitcoach.app.core.result.AppError
 import dev.fitcoach.app.domain.model.AiConfig
+import dev.fitcoach.app.domain.model.AiModelCapabilities
 import dev.fitcoach.app.domain.model.ConnectionCheck
 import dev.fitcoach.app.domain.model.ConnectionTestResult
 import kotlinx.coroutines.Dispatchers
@@ -84,25 +85,22 @@ class AiClient @Inject constructor(
         config: AiConfig,
         apiKey: String,
         messages: List<ChatMessage>,
-        jsonMode: Boolean = false
+        jsonMode: Boolean = false,
+        reasoningEffort: String? = null
     ): ChatResult = withContext(Dispatchers.IO) {
-        val payload = buildJsonObject {
-            put("model", config.modelId)
-            put("temperature", config.temperature)
-            put("top_p", config.topP)
-            put("max_tokens", config.maxOutputTokens)
-            if (jsonMode && config.useJsonMode) {
-                put("response_format", buildJsonObject { put("type", "json_object") })
-            }
-            put("messages", buildJsonArray {
-                messages.forEach { m ->
-                    add(buildJsonObject {
-                        put("role", m.role)
-                        put("content", m.content)
-                    })
-                }
-            })
-        }
+        val capabilities = AiModelCapabilities.forModel(config.provider, config.modelId)
+        executeChat(config, apiKey, messages, jsonMode, reasoningEffort, capabilities)
+    }
+
+    private fun executeChat(
+        config: AiConfig,
+        apiKey: String,
+        messages: List<ChatMessage>,
+        jsonMode: Boolean,
+        reasoningEffort: String?,
+        capabilities: AiModelCapabilities
+    ): ChatResult {
+        val payload = buildChatPayload(config, messages, jsonMode, reasoningEffort, capabilities)
         val request = Request.Builder()
             .url(config.effectiveBaseUrl() + "/chat/completions")
             .header("Authorization", "Bearer $apiKey")
@@ -120,13 +118,75 @@ class AiClient @Inject constructor(
 
         response.use { r ->
             val body = r.body?.string().orEmpty()
-            when (r.code) {
+            return when (r.code) {
                 200 -> parseChat(body)
+                400 -> throw mapBadRequest(body, capabilities)
                 401, 403 -> throw AppError.Auth("Chiave non valida (HTTP ${r.code})")
                 402 -> throw AppError.InsufficientCredits("Crediti insufficienti (HTTP 402)")
+                404 -> throw AppError.ModelMissing("Modello o endpoint non trovato (HTTP 404): ${body.take(200)}")
                 429 -> throw AppError.RateLimit("Limite di richieste raggiunto (HTTP 429)")
                 else -> throw AppError.InvalidResponse("HTTP ${r.code}: ${body.take(300)}")
             }
+        }
+    }
+
+    /**
+     * Builds the request body from the capabilities of the selected model.
+     *
+     * The token budget is sent under the parameter the model actually accepts, and
+     * sampling/JSON parameters are omitted for models that reject them, so a
+     * request is never rejected for an unsupported parameter.
+     */
+    fun buildChatPayload(
+        config: AiConfig,
+        messages: List<ChatMessage>,
+        jsonMode: Boolean,
+        reasoningEffort: String?,
+        capabilities: AiModelCapabilities
+    ): JsonObject = buildJsonObject {
+        put("model", config.modelId)
+        if (!capabilities.rejectsSamplingParameters) {
+            put("temperature", config.temperature)
+            put("top_p", config.topP)
+        }
+        val budget = AiModelCapabilities.clampOutputTokens(config.maxOutputTokens, capabilities)
+        put(capabilities.tokenParameterName, budget)
+        if (jsonMode && config.useJsonMode && !capabilities.rejectsJsonMode) {
+            put("response_format", buildJsonObject { put("type", "json_object") })
+        }
+        if (reasoningEffort != null && capabilities.supportsReasoningEffort) {
+            put("reasoning_effort", reasoningEffort)
+        }
+        put("messages", buildJsonArray {
+            messages.forEach { m ->
+                add(buildJsonObject {
+                    put("role", m.role)
+                    put("content", m.content)
+                })
+            }
+        })
+    }
+
+    /**
+     * Turns a 400 into a precise error. When the provider names a parameter the
+     * model does not support, the message says which one, instead of a generic
+     * "HTTP 400".
+     */
+    private fun mapBadRequest(body: String, capabilities: AiModelCapabilities): AppError {
+        val message = runCatching {
+            json.parseToJsonElement(body).jsonObject["error"]?.jsonObject?.get("message")?.jsonPrimitive?.content
+        }.getOrNull().orEmpty()
+        val lower = message.lowercase()
+        return when {
+            lower.contains("max_tokens") || lower.contains("max_completion_tokens") ->
+                AppError.InvalidResponse(
+                    "Il modello non accetta '${capabilities.tokenParameterName}': $message"
+                )
+            lower.contains("temperature") || lower.contains("top_p") ->
+                AppError.InvalidResponse("Il modello non accetta i parametri di campionamento: $message")
+            lower.contains("response_format") ->
+                AppError.InvalidResponse("Il modello non accetta il formato JSON richiesto: $message")
+            else -> AppError.InvalidResponse(message.ifBlank { "Richiesta rifiutata (HTTP 400): ${body.take(300)}" })
         }
     }
 
@@ -142,6 +202,11 @@ class AiClient @Inject constructor(
         val content = choice["message"]?.jsonObject?.get("content")?.jsonPrimitive?.content
             ?: throw AppError.InvalidResponse("Contenuto mancante nella risposta")
         val finish = choice["finish_reason"]?.jsonPrimitive?.content
+        if (finish == "length") {
+            throw AppError.Truncated(
+                "Il modello ha esaurito lo spazio di output: riduci il piano o alza il limite di token."
+            )
+        }
         return ChatResult(content, finish)
     }
 

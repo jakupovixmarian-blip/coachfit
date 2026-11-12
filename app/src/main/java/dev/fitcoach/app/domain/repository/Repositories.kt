@@ -44,6 +44,21 @@ interface ExerciseRepository {
 interface RoutineRepository {
     fun observeRoutines(): Flow<List<Routine>>
     fun observeActive(): Flow<Routine?>
+
+    /** Sessions of the active program, ordered by day. Empty when no program is active. */
+    fun observeActiveProgram(): Flow<List<Routine>>
+    suspend fun getActiveProgram(): List<Routine>
+    suspend fun getProgram(programId: Long): List<Routine>
+
+    /**
+     * Persists every session of a program in one transaction: deactivates the
+     * previous program, replaces its sessions and activates the new one.
+     */
+    suspend fun saveProgram(
+        programName: String,
+        routines: List<Routine>,
+        exercisesByRoutineIndex: List<List<RoutineExercise>>
+    ): List<Long>
     suspend fun getActive(): Routine?
     suspend fun getById(id: Long): Routine?
     fun observeExercises(routineId: Long): Flow<List<RoutineExercise>>

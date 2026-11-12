@@ -9,6 +9,7 @@ import dev.fitcoach.app.domain.model.Food
 import dev.fitcoach.app.domain.model.MealPlan
 import dev.fitcoach.app.domain.model.Routine
 import dev.fitcoach.app.domain.model.UserProfile
+import dev.fitcoach.app.domain.model.SessionStatus
 import dev.fitcoach.app.domain.model.WorkoutSession
 import dev.fitcoach.app.domain.repository.DiaryRepository
 import dev.fitcoach.app.domain.repository.FoodRepository
@@ -16,11 +17,14 @@ import dev.fitcoach.app.domain.repository.MealPlanRepository
 import dev.fitcoach.app.domain.repository.ProfileRepository
 import dev.fitcoach.app.domain.repository.RoutineRepository
 import dev.fitcoach.app.domain.repository.SessionRepository
+import dev.fitcoach.app.domain.usecase.ProgressionEngine
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class MacroTotals(val kcal: Double, val protein: Double, val carbs: Double, val fat: Double)
@@ -53,26 +57,47 @@ class HomeViewModel @Inject constructor(
     private val weekStart = DateUtils.startOfWeek().toEpochDay()
     private val weekSessionsFlow = sessionRepository.observeRange(weekStart, weekStart + 6)
 
+    private val _weeklyVolume = MutableStateFlow(0.0)
+
     val state: StateFlow<HomeState> = combine(
         profileRepository.observeProfile(),
         mealPlanRepository.observeActive(),
-        routineRepository.observeActive(),
-        combine(diaryFlow, foodsFlow) { entries, foods -> entries to foods },
-        combine(weekSessionsFlow, sessionRepository.observeSessions()) { week, all -> week to all }
-    ) { profile, plan, routine, diaryPair, sessionPair ->
+        routineRepository.observeActiveProgram(),
+        combine(
+            combine(diaryFlow, foodsFlow) { entries, foods -> entries to foods },
+            combine(weekSessionsFlow, sessionRepository.observeSessions()) { week, all -> week to all },
+            _weeklyVolume
+        ) { diaryPair, sessionPair, volume -> Triple(diaryPair, sessionPair, volume) }
+    ) { profile, plan, program, bundle ->
+        val (diaryPair, sessionPair, volume) = bundle
         val (entries, foods) = diaryPair
         val (week, all) = sessionPair
+        val completedThisWeek = week.filter { it.status == SessionStatus.COMPLETED }
         HomeState(
             profile = profile,
             plan = plan,
-            routine = routine,
+            routine = program.firstOrNull(),
             today = computeTotals(entries, foods),
-            lastSession = all.firstOrNull { it.status.name == "COMPLETED" },
-            nextSessionName = routine?.name,
-            weeklySessions = week.count { it.status.name == "COMPLETED" },
-            weeklyVolumeKg = 0.0
+            lastSession = all.firstOrNull { it.status == SessionStatus.COMPLETED },
+            nextSessionName = program.firstOrNull()?.dayLabel?.ifBlank { program.firstOrNull()?.name },
+            weeklySessions = completedThisWeek.size,
+            weeklyVolumeKg = volume
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeState())
+
+    init {
+        // Volume must come from the sets actually recorded, not from a constant.
+        viewModelScope.launch {
+            combine(weekSessionsFlow, sessionRepository.observeSessions()) { week, _ -> week }
+                .collect { week ->
+                    val completed = week.filter { it.status == SessionStatus.COMPLETED }
+                    val total = completed.sumOf { session ->
+                        ProgressionEngine.volume(sessionRepository.getSets(session.id))
+                    }
+                    _weeklyVolume.value = total
+                }
+        }
+    }
 
     private fun computeTotals(entries: List<DiaryEntry>, foods: List<Food>): MacroTotals {
         val foodById = foods.associateBy { it.id }

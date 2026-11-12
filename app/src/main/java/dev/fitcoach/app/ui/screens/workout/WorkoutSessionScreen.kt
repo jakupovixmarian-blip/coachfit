@@ -112,11 +112,11 @@ fun WorkoutSessionScreen(
                 FitCard {
                     Column {
                         val progress = if (state.plannedTotalSets > 0) {
-                            state.totalSets.toFloat() / state.plannedTotalSets
+                            state.effectiveSets.toFloat() / state.plannedTotalSets
                         } else 0f
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Serie completate", style = MaterialTheme.typography.bodyMedium)
-                            Text("${state.totalSets}/${state.plannedTotalSets}", style = MaterialTheme.typography.bodyMedium)
+                            Text("Serie effettive", style = MaterialTheme.typography.bodyMedium)
+                            Text("${state.effectiveSets}/${state.plannedTotalSets}", style = MaterialTheme.typography.bodyMedium)
                         }
                         Spacer(Modifier.height(4.dp))
                         LinearProgressIndicator(
@@ -233,17 +233,26 @@ fun WorkoutSessionScreen(
                 Column {
                     LabeledField("Note della seduta", notes, { notes = it }, singleLine = false)
                     Spacer(Modifier.height(6.dp))
-                    Text(
-                        "La seduta viene salvata con ${state.totalSets} serie e volume ${Format.kg(state.totalVolumeKg)}.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    if (state.hasRecordedWork) {
+                        Text(
+                            "La seduta viene salvata con ${state.effectiveSets} serie effettive e volume ${Format.kg(state.totalVolumeKg)}.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    } else {
+                        Text(
+                            "Non hai registrato nessuna serie. Una seduta senza serie non viene conteggiata nei progressi: " +
+                                "chiudendola verra salvata come seduta vuota.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.finishSession(notes)
+                    viewModel.finishSession(notes, force = !state.hasRecordedWork)
                     showFinish = false
-                }) { Text("Salva e chiudi") }
+                }) { Text(if (state.hasRecordedWork) "Salva e chiudi" else "Chiudi come seduta vuota") }
             },
             dismissButton = {
                 Column {

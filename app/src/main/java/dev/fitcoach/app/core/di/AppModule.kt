@@ -30,7 +30,7 @@ object AppModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): FitCoachDatabase =
         Room.databaseBuilder(context, FitCoachDatabase::class.java, FitCoachDatabase.NAME)
-            .fallbackToDestructiveMigration()
+            .addMigrations(FitCoachDatabase.MIGRATION_1_2)
             .build()
 
     @Provides

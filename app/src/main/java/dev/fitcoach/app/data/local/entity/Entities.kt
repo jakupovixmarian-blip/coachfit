@@ -77,13 +77,17 @@ data class ExerciseEntity(
     val isFavorite: Boolean
 )
 
-@Entity(tableName = "routine")
+@Entity(tableName = "routine", indices = [Index("programId")])
 data class RoutineEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     val name: String,
     val description: String,
     val isActive: Boolean,
-    val createdAt: Long
+    val createdAt: Long,
+    /** Groups sessions of the same generated program. 0 = standalone routine. */
+    val programId: Long = 0L,
+    val dayIndex: Int = 0,
+    val dayLabel: String = ""
 )
 
 @Entity(
