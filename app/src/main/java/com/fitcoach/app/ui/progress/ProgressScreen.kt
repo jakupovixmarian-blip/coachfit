@@ -102,7 +102,8 @@ fun ProgressScreen(
         item {
             SectionCard {
                 Column {
-                    SectionHeader("Peso corporeo", "${state.weights.size} misurazioni")
+                    val n = state.weights.size
+                    SectionHeader("Peso corporeo", "$n ${if (n == 1) "misurazione" else "misurazioni"}")
                     Spacer(Modifier.height(10.dp))
                     val points = state.weights
                         .sortedBy { it.dateEpochDay }

@@ -83,7 +83,7 @@ class AnamnesisViewModel @Inject constructor(
         profile = profile.copy(updatedAt = System.currentTimeMillis())
         _state.value = _state.value.copy(
             profile = profile, input = "", selected = emptySet(), error = null,
-            current = AnamnesisEngine.nextQuestion(profile),
+            current = AnamnesisEngine.nextQuestionAfter(profile, q.id),
             answeredCount = AnamnesisEngine.questions.count { AnamnesisEngine.isAnswered(profile, it.id) }
         )
         refreshDerived()
@@ -99,8 +99,7 @@ class AnamnesisViewModel @Inject constructor(
         }
         val profile = _state.value.profile
         _state.value = _state.value.copy(
-            current = AnamnesisEngine.questions.dropWhile { it.id != q.id }.drop(1)
-                .firstOrNull { !AnamnesisEngine.isAnswered(profile, it.id) },
+            current = AnamnesisEngine.nextQuestionAfter(profile, q.id),
             input = "", selected = emptySet(), error = null
         )
         refreshDerived()

@@ -230,6 +230,18 @@ object AnamnesisEngine {
             !isAnswered(profile, q.id) && (q.required || !skipOptional)
         }
 
+    /**
+     * Prossima domanda non ancora risposta DOPO quella indicata. L'avanzamento e
+     * monotono: saltare una domanda facoltativa non deve riportare l'utente
+     * indietro sulla domanda saltata (la prima senza risposta globale), che
+     * causava un ciclo infinito tra "Salta" e "Avanti".
+     */
+    fun nextQuestionAfter(profile: UserProfile, afterId: String): Question? {
+        val idx = questions.indexOfFirst { it.id == afterId }
+        if (idx < 0) return nextQuestion(profile)
+        return questions.drop(idx + 1).firstOrNull { !isAnswered(profile, it.id) }
+    }
+
     /** Domande obbligatorie ancora senza risposta. */
     fun missingRequired(profile: UserProfile): List<Question> =
         questions.filter { it.required && !isAnswered(profile, it.id) }

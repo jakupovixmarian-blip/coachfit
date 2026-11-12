@@ -15,6 +15,15 @@ class AnamnesisEngineTest {
         availableEquipment = setOf(Equipment.BARBELL, Equipment.DUMBBELL)
     )
 
+    /** Risposta valida generica per una domanda, in base al suo tipo. */
+    private fun defaultAnswerFor(q: AnamnesisEngine.Question): String = when (q.kind) {
+        AnamnesisEngine.Kind.NUMBER -> "1"
+        AnamnesisEngine.Kind.INT -> "1"
+        AnamnesisEngine.Kind.BOOL -> "true"
+        AnamnesisEngine.Kind.CHOICE, AnamnesisEngine.Kind.MULTI -> q.options.firstOrNull() ?: "1"
+        AnamnesisEngine.Kind.TEXT -> "test"
+    }
+
     @Test
     fun `empty profile reports essential data missing`() {
         val p = UserProfile()
@@ -26,6 +35,33 @@ class AnamnesisEngineTest {
     fun `next question skips already answered`() {
         val q = AnamnesisEngine.nextQuestion(filled())
         assertThat(q?.id).isEqualTo("bodyFatPercent")
+    }
+
+    @Test
+    fun `skipping an optional question advances monotonically and does not loop`() {
+        // Profilo con le domande iniziali risposte fino a una facoltativa non risposta.
+        val optional = AnamnesisEngine.questions.first { !it.required }
+        val before = AnamnesisEngine.questions.takeWhile { it.id != optional.id }
+        var p = filled()
+        before.forEach { p = AnamnesisEngine.applyAnswer(p, it.id, defaultAnswerFor(it)) }
+
+        // La domanda corrente e quella facoltativa.
+        assertThat(AnamnesisEngine.nextQuestion(p)?.id).isEqualTo(optional.id)
+
+        // Saltandola, la successiva NON deve tornare sulla domanda saltata.
+        val after = AnamnesisEngine.nextQuestionAfter(p, optional.id)
+        assertThat(after?.id).isNotEqualTo(optional.id)
+        // E' la prima non risposta DOPO quella saltata.
+        val expected = AnamnesisEngine.questions
+            .dropWhile { it.id != optional.id }.drop(1)
+            .firstOrNull { !AnamnesisEngine.isAnswered(p, it.id) }
+        assertThat(after?.id).isEqualTo(expected?.id)
+
+        // Se tutte le successive sono risposte, non c'e' una prossima domanda.
+        var allAfter = p
+        AnamnesisEngine.questions.dropWhile { it.id != optional.id }.drop(1)
+            .forEach { allAfter = AnamnesisEngine.applyAnswer(allAfter, it.id, defaultAnswerFor(it)) }
+        assertThat(AnamnesisEngine.nextQuestionAfter(allAfter, optional.id)).isNull()
     }
 
     @Test
