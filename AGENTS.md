@@ -59,6 +59,11 @@ instrumented/on-device test was executed here.
   stop/pause that arrives while no timer is active.
 - `androidx.compose.material3.Snackbar` is a low-level composable, not a host: show messages as
   inline `Text` instead (this bit us twice).
+- Chat turns must be persisted before they are rendered: a LazyColumn keyed on `it.id`
+  crashes on duplicate keys when several in-memory messages all carry id = 0. Both the intake
+  and the Coach tab therefore go through `CoachChatRepository`, which returns real ids.
+- Seed the intake opening question with a re-read right before the insert, so two concurrent
+  seeds (screen init and "ricontrolla") cannot insert it twice.
 - `MeasurementType.CUSTOM` needs a `customLabel`; `Measurement.label` falls back to the enum label.
 - Room + Robolectric tests need `ApplicationProvider.getApplicationContext<Context>()` and
   `.allowMainThreadQueries()`.
