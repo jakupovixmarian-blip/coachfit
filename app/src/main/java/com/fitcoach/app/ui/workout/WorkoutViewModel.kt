@@ -163,6 +163,25 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Apre il form serie per l'esercizio, avviando o riaprendo automaticamente la sessione
+     * odierna se necessario: l'utente non deve premere un pulsante separato per iniziare.
+     */
+    fun logSetFor(planned: PlannedExercise) {
+        viewModelScope.launch {
+            if (!isSessionActive()) {
+                val day = _state.value.today
+                if (day == null) {
+                    _state.value = _state.value.copy(message = "Nessuna seduta programmata per oggi.")
+                    return@launch
+                }
+                workoutRepository.startSession(day, LocalDate.now().toEpochDay())
+                load()
+            }
+            openSetForm(planned, sessionSetsFor(planned.exerciseId).size)
+        }
+    }
+
     fun openSetForm(planned: PlannedExercise, setIndex: Int) {
         viewModelScope.launch {
             val lastPerf = workoutRepository.getLatestPerformance(planned.exerciseId)

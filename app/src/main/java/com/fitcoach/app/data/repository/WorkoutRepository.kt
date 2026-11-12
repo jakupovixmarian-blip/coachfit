@@ -170,7 +170,13 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun startSession(workoutDay: WorkoutDay, epochDay: Long): Long {
         val existing = sessionDao.getForDay(epochDay)
-        if (existing != null) return existing.id
+        if (existing != null) {
+            // Una seduta già completata oggi viene riaperta: l'utente può aggiungere altre serie.
+            if (existing.status == SessionStatus.COMPLETED) {
+                sessionDao.update(existing.copy(status = SessionStatus.IN_PROGRESS, completedAt = null))
+            }
+            return existing.id
+        }
         val planId = planDao.getActive()?.id ?: 0L
         return sessionDao.insert(
             WorkoutSessionEntity(

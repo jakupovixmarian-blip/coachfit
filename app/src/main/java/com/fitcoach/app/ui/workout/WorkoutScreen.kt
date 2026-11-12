@@ -150,6 +150,12 @@ fun WorkoutScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
+                        Spacer(Modifier.height(10.dp))
+                        OutlinedButton(onClick = { viewModel.startSession() }) {
+                            Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Riprendi sessione")
+                        }
                     } else if (session == null) {
                         Button(onClick = { viewModel.startSession() }) {
                             Icon(Icons.Filled.PlayArrow, contentDescription = null)
@@ -190,8 +196,7 @@ fun WorkoutScreen(
                         planned = planned,
                         loggedSets = viewModel.sessionSetsFor(planned.exerciseId),
                         lastPerformance = state.lastPerformances[planned.exerciseId],
-                        sessionActive = viewModel.isSessionActive(),
-                        onAddSet = { index -> viewModel.openSetForm(planned, index) },
+                        onLogSet = { viewModel.logSetFor(planned) },
                         onSubstitute = { viewModel.openSubstitution(planned) }
                     )
                 }
@@ -379,8 +384,7 @@ private fun ExerciseCard(
     planned: PlannedExercise,
     loggedSets: List<WorkoutSet>,
     lastPerformance: ExercisePerformance?,
-    sessionActive: Boolean,
-    onAddSet: (Int) -> Unit,
+    onLogSet: () -> Unit,
     onSubstitute: () -> Unit
 ) {
     SectionCard {
@@ -453,13 +457,12 @@ private fun ExerciseCard(
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
-                    onClick = { onAddSet(loggedSets.size) },
-                    enabled = sessionActive,
+                    onClick = { onLogSet() },
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = null)
                     Spacer(Modifier.width(6.dp))
-                    Text(if (sessionActive) "Registra serie ${loggedSets.size + 1}" else "Avvia la sessione")
+                    Text("Registra serie ${loggedSets.size + 1}")
                 }
                 OutlinedButton(onClick = onSubstitute) {
                     Icon(Icons.Filled.SwapHoriz, contentDescription = "Sostituisci esercizio")
