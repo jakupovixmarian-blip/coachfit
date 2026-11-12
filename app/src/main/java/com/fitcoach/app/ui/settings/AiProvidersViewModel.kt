@@ -2,12 +2,14 @@ package com.fitcoach.app.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fitcoach.app.data.remote.AiResult
 import com.fitcoach.app.data.remote.SecureKeyStore
 import com.fitcoach.app.data.repository.ChatRepository
-import com.fitcoach.app.domain.coach.CoachService
 import com.fitcoach.app.domain.model.AiProvider
 import com.fitcoach.app.domain.model.AiProviderSettings
+import com.fitcoach.app.v2.ai.provider.ConnectionTest
+import com.fitcoach.app.v2.ai.provider.OpenAiCompatibleClient
+import com.fitcoach.app.v2.ai.provider.ProviderConfiguration
+import com.fitcoach.app.v2.ai.provider.ProviderKind
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +38,7 @@ data class AiProvidersUiState(
 class AiProvidersViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val secureKeyStore: SecureKeyStore,
-    private val coachService: CoachService
+    private val aiClientV2: OpenAiCompatibleClient
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AiProvidersUiState())
@@ -124,35 +126,37 @@ class AiProvidersViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(testing = true, testStatus = null, testOk = null)
             saveCurrent()
-            val result = coachService.testConnection()
             val settings = chatRepository.getAiSettings()
-            when (result) {
-                is AiResult.Success -> {
-                    chatRepository.saveAiSettings(
-                        settings.copy(
-                            lastTestOk = true,
-                            lastTestMessage = "Connessione riuscita (${result.model ?: "modello ok"}).",
-                            lastTestAt = System.currentTimeMillis()
-                        )
-                    )
-                    _state.value = _state.value.copy(
-                        testing = false, testOk = true,
-                        testStatus = "Connessione riuscita con ${_state.value.provider.label}."
-                    )
-                }
-                is AiResult.Failure -> {
-                    chatRepository.saveAiSettings(
-                        settings.copy(
-                            lastTestOk = false,
-                            lastTestMessage = result.message,
-                            lastTestAt = System.currentTimeMillis()
-                        )
-                    )
-                    _state.value = _state.value.copy(
-                        testing = false, testOk = false, testStatus = result.message
-                    )
-                }
+            val kind = ProviderKind.valueOf(settings.provider.name)
+            val result = aiClientV2.testConnection(
+                ProviderConfiguration(
+                    provider = kind,
+                    baseUrl = if (settings.useBackendProxy) settings.backendBaseUrl else settings.baseUrl,
+                    model = settings.model,
+                    credentialRef = settings.provider.name.takeUnless { settings.useBackendProxy },
+                    usesBackendProxy = settings.useBackendProxy,
+                    maxOutputTokens = settings.maxTokens.coerceIn(1, 128_000),
+                    timeoutMs = 30_000L
+                )
+            )
+            val (ok, message) = when (result) {
+                is ConnectionTest.Success -> true to
+                    "Connessione riuscita (${result.model}, ${result.latencyMs} ms)."
+                is ConnectionTest.Failure -> false to
+                    "${result.result.reason}: ${result.result.message}"
             }
+            chatRepository.saveAiSettings(
+                settings.copy(
+                    lastTestOk = ok,
+                    lastTestMessage = message,
+                    lastTestAt = System.currentTimeMillis()
+                )
+            )
+            _state.value = _state.value.copy(
+                testing = false,
+                testOk = ok,
+                testStatus = message
+            )
         }
     }
 

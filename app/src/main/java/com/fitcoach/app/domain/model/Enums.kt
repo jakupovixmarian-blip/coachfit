@@ -195,7 +195,7 @@ enum class BudgetScope(val label: String) {
 enum class ChatRole { USER, ASSISTANT, SYSTEM }
 
 enum class AiProvider(val label: String, val defaultBaseUrl: String, val defaultModel: String) {
-    OPENAI("OpenAI", "https://api.openai.com/v1/", "gpt-4o-mini"),
+    OPENAI("OpenAI", "https://api.openai.com/v1/", "gpt-5.6"),
     GROQ("Groq", "https://api.groq.com/openai/v1/", "llama-3.3-70b-versatile"),
     OPENROUTER("OpenRouter", "https://openrouter.ai/api/v1/", "meta-llama/llama-3.3-70b-instruct:free"),
     DEEPSEEK("DeepSeek", "https://api.deepseek.com/v1/", "deepseek-chat"),

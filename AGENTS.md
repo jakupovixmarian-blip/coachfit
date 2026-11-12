@@ -27,6 +27,15 @@ app/src/main/java/com/fitcoach/app/
 └── FitCoachApplication.kt
 ```
 
+## Ricostruzione FitCoach 2.0
+
+- La ricostruzione procede sul branch `fitcoach-2.0-rebuild`; il baseline v1 è conservato in `archive/fitcoach-1.0-a2bea9a`.
+- Backup verificato: `/workspace/backups/fitcoach-1.0-20261112/` contiene bundle Git, archivio sorgente, artefatti, dati Room copiati e `SHA256SUMS`.
+- Roadmap e confini architetturali: `docs/FITCOACH_2_ROADMAP.md`.
+- Il nuovo layer provider è isolato in `app/src/main/java/com/fitcoach/app/v2/ai/`: capability, transport OkHttp, classificazione errori, discovery modelli e job di generazione non dipendono dai repository v1.
+- Le chiavi sono referenziate per alias e lette da `SecureKeyStore`; non inserire mai chiavi in Room, log, test o codice.
+- Un test provider locale non equivale a un test provider reale: riportare sempre separatamente `PROVIDER_REAL` e `UI_E2E`.
+
 ## Comandi
 
 Lo script `/workspace/build.sh` avvolge Gradle e imposta l'ambiente:
