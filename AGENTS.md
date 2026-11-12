@@ -50,7 +50,7 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
 - **Integrazione**: le funzionalità nutrizionali (piano, sostituzioni, spesa, diario)
   condividono lo stesso database alimentare e gli stessi identificativi del piano. Non
   creare moduli indipendenti.
-- **Room**: DB version attuale **5**. Aggiungendo entita/DAO ricordarsi di importarli in
+- **Room**: DB version attuale **6**. Aggiungendo entita/DAO ricordarsi di importarli in
   `FitCoachDatabase.kt` (un import mancante causa `[ksp] MissingType`), registrare la
   migrazione in `Migrations.kt` e i mapper in `Mappers.kt`. Lo schema esportato sta in
   `app/schemas/`.

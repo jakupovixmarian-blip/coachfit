@@ -27,6 +27,7 @@ import com.fitcoach.app.domain.model.SourceKind
 import com.fitcoach.app.domain.model.SplitType
 import com.fitcoach.app.domain.model.TechnicalLevel
 import com.fitcoach.app.domain.model.TrainingExperience
+import com.fitcoach.app.domain.model.TrainingStatus
 import com.fitcoach.app.domain.model.TransportMode
 import com.fitcoach.app.domain.model.WorkShift
 import com.fitcoach.app.domain.model.WorkType
@@ -42,6 +43,10 @@ class Converters {
 
     @TypeConverter fun experienceToString(v: TrainingExperience): String = v.name
     @TypeConverter fun stringToExperience(v: String): TrainingExperience = TrainingExperience.valueOf(v)
+
+    @TypeConverter fun trainingStatusToString(v: TrainingStatus?): String? = v?.name
+    @TypeConverter fun stringToTrainingStatus(v: String?): TrainingStatus? =
+        v?.let { runCatching { TrainingStatus.valueOf(it) }.getOrNull() }
 
     @TypeConverter fun equipmentSetToString(v: Set<Equipment>): String = v.joinToString(",") { it.name }
     @TypeConverter fun stringToEquipmentSet(v: String): Set<Equipment> =

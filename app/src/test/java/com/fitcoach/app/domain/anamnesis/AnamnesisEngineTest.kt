@@ -3,6 +3,7 @@ package com.fitcoach.app.domain.anamnesis
 import com.fitcoach.app.domain.model.Equipment
 import com.fitcoach.app.domain.model.Goal
 import com.fitcoach.app.domain.model.Sex
+import com.fitcoach.app.domain.model.TrainingStatus
 import com.fitcoach.app.domain.model.UserProfile
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -75,6 +76,15 @@ class AnamnesisEngineTest {
         assertThat(p.sex).isEqualTo(Sex.FEMALE)
         assertThat(p.heightCm).isWithin(0.01).of(172.5)
         assertThat(p.weightKg).isWithin(0.01).of(64.2)
+    }
+
+    @Test
+    fun `anamnesis keeps training status and parses declared loads`() {
+        var p = AnamnesisEngine.applyAnswer(UserProfile(), "trainingStatus", "CURRENTLY_TRAINING")
+        p = AnamnesisEngine.applyAnswer(p, "currentLoads", "panca=70, squat:100, invalid")
+
+        assertThat(p.trainingStatus).isEqualTo(TrainingStatus.CURRENTLY_TRAINING)
+        assertThat(p.currentLoads).containsExactly("panca", 70.0, "squat", 100.0)
     }
 
     @Test

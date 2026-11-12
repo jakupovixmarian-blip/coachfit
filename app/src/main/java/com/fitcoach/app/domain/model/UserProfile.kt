@@ -13,6 +13,7 @@ data class UserProfile(
     val weightKg: Double? = null,
     val bodyFatPercent: Double? = null,
     val experience: TrainingExperience = TrainingExperience.BEGINNER,
+    val trainingStatus: TrainingStatus? = null,
     val goal: Goal = Goal.RECOMP,
     val trainingDaysPerWeek: Int = 3,
     val availableEquipment: Set<Equipment> = emptySet(),

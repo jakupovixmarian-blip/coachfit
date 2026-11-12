@@ -214,6 +214,9 @@ class AnamnesisViewModel @Inject constructor(
         "heightCm" -> _state.value.profile.heightCm?.toString().orEmpty()
         "weightKg" -> _state.value.profile.weightKg?.toString().orEmpty()
         "sleepHours" -> _state.value.profile.sleepHours?.toString().orEmpty()
+        "trainingStatus" -> _state.value.profile.trainingStatus?.name.orEmpty()
+        "currentLoads" -> _state.value.profile.currentLoads.entries
+            .joinToString(", ") { "${it.key}=${it.value}" }
         else -> ""
     }
 

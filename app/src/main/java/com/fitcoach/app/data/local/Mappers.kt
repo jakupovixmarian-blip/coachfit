@@ -8,6 +8,7 @@ object Mappers {
     fun UserProfileEntity.toDomain() = UserProfile(
         id = id, name = name, ageYears = ageYears, sex = sex, heightCm = heightCm,
         weightKg = weightKg, bodyFatPercent = bodyFatPercent, experience = experience,
+        trainingStatus = trainingStatus,
         goal = goal, trainingDaysPerWeek = trainingDaysPerWeek, availableEquipment = availableEquipment,
         dietaryPreferences = dietaryPreferences, excludedFoods = excludedFoods, allergies = allergies,
         physicalLimitations = physicalLimitations, movementsToAvoid = movementsToAvoid,
@@ -40,6 +41,7 @@ object Mappers {
     fun UserProfile.toEntity() = UserProfileEntity(
         id = id, name = name, ageYears = ageYears, sex = sex, heightCm = heightCm,
         weightKg = weightKg, bodyFatPercent = bodyFatPercent, experience = experience,
+        trainingStatus = trainingStatus,
         goal = goal, trainingDaysPerWeek = trainingDaysPerWeek, availableEquipment = availableEquipment,
         dietaryPreferences = dietaryPreferences, excludedFoods = excludedFoods, allergies = allergies,
         physicalLimitations = physicalLimitations, movementsToAvoid = movementsToAvoid,

@@ -24,7 +24,7 @@ Sviluppato per fasi verificabili. Ogni fase è stata compilata e testata.
 
 - **Kotlin**, **Jetpack Compose**, **Material 3**
 - **MVVM + Clean Architecture** (domain / data / ui)
-- **Room** (23 entità, DAO, migrazioni, schema esportato; DB v5)
+- **Room** (23 entità, DAO, migrazioni, schema esportato; DB v6)
 - **Coroutines / Flow**, **WorkManager**, **AlarmManager** (notifiche esatte)
 - **DataStore** per le impostazioni, **Hilt** per la dependency injection
 - **Retrofit / OkHttp + kotlinx.serialization** per le API AI
@@ -243,7 +243,7 @@ app/src/main/java/com/fitcoach/app/
 
 ## Test
 
-Test unitari dei motori matematici (**197 test**, 23 classi): energia (incl. NEAT da stile
+Test unitari dei motori matematici (**199 test**, 24 classi): energia (incl. NEAT da stile
 di vita), carb cycling (incl. attivazione condizionale), generazione pasti (incl. n° pasti e
 preferenza colazione), sostituzione alimentare vincolata (pollo→tonno, rifiuto oltre il
 limite calorico, sostituzione combinata, tolleranze), lista della spesa (somma alimenti

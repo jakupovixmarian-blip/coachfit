@@ -89,6 +89,13 @@ enum class TrainingExperience(val label: String) {
     ADVANCED("Avanzato (3+ anni)")
 }
 
+enum class TrainingStatus(val label: String) {
+    NEVER_TRAINED("Non mi sono mai allenato"),
+    FORMERLY_TRAINED("Mi sono allenato in passato ma ho smesso"),
+    CURRENTLY_TRAINING("Mi alleno attualmente"),
+    OCCASIONAL("Mi alleno saltuariamente")
+}
+
 enum class Equipment(val label: String) {
     BARBELL("Bilanciere e dischi"),
     DUMBBELL("Manubri"),

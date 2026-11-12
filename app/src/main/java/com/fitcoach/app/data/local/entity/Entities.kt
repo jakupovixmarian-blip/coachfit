@@ -30,6 +30,7 @@ import com.fitcoach.app.domain.model.SourceKind
 import com.fitcoach.app.domain.model.SplitType
 import com.fitcoach.app.domain.model.TechnicalLevel
 import com.fitcoach.app.domain.model.TrainingExperience
+import com.fitcoach.app.domain.model.TrainingStatus
 import com.fitcoach.app.domain.model.TransportMode
 import com.fitcoach.app.domain.model.WorkShift
 import com.fitcoach.app.domain.model.WorkType
@@ -46,6 +47,7 @@ data class UserProfileEntity(
     val weightKg: Double? = null,
     val bodyFatPercent: Double? = null,
     val experience: TrainingExperience = TrainingExperience.BEGINNER,
+    val trainingStatus: TrainingStatus? = null,
     val goal: Goal = Goal.RECOMP,
     val trainingDaysPerWeek: Int = 3,
     val availableEquipment: Set<Equipment> = emptySet(),

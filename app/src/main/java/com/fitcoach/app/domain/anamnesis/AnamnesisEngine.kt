@@ -11,6 +11,7 @@ import com.fitcoach.app.domain.model.MuscleGroup
 import com.fitcoach.app.domain.model.Sex
 import com.fitcoach.app.domain.model.TechnicalLevel
 import com.fitcoach.app.domain.model.TrainingExperience
+import com.fitcoach.app.domain.model.TrainingStatus
 import com.fitcoach.app.domain.model.TransportMode
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WorkShift
@@ -178,12 +179,22 @@ object AnamnesisEngine {
 
         // --- Esperienza di allenamento ---
         Question(
+            "trainingStatus", sections[4], "Ti sei già allenato con i pesi in passato?",
+            hint = "La risposta determina le domande successive.",
+            kind = Kind.CHOICE, options = TrainingStatus.entries.map { it.name }
+        ),
+        Question(
             "experience", sections[4], "Qual è il tuo livello di esperienza?",
             kind = Kind.CHOICE, options = TrainingExperience.entries.map { it.name }
         ),
         Question(
             "trainingYears", sections[4], "Da quanti anni ti alleni?", kind = Kind.NUMBER,
             required = false
+        ),
+        Question(
+            "currentLoads", sections[4],
+            "Conosci carichi reali recenti? (es. panca=70, squat=100; scrivi 'non so' se non li conosci)",
+            kind = Kind.TEXT, required = false
         ),
         Question(
             "trainingDaysPerWeek", sections[4], "Quanti giorni a settimana puoi allenarti?",
@@ -227,7 +238,7 @@ object AnamnesisEngine {
     /** La prossima domanda da porre (prima non risposta), o null se completata. */
     fun nextQuestion(profile: UserProfile, skipOptional: Boolean = false): Question? =
         questions.firstOrNull { q ->
-            !isAnswered(profile, q.id) && (q.required || !skipOptional)
+            isRelevant(profile, q) && !isAnswered(profile, q.id) && (q.required || !skipOptional)
         }
 
     /**
@@ -239,12 +250,15 @@ object AnamnesisEngine {
     fun nextQuestionAfter(profile: UserProfile, afterId: String): Question? {
         val idx = questions.indexOfFirst { it.id == afterId }
         if (idx < 0) return nextQuestion(profile)
-        return questions.drop(idx + 1).firstOrNull { !isAnswered(profile, it.id) }
+        return questions.drop(idx + 1).firstOrNull { isRelevant(profile, it) && !isAnswered(profile, it.id) }
     }
 
     /** Domande obbligatorie ancora senza risposta. */
     fun missingRequired(profile: UserProfile): List<Question> =
-        questions.filter { it.required && !isAnswered(profile, it.id) }
+        questions.filter { isRelevant(profile, it) && it.required && !isAnswered(profile, it.id) }
+
+    private fun isRelevant(profile: UserProfile, question: Question): Boolean =
+        question.id != "currentLoads" || profile.trainingStatus != TrainingStatus.NEVER_TRAINED
 
     fun isAnswered(profile: UserProfile, id: String): Boolean = when (id) {
         "age" -> profile.ageYears != null
@@ -278,8 +292,10 @@ object AnamnesisEngine {
         "monthlyFoodBudgetEur" -> profile.monthlyFoodBudgetEur != null
         "budgetScope" -> true
         "budgetPersons" -> profile.budgetPersons >= 1
+        "trainingStatus" -> profile.trainingStatus != null
         "experience" -> true
         "trainingYears" -> profile.trainingYears != null
+        "currentLoads" -> profile.currentLoads.isNotEmpty() || profile.trainingStatus == TrainingStatus.NEVER_TRAINED
         "trainingDaysPerWeek" -> profile.trainingDaysPerWeek > 0
         "technicalLevel" -> true
         "availableEquipment" -> profile.availableEquipment.isNotEmpty()
@@ -336,8 +352,10 @@ object AnamnesisEngine {
             } ?: profile
             "budgetScope" -> enumOrNull<BudgetScope>(v)?.let { profile.copy(budgetScope = it) } ?: profile
             "budgetPersons" -> i()?.let { profile.copy(budgetPersons = it.coerceAtLeast(1)) } ?: profile
+            "trainingStatus" -> enumOrNull<TrainingStatus>(v)?.let { profile.copy(trainingStatus = it) } ?: profile
             "experience" -> enumOrNull<TrainingExperience>(v)?.let { profile.copy(experience = it) } ?: profile
             "trainingYears" -> d()?.let { profile.copy(trainingYears = it) } ?: profile
+            "currentLoads" -> profile.copy(currentLoads = parseLoads(v))
             "trainingDaysPerWeek" -> i()?.let { profile.copy(trainingDaysPerWeek = it) } ?: profile
             "technicalLevel" -> enumOrNull<TechnicalLevel>(v)?.let { profile.copy(technicalLevel = it) } ?: profile
             "availableEquipment" -> profile.copy(availableEquipment = enumSet<Equipment>(v))
@@ -384,8 +402,12 @@ object AnamnesisEngine {
             )
         }
         appendLine("ESPERIENZA DI ALLENAMENTO")
+        profile.trainingStatus?.let { appendLine("- Stato: ${it.label}") }
         appendLine("- Esperienza: ${profile.experience.label}")
         profile.trainingYears?.let { appendLine("- Anni di allenamento: $it") }
+        if (profile.currentLoads.isNotEmpty()) {
+            appendLine("- Carichi dichiarati: ${profile.currentLoads.entries.joinToString { "${it.key} ${it.value} kg" }}")
+        }
         appendLine("- Giorni/settimana: ${profile.trainingDaysPerWeek}")
         appendLine("- Livello tecnico: ${profile.technicalLevel.label}")
         appendLine("- Attrezzatura: ${profile.availableEquipment.joinToString { it.label }.ifBlank { "—" }}")
@@ -396,6 +418,15 @@ object AnamnesisEngine {
         appendLine("- Limitazioni: ${profile.physicalLimitations.ifEmpty { listOf("nessuna") }.joinToString()}")
         appendLine("- Movimenti da evitare: ${profile.movementsToAvoid.ifEmpty { listOf("nessuno") }.joinToString()}")
     }
+
+    private fun parseLoads(value: String): Map<String, Double> =
+        value.split(",", ";", "\n").mapNotNull { token ->
+            val match = Regex("^\\s*(.+?)\\s*[=:]\\s*(\\d+(?:[.,]\\d+)?)\\s*(?:kg)?\\s*$")
+                .matchEntire(token) ?: return@mapNotNull null
+            val name = match.groupValues[1].trim()
+            val kg = match.groupValues[2].replace(',', '.').toDoubleOrNull()
+            if (name.isBlank() || kg == null || kg <= 0.0) null else name to kg
+        }.toMap()
 
     private inline fun <reified T : Enum<T>> enumOrNull(value: String): T? =
         T::class.java.enumConstants?.firstOrNull { it.name.equals(value, ignoreCase = true) }
