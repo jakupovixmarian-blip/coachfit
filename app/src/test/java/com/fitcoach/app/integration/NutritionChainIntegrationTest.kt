@@ -124,6 +124,26 @@ class NutritionChainIntegrationTest {
     }
 
     @Test
+    fun `profilo anamnesi confermata genera automaticamente entrambi i programmi`() = runTest {
+        val confirmed = profile.copy(
+            anamnesisCompleted = true,
+            anamnesisConfirmedAt = System.currentTimeMillis(),
+            anamnesisSummary = "Profilo confermato"
+        )
+        val result = generatePrograms(
+            profile = confirmed,
+            regenerateNutrition = true,
+            regenerateWorkout = true,
+            requireAnamnesis = true
+        )
+
+        assertThat(result).isInstanceOf(GenerateProgramsUseCase.Result.Success::class.java)
+        assertThat(nutritionRepository.getActivePlan()).isNotNull()
+        assertThat(workoutRepository.getActivePlan()).isNotNull()
+    }
+
+
+    @Test
     fun `la spesa conserva lo stato spuntato dopo la rigenerazione`() = runTest {
         generatePrograms(profile, regenerateNutrition = true, regenerateWorkout = false, requireAnamnesis = false)
         val weekStart = NutritionDiaryRepository.weekStart(NutritionDiaryRepository.todayEpochDay())

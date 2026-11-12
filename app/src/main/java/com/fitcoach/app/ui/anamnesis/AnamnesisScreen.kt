@@ -126,13 +126,30 @@ internal fun AnamnesisContent(
                         color = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Ora puoi generare alimentazione e allenamento dalla Dashboard o dalle " +
-                            "rispettive sezioni.",
+                        state.generationMessage
+                            ?: "Il percorso verra generato automaticamente usando i dati confermati.",
                         style = MaterialTheme.typography.bodySmall, color = TextSecondary
                     )
+                    if (state.generatingPrograms) {
+                        Spacer(Modifier.height(12.dp))
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Calcolo target, piano di 7 giorni e scheda personalizzata...",
+                            style = MaterialTheme.typography.labelSmall, color = TextSecondary
+                        )
+                    }
+                    state.generationWarnings.forEach { warning ->
+                        Spacer(Modifier.height(4.dp))
+                        Text("• $warning", style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.tertiary)
+                    }
                     Spacer(Modifier.height(16.dp))
-                    Button(onClick = onNavigateDashboard,
-                        modifier = Modifier.fillMaxWidth()) { Text("Vai alla Dashboard") }
+                    Button(
+                        onClick = onNavigateDashboard,
+                        enabled = !state.generatingPrograms,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Vai alla Dashboard") }
                     Spacer(Modifier.height(8.dp))
                     OutlinedButton(onClick = onOpenSummary,
                         modifier = Modifier.fillMaxWidth()) { Text("Rivedi il riepilogo") }

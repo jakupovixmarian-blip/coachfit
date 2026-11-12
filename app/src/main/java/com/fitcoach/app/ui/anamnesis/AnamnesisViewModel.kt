@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
 import com.fitcoach.app.domain.model.UserProfile
+import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,12 +32,16 @@ data class AnamnesisUiState(
     val showSummary: Boolean = false,
     val confirmed: Boolean = false,
     val error: String? = null,
+    val generatingPrograms: Boolean = false,
+    val generationMessage: String? = null,
+    val generationWarnings: List<String> = emptyList(),
     val aiEnabled: Boolean = false
 )
 
 @HiltViewModel
 class AnamnesisViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val generatePrograms: GenerateProgramsUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AnamnesisUiState())
@@ -151,10 +156,44 @@ class AnamnesisViewModel @Inject constructor(
             updatedAt = System.currentTimeMillis()
         )
         viewModelScope.launch {
-            userRepository.save(confirmed)
             _state.value = _state.value.copy(
-                profile = confirmed, confirmed = true, showSummary = false, error = null
+                profile = confirmed,
+                confirmed = true,
+                showSummary = false,
+                error = null,
+                generatingPrograms = true,
+                generationMessage = "Anamnesi confermata. Generazione locale del percorso in corso...",
+                generationWarnings = emptyList()
             )
+            userRepository.save(confirmed)
+            val result = runCatching {
+                generatePrograms(profile = confirmed, requireAnamnesis = true)
+            }.getOrElse { error ->
+                GenerateProgramsUseCase.Result.Error(
+                    error.message ?: "Errore inatteso durante la generazione."
+                )
+            }
+            when (result) {
+                is GenerateProgramsUseCase.Result.Success -> _state.value = _state.value.copy(
+                    generatingPrograms = false,
+                    generationMessage = "Percorso creato: piano alimentare di 7 giorni e scheda salvati.",
+                    generationWarnings = result.warnings
+                )
+                is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed -> _state.value = _state.value.copy(
+                    generatingPrograms = false,
+                    generationMessage = "Generazione bloccata: l'anamnesi non risulta pronta.",
+                    error = (result.missing + result.contradictions).joinToString(" ")
+                )
+                is GenerateProgramsUseCase.Result.MissingData -> _state.value = _state.value.copy(
+                    generatingPrograms = false,
+                    generationMessage = "Mancano dati essenziali: ${result.missing.joinToString()}."
+                )
+                is GenerateProgramsUseCase.Result.Error -> _state.value = _state.value.copy(
+                    generatingPrograms = false,
+                    generationMessage = "Generazione non completata.",
+                    error = result.message
+                )
+            }
         }
     }
 
