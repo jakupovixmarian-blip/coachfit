@@ -541,7 +541,12 @@ data class AiProviderSettingsEntity(
 
 @Entity(
     tableName = "diary_entries",
-    indices = [Index("dateEpochDay"), Index("planEntryId"), Index("mealSlot")]
+    indices = [
+        Index("dateEpochDay"),
+        Index("planEntryId"),
+        Index("mealSlot"),
+        Index(value = ["dateEpochDay", "planEntryId"], unique = true)
+    ]
 )
 data class DiaryEntryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

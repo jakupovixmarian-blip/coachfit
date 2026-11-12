@@ -89,7 +89,7 @@ import com.fitcoach.app.data.local.entity.WorkoutSetEntity
         ShoppingItemEntity::class,
         SubstitutionLogEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

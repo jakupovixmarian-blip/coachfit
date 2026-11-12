@@ -191,3 +191,23 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_food_database_sourceId` ON `food_database` (`sourceId`)")
     }
 }
+
+/**
+ * Migrazione schema v4 -> v5.
+ *
+ * Impedisce duplicati della stessa voce di piano nello stesso giorno, senza
+ * impedire la registrazione della voce negli altri giorni del calendario.
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "DELETE FROM diary_entries WHERE planEntryId IS NOT NULL AND id NOT IN (" +
+                "SELECT MIN(id) FROM diary_entries WHERE planEntryId IS NOT NULL " +
+                "GROUP BY dateEpochDay, planEntryId)"
+        )
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_diary_entries_dateEpochDay_planEntryId` " +
+                "ON `diary_entries` (`dateEpochDay`, `planEntryId`)"
+        )
+    }
+}

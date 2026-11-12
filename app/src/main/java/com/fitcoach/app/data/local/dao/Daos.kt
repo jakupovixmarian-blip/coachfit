@@ -580,8 +580,8 @@ interface DiaryEntryDao {
     @Query("SELECT * FROM diary_entries WHERE dateEpochDay BETWEEN :from AND :to ORDER BY dateEpochDay, createdAt")
     suspend fun getBetween(from: Long, to: Long): List<DiaryEntryEntity>
 
-    @Query("SELECT * FROM diary_entries WHERE planEntryId = :planEntryId LIMIT 1")
-    suspend fun getByPlanEntry(planEntryId: Long): DiaryEntryEntity?
+    @Query("SELECT * FROM diary_entries WHERE planEntryId = :planEntryId AND dateEpochDay = :dateEpochDay LIMIT 1")
+    suspend fun getByPlanEntry(planEntryId: Long, dateEpochDay: Long): DiaryEntryEntity?
 
     @Query("SELECT * FROM diary_entries WHERE id = :id")
     suspend fun getById(id: Long): DiaryEntryEntity?

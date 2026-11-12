@@ -13,6 +13,7 @@ import com.fitcoach.app.data.repository.ShoppingRepository
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
 import com.fitcoach.app.domain.model.Goal
+import com.fitcoach.app.domain.model.MealSlot
 import com.fitcoach.app.domain.model.Sex
 import com.fitcoach.app.domain.model.TrainingExperience
 import com.fitcoach.app.domain.model.UserProfile
@@ -136,6 +137,49 @@ class NutritionChainIntegrationTest {
         val same = after.first { it.foodItemId == first.foodItemId }
         assertThat(same.checked).isTrue()
     }
+
+    @Test
+    fun `diario separa la stessa voce di piano tra date e impedisce duplicati`() = runTest {
+        generatePrograms(profile, regenerateNutrition = true, regenerateWorkout = false, requireAnamnesis = false)
+        val plan = nutritionRepository.getActivePlan()!!
+        val mealEntry = plan.days.first { it.meals.isNotEmpty() }.meals.first().entries.first()
+        val firstDay = NutritionDiaryRepository.todayEpochDay()
+        val nextWeekSameDay = firstDay + 7
+
+        diaryRepository.togglePlanEntry(mealEntry, MealSlot.BREAKFAST, "08:00", firstDay)
+        diaryRepository.togglePlanEntry(mealEntry, MealSlot.BREAKFAST, "08:00", firstDay)
+        diaryRepository.togglePlanEntry(mealEntry, MealSlot.BREAKFAST, "08:00", nextWeekSameDay)
+
+        val firstEntries = diaryRepository.entriesForDay(firstDay)
+        val nextEntries = diaryRepository.entriesForDay(nextWeekSameDay)
+        assertThat(firstEntries).hasSize(1)
+        assertThat(firstEntries.single().active).isFalse()
+        assertThat(nextEntries).hasSize(1)
+        assertThat(nextEntries.single().active).isTrue()
+    }
+
+    @Test
+    fun `diario ricalcola quantita e bilancio solo sui consumi attivi`() = runTest {
+        generatePrograms(profile, regenerateNutrition = true, regenerateWorkout = false, requireAnamnesis = false)
+        val plan = nutritionRepository.getActivePlan()!!
+        val meal = plan.days.first { it.meals.isNotEmpty() }.meals.first()
+        val mealEntry = meal.entries.first()
+        val date = NutritionDiaryRepository.todayEpochDay()
+
+        diaryRepository.togglePlanEntry(mealEntry, meal.slot, meal.time, date)
+        val original = diaryRepository.entriesForDay(date).single()
+        diaryRepository.updateGrams(original.id, original.grams * 2)
+
+        val updated = diaryRepository.entriesForDay(date).single()
+        assertThat(updated.kcal).isWithin(0.001).of(original.kcal * 2)
+        assertThat(updated.protein).isWithin(0.001).of(original.protein * 2)
+        assertThat(diaryRepository.balanceForDay(date).consumedKcal)
+            .isWithin(0.001).of(original.kcal * 2)
+
+        diaryRepository.setActive(updated.id, false)
+        assertThat(diaryRepository.balanceForDay(date).consumedKcal).isEqualTo(0.0)
+    }
+
 
     @Test
     fun `il ViewModel Spesa si aggiorna quando il piano viene generato dopo l'apertura del tab`() = runTest {

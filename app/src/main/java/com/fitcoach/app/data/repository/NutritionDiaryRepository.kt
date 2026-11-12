@@ -1,5 +1,6 @@
 package com.fitcoach.app.data.repository
 
+import androidx.room.withTransaction
 import com.fitcoach.app.data.local.FitCoachDatabase
 import com.fitcoach.app.data.local.Mappers.toDomain
 import com.fitcoach.app.data.local.Mappers.toEntity
@@ -63,29 +64,31 @@ class NutritionDiaryRepository @Inject constructor(
      * i valori previsti; alla despunta la disattiva (resta nello storico).
      */
     suspend fun togglePlanEntry(entry: MealEntry, slot: MealSlot, time: String, epochDay: Long) {
-        val existing = diaryDao.getByPlanEntry(entry.id)
-        if (existing != null) {
-            diaryDao.setActive(existing.id, !existing.active)
-            return
+        db.withTransaction {
+            val existing = diaryDao.getByPlanEntry(entry.id, epochDay)
+            if (existing != null) {
+                diaryDao.setActive(existing.id, !existing.active)
+                return@withTransaction
+            }
+            diaryDao.insert(
+                DiaryEntry(
+                    dateEpochDay = epochDay,
+                    mealSlot = slot,
+                    time = time,
+                    foodItemId = entry.foodItemId,
+                    foodName = entry.foodName,
+                    grams = entry.grams,
+                    unit = entry.unit,
+                    kcal = entry.kcal,
+                    protein = entry.protein,
+                    carbs = entry.carbs,
+                    fat = entry.fat,
+                    source = DiarySource.PLAN,
+                    planEntryId = entry.id,
+                    active = true
+                ).toEntity()
+            )
         }
-        diaryDao.insert(
-            DiaryEntry(
-                dateEpochDay = epochDay,
-                mealSlot = slot,
-                time = time,
-                foodItemId = entry.foodItemId,
-                foodName = entry.foodName,
-                grams = entry.grams,
-                unit = entry.unit,
-                kcal = entry.kcal,
-                protein = entry.protein,
-                carbs = entry.carbs,
-                fat = entry.fat,
-                source = DiarySource.PLAN,
-                planEntryId = entry.id,
-                active = true
-            ).toEntity()
-        )
     }
 
     /** Aggiunge un alimento fuori piano, calcolando i valori dalla quantita. */

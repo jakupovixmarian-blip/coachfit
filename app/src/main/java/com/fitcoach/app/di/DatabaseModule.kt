@@ -6,6 +6,7 @@ import com.fitcoach.app.data.local.FitCoachDatabase
 import com.fitcoach.app.data.local.MIGRATION_1_2
 import com.fitcoach.app.data.local.MIGRATION_2_3
 import com.fitcoach.app.data.local.MIGRATION_3_4
+import com.fitcoach.app.data.local.MIGRATION_4_5
 import com.fitcoach.app.data.local.dao.AiSettingsDao
 import com.fitcoach.app.data.local.dao.CheckInDao
 import com.fitcoach.app.data.local.dao.ChatDao
@@ -47,7 +48,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): FitCoachDatabase =
         Room.databaseBuilder(context, FitCoachDatabase::class.java, FitCoachDatabase.DB_NAME)
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .fallbackToDestructiveMigration()
             .build()
 
