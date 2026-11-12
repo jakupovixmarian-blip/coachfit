@@ -30,6 +30,8 @@ import com.fitcoach.app.data.local.dao.WorkoutDayDao
 import com.fitcoach.app.data.local.dao.WorkoutPlanDao
 import com.fitcoach.app.data.local.dao.WorkoutSessionDao
 import com.fitcoach.app.data.local.dao.WorkoutSetDao
+import com.fitcoach.app.data.local.dao.V2AnamnesisDao
+import com.fitcoach.app.data.local.dao.V2GenerationDao
 import com.fitcoach.app.data.local.dao.WorkoutScheduleOverrideDao
 import com.fitcoach.app.data.local.dao.ProgressPhotoDao
 import com.fitcoach.app.data.local.entity.AiProviderSettingsEntity
@@ -61,6 +63,10 @@ import com.fitcoach.app.data.local.entity.WorkoutDayEntity
 import com.fitcoach.app.data.local.entity.WorkoutPlanEntity
 import com.fitcoach.app.data.local.entity.WorkoutSessionEntity
 import com.fitcoach.app.data.local.entity.WorkoutSetEntity
+import com.fitcoach.app.data.local.entity.V2AnamnesisAnswerEntity
+import com.fitcoach.app.data.local.entity.V2AnamnesisSessionEntity
+import com.fitcoach.app.data.local.entity.V2GenerationJobEntity
+import com.fitcoach.app.data.local.entity.V2GenerationPayloadEntity
 import com.fitcoach.app.data.local.entity.WorkoutScheduleOverrideEntity
 import com.fitcoach.app.data.local.entity.ProgressPhotoEntity
 
@@ -96,9 +102,13 @@ import com.fitcoach.app.data.local.entity.ProgressPhotoEntity
         SubstitutionLogEntity::class,
         WorkoutScheduleOverrideEntity::class,
         ProgressPhotoEntity::class,
-        FreeSessionExerciseEntity::class
+        FreeSessionExerciseEntity::class,
+        V2AnamnesisSessionEntity::class,
+        V2AnamnesisAnswerEntity::class,
+        V2GenerationJobEntity::class,
+        V2GenerationPayloadEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -134,6 +144,8 @@ abstract class FitCoachDatabase : RoomDatabase() {
     abstract fun diaryEntryDao(): DiaryEntryDao
     abstract fun shoppingItemDao(): ShoppingItemDao
     abstract fun substitutionLogDao(): SubstitutionLogDao
+    abstract fun v2AnamnesisDao(): V2AnamnesisDao
+    abstract fun v2GenerationDao(): V2GenerationDao
 
     companion object {
         const val DB_NAME = "fitcoach.db"

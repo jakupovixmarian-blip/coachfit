@@ -12,6 +12,7 @@ import com.fitcoach.app.data.local.MIGRATION_6_7
 import com.fitcoach.app.data.local.MIGRATION_7_8
 import com.fitcoach.app.data.local.MIGRATION_8_9
 import com.fitcoach.app.data.local.MIGRATION_9_10
+import com.fitcoach.app.data.local.MIGRATION_10_11
 import com.fitcoach.app.data.local.dao.AiSettingsDao
 import com.fitcoach.app.data.local.dao.CheckInDao
 import com.fitcoach.app.data.local.dao.ChatDao
@@ -38,6 +39,8 @@ import com.fitcoach.app.data.local.dao.WorkoutDayDao
 import com.fitcoach.app.data.local.dao.WorkoutPlanDao
 import com.fitcoach.app.data.local.dao.WorkoutSessionDao
 import com.fitcoach.app.data.local.dao.WorkoutSetDao
+import com.fitcoach.app.data.local.dao.V2AnamnesisDao
+import com.fitcoach.app.data.local.dao.V2GenerationDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -54,7 +57,7 @@ object DatabaseModule {
     fun provideDatabase(@ApplicationContext context: Context): FitCoachDatabase =
         Room.databaseBuilder(context, FitCoachDatabase::class.java, FitCoachDatabase.DB_NAME)
             .addMigrations(
-                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10
+                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11
             )
             .fallbackToDestructiveMigration()
             .build()
@@ -85,4 +88,6 @@ object DatabaseModule {
     @Provides fun diaryEntryDao(db: FitCoachDatabase): DiaryEntryDao = db.diaryEntryDao()
     @Provides fun shoppingItemDao(db: FitCoachDatabase): ShoppingItemDao = db.shoppingItemDao()
     @Provides fun substitutionLogDao(db: FitCoachDatabase): SubstitutionLogDao = db.substitutionLogDao()
+    @Provides fun v2AnamnesisDao(db: FitCoachDatabase): V2AnamnesisDao = db.v2AnamnesisDao()
+    @Provides fun v2GenerationDao(db: FitCoachDatabase): V2GenerationDao = db.v2GenerationDao()
 }

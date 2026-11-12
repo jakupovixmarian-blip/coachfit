@@ -1,5 +1,8 @@
 package com.fitcoach.app.v2.domain.anamnesis
 
+import com.fitcoach.app.data.local.dao.V2AnamnesisDao
+import com.fitcoach.app.data.local.entity.V2AnamnesisAnswerEntity
+import com.fitcoach.app.data.local.entity.V2AnamnesisSessionEntity
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -68,5 +71,46 @@ class DataStoreAnamnesisStore @Inject constructor(
 
     private companion object {
         val SESSION_KEY = stringPreferencesKey("session")
+    }
+}
+
+@Singleton
+class RoomAnamnesisStore @Inject constructor(
+    private val dao: V2AnamnesisDao
+) : AnamnesisStore {
+    override suspend fun load(): AnamnesisSession? {
+        val entity = dao.latestSession() ?: return null
+        val answers = dao.answers(entity.id).mapNotNull { row ->
+            runCatching {
+                AnamnesisField.valueOf(row.field) to AnamnesisAnswer(
+                    status = AnswerStatus.valueOf(row.status),
+                    value = row.value,
+                    updatedAt = row.updatedAt
+                )
+            }.getOrNull()
+        }.toMap()
+        return AnamnesisSession(entity.id, answers, entity.confirmedAt)
+    }
+
+    override suspend fun save(session: AnamnesisSession) {
+        val now = System.currentTimeMillis()
+        val previous = dao.latestSession()?.takeIf { it.id == session.id }
+        dao.replace(
+            V2AnamnesisSessionEntity(
+                id = session.id,
+                createdAt = previous?.createdAt ?: now,
+                updatedAt = now,
+                confirmedAt = session.confirmedAt
+            ),
+            session.answers.map { (field, answer) ->
+                V2AnamnesisAnswerEntity(
+                    sessionId = session.id,
+                    field = field.name,
+                    status = answer.status.name,
+                    value = answer.value,
+                    updatedAt = answer.updatedAt
+                )
+            }
+        )
     }
 }

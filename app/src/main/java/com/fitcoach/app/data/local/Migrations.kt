@@ -252,3 +252,17 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
         db.execSQL("ALTER TABLE program_changes ADD COLUMN followUpAction TEXT NOT NULL DEFAULT ''")
     }
 }
+
+/** Migrazione schema v10 -> v11: persistenza isolata per anamnesi e generazione 2.0. */
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS `v2_anamnesis_sessions` (`id` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `confirmedAt` INTEGER, PRIMARY KEY(`id`))")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_v2_anamnesis_sessions_updatedAt` ON `v2_anamnesis_sessions` (`updatedAt`)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `v2_anamnesis_answers` (`sessionId` TEXT NOT NULL, `field` TEXT NOT NULL, `status` TEXT NOT NULL, `value` TEXT, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`sessionId`, `field`))")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_v2_anamnesis_answers_sessionId` ON `v2_anamnesis_answers` (`sessionId`)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `v2_generation_jobs` (`id` TEXT NOT NULL, `profileVersion` INTEGER NOT NULL, `stateJson` TEXT NOT NULL, `committed` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_v2_generation_jobs_updatedAt` ON `v2_generation_jobs` (`updatedAt`)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `v2_generation_payloads` (`jobId` TEXT NOT NULL, `phase` TEXT NOT NULL, `payloadJson` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`jobId`, `phase`))")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_v2_generation_payloads_jobId` ON `v2_generation_payloads` (`jobId`)")
+    }
+}
