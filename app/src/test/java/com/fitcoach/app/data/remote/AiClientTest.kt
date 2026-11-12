@@ -25,7 +25,8 @@ class AiClientTest {
 
     private class RecordingApi(
         private val responses: MutableList<Response<ChatCompletionResponse>>,
-        val sent: MutableList<ChatCompletionRequest> = mutableListOf()
+        val sent: MutableList<ChatCompletionRequest> = mutableListOf(),
+        val authorizations: MutableList<String?> = mutableListOf()
     ) : AiApi {
         override suspend fun chatCompletions(
             url: String,
@@ -36,6 +37,7 @@ class AiClientTest {
             body: ChatCompletionRequest
         ): Response<ChatCompletionResponse> {
             sent += body
+            authorizations += authorization
             return responses.removeAt(0)
         }
     }
@@ -120,6 +122,25 @@ class AiClientTest {
 
         assertThat(result).isInstanceOf(AiResult.Failure::class.java)
         assertThat(api.sent).hasSize(1)
+    }
+
+    @Test
+    fun `backend proxy puo funzionare senza chiave locale`() = runTest {
+        val api = RecordingApi(mutableListOf(okResponse()))
+        val client = AiClient(api, json)
+        val cfg = AiProviderConfig(
+            provider = AiProvider.OPENAI,
+            baseUrl = "https://proxy.example.test/v1/",
+            model = "proxy-model",
+            apiKey = null,
+            usesBackendProxy = true
+        )
+
+        val result = client.complete(cfg, listOf(ChatMessageDto("user", "ciao")))
+
+        assertThat(result).isInstanceOf(AiResult.Success::class.java)
+        assertThat(api.authorizations).containsExactly(null)
+        assertThat(cfg.isConfigured).isTrue()
     }
 
     @Test

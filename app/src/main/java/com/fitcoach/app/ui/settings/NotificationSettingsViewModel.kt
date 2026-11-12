@@ -77,7 +77,8 @@ class NotificationSettingsViewModel @Inject constructor(
 
     private suspend fun reschedule() {
         val prefs = preferencesRepository.getOrCreate()
-        scheduler.scheduleAll(prefs)
+        val records = notificationRepository.getAll()
+        scheduler.scheduleAll(prefs, records)
     }
 
     fun consumeMessage() { _state.value = _state.value.copy(message = null) }

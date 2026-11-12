@@ -9,7 +9,8 @@ data class AiProviderConfig(
     val model: String,
     val apiKey: String?,
     val temperature: Double = 0.4,
-    val maxTokens: Int = 1200
+    val maxTokens: Int = 1200,
+    val usesBackendProxy: Boolean = false
 ) {
     /** URL completo dell'endpoint Chat Completions. */
     val completionsUrl: String
@@ -20,5 +21,5 @@ data class AiProviderConfig(
 
     val isConfigured: Boolean
         get() = baseUrl.isNotBlank() && model.isNotBlank() &&
-            (provider == AiProvider.CUSTOM || !apiKey.isNullOrBlank())
+            (usesBackendProxy || provider == AiProvider.CUSTOM || !apiKey.isNullOrBlank())
 }

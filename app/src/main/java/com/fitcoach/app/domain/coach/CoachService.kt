@@ -132,7 +132,7 @@ class CoachService @Inject constructor(
             else -> settings.baseUrl.ifBlank { provider.defaultBaseUrl }
         }
         val model = settings.model.ifBlank { provider.defaultModel }
-        val key = if (provider == AiProvider.CUSTOM && settings.useBackendProxy) {
+        val key = if (settings.useBackendProxy) {
             null
         } else {
             secureKeyStore.getApiKey(provider.name)
@@ -143,7 +143,8 @@ class CoachService @Inject constructor(
             model = model,
             apiKey = key,
             temperature = settings.temperature,
-            maxTokens = settings.maxTokens
+            maxTokens = settings.maxTokens,
+            usesBackendProxy = settings.useBackendProxy
         )
     }
 

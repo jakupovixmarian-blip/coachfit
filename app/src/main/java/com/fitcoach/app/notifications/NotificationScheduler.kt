@@ -10,6 +10,7 @@ import android.os.Build
 import com.fitcoach.app.MainActivity
 import com.fitcoach.app.R
 import com.fitcoach.app.domain.model.MealSlot
+import com.fitcoach.app.domain.model.NotificationRecord
 import com.fitcoach.app.domain.model.UserPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.Calendar
@@ -50,55 +51,72 @@ class NotificationScheduler @Inject constructor(
         }
     }
 
-    /** Riprogramma tutte le notifiche in base alle preferenze. */
-    fun scheduleAll(prefs: UserPreferences) {
+    /** Riprogramma tutte le notifiche in base alle preferenze e alle impostazioni salvate. */
+    fun scheduleAll(prefs: UserPreferences, records: List<NotificationRecord> = emptyList()) {
         cancelAll()
         if (!prefs.notificationsEnabled) return
 
+        val byKind = records.associateBy { it.kind }
         var requestCode = 100
+        fun nextCode(record: NotificationRecord?): Int {
+            val code = record?.requestCode?.takeIf { it > 0 } ?: requestCode
+            requestCode++
+            return code
+        }
         prefs.mealSchedules.forEach { schedule ->
-            if (schedule.enabled) {
+            val record = byKind["MEAL_${schedule.slot.name}"]
+            if (record?.enabled ?: schedule.enabled) {
                 scheduleDaily(
-                    requestCode = requestCode++,
-                    time = schedule.time,
-                    kind = "MEAL_${schedule.slot.name}",
-                    title = "FitCoach – ${schedule.slot.label}",
-                    body = bodyForMeal(schedule.slot),
+                    requestCode = nextCode(record),
+                    time = record?.triggerTime ?: schedule.time,
+                    kind = record?.kind ?: "MEAL_${schedule.slot.name}",
+                    title = record?.title ?: "FitCoach – ${schedule.slot.label}",
+                    body = record?.body ?: bodyForMeal(schedule.slot),
                     channel = ReminderReceiver.CHANNEL_MEALS
                 )
             }
         }
-        scheduleDaily(
-            requestCode = requestCode++,
-            time = prefs.workoutTime,
-            kind = "WORKOUT",
-            title = "FitCoach – Allenamento",
-            body = "E' ora di allenarti. Apri l'app per vedere la scheda di oggi.",
-            channel = ReminderReceiver.CHANNEL_WORKOUT
-        )
-        if (prefs.hydrationRemindersEnabled) {
+
+        val workout = byKind["WORKOUT"]
+        if (workout?.enabled ?: true) {
+            scheduleDaily(
+                requestCode = nextCode(workout),
+                time = workout?.triggerTime ?: prefs.workoutTime,
+                kind = "WORKOUT",
+                title = workout?.title ?: "FitCoach – Allenamento",
+                body = workout?.body ?: "E' ora di allenarti. Apri l'app per vedere la scheda di oggi.",
+                channel = ReminderReceiver.CHANNEL_WORKOUT
+            )
+        }
+
+        val hydration = byKind["HYDRATION"]
+        if (hydration?.enabled ?: prefs.hydrationRemindersEnabled) {
             scheduleHydration(prefs, requestCode)
             requestCode += 12
         }
-        if (prefs.weeklyCheckInEnabled) {
+
+        val checkIn = byKind["CHECKIN"]
+        if (checkIn?.enabled ?: prefs.weeklyCheckInEnabled) {
             scheduleWeekly(
-                requestCode = requestCode++,
+                requestCode = nextCode(checkIn),
                 dayOfWeek = prefs.weeklyCheckInDay,
-                time = prefs.weeklyCheckInTime,
+                time = checkIn?.triggerTime ?: prefs.weeklyCheckInTime,
                 kind = "CHECKIN",
-                title = "FitCoach – Check-in settimanale",
-                body = "Registra peso e misure per aggiornare il tuo programma.",
+                title = checkIn?.title ?: "FitCoach – Check-in settimanale",
+                body = checkIn?.body ?: "Registra peso e misure per aggiornare il tuo programma.",
                 channel = ReminderReceiver.CHANNEL_CHECKIN
             )
         }
-        if (prefs.weightReminderEnabled) {
+
+        val weight = byKind["WEIGHT"]
+        if (weight?.enabled ?: prefs.weightReminderEnabled) {
             scheduleWeekly(
-                requestCode = requestCode++,
+                requestCode = nextCode(weight),
                 dayOfWeek = prefs.weightReminderDay,
-                time = prefs.weightReminderTime,
+                time = weight?.triggerTime ?: prefs.weightReminderTime,
                 kind = "WEIGHT",
-                title = "FitCoach – Valutazione del peso",
-                body = "Pesati a digiuno e registra il peso per il monitoraggio.",
+                title = weight?.title ?: "FitCoach – Valutazione del peso",
+                body = weight?.body ?: "Pesati a digiuno e registra il peso per il monitoraggio.",
                 channel = ReminderReceiver.CHANNEL_CHECKIN
             )
         }
@@ -132,7 +150,7 @@ class NotificationScheduler @Inject constructor(
         setAlarm(requestCode, trigger, kind, title, body, channel, repeatingDaily = true)
     }
 
-    private fun scheduleWeekly(
+    internal fun scheduleWeekly(
         requestCode: Int,
         dayOfWeek: Int,
         time: String,
@@ -198,6 +216,7 @@ class NotificationScheduler @Inject constructor(
         weekly: Boolean = false,
         dayOfWeek: Int = 0
     ) {
+        val triggerCalendar = Calendar.getInstance().apply { timeInMillis = triggerAtMillis }
         val intent = Intent(context, ReminderReceiver::class.java).apply {
             putExtra(ReminderReceiver.EXTRA_KIND, kind)
             putExtra(ReminderReceiver.EXTRA_TITLE, title)
@@ -207,6 +226,8 @@ class NotificationScheduler @Inject constructor(
             putExtra(ReminderReceiver.EXTRA_REPEAT_DAILY, repeatingDaily)
             putExtra(ReminderReceiver.EXTRA_WEEKLY, weekly)
             putExtra(ReminderReceiver.EXTRA_DAY_OF_WEEK, dayOfWeek)
+            putExtra(ReminderReceiver.EXTRA_HOUR, triggerCalendar.get(Calendar.HOUR_OF_DAY))
+            putExtra(ReminderReceiver.EXTRA_MINUTE, triggerCalendar.get(Calendar.MINUTE))
         }
         val pending = PendingIntent.getBroadcast(
             context, requestCode, intent,

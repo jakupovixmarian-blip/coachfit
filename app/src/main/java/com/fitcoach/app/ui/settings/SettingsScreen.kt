@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -47,15 +49,26 @@ import com.fitcoach.app.ui.theme.TextSecondary
 @Composable
 fun SettingsScreen(
     navController: NavHostController,
-    exportViewModel: ExportViewModel = hiltViewModel()
+    exportViewModel: ExportViewModel = hiltViewModel(),
+    backupViewModel: BackupViewModel = hiltViewModel()
 ) {
     val exportState by exportViewModel.state.collectAsStateWithLifecycle()
+    val backupState by backupViewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    val restoreLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri -> uri?.let(backupViewModel::restoreBackup) }
 
     LaunchedEffect(exportState.message) {
         exportState.message?.let {
             snackbar.showSnackbar(it)
             exportViewModel.consumeMessage()
+        }
+    }
+    LaunchedEffect(backupState.message) {
+        backupState.message?.let {
+            snackbar.showSnackbar(it)
+            backupViewModel.consumeMessage()
         }
     }
 
@@ -156,6 +169,33 @@ fun SettingsScreen(
                             Icon(Icons.Filled.FileDownload, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
                             Text(if (exportState.exporting) "Esportazione..." else "Esporta tutto (JSON)")
+                        }
+                    }
+                }
+            }
+
+            item {
+                SectionCard(modifier = Modifier.fillMaxWidth()) {
+                    Column {
+                        SectionHeader("Backup e ripristino", "Copia locale completa del database")
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Il ripristino sostituisce i dati locali e riavvia l'app. Conserva il file in un luogo sicuro.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = { backupViewModel.createBackup() },
+                                enabled = !backupState.working,
+                                modifier = Modifier.weight(1f)
+                            ) { Text(if (backupState.working) "Attendi..." else "Crea backup") }
+                            OutlinedButton(
+                                onClick = { restoreLauncher.launch(arrayOf("application/octet-stream", "application/x-sqlite3", "*/*")) },
+                                enabled = !backupState.working,
+                                modifier = Modifier.weight(1f)
+                            ) { Text("Ripristina") }
                         }
                     }
                 }

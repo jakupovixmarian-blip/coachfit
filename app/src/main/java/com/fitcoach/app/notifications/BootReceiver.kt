@@ -3,8 +3,8 @@ package com.fitcoach.app.notifications
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.fitcoach.app.data.repository.NotificationRepository
 import com.fitcoach.app.data.repository.PreferencesRepository
-import com.fitcoach.app.data.repository.UserRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +20,7 @@ class BootReceiver : BroadcastReceiver() {
 
     @Inject lateinit var notificationScheduler: NotificationScheduler
     @Inject lateinit var preferencesRepository: PreferencesRepository
-    @Inject lateinit var userRepository: UserRepository
+    @Inject lateinit var notificationRepository: NotificationRepository
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action ?: return
@@ -34,7 +34,8 @@ class BootReceiver : BroadcastReceiver() {
             try {
                 notificationScheduler.createChannels()
                 val prefs = preferencesRepository.getOrCreate()
-                notificationScheduler.scheduleAll(prefs)
+                val records = notificationRepository.getAll()
+                notificationScheduler.scheduleAll(prefs, records)
             } finally {
                 pendingResult.finish()
             }

@@ -82,28 +82,32 @@ class AiProvidersViewModel @Inject constructor(
     fun updateTemperature(v: Double) { _state.value = _state.value.copy(temperature = v) }
     fun updateMaxTokens(v: Int) { _state.value = _state.value.copy(maxTokens = v) }
 
+    private suspend fun saveCurrent(): AiProviderSettings {
+        val s = _state.value
+        if (s.apiKeyInput.isNotBlank()) {
+            secureKeyStore.putApiKey(s.provider.name, s.apiKeyInput.trim())
+        }
+        val settings = AiProviderSettings(
+            provider = s.provider,
+            baseUrl = s.baseUrl.trim().ifBlank { s.provider.defaultBaseUrl },
+            model = s.model.trim().ifBlank { s.provider.defaultModel },
+            useBackendProxy = s.useBackendProxy,
+            backendBaseUrl = s.backendBaseUrl.trim(),
+            temperature = s.temperature,
+            maxTokens = s.maxTokens
+        )
+        chatRepository.saveAiSettings(settings)
+        _state.value = _state.value.copy(
+            apiKeyInput = "",
+            hasStoredKey = secureKeyStore.hasKey(s.provider.name)
+        )
+        return settings
+    }
+
     fun save() {
         viewModelScope.launch {
-            val s = _state.value
-            if (s.apiKeyInput.isNotBlank()) {
-                secureKeyStore.putApiKey(s.provider.name, s.apiKeyInput.trim())
-            }
-            chatRepository.saveAiSettings(
-                AiProviderSettings(
-                    provider = s.provider,
-                    baseUrl = s.baseUrl.trim().ifBlank { s.provider.defaultBaseUrl },
-                    model = s.model.trim().ifBlank { s.provider.defaultModel },
-                    useBackendProxy = s.useBackendProxy,
-                    backendBaseUrl = s.backendBaseUrl.trim(),
-                    temperature = s.temperature,
-                    maxTokens = s.maxTokens
-                )
-            )
-            _state.value = s.copy(
-                apiKeyInput = "",
-                hasStoredKey = secureKeyStore.hasKey(s.provider.name),
-                message = "Impostazioni salvate."
-            )
+            saveCurrent()
+            _state.value = _state.value.copy(message = "Impostazioni salvate.")
         }
     }
 
@@ -118,8 +122,8 @@ class AiProvidersViewModel @Inject constructor(
 
     fun testConnection() {
         viewModelScope.launch {
-            save()
             _state.value = _state.value.copy(testing = true, testStatus = null, testOk = null)
+            saveCurrent()
             val result = coachService.testConnection()
             val settings = chatRepository.getAiSettings()
             when (result) {

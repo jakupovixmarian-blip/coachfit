@@ -36,7 +36,7 @@ class AiClient @Inject constructor(
         if (config.model.isBlank()) {
             return AiResult.Failure("Modello non configurato. Vai in Impostazioni > Provider AI.")
         }
-        if (config.provider != AiProvider.CUSTOM && config.apiKey.isNullOrBlank()) {
+        if (!config.usesBackendProxy && config.provider != AiProvider.CUSTOM && config.apiKey.isNullOrBlank()) {
             return AiResult.Failure("API key mancante per ${config.provider.label}.")
         }
 

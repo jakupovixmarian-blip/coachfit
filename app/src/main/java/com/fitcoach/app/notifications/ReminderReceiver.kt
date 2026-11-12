@@ -9,7 +9,6 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.fitcoach.app.MainActivity
 import com.fitcoach.app.R
-import java.util.Calendar
 
 /**
  * Riceve gli allarmi dei promemoria e mostra la notifica.
@@ -124,17 +123,17 @@ class ReminderReceiver : BroadcastReceiver() {
         val dayOfWeek = intent.getIntExtra(EXTRA_DAY_OF_WEEK, 0)
 
         // L'allarme originale non e ripetitivo: lo ripianifichiamo per il periodo successivo.
-        val now = Calendar.getInstance()
-        val next = Calendar.getInstance().apply {
-            timeInMillis = now.timeInMillis
-            add(if (weekly) Calendar.WEEK_OF_YEAR else Calendar.DAY_OF_YEAR, 1)
-        }
         if (repeatDaily || weekly) {
             // Riprogramma a orario fisso per il giorno successivo / settimana successiva.
             val hour = intent.getIntExtra(EXTRA_HOUR, -1)
             val minute = intent.getIntExtra(EXTRA_MINUTE, -1)
             if (hour >= 0 && minute >= 0) {
-                scheduler.scheduleDaily(requestCode, "%02d:%02d".format(hour, minute), kind, title, body, channel)
+                val time = "%02d:%02d".format(hour, minute)
+                if (weekly) {
+                    scheduler.scheduleWeekly(requestCode, dayOfWeek, time, kind, title, body, channel)
+                } else {
+                    scheduler.scheduleDaily(requestCode, time, kind, title, body, channel)
+                }
             }
         }
     }

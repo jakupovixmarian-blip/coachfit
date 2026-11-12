@@ -3,6 +3,7 @@ package com.fitcoach.app
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.fitcoach.app.data.repository.NotificationRepository
 import com.fitcoach.app.data.repository.PreferencesRepository
 import com.fitcoach.app.data.repository.SeedInitializer
 import com.fitcoach.app.notifications.NotificationScheduler
@@ -28,6 +29,9 @@ class FitCoachApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var preferencesRepository: PreferencesRepository
 
+    @Inject
+    lateinit var notificationRepository: NotificationRepository
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val workManagerConfiguration: Configuration
@@ -41,7 +45,8 @@ class FitCoachApplication : Application(), Configuration.Provider {
         appScope.launch {
             seedInitializer.seedIfNeeded()
             val prefs = preferencesRepository.getOrCreate()
-            notificationScheduler.scheduleAll(prefs)
+            val records = notificationRepository.getAll()
+            notificationScheduler.scheduleAll(prefs, records)
         }
     }
 }
