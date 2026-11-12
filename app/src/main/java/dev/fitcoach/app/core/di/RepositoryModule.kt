@@ -4,6 +4,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dev.fitcoach.app.data.backup.BackupRepositoryImpl
 import dev.fitcoach.app.data.repository.*
 import dev.fitcoach.app.domain.repository.*
 import javax.inject.Singleton
@@ -46,4 +47,7 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindAiConfigRepository(impl: AiConfigRepositoryImpl): AiConfigRepository
+
+    @Binds @Singleton
+    abstract fun bindBackupRepository(impl: BackupRepositoryImpl): BackupRepository
 }
