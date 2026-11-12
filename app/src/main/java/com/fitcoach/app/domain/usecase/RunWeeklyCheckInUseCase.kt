@@ -1,6 +1,7 @@
 package com.fitcoach.app.domain.usecase
 
 import com.fitcoach.app.data.repository.ChangeRepository
+import com.fitcoach.app.data.repository.NutritionDiaryRepository
 import com.fitcoach.app.data.repository.NutritionRepository
 import com.fitcoach.app.data.repository.ProgressRepository
 import com.fitcoach.app.data.repository.UserRepository
@@ -24,6 +25,7 @@ class RunWeeklyCheckInUseCase @Inject constructor(
     private val progressRepository: ProgressRepository,
     private val workoutRepository: WorkoutRepository,
     private val nutritionRepository: NutritionRepository,
+    private val diaryRepository: NutritionDiaryRepository,
     private val changeRepository: ChangeRepository
 ) {
     data class Outcome(
@@ -55,18 +57,17 @@ class RunWeeklyCheckInUseCase @Inject constructor(
             .joinToString("; ")
 
         val nutritionPlan = nutritionRepository.getActivePlan()
-        val avgCalories = nutritionPlan?.days
-            ?.flatMap { it.meals }
-            ?.takeIf { it.isNotEmpty() }
-            ?.let { meals -> meals.sumOf { it.kcal } / 7.0 }
+        val diarySummary = diaryRepository.weeklySummary(weekStartEpochDay)
+        val avgConsumedCalories = diarySummary.avgKcal.takeIf { diarySummary.daysTracked > 0 }
+        val consumedAdherence = diarySummary.avgAdherencePercent.takeIf { diarySummary.daysTracked > 0 }
 
         val checkIn = AdaptiveEngine.buildCheckIn(
             profile = profile,
             weekStartEpochDay = weekStartEpochDay,
             avgWeight = trend?.weeklyAverages?.lastOrNull()?.avgWeightKg,
             trend = trend?.trendKgPerWeek,
-            avgCalories = avgCalories,
-            adherence = adherence,
+            avgCalories = avgConsumedCalories,
+            adherence = consumedAdherence,
             sessionsCompleted = completed,
             sessionsPlanned = planned,
             performanceTrend = recovery.explanation,
@@ -88,8 +89,8 @@ class RunWeeklyCheckInUseCase @Inject constructor(
                     currentDailyKcal = weekly / 7.0,
                     weightTrendKgPerWeek = trend?.trendKgPerWeek?.takeIf { trend.isReliable },
                     weeksOfData = trend?.weeksOfData ?: 0,
-                    avgAdherencePercent = adherence,
-                    avgCaloriesConsumed = avgCalories
+                    avgAdherencePercent = consumedAdherence,
+                    avgCaloriesConsumed = avgConsumedCalories
                 )
             )
             nutritionChanges.forEach { changeRepository.add(it) }
