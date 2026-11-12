@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.ExercisePerformance
 import com.fitcoach.app.domain.model.IntensityTechnique
 import com.fitcoach.app.domain.model.PlannedExercise
@@ -116,6 +118,9 @@ fun WorkoutScreen(
             ) {
                 SectionHeader("Allenamento", plan.splitType.label)
                 Row {
+                    IconButton(onClick = { viewModel.showLibrary(true) }) {
+                        Icon(Icons.Filled.MenuBook, contentDescription = "Libreria esercizi", tint = TextSecondary)
+                    }
                     IconButton(onClick = { viewModel.showHistory(true) }) {
                         Icon(Icons.Filled.History, contentDescription = "Storico sessioni", tint = TextSecondary)
                     }
@@ -301,6 +306,15 @@ fun WorkoutScreen(
         )
     }
 
+    if (state.showLibrary) {
+        ExerciseLibraryDialog(
+            exercises = state.libraryExercises,
+            query = state.libraryQuery,
+            onQueryChange = viewModel::updateLibraryQuery,
+            onDismiss = { viewModel.showLibrary(false) }
+        )
+    }
+
     SnackbarHost(snackbar)
 }
 
@@ -332,6 +346,64 @@ private fun SessionHistoryDialog(
                                     if (s.painReported) append(" · dolore segnalato")
                                 },
                                 style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Chiudi") } }
+    )
+}
+
+
+@Composable
+private fun ExerciseLibraryDialog(
+    exercises: List<Exercise>,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val normalizedQuery = query.trim().lowercase()
+    val filtered = exercises.filter { exercise ->
+        normalizedQuery.isBlank() || listOf(
+            exercise.name,
+            exercise.primaryMuscle.label,
+            exercise.equipment.joinToString { it.label }
+        ).any { it.lowercase().contains(normalizedQuery) }
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Libreria esercizi (${filtered.size})") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = onQueryChange,
+                    label = { Text("Cerca esercizio o muscolo") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(8.dp))
+                LazyColumn(Modifier.height(360.dp)) {
+                    items(filtered.size) { index ->
+                        val exercise = filtered[index]
+                        Column(Modifier.fillMaxWidth().padding(vertical = 7.dp)) {
+                            Text(
+                                exercise.name,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                "${exercise.primaryMuscle.label} · ${exercise.category.name} · " +
+                                    "${exercise.minReps}-${exercise.maxReps} reps · ${exercise.restSeconds}s",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                            Text(
+                                "Attrezzatura: ${exercise.equipment.joinToString { it.label }.ifBlank { "corpo libero" }}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
                             )
                         }
                     }

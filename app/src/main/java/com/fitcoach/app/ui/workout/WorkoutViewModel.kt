@@ -60,6 +60,9 @@ data class WorkoutUiState(
     // Storico sessioni.
     val history: List<WorkoutSession> = emptyList(),
     val showHistory: Boolean = false,
+    val showLibrary: Boolean = false,
+    val libraryQuery: String = "",
+    val libraryExercises: List<com.fitcoach.app.domain.model.Exercise> = emptyList(),
     // Cronometro durata sessione.
     val sessionElapsedSeconds: Int = 0
 )
@@ -126,6 +129,23 @@ class WorkoutViewModel @Inject constructor(
 
     fun showHistory(show: Boolean) {
         _state.value = _state.value.copy(showHistory = show)
+    }
+
+    fun showLibrary(show: Boolean) {
+        if (!show) {
+            _state.value = _state.value.copy(showLibrary = false, libraryQuery = "")
+            return
+        }
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                showLibrary = true,
+                libraryExercises = exerciseRepository.getAll().sortedBy { it.name }
+            )
+        }
+    }
+
+    fun updateLibraryQuery(query: String) {
+        _state.value = _state.value.copy(libraryQuery = query)
     }
 
     fun generateWorkout() {
