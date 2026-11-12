@@ -122,7 +122,18 @@ fun CoachScreen(
                 }
             }
             if (state.sending) {
-                item { CircularProgressIndicator() }
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        state.progress?.let {
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        CircularProgressIndicator()
+                    }
+                }
             }
         }
 

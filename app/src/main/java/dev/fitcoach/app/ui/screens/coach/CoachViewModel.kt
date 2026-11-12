@@ -31,7 +31,9 @@ data class CoachChatState(
     val configured: Boolean = false,
     val sending: Boolean = false,
     val error: String? = null,
-    val appliedActions: List<String> = emptyList()
+    val appliedActions: List<String> = emptyList(),
+    /** Human-readable progress while a long generation (7 days) is running. */
+    val progress: String? = null
 )
 
 /**
@@ -119,20 +121,30 @@ class CoachViewModel @Inject constructor(
     /** Direct shortcut: ask the agent to regenerate the meal plan. */
     fun regenerateMealPlan() = runAction(CoachAction.GenerateMealPlan(""))
 
+    private suspend fun reportProgress(done: Int, total: Int) {
+        _state.update { it.copy(progress = "Piano alimentare: giorno ${done + 1} di $total...") }
+    }
+
     private fun runAction(action: CoachAction) {
         viewModelScope.launch {
             _state.update { it.copy(sending = true, error = null) }
             try {
-                val result = coachAgent.applyAction(action)
+                val result = when (action) {
+                    is CoachAction.GenerateMealPlan ->
+                        coachAgent.generateMealPlan(action.notes, ::reportProgress).let {
+                            "Piano alimentare generato: ${it.dayCount} giorni, ${it.itemCount} voci."
+                        }
+                    else -> coachAgent.applyAction(action)
+                }
                 val text = result ?: "Azione non applicata: dati insufficienti."
                 coachChatRepository.add(
                     CoachChatMessage(role = ChatRole.ASSISTANT, content = text, createdAt = DateUtils.nowMillis(), actionSummary = text)
                 )
-                _state.update { it.copy(sending = false) }
+                _state.update { it.copy(sending = false, progress = null) }
             } catch (error: AppError) {
-                _state.update { it.copy(sending = false, error = error.message) }
+                _state.update { it.copy(sending = false, error = error.message, progress = null) }
             } catch (t: Throwable) {
-                _state.update { it.copy(sending = false, error = t.message ?: "Errore imprevisto") }
+                _state.update { it.copy(sending = false, error = t.message ?: "Errore imprevisto", progress = null) }
             }
         }
     }

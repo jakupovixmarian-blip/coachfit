@@ -8,10 +8,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -21,12 +22,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.fitcoach.app.core.util.DateUtils
 import dev.fitcoach.app.core.util.Format
 import dev.fitcoach.app.ui.components.EmptyState
 import dev.fitcoach.app.ui.components.FitCard
+import dev.fitcoach.app.ui.components.HeroCard
 import dev.fitcoach.app.ui.components.KeyValueRow
+import dev.fitcoach.app.ui.components.ProgressTrack
 import dev.fitcoach.app.ui.components.SectionTitle
-import dev.fitcoach.app.ui.components.StatPill
+import dev.fitcoach.app.ui.components.StatTile
+import dev.fitcoach.app.ui.theme.BlueAccent
+import dev.fitcoach.app.ui.theme.VioletAccent
 
 @Composable
 fun HomeScreen(
@@ -35,101 +41,109 @@ fun HomeScreen(
     onOpenProgress: () -> Unit,
     onOpenCoach: () -> Unit,
     onOpenPlan: () -> Unit,
+    onOpenShopping: () -> Unit,
+    onOpenCalendar: () -> Unit,
+    onOpenSettings: () -> Unit,
     onStartOnboarding: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val profile = state.profile
+    val target = profile?.targetCalories()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(horizontal = 16.dp)
+            .padding(top = 12.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Ciao ${profile?.name?.ifBlank { "" } ?: ""}".trim(), style = MaterialTheme.typography.headlineSmall)
         Text(
-            dev.fitcoach.app.core.util.DateUtils.format(dev.fitcoach.app.core.util.DateUtils.today()),
+            "Ciao${profile?.name?.takeIf { it.isNotBlank() }?.let { " $it" } ?: ""}",
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Text(
+            DateUtils.format(DateUtils.today()),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         if (profile == null || !profile.onboardingCompleted) {
-            FitCard {
+            HeroCard {
                 Column {
-                    SectionTitle("Completa l'anamnesi")
+                    SectionTitle("Inizia da qui")
                     Text(
-                        "Inserisci i tuoi dati per ottenere target e programmi personalizzati. Puoi comunque usare l'app manualmente.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        "Completa l'anamnesi: l'agente raccoglie i tuoi dati e costruisce scheda e piano.",
+                        style = MaterialTheme.typography.bodyMedium
                     )
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(12.dp))
                     Button(onClick = onStartOnboarding) { Text("Apri anamnesi") }
                 }
             }
         }
 
-        // Oggi: calorie e macro
-        FitCard {
+        // Il numero piu importante della schermata.
+        HeroCard {
             Column {
                 SectionTitle("Oggi")
-                val target = profile?.targetCalories()
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(Format.kcal(state.today.kcal), style = MaterialTheme.typography.headlineSmall)
+                Row(verticalAlignment = androidx.compose.ui.Alignment.Bottom) {
                     Text(
-                        target?.let { "obiettivo ${Format.kcal(it)}" } ?: "obiettivo non calcolabile",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        state.today.kcal.toInt().toString(),
+                        style = MaterialTheme.typography.displayMedium
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "kcal",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
                 if (target != null && target > 0) {
+                    Spacer(Modifier.height(10.dp))
+                    ProgressTrack((state.today.kcal / target).toFloat())
                     Spacer(Modifier.height(6.dp))
-                    LinearProgressIndicator(
-                        progress = { (state.today.kcal / target).toFloat().coerceIn(0f, 1f) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(4.dp))
                     Text(
-                        "Rimanenti ${Format.kcal((target - state.today.kcal).coerceAtLeast(0.0))}",
+                        "obiettivo ${Format.kcal(target)} · rimangono " +
+                            Format.kcal((target - state.today.kcal).coerceAtLeast(0.0)),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    StatPill("Proteine", Format.grams(state.today.protein))
-                    StatPill("Carboidrati", Format.grams(state.today.carbs))
-                    StatPill("Grassi", Format.grams(state.today.fat))
+                    StatTile("Proteine", Format.grams(state.today.protein), accent = MaterialTheme.colorScheme.primary)
+                    StatTile("Carboidrati", Format.grams(state.today.carbs), accent = BlueAccent)
+                    StatTile("Grassi", Format.grams(state.today.fat), accent = VioletAccent)
                 }
-                Spacer(Modifier.height(12.dp))
-                Button(onClick = onOpenDiary, modifier = Modifier.fillMaxWidth()) { Text("Apri diario") }
             }
         }
 
-        // Allenamento
         FitCard {
             Column {
                 SectionTitle("Allenamento")
-                KeyValueRow("Programma attivo", state.routine?.name ?: "Nessuno")
-                KeyValueRow("Sedute completate questa settimana", state.weeklySessions.toString())
-                KeyValueRow("Volume settimanale", Format.kg(state.weeklyVolumeKg))
-                KeyValueRow("Ultima seduta", state.lastSession?.name ?: "Nessuna registrata")
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    StatTile("Sedute", state.weeklySessions.toString())
+                    StatTile("Volume", Format.kg(state.weeklyVolumeKg))
+                }
                 Spacer(Modifier.height(10.dp))
+                KeyValueRow("Programma attivo", state.routine?.name ?: "Nessuno")
+                KeyValueRow("Ultima seduta", state.lastSession?.name ?: "Nessuna")
+                Spacer(Modifier.height(12.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Button(onClick = onOpenWorkout, modifier = Modifier.weight(1f)) { Text("Workout") }
-                    OutlinedButton(onClick = onOpenPlan, modifier = Modifier.weight(1f)) { Text("Piano") }
+                    OutlinedButton(onClick = onOpenProgress, modifier = Modifier.weight(1f)) { Text("Progressi") }
                 }
             }
         }
 
-        // Piano alimentare
         FitCard {
             Column {
                 SectionTitle("Piano alimentare")
                 if (state.plan == null) {
                     Text(
-                        "Nessun piano attivo. Puoi crearlo manualmente o con il Coach AI.",
+                        "Nessun piano attivo. Generane uno con l'agente o crealo a mano.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -138,18 +152,30 @@ fun HomeScreen(
                     KeyValueRow("Calorie target", Format.kcal(state.plan!!.targetKcal))
                     KeyValueRow("Proteine target", Format.grams(state.plan!!.targetProtein))
                 }
-                Spacer(Modifier.height(10.dp))
-                OutlinedButton(onClick = onOpenPlan, modifier = Modifier.fillMaxWidth()) { Text("Gestisci piano") }
+                Spacer(Modifier.height(12.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Button(onClick = onOpenPlan, modifier = Modifier.weight(1f)) { Text("Piano") }
+                    OutlinedButton(onClick = onOpenDiary, modifier = Modifier.weight(1f)) { Text("Diario") }
+                }
             }
         }
 
-        // Scorciatoie
+        OutlinedButton(
+            onClick = onOpenCoach,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+        ) { Text("Parla con il Coach AI") }
+
         FitCard {
             Column {
-                SectionTitle("Scorciatoie")
+                SectionTitle("Altro")
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(onClick = onOpenProgress, modifier = Modifier.weight(1f)) { Text("Progressi") }
-                    OutlinedButton(onClick = onOpenCoach, modifier = Modifier.weight(1f)) { Text("Coach") }
+                    OutlinedButton(onClick = onOpenCalendar, modifier = Modifier.weight(1f)) { Text("Calendario") }
+                    OutlinedButton(onClick = onOpenShopping, modifier = Modifier.weight(1f)) { Text("Spesa") }
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
+                    Text("Impostazioni")
                 }
             }
         }
@@ -157,9 +183,8 @@ fun HomeScreen(
         if (state.today.kcal == 0.0 && state.weeklySessions == 0 && state.plan == null && state.routine == null) {
             EmptyState(
                 title = "Benvenuto in FitCoach",
-                subtitle = "Inizia registrando un pasto dal Diario o una seduta dal Workout. I dati restano sul dispositivo."
+                subtitle = "Registra un pasto dal Diario o avvia una seduta dal Workout. I dati restano sul dispositivo."
             )
         }
-        Spacer(Modifier.height(16.dp))
     }
 }

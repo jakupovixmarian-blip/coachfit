@@ -6,9 +6,14 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.os.Build
 import android.os.IBinder
 import android.os.SystemClock
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -170,6 +175,7 @@ class RestTimerService : Service() {
     private fun onFinished() {
         _state.value = _state.value.copy(running = false, remainingSeconds = 0)
         updateNotification()
+        alertRestFinished()
         stopSelf()
     }
 
@@ -202,6 +208,69 @@ class RestTimerService : Service() {
                     NotificationChannel(CHANNEL_ID, "Timer recupero", NotificationManager.IMPORTANCE_LOW)
                 )
             }
+            if (manager?.getNotificationChannel(ALARM_CHANNEL_ID) == null) {
+                manager?.createNotificationChannel(
+                    NotificationChannel(ALARM_CHANNEL_ID, "Fine recupero", NotificationManager.IMPORTANCE_HIGH).apply {
+                        description = "Avvisa con suono e vibrazione quando il recupero e finito"
+                        enableVibration(true)
+                        vibrationPattern = longArrayOf(0, 400, 200, 400, 200, 600)
+                    }
+                )
+            }
+        }
+    }
+
+    /**
+     * Fires the end-of-rest alarm: a short tone plus a vibration pattern, and a
+     * high-importance notification so the user notices even with the screen off.
+     * Sound and vibration are best-effort: a device with the ringer muted or
+     * without a vibrator must not crash the timer.
+     */
+    private fun alertRestFinished() {
+        val title = "Recupero completato"
+        val text = _state.value.exerciseName.ifBlank { "Torna alla serie" }
+        runCatching {
+            val manager = getSystemService(NotificationManager::class.java)
+            val notification = NotificationCompat.Builder(this, ALARM_CHANNEL_ID)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setAutoCancel(true)
+                .setOnlyAlertOnce(false)
+                .build()
+            manager?.notify(ALARM_NOTIFICATION_ID, notification)
+        }
+        runCatching {
+            val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            val tone = RingtoneManager.getRingtone(applicationContext, uri)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                tone.audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            }
+            tone.play()
+        }
+        runCatching { vibrate() }
+    }
+
+    private fun vibrate() {
+        val pattern = longArrayOf(0, 400, 200, 400, 200, 600)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val manager = getSystemService(VibratorManager::class.java)
+            manager?.defaultVibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
+        } else {
+            @Suppress("DEPRECATION")
+            val vibrator = getSystemService(Vibrator::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(pattern, -1)
+            }
         }
     }
 
@@ -212,7 +281,9 @@ class RestTimerService : Service() {
 
     companion object {
         const val CHANNEL_ID = "fitcoach_rest_timer"
+        const val ALARM_CHANNEL_ID = "fitcoach_rest_alarm"
         const val NOTIFICATION_ID = 4711
+        const val ALARM_NOTIFICATION_ID = 4712
         const val ACTION_START = "dev.fitcoach.app.START"
         const val ACTION_PAUSE = "dev.fitcoach.app.PAUSE"
         const val ACTION_RESUME = "dev.fitcoach.app.RESUME"

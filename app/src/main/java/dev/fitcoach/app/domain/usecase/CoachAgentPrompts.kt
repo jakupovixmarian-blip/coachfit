@@ -264,15 +264,26 @@ class CoachAgentPrompts @Inject constructor(
 
     // ---- meal plan ------------------------------------------------------
 
-    fun mealPlanPrompt(
+    /**
+     * One day of the meal plan, asked on its own.
+     *
+     * A whole week in a single answer overflows the output budget of small models
+     * and comes back truncated, which is why the plan used to fail while the
+     * program (a much shorter answer) succeeded. Asking one day at a time keeps
+     * every answer small; the app joins the days afterwards.
+     */
+    fun mealPlanDayPrompt(
         profile: UserProfile,
         foods: List<Food>,
         knowledge: List<KnowledgeNote>,
-        notes: String
+        notes: String,
+        dayIndex: Int,
+        dayCount: Int,
+        previousDays: String
     ): String = """
-        Sei il nutrizionista dell'app. Devi costruire un piano alimentare settimanale
-        decidendo tu alimenti, grammature e distribuzione dei pasti in base all'analisi
-        dei dati dell'utente.
+        Sei il nutrizionista dell'app. Costruisci il giorno ${dayIndex + 1} di $dayCount
+        di un piano alimentare settimanale, decidendo tu alimenti, grammature e
+        distribuzione dei pasti in base all'analisi dei dati dell'utente.
         ${commonRules()}
 
         ${knowledgeBlock(knowledge)}
@@ -282,42 +293,50 @@ class CoachAgentPrompts @Inject constructor(
         RICHIESTE AGGIUNTIVE DELL'UTENTE (se presenti):
         ${notes.ifBlank { "nessuna" }}
 
+        GIORNI GIA COSTRUITI (mantieni uno stile coerente, non ripetere gli stessi
+        identici pasti se non ha senso):
+        ${previousDays.ifBlank { "nessuno: questo e il primo giorno" }}
+
         ARCHIVIO ALIMENTI (usa solo questi id):
         ${foodCatalogBlock(foods)}
 
-        Rispondi SOLO con JSON valido:
+        Rispondi SOLO con JSON valido per QUESTO SOLO GIORNO:
         {"name":"Piano alimentare","rationale":"spiegazione breve in italiano",
-         "days":[{"dayIndex":0,"meals":[
-           {"slot":"BREAKFAST","foodId":12,"grams":80,"preparation":""}]}]}
+         "dayIndex":$dayIndex,
+         "meals":[{"slot":"BREAKFAST","foodId":12,"grams":80,"preparation":""}]}
         Gli slot ammessi sono: ${MealSlot.entries.joinToString(", ") { it.name }}.
-        Copri tutti i 7 giorni (dayIndex da 0 a 6).
+        Il campo dayIndex deve valere esattamente $dayIndex.
     """.trimIndent()
 
-    fun parseMealPlan(raw: String, knownFoodIds: Set<Long>): MealPlanDraft {
+    /** Parses the answer of [mealPlanDayPrompt]: one day, or a whole "days" array. */
+    fun parseMealPlanDay(raw: String, knownFoodIds: Set<Long>, expectedDayIndex: Int): MealPlanDraftDay {
         val root = rootObject(raw)
-        val name = root["name"]?.jsonPrimitive?.content.orEmpty().ifBlank { "Piano AI" }
-        val rationale = root["rationale"]?.jsonPrimitive?.content.orEmpty()
-        val days = (root["days"] as? JsonArray)?.mapNotNull { element ->
-            val day = element as? JsonObject ?: return@mapNotNull null
-            val index = day["dayIndex"]?.jsonPrimitive?.content?.toIntOrNull() ?: return@mapNotNull null
-            val items = (day["meals"] as? JsonArray)?.mapNotNull { itemElement ->
-                val obj = itemElement as? JsonObject ?: return@mapNotNull null
-                val slotName = obj["slot"]?.jsonPrimitive?.content.orEmpty().uppercase()
-                val slot = MealSlot.entries.firstOrNull { it.name == slotName } ?: return@mapNotNull null
-                val foodId = obj["foodId"]?.jsonPrimitive?.content?.toLongOrNull() ?: return@mapNotNull null
-                if (foodId !in knownFoodIds) return@mapNotNull null
-                val grams = obj["grams"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: return@mapNotNull null
-                if (grams <= 0 || grams > 2000) return@mapNotNull null
-                MealPlanDraftItem(slot, foodId, grams, obj["preparation"]?.jsonPrimitive?.content.orEmpty())
-            }.orEmpty()
-            if (items.isEmpty()) return@mapNotNull null
-            MealPlanDraftDay(index, items)
-        }.orEmpty()
-
-        if (days.isEmpty()) {
-            throw AppError.InvalidResponse("Il modello non ha proposto nessun pasto valido")
+        val meals = root["meals"] as? JsonArray
+            ?: (root["days"] as? JsonArray)?.firstOrNull()?.jsonObject?.get("meals") as? JsonArray
+            ?: throw AppError.InvalidResponse("Il modello non ha proposto pasti per il giorno ${expectedDayIndex + 1}")
+        val index = root["dayIndex"]?.jsonPrimitive?.content?.toIntOrNull() ?: expectedDayIndex
+        val items = meals.mapNotNull { itemElement ->
+            val obj = itemElement as? JsonObject ?: return@mapNotNull null
+            val slotName = obj["slot"]?.jsonPrimitive?.content.orEmpty().uppercase()
+            val slot = MealSlot.entries.firstOrNull { it.name == slotName } ?: return@mapNotNull null
+            val foodId = obj["foodId"]?.jsonPrimitive?.content?.toLongOrNull() ?: return@mapNotNull null
+            if (foodId !in knownFoodIds) return@mapNotNull null
+            val grams = obj["grams"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: return@mapNotNull null
+            if (grams <= 0 || grams > 2000) return@mapNotNull null
+            MealPlanDraftItem(slot, foodId, grams, obj["preparation"]?.jsonPrimitive?.content.orEmpty())
         }
-        return MealPlanDraft(name, rationale, days, raw)
+        if (items.isEmpty()) {
+            throw AppError.InvalidResponse("Nessun pasto valido per il giorno ${expectedDayIndex + 1}")
+        }
+        return MealPlanDraftDay(index, items)
+    }
+
+    /** Reads name and rationale from any of the per-day answers. */
+    fun parseMealPlanHeader(raw: String): Pair<String, String> {
+        val root = runCatching { rootObject(raw) }.getOrNull() ?: return "" to ""
+        val name = root["name"]?.jsonPrimitive?.content.orEmpty()
+        val rationale = root["rationale"]?.jsonPrimitive?.content.orEmpty()
+        return name to rationale
     }
 
     // ---- chat -----------------------------------------------------------

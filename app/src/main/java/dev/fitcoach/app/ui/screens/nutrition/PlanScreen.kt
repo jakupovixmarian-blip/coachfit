@@ -19,6 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -41,6 +42,7 @@ import dev.fitcoach.app.ui.components.EmptyState
 import dev.fitcoach.app.ui.components.FitCard
 import dev.fitcoach.app.ui.components.KeyValueRow
 import dev.fitcoach.app.ui.components.NumberField
+import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.SectionTitle
 
 private val DAY_NAMES = listOf("Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom")
@@ -51,22 +53,40 @@ fun PlanScreen(
     viewModel: PlanViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val generating by viewModel.generating.collectAsStateWithLifecycle()
     var editingItem by remember { mutableStateOf<MealItem?>(null) }
     var addingToSlot by remember { mutableStateOf<MealSlot?>(null) }
 
     val plan = state.plan
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Piano alimentare", style = MaterialTheme.typography.headlineSmall)
+        ScreenHeader(
+            title = "Piano alimentare",
+            subtitle = "Generato dall'agente o costruito a mano, con alimenti reali"
+        )
         Spacer(Modifier.height(8.dp))
 
         if (plan == null) {
             EmptyState(
                 title = "Nessun piano attivo",
-                subtitle = "Crea un piano a 7 giorni e aggiungi gli alimenti manualmente, oppure genera un piano con il Coach AI."
+                subtitle = "Genera un piano a 7 giorni con l'agente, oppure crealo manualmente e aggiungi gli alimenti."
             )
-            Button(onClick = { viewModel.createEmptyPlan() }, modifier = Modifier.fillMaxWidth()) {
-                Text("Crea piano manuale (7 giorni)")
+            if (generating != null) {
+                Text(
+                    generating ?: "",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.height(8.dp))
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            } else {
+                Button(onClick = { viewModel.generateWithAi() }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Genera con l'agente AI")
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(onClick = { viewModel.createEmptyPlan() }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Crea piano manuale (7 giorni)")
+                }
             }
             return
         }
@@ -91,6 +111,21 @@ fun PlanScreen(
                 KeyValueRow("Grassi", Format.grams(totals.fat))
                 Spacer(Modifier.height(8.dp))
                 Button(onClick = onOpenDiary, modifier = Modifier.fillMaxWidth()) { Text("Registra nel diario") }
+                Spacer(Modifier.height(8.dp))
+                if (generating != null) {
+                    Text(
+                        generating ?: "",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                } else {
+                    OutlinedButton(
+                        onClick = { viewModel.generateWithAi() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Rigenera con l'agente AI") }
+                }
             }
         }
 

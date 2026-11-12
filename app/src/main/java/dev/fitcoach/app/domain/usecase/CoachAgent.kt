@@ -147,17 +147,46 @@ class CoachAgent @Inject constructor(
 
     // ---- meal plan ------------------------------------------------------
 
-    /** Generates a weekly meal plan and activates it. */
-    suspend fun generateMealPlan(notes: String = ""): MealPlanOutcome {
+    /**
+     * Generates a weekly meal plan and activates it.
+     *
+     * The week is requested one day at a time: a single answer carrying all seven
+     * days overflows the output budget of small models and comes back truncated,
+     * so the plan would fail while the (shorter) training program succeeded.
+     */
+    suspend fun generateMealPlan(notes: String = "", onProgress: (suspend (Int, Int) -> Unit)? = null): MealPlanOutcome {
         val profile = profileRepository.getProfile()
             ?: throw AppError.Validation("Profilo non disponibile: completa prima l'anamnesi.")
         val foods = foodRepository.getAll()
         if (foods.isEmpty()) throw AppError.Validation("Archivio alimenti vuoto.")
         val knowledge = knowledgeRepository.getEnabled()
+        val knownIds = foods.map { it.id }.toSet()
 
-        val raw = gateway.complete(systemPrompt, prompts.mealPlanPrompt(profile, foods, knowledge, notes))
-        val draft = prompts.parseMealPlan(raw, foods.map { it.id }.toSet())
+        val dayCount = MEAL_PLAN_DAYS
+        val draftDays = mutableListOf<MealPlanDraftDay>()
+        var draftName = "Piano alimentare"
+        var draftRationale = ""
+        val previousSummaries = mutableListOf<String>()
 
+        repeat(dayCount) { dayIndex ->
+            onProgress?.invoke(dayIndex, dayCount)
+            val raw = gateway.complete(
+                systemPrompt,
+                prompts.mealPlanDayPrompt(
+                    profile, foods, knowledge, notes, dayIndex, dayCount, previousSummaries.joinToString("\n")
+                )
+            )
+            val day = prompts.parseMealPlanDay(raw, knownIds, dayIndex)
+            if (draftDays.isEmpty()) {
+                val (name, rationale) = prompts.parseMealPlanHeader(raw)
+                if (name.isNotBlank()) draftName = name
+                if (rationale.isNotBlank()) draftRationale = rationale
+            }
+            draftDays += day.copy(dayIndex = dayIndex)
+            previousSummaries += "giorno ${dayIndex + 1}: " + day.items.joinToString(", ") { "foodId=${it.foodId} ${it.grams}g" }
+        }
+
+        val draft = MealPlanDraft(draftName, draftRationale, draftDays, "")
         val plan = MealPlan(
             name = draft.name,
             isActive = true,
@@ -294,5 +323,10 @@ class CoachAgent @Inject constructor(
             if (item != null) return routine to item
         }
         return null
+    }
+
+    companion object {
+        /** Days of a generated meal plan. */
+        const val MEAL_PLAN_DAYS = 7
     }
 }

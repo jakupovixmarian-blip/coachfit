@@ -75,22 +75,47 @@ class CoachAgentPromptsTest {
     // ---- meal plan ------------------------------------------------------
 
     @Test
-    fun `meal plan parser only accepts catalog foods and positive grams`() {
+    fun `meal plan day parser only accepts catalog foods and positive grams`() {
         val raw = """
-            {"name":"Piano","rationale":"4 pasti","days":[
-              {"dayIndex":0,"meals":[
+            {"name":"Piano","rationale":"4 pasti","dayIndex":0,"meals":[
                 {"slot":"BREAKFAST","foodId":10,"grams":80,"preparation":"cotto"},
                 {"slot":"LUNCH","foodId":77,"grams":200},
-                {"slot":"DINNER","foodId":11,"grams":-5}]}]}
+                {"slot":"DINNER","foodId":11,"grams":-5}]}
         """.trimIndent()
 
-        val draft = prompts.parseMealPlan(raw, setOf(10L, 11L))
+        val day = prompts.parseMealPlanDay(raw, setOf(10L, 11L), 0)
 
-        assertEquals(1, draft.days.size)
         // Unknown food and negative grams are both dropped.
-        assertEquals(1, draft.days.first().items.size)
-        assertEquals(10L, draft.days.first().items.first().foodId)
-        assertEquals(80.0, draft.days.first().items.first().grams, 0.001)
+        assertEquals(1, day.items.size)
+        assertEquals(10L, day.items.first().foodId)
+        assertEquals(80.0, day.items.first().grams, 0.001)
+    }
+
+    @Test
+    fun `meal plan day parser also accepts a days array and reads the header`() {
+        val raw = """
+            {"name":"Settimana tipo","rationale":"iso","days":[
+              {"dayIndex":2,"meals":[{"slot":"LUNCH","foodId":11,"grams":150}]}]}
+        """.trimIndent()
+
+        val day = prompts.parseMealPlanDay(raw, setOf(11L), 2)
+        assertEquals(2, day.dayIndex)
+        assertEquals(11L, day.items.first().foodId)
+
+        val (name, rationale) = prompts.parseMealPlanHeader(raw)
+        assertEquals("Settimana tipo", name)
+        assertEquals("iso", rationale)
+    }
+
+    @Test
+    fun `meal plan day parser rejects a day without usable meals`() {
+        val raw = """{"dayIndex":3,"meals":[{"slot":"LUNCH","foodId":99,"grams":100}]}"""
+        try {
+            prompts.parseMealPlanDay(raw, setOf(1L), 3)
+            fail("Expected InvalidResponse")
+        } catch (error: AppError) {
+            assertTrue(error is AppError.InvalidResponse)
+        }
     }
 
     // ---- anamnesi -------------------------------------------------------

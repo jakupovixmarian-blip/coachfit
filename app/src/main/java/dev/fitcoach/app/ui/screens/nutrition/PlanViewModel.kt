@@ -11,6 +11,8 @@ import dev.fitcoach.app.domain.model.PlanDay
 import dev.fitcoach.app.domain.repository.FoodRepository
 import dev.fitcoach.app.domain.repository.MealPlanRepository
 import dev.fitcoach.app.domain.repository.ProfileRepository
+import dev.fitcoach.app.domain.usecase.CoachAgent
+import dev.fitcoach.app.core.result.AppError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,13 +41,17 @@ data class PlanUiState(
 class PlanViewModel @Inject constructor(
     private val mealPlanRepository: MealPlanRepository,
     private val foodRepository: FoodRepository,
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val coachAgent: CoachAgent
 ) : ViewModel() {
 
     private val selectedDayIndex = MutableStateFlow(0)
     private val reload = MutableStateFlow(0)
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
+
+    private val _generating = MutableStateFlow<String?>(null)
+    val generating: StateFlow<String?> = _generating.asStateFlow()
 
     private val planAndItems = combine(
         mealPlanRepository.observeActive(),
@@ -84,6 +90,26 @@ class PlanViewModel @Inject constructor(
     fun selectDay(index: Int) { selectedDayIndex.value = index }
 
     fun dismissMessage() { _message.value = null }
+
+    /** Generates the plan with the agent, one day at a time, reporting progress. */
+    fun generateWithAi() {
+        viewModelScope.launch {
+            _generating.value = "Avvio generazione..."
+            try {
+                val outcome = coachAgent.generateMealPlan("") { done, total ->
+                    _generating.value = "Giorno ${done + 1} di $total..."
+                }
+                _message.value = "Piano generato: ${outcome.dayCount} giorni, ${outcome.itemCount} voci"
+                refresh()
+            } catch (error: AppError) {
+                _message.value = error.message
+            } catch (t: Throwable) {
+                _message.value = t.message ?: "Errore durante la generazione"
+            } finally {
+                _generating.value = null
+            }
+        }
+    }
 
     private fun refresh() { reload.value = reload.value + 1 }
 

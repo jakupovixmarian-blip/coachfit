@@ -39,18 +39,34 @@ object Routes {
     fun measurementDetail(type: String) = "progress/measurement/$type"
 }
 
+/**
+ * Destinations shown in the bottom bar.
+ *
+ * Kept to five: more entries make the labels unreadable on a phone and bury the
+ * primary actions. The remaining screens are reached from the Home shortcuts.
+ */
 enum class TopDestination(
     val route: String,
     val label: String,
     val icon: ImageVector
 ) {
     HOME(Routes.HOME, "Home", Icons.Filled.Home),
-    PLAN(Routes.PLAN, "Piano", Icons.Filled.Restaurant),
-    SHOPPING(Routes.SHOPPING, "Spesa", Icons.Filled.ShoppingCart),
     WORKOUT(Routes.WORKOUT, "Workout", Icons.Filled.FitnessCenter),
-    CALENDAR(Routes.CALENDAR, "Calendario", Icons.Filled.CalendarMonth),
-    DIARY(Routes.DIARY, "Diario", Icons.Filled.RestaurantMenu),
+    PLAN(Routes.PLAN, "Piano", Icons.Filled.Restaurant),
     PROGRESS(Routes.PROGRESS, "Progressi", Icons.Filled.ShowChart),
     COACH(Routes.COACH, "Coach", Icons.Filled.SmartToy),
+
+    // Not in the bottom bar, but they reuse the same route/label/icon shape.
+    SHOPPING(Routes.SHOPPING, "Spesa", Icons.Filled.ShoppingCart),
+    CALENDAR(Routes.CALENDAR, "Calendario", Icons.Filled.CalendarMonth),
+    DIARY(Routes.DIARY, "Diario", Icons.Filled.RestaurantMenu),
     SETTINGS(Routes.SETTINGS, "Impostazioni", Icons.Filled.Settings)
 }
+
+/** Screens reachable from Home but outside the bottom bar. */
+val SecondaryDestinations: List<TopDestination> = listOf(
+    TopDestination.SHOPPING,
+    TopDestination.CALENDAR,
+    TopDestination.DIARY,
+    TopDestination.SETTINGS
+)

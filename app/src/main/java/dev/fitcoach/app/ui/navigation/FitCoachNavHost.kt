@@ -2,10 +2,13 @@ package dev.fitcoach.app.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -46,9 +49,13 @@ fun FitCoachNavHost(
 
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 0.dp
+                ) {
                     TopDestination.entries.forEach { dest ->
                         NavigationBarItem(
                             selected = currentRoute == dest.route,
@@ -60,7 +67,14 @@ fun FitCoachNavHost(
                                 }
                             },
                             icon = { Icon(dest.icon, contentDescription = dest.label) },
-                            label = { Text(dest.label) }
+                            label = { Text(dest.label, style = MaterialTheme.typography.labelSmall) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primary,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         )
                     }
                 }
@@ -89,6 +103,9 @@ fun FitCoachNavHost(
                     onOpenProgress = { navController.navigate(Routes.PROGRESS) },
                     onOpenCoach = { navController.navigate(Routes.COACH) },
                     onOpenPlan = { navController.navigate(Routes.PLAN) },
+                    onOpenShopping = { navController.navigate(Routes.SHOPPING) },
+                    onOpenCalendar = { navController.navigate(Routes.CALENDAR) },
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     onStartOnboarding = { navController.navigate(Routes.ANAMNESI) }
                 )
             }

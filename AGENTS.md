@@ -93,3 +93,29 @@ instrumented/on-device test was executed here.
 - `AiModelCapabilities.forModel(provider, modelId)` is the single source of truth for the request
   body: reasoning models (o-series, gpt-5) need `max_completion_tokens` and reject
   `temperature`/`top_p`/`response_format`. Verify with `AiRequestPayloadTest`.
+
+## Meal plan generation (per-day)
+
+- A full week in one answer overflows a small output budget and comes back truncated, which is
+  what made the plan look broken. `CoachAgent.generateMealPlan` therefore asks **one day per
+  call** (`MEAL_PLAN_DAYS` days), passing the previous days' summary so the week stays coherent.
+  Keep it that way: do not merge it back into a single weekly request.
+- `CoachAgentPrompts.parseMealPlanDay` parses a single day and also tolerates a `days` array, so
+  a model that answers with the whole week is still usable. `parseMealPlanHeader` reads name and
+  rationale from any day's answer.
+- The UI exposes generation from the Plan tab (`PlanScreen` -> `PlanViewModel.generateWithAi`),
+  reporting progress day by day. A plan is never generated implicitly at startup.
+
+## Rest timer alarm
+
+- `RestTimerService` plays a tone and a vibration pattern when the countdown ends, and posts a
+  high-importance notification on `ALARM_CHANNEL_ID` so it is noticed with the screen off. Sound
+  and vibration are wrapped in `runCatching`: a muted ringer or a device without a vibrator must
+  never crash the timer.
+
+## UI style
+
+- Dark-first, five-tab bottom bar (`TopDestination`); the other screens are reached from the Home
+  shortcuts (`SecondaryDestinations`). Theme tokens live in `ui/theme`; shared widgets
+  (`FitCard`, `HeroCard`, `StatTile`, `ProgressTrack`, `Tag`, `ScreenHeader`) in
+  `ui/components/Common.kt`. Prefer these over ad-hoc `Card`/`Text` styling so screens stay consistent.
