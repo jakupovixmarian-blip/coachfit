@@ -1,6 +1,7 @@
 package dev.fitcoach.app.ui.screens.anamnesi
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fitcoach.app.ui.components.ChatBubble
 import dev.fitcoach.app.ui.components.FitCard
@@ -44,6 +47,8 @@ fun AnamnesiScreen(
     val listState = rememberLazyListState()
 
     LaunchedEffect(state.finished) { if (state.finished) onFinished() }
+    // Coming back from the AI settings must start the intake without a manual tap.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshConfiguration() }
     LaunchedEffect(state.messages.size) {
         if (state.messages.isNotEmpty()) listState.animateScrollToItem(state.messages.size - 1)
     }
@@ -64,13 +69,12 @@ fun AnamnesiScreen(
             )
             Spacer(Modifier.height(12.dp))
 
-            if (state.checking) {
-                CircularProgressIndicator()
-                return@Column
-            }
+            when {
+                state.checking -> Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
 
-            if (!state.configured) {
-                FitCard {
+                !state.configured -> FitCard {
                     Column {
                         SectionTitle("Serve un provider AI")
                         Text(
@@ -83,59 +87,66 @@ fun AnamnesiScreen(
                             Text("Configura provider AI")
                         }
                         Spacer(Modifier.height(6.dp))
-                        OutlinedButton(onClick = { viewModel.refreshConfiguration() }, modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(
+                            onClick = { viewModel.refreshConfiguration() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             Text("Ho configurato, ricontrolla")
                         }
                     }
                 }
-                return@Column
-            }
 
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(state.messages, key = { it.id }) { message ->
-                    ChatBubble(text = message.content, fromUser = message.isUser)
-                }
-                if (state.sending) {
-                    item {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            CircularProgressIndicator(modifier = Modifier.height(20.dp).fillMaxWidth(0.08f))
-                            Spacer(Modifier.height(0.dp))
-                            Text("  Il coach sta scrivendo...", style = MaterialTheme.typography.bodyMedium)
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        state = listState,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(state.messages, key = { it.id }) { message ->
+                            ChatBubble(text = message.content, fromUser = message.isUser)
+                        }
+                        if (state.sending) {
+                            item {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.height(20.dp).fillMaxWidth(0.08f)
+                                    )
+                                    Text(
+                                        "  Il coach sta scrivendo...",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
                         }
                     }
-                }
-            }
 
-            state.error?.let {
-                Spacer(Modifier.height(6.dp))
-                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
-            }
+                    state.error?.let {
+                        Spacer(Modifier.height(6.dp))
+                        Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+                    }
 
-            Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.Bottom) {
-                OutlinedTextField(
-                    value = draft,
-                    onValueChange = { draft = it },
-                    label = { Text("Rispondi al coach") },
-                    modifier = Modifier.weight(1f),
-                    maxLines = 4
-                )
-                Spacer(Modifier.height(0.dp))
-                Button(
-                    onClick = { viewModel.send(draft); draft = "" },
-                    enabled = state.canSend && draft.isNotBlank(),
-                    modifier = Modifier.padding(start = 8.dp)
-                ) { Text("Invia") }
-            }
+                    Spacer(Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        OutlinedTextField(
+                            value = draft,
+                            onValueChange = { draft = it },
+                            label = { Text("Rispondi al coach") },
+                            modifier = Modifier.weight(1f),
+                            maxLines = 4
+                        )
+                        Button(
+                            onClick = { viewModel.send(draft); draft = "" },
+                            enabled = state.canSend && draft.isNotBlank(),
+                            modifier = Modifier.padding(start = 8.dp)
+                        ) { Text("Invia") }
+                    }
 
-            if (state.profile.name.isNotBlank()) {
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(onClick = { viewModel.finish() }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Ho finito, salva l'anamnesi")
+                    if (state.profile.name.isNotBlank()) {
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(onClick = { viewModel.finish() }, modifier = Modifier.fillMaxWidth()) {
+                            Text("Ho finito, salva l'anamnesi")
+                        }
+                    }
                 }
             }
         }

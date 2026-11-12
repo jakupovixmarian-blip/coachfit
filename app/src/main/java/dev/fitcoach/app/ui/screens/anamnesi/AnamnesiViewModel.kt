@@ -8,6 +8,7 @@ import dev.fitcoach.app.core.util.DateUtils
 import dev.fitcoach.app.domain.model.ChatRole
 import dev.fitcoach.app.domain.model.CoachChatMessage
 import dev.fitcoach.app.domain.model.UserProfile
+import dev.fitcoach.app.domain.repository.CoachChatRepository
 import dev.fitcoach.app.domain.repository.ProfileRepository
 import dev.fitcoach.app.domain.usecase.CoachAgent
 import dev.fitcoach.app.domain.usecase.CoachAgentPrompts
@@ -32,13 +33,17 @@ data class AnamnesiState(
 
 /**
  * Conversational intake. The agent asks the questions and extracts the profile
- * fields turn by turn; the app only stores what the agent understood. There is no
- * manual form: when the provider is missing the screen asks to configure it first.
+ * fields turn by turn; the app only stores what the agent understood.
+ *
+ * The turns are persisted through [CoachChatRepository], so every message has a
+ * real, unique id (the list needs stable keys) and the intake becomes the opening
+ * of the same conversation the Coach tab continues.
  */
 @HiltViewModel
 class AnamnesiViewModel @Inject constructor(
     private val coachAgent: CoachAgent,
     private val profileRepository: ProfileRepository,
+    private val chatRepository: CoachChatRepository,
     private val prompts: CoachAgentPrompts
 ) : ViewModel() {
 
@@ -49,53 +54,72 @@ class AnamnesiViewModel @Inject constructor(
         viewModelScope.launch {
             val existing = profileRepository.getProfile()
             val configured = coachAgent.isConfigured()
-            val opening = if (configured && existing == null) {
-                listOf(
-                    CoachChatMessage(
-                        role = ChatRole.ASSISTANT,
-                        content = "Ciao! Sono il tuo coach. Raccontami chi sei e cosa vuoi " +
-                            "ottenere: mi servono alcuni dati per costruire la tua scheda e il " +
-                            "tuo piano alimentare. Iniziamo: come ti chiami e quanti anni hai?",
-                        createdAt = DateUtils.nowMillis()
-                    )
-                )
-            } else {
-                emptyList()
-            }
+            val messages = chatRepository.getMessages()
             _state.update {
                 it.copy(
+                    messages = messages,
                     profile = existing ?: UserProfile(),
                     configured = configured,
-                    checking = false,
-                    messages = opening
+                    checking = false
                 )
             }
+            if (configured && messages.isEmpty()) seedOpeningQuestion()
         }
     }
 
+    /** Re-reads the provider state; seeds the first question once it is ready. */
     fun refreshConfiguration() {
-        viewModelScope.launch { _state.update { it.copy(configured = coachAgent.isConfigured()) } }
+        viewModelScope.launch {
+            val configured = coachAgent.isConfigured()
+            _state.update { it.copy(configured = configured) }
+            if (configured && _state.value.messages.isEmpty()) seedOpeningQuestion()
+        }
+    }
+
+    /**
+     * Writes the agent's first question only when the conversation is still empty.
+     * Re-reading the stored turns right before writing keeps two concurrent seeds
+     * (screen init and "ricontrolla") from inserting the question twice.
+     */
+    private suspend fun seedOpeningQuestion() {
+        if (chatRepository.getMessages().isNotEmpty()) return
+        chatRepository.add(
+            CoachChatMessage(
+                role = ChatRole.ASSISTANT,
+                content = "Ciao! Sono il tuo coach. Raccontami chi sei e cosa vuoi " +
+                    "ottenere: mi servono alcuni dati per costruire la tua scheda e il " +
+                    "tuo piano alimentare. Iniziamo: come ti chiami e quanti anni hai?",
+                createdAt = DateUtils.nowMillis()
+            )
+        )
+        _state.update { it.copy(messages = chatRepository.getMessages()) }
     }
 
     fun send(text: String) {
         val content = text.trim()
         if (content.isEmpty() || _state.value.sending) return
-        val userMessage = CoachChatMessage(role = ChatRole.USER, content = content, createdAt = DateUtils.nowMillis())
-        val conversation = _state.value.messages + userMessage
-        _state.update { it.copy(messages = conversation, sending = true, error = null) }
+        _state.update { it.copy(sending = true, error = null) }
 
         viewModelScope.launch {
             try {
-                val reply = coachAgent.anamnesiReply(_state.value.profile, conversation)
+                chatRepository.add(
+                    CoachChatMessage(role = ChatRole.USER, content = content, createdAt = DateUtils.nowMillis())
+                )
+                // Show the user's turn immediately, while the agent is answering.
+                _state.update { it.copy(messages = chatRepository.getMessages()) }
+                val history = chatRepository.getMessages()
+                val reply = coachAgent.anamnesiReply(_state.value.profile, history)
                 val patched = prompts.applyProfilePatch(_state.value.profile, reply.profilePatch)
                 profileRepository.saveProfile(patched)
-                val assistantMessage = CoachChatMessage(
-                    role = ChatRole.ASSISTANT,
-                    content = reply.reply.ifBlank { "Grazie, ho aggiornato i tuoi dati." },
-                    createdAt = DateUtils.nowMillis()
+                chatRepository.add(
+                    CoachChatMessage(
+                        role = ChatRole.ASSISTANT,
+                        content = reply.reply.ifBlank { "Grazie, ho aggiornato i tuoi dati." },
+                        createdAt = DateUtils.nowMillis()
+                    )
                 )
                 _state.update {
-                    it.copy(messages = it.messages + assistantMessage, profile = patched, sending = false)
+                    it.copy(messages = chatRepository.getMessages(), profile = patched, sending = false)
                 }
                 if (reply.complete) finish()
             } catch (error: AppError) {

@@ -107,7 +107,9 @@ fun FitCoachNavHost(
             composable(Routes.PROGRESS) {
                 ProgressScreen(onOpenMeasurement = { navController.navigate(Routes.measurementDetail(it)) })
             }
-            composable(Routes.COACH) { CoachScreen() }
+            composable(Routes.COACH) {
+                CoachScreen(onOpenAiSettings = { navController.navigate(Routes.AI_SETTINGS) })
+            }
             composable(Routes.SETTINGS) {
                 SettingsScreen(
                     onOpenAi = { navController.navigate(Routes.AI_SETTINGS) },
