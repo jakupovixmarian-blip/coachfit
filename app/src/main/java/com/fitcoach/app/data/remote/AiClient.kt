@@ -26,7 +26,7 @@ class AiClient @Inject constructor(
     suspend fun complete(
         config: AiProviderConfig,
         messages: List<ChatMessageDto>,
-        temperature: Double = config.temperature,
+        temperature: Double? = config.temperature,
         maxTokens: Int = config.maxTokens,
         responseFormat: ChatCompletionRequest.ResponseFormat? = null
     ): AiResult {
@@ -40,26 +40,52 @@ class AiClient @Inject constructor(
             return AiResult.Failure("API key mancante per ${config.provider.label}.")
         }
 
+        // Adatta il payload a quanto appreso su questo provider/modello (es. modelli
+        // che accettano solo la temperatura di default), per non ripetere ogni volta
+        // una chiamata destinata a fallire.
+        val learned = learnedParams[config.provider to config.model]
+        val effectiveTemperature = if (learned?.dropTemperature == true) null else temperature
+
         // Costruzione del payload con il parametro token corretto per provider/modello
         // (max_tokens oppure max_completion_tokens, mai entrambi).
-        val request = ChatCompletionRequest.forProvider(
+        var request = ChatCompletionRequest.forProvider(
             provider = config.provider,
             model = config.model,
             messages = messages,
-            temperature = temperature,
+            temperature = effectiveTemperature,
             maxTokens = maxTokens,
             responseFormat = responseFormat
         )
-
-        val first = sendOnce(config, request)
-        if (first is AiResult.Failure && AiParameterPolicy.isUnsupportedTokenParamError(first.message)) {
-            // Il provider ha rifiutato il parametro token inviato: un solo retry
-            // controllato con l'altro parametro, senza mai inviarli entrambi.
-            val retry = sendOnce(config, ChatCompletionRequest.withAlternateTokenParam(request))
-            if (retry is AiResult.Success) return retry
+        if (learned?.alternateTokenParam == true) {
+            request = ChatCompletionRequest.withAlternateTokenParam(request)
         }
-        return first
+
+        // Fallback controllato e limitato: ad ogni passo si corregge UN solo
+        // parametro rifiutato (token, poi temperatura). Mai entrambi i parametri
+        // token insieme, mai loop infiniti.
+        var result = sendOnce(config, request)
+        if (result is AiResult.Failure && AiParameterPolicy.isUnsupportedTokenParamError(result.message)) {
+            request = ChatCompletionRequest.withAlternateTokenParam(request)
+            result = sendOnce(config, request)
+            if (result is AiResult.Success) {
+                learnedParams[config.provider to config.model] = Learned(dropTemperature = false, alternateTokenParam = true)
+            }
+        }
+        if (result is AiResult.Failure && AiParameterPolicy.isUnsupportedTemperatureError(result.message)) {
+            request = ChatCompletionRequest.withoutTemperature(request)
+            result = sendOnce(config, request)
+            if (result is AiResult.Success) {
+                learnedParams[config.provider to config.model] =
+                    Learned(dropTemperature = true, alternateTokenParam = learned?.alternateTokenParam == true)
+            }
+        }
+        return result
     }
+
+    /** Parametri corretti appresi per un provider/modello durante la sessione. */
+    private data class Learned(val dropTemperature: Boolean, val alternateTokenParam: Boolean)
+
+    private val learnedParams = java.util.concurrent.ConcurrentHashMap<Pair<AiProvider, String>, Learned>()
 
     private suspend fun sendOnce(
         config: AiProviderConfig,
@@ -93,10 +119,15 @@ class AiClient @Inject constructor(
                 403 -> "Accesso negato dal provider."
                 404 -> "Endpoint non trovato: verifica Base URL e modello."
                 429 -> "Troppe richieste o quota superata. Riprova tra poco."
-                else -> if (AiParameterPolicy.isUnsupportedTokenParamError(detail ?: "")) {
-                    "Parametro dei token non supportato dal modello. Il client ha gia provato " +
-                        "entrambi (max_tokens/max_completion_tokens): verifica il modello configurato."
-                } else null
+                else -> when {
+                    AiParameterPolicy.isUnsupportedTokenParamError(detail ?: "") ->
+                        "Il modello ha rifiutato il parametro dei token anche dopo l'adattamento " +
+                            "automatico (max_tokens/max_completion_tokens): verifica il modello."
+                    AiParameterPolicy.isUnsupportedTemperatureError(detail ?: "") ->
+                        "Il modello non supporta la temperatura impostata (accetta solo il valore " +
+                            "di default): rimuovi o reimposta la temperatura nelle impostazioni."
+                    else -> null
+                }
             }
             val message = listOfNotNull(hint, detail).joinToString(" ").ifBlank {
                 "Errore HTTP ${response.code()}."
@@ -132,12 +163,17 @@ class AiClient @Inject constructor(
             ChatMessageDto(role = "system", content = "Sei un test di connessione."),
             ChatMessageDto(role = "user", content = "Rispondi esattamente con: OK")
         ),
-        temperature = 0.0,
-        maxTokens = 16
+        // Nessuna temperatura: alcuni modelli (es. gpt-6-luna) accettano solo il
+        // valore di default e rifiuterebbero la richiesta.
+        temperature = null,
+        // Budget sufficiente anche per i modelli di reasoning (che consumano token
+        // prima di produrre il testo) e per una risposta breve.
+        maxTokens = CONNECTION_TEST_MAX_TOKENS
     )
 
     companion object {
         private const val OPENROUTER_REFERER = "https://fitcoach.app"
         private const val OPENROUTER_TITLE = "FitCoach"
+        private const val CONNECTION_TEST_MAX_TOKENS = 256
     }
 }

@@ -20,7 +20,7 @@ class AiParameterPolicyTest {
 
     @Test
     fun `openai modelli recenti usano max_completion_tokens`() {
-        listOf("o1", "o1-preview", "o1-mini", "o3", "o3-mini", "o4-mini", "gpt-4.1", "gpt-4.1-mini", "gpt-5", "gpt-5-nano")
+        listOf("o1", "o1-preview", "o1-mini", "o3", "o3-mini", "o4-mini", "gpt-4.1", "gpt-4.1-mini", "gpt-5", "gpt-5-nano", "gpt-6-luna", "gpt-7-x")
             .forEach { model ->
                 assertThat(AiParameterPolicy.tokenParamFor(AiProvider.OPENAI, model))
                     .isEqualTo(TokenParam.MAX_COMPLETION_TOKENS)
@@ -64,5 +64,24 @@ class AiParameterPolicyTest {
         assertThat(AiParameterPolicy.isUnsupportedTokenParamError("Chiave API non valida")).isFalse()
         assertThat(AiParameterPolicy.isUnsupportedTokenParamError("rate limit exceeded")).isFalse()
         assertThat(AiParameterPolicy.isUnsupportedTokenParamError("")).isFalse()
+    }
+
+    @Test
+    fun `riconosce l'errore di temperatura non supportata`() {
+        assertThat(
+            AiParameterPolicy.isUnsupportedTemperatureError(
+                "Unsupported value: 'temperature' does not support 0.0 with this model. " +
+                    "Only the default (1) value is supported."
+            )
+        ).isTrue()
+        assertThat(
+            AiParameterPolicy.isUnsupportedTemperatureError("'temperature' does not support 0.4 with this model.")
+        ).isTrue()
+    }
+
+    @Test
+    fun `non riconosce la temperatura per errori diversi`() {
+        assertThat(AiParameterPolicy.isUnsupportedTemperatureError("Invalid API key")).isFalse()
+        assertThat(AiParameterPolicy.isUnsupportedTemperatureError("Unsupported parameter: 'max_tokens'")).isFalse()
     }
 }

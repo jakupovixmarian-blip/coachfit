@@ -67,6 +67,13 @@ data class ChatCompletionRequest(
                 maxCompletionTokens = if (currentlyNew) null else value
             )
         }
+
+        /**
+         * Rimuove la temperatura (i modelli che accettano solo il valore di default
+         * la rifiutano): il payload viene inviato senza `temperature`.
+         */
+        fun withoutTemperature(request: ChatCompletionRequest): ChatCompletionRequest =
+            request.copy(temperature = null)
     }
 }
 

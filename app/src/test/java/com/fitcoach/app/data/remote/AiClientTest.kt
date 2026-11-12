@@ -123,14 +123,57 @@ class AiClientTest {
     }
 
     @Test
-    fun `test connection usa un solo parametro token`() = runTest {
+    fun `test connection usa un solo parametro token e nessuna temperatura`() = runTest {
         val api = RecordingApi(mutableListOf(okResponse()))
         val client = AiClient(api, json)
 
         client.testConnection(config(AiProvider.OPENAI, "o1"))
 
         val body = api.sent.first()
-        assertThat(body.maxCompletionTokens).isEqualTo(16)
+        assertThat(body.maxCompletionTokens).isEqualTo(256)
         assertThat(body.maxTokens).isNull()
+        assertThat(body.temperature).isNull()
+    }
+
+    @Test
+    fun `ritenta senza temperatura quando il modello la rifiuta`() = runTest {
+        val api = RecordingApi(
+            mutableListOf(
+                errorResponse(400, "Unsupported value: 'temperature' does not support 0.4 with this model. Only the default (1) value is supported."),
+                okResponse()
+            )
+        )
+        val client = AiClient(api, json)
+
+        val result = client.complete(
+            config(AiProvider.OPENAI, "gpt-6-luna"),
+            listOf(ChatMessageDto("user", "ciao")),
+            temperature = 0.4
+        )
+
+        assertThat(result).isInstanceOf(AiResult.Success::class.java)
+        assertThat(api.sent).hasSize(2)
+        assertThat(api.sent[0].temperature).isEqualTo(0.4)
+        assertThat(api.sent[1].temperature).isNull()
+    }
+
+    @Test
+    fun `dopo l'apprendimento non reinvia la temperatura rifiutata`() = runTest {
+        val api = RecordingApi(
+            mutableListOf(
+                errorResponse(400, "Unsupported value: 'temperature' does not support 0.4 with this model."),
+                okResponse(),
+                okResponse()
+            )
+        )
+        val client = AiClient(api, json)
+        val cfg = config(AiProvider.OPENAI, "gpt-6-luna")
+
+        client.complete(cfg, listOf(ChatMessageDto("user", "ciao")), temperature = 0.4)
+        client.complete(cfg, listOf(ChatMessageDto("user", "come stai")), temperature = 0.4)
+
+        // 2 chiamate per la prima richiesta (retry), 1 sola per la seconda.
+        assertThat(api.sent).hasSize(3)
+        assertThat(api.sent[2].temperature).isNull()
     }
 }

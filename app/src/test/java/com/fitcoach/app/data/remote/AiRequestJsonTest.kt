@@ -65,6 +65,17 @@ class AiRequestJsonTest {
     }
 
     @Test
+    fun `openai gpt-6-luna usa max_completion_tokens`() {
+        listOf("gpt-6-luna", "gpt-6-sol", "gpt-6-astra", "gpt-5.6-luna", "gpt-7-x").forEach { model ->
+            val keys = keysOf(
+                ChatCompletionRequest.forProvider(AiProvider.OPENAI, model, messages, maxTokens = 256)
+            )
+            assertThat(keys).contains("max_completion_tokens")
+            assertThat(keys).doesNotContain("max_tokens")
+        }
+    }
+
+    @Test
     fun `groq openrouter deepseek e custom usano sempre max_tokens`() {
         val cases = listOf(
             AiProvider.GROQ to "llama-3.3-70b-versatile",

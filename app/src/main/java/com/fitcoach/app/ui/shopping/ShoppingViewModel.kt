@@ -3,6 +3,7 @@ package com.fitcoach.app.ui.shopping
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fitcoach.app.data.repository.NutritionDiaryRepository
+import com.fitcoach.app.data.repository.NutritionRepository
 import com.fitcoach.app.data.repository.ShoppingRepository
 import com.fitcoach.app.domain.model.ShoppingCategory
 import com.fitcoach.app.domain.model.ShoppingItem
@@ -32,7 +33,8 @@ data class ShoppingUiState(
 
 @HiltViewModel
 class ShoppingViewModel @Inject constructor(
-    private val shoppingRepository: ShoppingRepository
+    private val shoppingRepository: ShoppingRepository,
+    private val nutritionRepository: NutritionRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -43,22 +45,39 @@ class ShoppingViewModel @Inject constructor(
     val state: StateFlow<ShoppingUiState> = _state.asStateFlow()
 
     init {
-        load()
+        // La lista e derivata dal piano attivo: reagisce automaticamente quando il
+        // piano viene generato o modificato, cosi non resta mai vuota se il piano
+        // esiste (il tab Spesa puo essere aperto prima della generazione).
+        observePlan()
+    }
+
+    private fun observePlan() {
+        viewModelScope.launch {
+            nutritionRepository.activePlanFlow.collect { plan ->
+                if (plan == null) {
+                    _state.value = _state.value.copy(loading = false, items = emptyList())
+                } else {
+                    regenerateAndRefresh()
+                }
+            }
+        }
+    }
+
+    private suspend fun regenerateAndRefresh() {
+        val weekStart = _state.value.weekStart
+        val invalidated = shoppingRepository.regenerate(weekStart)
+        val items = shoppingRepository.itemsForWeek(weekStart)
+        _state.value = _state.value.copy(
+            loading = false,
+            items = items,
+            message = if (invalidated.isNotEmpty()) {
+                "Sostituzione rilevata: ricontrolla ${invalidated.joinToString()}."
+            } else _state.value.message
+        )
     }
 
     fun load() {
-        viewModelScope.launch {
-            val weekStart = _state.value.weekStart
-            val invalidated = shoppingRepository.regenerate(weekStart)
-            val items = shoppingRepository.itemsForWeek(weekStart)
-            _state.value = _state.value.copy(
-                loading = false,
-                items = items,
-                message = if (invalidated.isNotEmpty()) {
-                    "Sostituzione rilevata: ricontrolla ${invalidated.joinToString()}."
-                } else null
-            )
-        }
+        viewModelScope.launch { regenerateAndRefresh() }
     }
 
     fun toggleChecked(id: Long, checked: Boolean) {

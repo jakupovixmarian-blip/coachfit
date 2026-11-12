@@ -27,7 +27,7 @@ object AiParameterPolicy {
 
     /** Modelli OpenAI che richiedono `max_completion_tokens` (match per prefisso). */
     private val OPENAI_NEW_TOKEN_MODELS = listOf(
-        "o1", "o3", "o4", "gpt-4.1", "gpt-5"
+        "o1", "o3", "o4", "gpt-4.1", "gpt-5", "gpt-6", "gpt-7"
     )
 
     fun tokenParamFor(provider: AiProvider, model: String): TokenParam {
@@ -43,6 +43,9 @@ object AiParameterPolicy {
     fun requiresNewTokenParam(model: String): Boolean {
         val m = model.trim().lowercase()
         if (m.isEmpty()) return false
+        // Famiglie gpt-N con N >= 5 richiedono il nuovo parametro.
+        val gpt = Regex("^gpt-(\\d+)").find(m)
+        if (gpt != null && (gpt.groupValues[1].toIntOrNull() ?: 0) >= 5) return true
         return OPENAI_NEW_TOKEN_MODELS.any { m == it || m.startsWith("$it-") || m.startsWith("$it.") }
     }
 
@@ -58,5 +61,18 @@ object AiParameterPolicy {
             m.contains("unknown") ||
             m.contains("unrecognized") ||
             m.contains("invalid")
+    }
+
+    /**
+     * Rileva l'errore restituito dai modelli che accettano SOLO la temperatura di
+     * default (es. gpt-6-luna): "Unsupported value: 'temperature' does not support
+     * 0.0 with this model. Only the default (1) value is supported.".
+     */
+    fun isUnsupportedTemperatureError(message: String): Boolean {
+        val m = message.lowercase()
+        if (!m.contains("temperature")) return false
+        return m.contains("does not support") ||
+            m.contains("unsupported") ||
+            m.contains("only the default")
     }
 }
