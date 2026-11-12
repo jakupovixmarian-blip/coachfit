@@ -322,6 +322,10 @@ interface PlannedExerciseDao {
     @Query("UPDATE planned_exercises SET sets = :sets WHERE id = :id")
     suspend fun updateSets(id: Long, sets: Int)
 
+
+    @Query("UPDATE planned_exercises SET orderIndex = :orderIndex WHERE id = :id")
+    suspend fun updateOrder(id: Long, orderIndex: Int)
+
     @Update
     suspend fun update(item: PlannedExerciseEntity)
 

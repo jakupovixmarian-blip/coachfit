@@ -298,4 +298,29 @@ class NutritionChainIntegrationTest {
             Dispatchers.resetMain()
         }
     }
+
+    @Test
+    fun `libreria aggiunge modifica riordina e rimuove esercizi senza rigenerare la scheda`() = runTest {
+        generatePrograms(profile, regenerateNutrition = false, regenerateWorkout = true, requireAnamnesis = false)
+        val day = workoutRepository.getActiveDays().first { !it.isRestDay }
+        val before = day.exercises
+        val exercise = exerciseRepository.getAll().first { candidate -> before.none { it.exerciseId == candidate.id } }
+
+        assertThat(workoutRepository.addExerciseToDay(day.id, exercise)).isTrue()
+        val added = workoutRepository.getDay(day.id)!!.exercises.last()
+        assertThat(added.exerciseName).isEqualTo(exercise.name)
+        assertThat(workoutRepository.updateExerciseTemplate(added.id, 4, 8, 12, 120, 2,
+            com.fitcoach.app.domain.model.IntensityTechnique.DROP_SET)).isTrue()
+        val updated = workoutRepository.getDay(day.id)!!.exercises.last()
+        assertThat(updated.sets).isEqualTo(4)
+        assertThat(updated.intensityTechnique).isEqualTo(com.fitcoach.app.domain.model.IntensityTechnique.DROP_SET)
+
+        val originalOrder = workoutRepository.getDay(day.id)!!.exercises.map { it.id }
+        val reversedOrder = originalOrder.reversed()
+        workoutRepository.reorderExercises(day.id, reversedOrder)
+        assertThat(workoutRepository.getDay(day.id)!!.exercises.map { it.id }).isEqualTo(reversedOrder)
+        workoutRepository.removeExercise(added.id)
+        assertThat(workoutRepository.getDay(day.id)!!.exercises.any { it.id == added.id }).isFalse()
+    }
+
 }

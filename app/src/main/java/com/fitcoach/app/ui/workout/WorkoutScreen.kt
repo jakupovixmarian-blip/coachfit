@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.History
@@ -31,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -207,7 +210,9 @@ fun WorkoutScreen(
                         loggedSets = viewModel.sessionSetsFor(planned.exerciseId),
                         lastPerformance = state.lastPerformances[planned.exerciseId],
                         onLogSet = { viewModel.logSetFor(planned) },
-                        onSubstitute = { viewModel.openSubstitution(planned) }
+                        onSubstitute = { viewModel.openSubstitution(planned) },
+                        onRemove = { viewModel.removeExercise(planned) },
+                        onEdit = { viewModel.openEdit(planned) }
                     )
                 }
             }
@@ -304,6 +309,17 @@ fun WorkoutScreen(
         )
     }
 
+    state.editingExercise?.let { planned ->
+        ExerciseEditorDialog(
+            planned = planned,
+            onSave = { sets, min, max, rest, rir, technique ->
+                viewModel.updateExerciseTemplate(planned, sets, min, max, rest, rir, technique)
+                viewModel.closeEdit()
+            },
+            onDismiss = viewModel::closeEdit
+        )
+    }
+
     if (state.showHistory) {
         SessionHistoryDialog(
             history = state.history,
@@ -324,6 +340,7 @@ fun WorkoutScreen(
             exercises = state.libraryExercises,
             query = state.libraryQuery,
             onQueryChange = viewModel::updateLibraryQuery,
+            onAdd = viewModel::addExerciseToToday,
             onDismiss = { viewModel.showLibrary(false) }
         )
     }
@@ -419,6 +436,7 @@ private fun ExerciseLibraryDialog(
     exercises: List<Exercise>,
     query: String,
     onQueryChange: (String) -> Unit,
+    onAdd: (Exercise) -> Unit,
     onDismiss: () -> Unit
 ) {
     val normalizedQuery = query.trim().lowercase()
@@ -462,6 +480,11 @@ private fun ExerciseLibraryDialog(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary
                             )
+                            TextButton(onClick = { onAdd(exercise) }) {
+                                Icon(Icons.Filled.Add, contentDescription = null)
+                                Spacer(Modifier.width(4.dp))
+                                Text("Aggiungi alla seduta di oggi")
+                            }
                         }
                     }
                 }
@@ -514,7 +537,9 @@ private fun ExerciseCard(
     loggedSets: List<WorkoutSet>,
     lastPerformance: ExercisePerformance?,
     onLogSet: () -> Unit,
-    onSubstitute: () -> Unit
+    onSubstitute: () -> Unit,
+    onRemove: () -> Unit,
+    onEdit: () -> Unit
 ) {
     SectionCard {
         Column {
@@ -596,9 +621,61 @@ private fun ExerciseCard(
                 OutlinedButton(onClick = onSubstitute) {
                     Icon(Icons.Filled.SwapHoriz, contentDescription = "Sostituisci esercizio")
                 }
+                OutlinedButton(onClick = onEdit) {
+                    Icon(Icons.Filled.Edit, contentDescription = "Modifica esercizio")
+                }
+                OutlinedButton(onClick = onRemove) {
+                    Icon(Icons.Filled.Delete, contentDescription = "Rimuovi esercizio")
+                }
             }
         }
     }
+}
+
+@Composable
+private fun ExerciseEditorDialog(
+    planned: PlannedExercise,
+    onSave: (Int, Int, Int, Int, Int, IntensityTechnique) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val sets = remember { mutableStateOf(planned.sets.toString()) }
+    val minReps = remember { mutableStateOf(planned.minReps.toString()) }
+    val maxReps = remember { mutableStateOf(planned.maxReps.toString()) }
+    val rest = remember { mutableStateOf(planned.restSeconds.toString()) }
+    val rir = remember { mutableStateOf(planned.targetRir.toString()) }
+    val technique = remember { mutableStateOf(planned.intensityTechnique) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Modifica ${planned.exerciseName}") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Questa modifica riguarda il programma futuro e non cambia lo storico.",
+                    style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OutlinedTextField(sets.value, { sets.value = it }, label = { Text("Serie") }, singleLine = true, modifier = Modifier.weight(1f))
+                    OutlinedTextField(minReps.value, { minReps.value = it }, label = { Text("Min") }, singleLine = true, modifier = Modifier.weight(1f))
+                    OutlinedTextField(maxReps.value, { maxReps.value = it }, label = { Text("Max") }, singleLine = true, modifier = Modifier.weight(1f))
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OutlinedTextField(rest.value, { rest.value = it }, label = { Text("Recupero s") }, singleLine = true, modifier = Modifier.weight(1f))
+                    OutlinedTextField(rir.value, { rir.value = it }, label = { Text("RIR") }, singleLine = true, modifier = Modifier.weight(1f))
+                }
+                Text("Tecnica di intensità", style = MaterialTheme.typography.labelLarge)
+                IntensityTechnique.entries.forEach { option ->
+                    TextButton(onClick = { technique.value = option }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (technique.value == option) "✓ ${option.label}" else option.label)
+                    }
+                }
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } },
+        confirmButton = {
+            Button(onClick = {
+                val parsed = listOf(sets.value, minReps.value, maxReps.value, rest.value, rir.value).map { it.toIntOrNull() }
+                if (parsed.all { it != null }) onSave(parsed[0]!!, parsed[1]!!, parsed[2]!!, parsed[3]!!, parsed[4]!!, technique.value)
+            }) { Text("Salva") }
+        }
+    )
 }
 
 @Composable

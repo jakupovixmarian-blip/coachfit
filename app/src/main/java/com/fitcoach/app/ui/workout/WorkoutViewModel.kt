@@ -54,6 +54,7 @@ data class WorkoutUiState(
     val resting: Boolean = false,
     // Sostituzione esercizio.
     val substituteFor: PlannedExercise? = null,
+    val editingExercise: PlannedExercise? = null,
     val substituteOptions: List<com.fitcoach.app.domain.model.Exercise> = emptyList(),
     // Promemoria della sessione precedente per esercizio (exerciseId -> performance).
     val lastPerformances: Map<Long, ExercisePerformance> = emptyMap(),
@@ -172,6 +173,50 @@ class WorkoutViewModel @Inject constructor(
     fun updateLibraryQuery(query: String) {
         _state.value = _state.value.copy(libraryQuery = query)
     }
+
+    fun addExerciseToToday(exercise: com.fitcoach.app.domain.model.Exercise) {
+        viewModelScope.launch {
+            val day = _state.value.today
+            if (day == null) {
+                _state.value = _state.value.copy(message = "Non puoi aggiungere esercizi a un giorno di riposo.")
+                return@launch
+            }
+            if (workoutRepository.addExerciseToDay(day.id, exercise)) {
+                _state.value = _state.value.copy(message = "${exercise.name} aggiunto alla seduta.", showLibrary = false)
+                load()
+            }
+        }
+    }
+
+    fun removeExercise(planned: PlannedExercise) {
+        viewModelScope.launch {
+            workoutRepository.removeExercise(planned.id)
+            _state.value = _state.value.copy(message = "${planned.exerciseName} rimosso dalla seduta.")
+            load()
+        }
+    }
+
+    fun updateExerciseTemplate(
+        planned: PlannedExercise,
+        sets: Int,
+        minReps: Int,
+        maxReps: Int,
+        restSeconds: Int,
+        targetRir: Int,
+        technique: com.fitcoach.app.domain.model.IntensityTechnique
+    ) {
+        viewModelScope.launch {
+            if (workoutRepository.updateExerciseTemplate(planned.id, sets, minReps, maxReps, restSeconds, targetRir, technique)) {
+                _state.value = _state.value.copy(message = "Parametri di ${planned.exerciseName} aggiornati.")
+                load()
+            } else {
+                _state.value = _state.value.copy(message = "Parametri non validi: controlla serie, ripetizioni, recupero e RIR.")
+            }
+        }
+    }
+
+    fun openEdit(planned: PlannedExercise) { _state.value = _state.value.copy(editingExercise = planned) }
+    fun closeEdit() { _state.value = _state.value.copy(editingExercise = null) }
 
     fun generateWorkout() {
         viewModelScope.launch {

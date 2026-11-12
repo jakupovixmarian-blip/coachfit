@@ -179,6 +179,72 @@ class WorkoutRepository @Inject constructor(
     suspend fun updateTarget(plannedId: Long, weight: Double?, reps: Int?) =
         plannedDao.updateTarget(plannedId, weight, reps)
 
+    /** Aggiunge un esercizio alla seduta corrente senza rigenerare il programma. */
+    suspend fun addExerciseToDay(dayId: Long, exercise: Exercise): Boolean = db.withTransaction {
+        val day = dayDao.getById(dayId) ?: return@withTransaction false
+        if (day.isRestDay) return@withTransaction false
+        val current = plannedDao.getForDay(dayId)
+        plannedDao.insertAll(
+            listOf(
+                PlannedExerciseEntity(
+                    workoutDayId = dayId,
+                    exerciseId = exercise.id,
+                    exerciseName = exercise.name,
+                    primaryMuscle = exercise.primaryMuscle,
+                    orderIndex = (current.maxOfOrNull { it.orderIndex } ?: -1) + 1,
+                    sets = exercise.defaultSets,
+                    minReps = exercise.minReps,
+                    maxReps = exercise.maxReps,
+                    restSeconds = exercise.restSeconds,
+                    targetRir = exercise.targetRir,
+                    technique = exercise.technique,
+                    category = exercise.category,
+                    selectionReason = "Aggiunto manualmente dall'utente.",
+                    restReason = "Recupero standard dell'esercizio.",
+                    movementPattern = exercise.movementPattern
+                )
+            )
+        )
+        true
+    }
+
+    suspend fun removeExercise(plannedId: Long) {
+        plannedDao.getById(plannedId)?.let { plannedDao.delete(it) }
+    }
+
+    suspend fun updateExerciseTemplate(
+        plannedId: Long,
+        sets: Int,
+        minReps: Int,
+        maxReps: Int,
+        restSeconds: Int,
+        targetRir: Int,
+        technique: com.fitcoach.app.domain.model.IntensityTechnique
+    ): Boolean {
+        val current = plannedDao.getById(plannedId) ?: return false
+        if (sets !in 1..20 || minReps !in 1..50 || maxReps !in minReps..50 ||
+            restSeconds !in 15..900 || targetRir !in 0..5
+        ) return false
+        plannedDao.update(
+            current.copy(
+                sets = sets,
+                minReps = minReps,
+                maxReps = maxReps,
+                restSeconds = restSeconds,
+                targetRir = targetRir,
+                intensityTechnique = technique
+            )
+        )
+        return true
+    }
+
+    suspend fun reorderExercises(dayId: Long, orderedIds: List<Long>) = db.withTransaction {
+        val existing = plannedDao.getForDay(dayId).associateBy { it.id }
+        orderedIds.distinct().forEachIndexed { index, id ->
+            if (id in existing) plannedDao.updateOrder(id, index)
+        }
+    }
+
     // ---------------- Sessioni ----------------
 
     suspend fun startSession(workoutDay: WorkoutDay, epochDay: Long): Long {
