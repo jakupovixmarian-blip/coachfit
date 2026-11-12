@@ -6,6 +6,7 @@ import com.fitcoach.app.v2.domain.GenerationPhase
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.Test
@@ -101,10 +102,36 @@ class GenerationCoordinatorTest {
             val payload = buildJsonObject {
                 put("assumptions", JsonArray(emptyList()))
                 when (phase) {
-                    GenerationPhase.NUTRITION -> put("days", JsonArray(emptyList()))
-                    GenerationPhase.WORKOUT -> put("days", JsonArray(List(profile.trainingDays) { buildJsonObject {} }))
-                    GenerationPhase.CALENDAR -> put("workoutDayIndices", JsonArray(emptyList()))
-                    GenerationPhase.INDICATORS -> put("metrics", JsonArray(emptyList()))
+                    GenerationPhase.NUTRITION -> put("days", JsonArray((0..6).map { dayIndex ->
+                        buildJsonObject {
+                            put("dayIndex", dayIndex)
+                            put("dayType", "MEDIUM")
+                            put("meals", JsonArray(List(3) {
+                                buildJsonObject {
+                                    put("entries", JsonArray(listOf(buildJsonObject {
+                                        put("foodName", "test")
+                                        put("grams", 100)
+                                    })))
+                                }
+                            }))
+                        }
+                    }))
+                    GenerationPhase.WORKOUT -> put("days", JsonArray(List(profile.trainingDays) { dayIndex ->
+                        buildJsonObject {
+                            put("dayIndex", dayIndex)
+                            put("exercises", JsonArray(listOf(buildJsonObject {
+                                put("exerciseId", "test")
+                                put("sets", 3)
+                                put("minReps", 8)
+                                put("maxReps", 12)
+                            })))
+                        }
+                    }))
+                    GenerationPhase.CALENDAR -> {
+                        put("workoutDayIndices", JsonArray((0 until profile.trainingDays).map(::JsonPrimitive)))
+                        put("restDayIndices", JsonArray((profile.trainingDays..6).map(::JsonPrimitive)))
+                    }
+                    GenerationPhase.INDICATORS -> put("metrics", JsonArray(listOf(JsonPrimitive("metric"))))
                 }
             }
             return GenerationGatewayResult.Success(payload, "test")
