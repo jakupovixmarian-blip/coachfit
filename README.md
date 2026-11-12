@@ -18,7 +18,7 @@ Sviluppato per fasi verificabili. Ogni fase è stata compilata e testata.
 | 4 – Coach adattivo | Analisi peso/aderenza/performance, regole decisionali, check-in, proposte, storico | ✅ |
 | 5 – AI | Chat con contesto strutturato, provider configurabili, azioni controllate, gestione errori | ✅ |
 | 6 – Notifiche e statistiche | Calendario notifiche, grafici, export dati | ✅ |
-| 7 – Collaudo | Test unitari motori, build APK debug/release | ✅ |
+| 7 – Collaudo | Test unitari motori, build APK debug/release; UI E2E da eseguire su dispositivo | ◐ |
 
 ## Stack tecnologico
 
@@ -204,7 +204,7 @@ con `sdk.dir=...`.
 ./gradlew :app:assembleDebug
 # output: app/build/outputs/apk/debug/app-debug.apk
 
-# APK release (firmabile)
+# APK release (firmabile; senza keystore produce app-release-unsigned.apk)
 ./gradlew :app:assembleRelease
 ```
 
