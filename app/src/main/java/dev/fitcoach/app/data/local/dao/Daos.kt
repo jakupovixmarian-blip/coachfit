@@ -7,10 +7,12 @@ import androidx.room.Query
 import androidx.room.Update
 import androidx.room.Upsert
 import dev.fitcoach.app.data.local.entity.AiConfigEntity
+import dev.fitcoach.app.data.local.entity.CoachMessageEntity
 import dev.fitcoach.app.data.local.entity.CoachProposalEntity
 import dev.fitcoach.app.data.local.entity.DiaryEntryEntity
 import dev.fitcoach.app.data.local.entity.ExerciseEntity
 import dev.fitcoach.app.data.local.entity.FoodEntity
+import dev.fitcoach.app.data.local.entity.KnowledgeNoteEntity
 import dev.fitcoach.app.data.local.entity.LoggedSetEntity
 import dev.fitcoach.app.data.local.entity.MealItemEntity
 import dev.fitcoach.app.data.local.entity.MealPlanEntity
@@ -93,6 +95,9 @@ interface PhotoDao {
     @Query("UPDATE photo SET notes = :notes WHERE id = :id")
     suspend fun updateNotes(id: Long, notes: String)
 
+    @Query("UPDATE photo SET analysis = :analysis, analysisAt = :at WHERE id = :id")
+    suspend fun updateAnalysis(id: Long, analysis: String, at: Long)
+
     @Query("DELETE FROM photo WHERE id = :id")
     suspend fun delete(id: Long)
 
@@ -125,6 +130,9 @@ interface ExerciseDao {
 
     @Query("UPDATE exercise SET isFavorite = :fav WHERE id = :id")
     suspend fun setFavorite(id: Long, fav: Boolean)
+
+    @Query("UPDATE exercise SET defaultRestSeconds = :seconds WHERE id = :id")
+    suspend fun setDefaultRest(id: Long, seconds: Int)
 
     @Query("DELETE FROM exercise WHERE id = :id AND isCustom = 1")
     suspend fun deleteCustom(id: Long)
@@ -490,6 +498,57 @@ interface CoachDao {
     suspend fun delete(id: Long)
 
     @Query("DELETE FROM coach_proposal")
+    suspend fun clear()
+}
+
+@Dao
+interface CoachChatDao {
+    @Query("SELECT * FROM coach_message ORDER BY createdAt ASC, id ASC")
+    fun observeAll(): Flow<List<CoachMessageEntity>>
+
+    @Query("SELECT * FROM coach_message ORDER BY createdAt ASC, id ASC")
+    suspend fun getAll(): List<CoachMessageEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entity: CoachMessageEntity): Long
+
+    @Query("DELETE FROM coach_message WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("DELETE FROM coach_message")
+    suspend fun clear()
+}
+
+@Dao
+interface KnowledgeDao {
+    @Query("SELECT * FROM knowledge_note ORDER BY topic ASC, title ASC")
+    fun observeAll(): Flow<List<KnowledgeNoteEntity>>
+
+    @Query("SELECT * FROM knowledge_note WHERE enabled = 1 ORDER BY topic ASC, title ASC")
+    suspend fun getEnabled(): List<KnowledgeNoteEntity>
+
+    @Query("SELECT * FROM knowledge_note ORDER BY topic ASC, title ASC")
+    suspend fun getAll(): List<KnowledgeNoteEntity>
+
+    @Query("SELECT COUNT(*) FROM knowledge_note WHERE builtIn = 1")
+    suspend fun builtInCount(): Int
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entity: KnowledgeNoteEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(entities: List<KnowledgeNoteEntity>)
+
+    @Update
+    suspend fun update(entity: KnowledgeNoteEntity)
+
+    @Query("DELETE FROM knowledge_note WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("DELETE FROM knowledge_note WHERE builtIn = 0")
+    suspend fun clearUserNotes()
+
+    @Query("DELETE FROM knowledge_note")
     suspend fun clear()
 }
 

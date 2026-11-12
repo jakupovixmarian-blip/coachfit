@@ -34,7 +34,7 @@ class AppStartViewModel @Inject constructor(
     profileRepository: ProfileRepository
 ) : ViewModel() {
     val startRoute: StateFlow<String?> = profileRepository.observeProfile()
-        .map { profile -> if (profile?.onboardingCompleted == true) Routes.HOME else Routes.ONBOARDING }
+        .map { profile -> if (profile?.onboardingCompleted == true) Routes.HOME else Routes.ANAMNESI }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 }
 

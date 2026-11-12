@@ -22,7 +22,9 @@ import dev.fitcoach.app.ui.screens.home.HomeScreen
 import dev.fitcoach.app.ui.screens.nutrition.DiaryScreen
 import dev.fitcoach.app.ui.screens.nutrition.PlanScreen
 import dev.fitcoach.app.ui.screens.nutrition.ShoppingScreen
-import dev.fitcoach.app.ui.screens.onboarding.OnboardingScreen
+import dev.fitcoach.app.ui.screens.anamnesi.AnamnesiScreen
+import dev.fitcoach.app.ui.screens.knowledge.KnowledgeScreen
+import dev.fitcoach.app.ui.screens.workout.ManualProgramScreen
 import dev.fitcoach.app.ui.screens.progress.MeasurementDetailScreen
 import dev.fitcoach.app.ui.screens.progress.ProgressScreen
 import dev.fitcoach.app.ui.screens.settings.AiSettingsScreen
@@ -70,12 +72,15 @@ fun FitCoachNavHost(
             startDestination = startRoute,
             modifier = Modifier.padding(padding)
         ) {
-            composable(Routes.ONBOARDING) {
-                OnboardingScreen(onFinished = {
-                    navController.navigate(Routes.HOME) {
-                        popUpTo(Routes.ONBOARDING) { inclusive = true }
+            composable(Routes.ANAMNESI) {
+                AnamnesiScreen(
+                    onOpenAiSettings = { navController.navigate(Routes.AI_SETTINGS) },
+                    onFinished = {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.ANAMNESI) { inclusive = true }
+                        }
                     }
-                })
+                )
             }
             composable(Routes.HOME) {
                 HomeScreen(
@@ -84,7 +89,7 @@ fun FitCoachNavHost(
                     onOpenProgress = { navController.navigate(Routes.PROGRESS) },
                     onOpenCoach = { navController.navigate(Routes.COACH) },
                     onOpenPlan = { navController.navigate(Routes.PLAN) },
-                    onStartOnboarding = { navController.navigate(Routes.ONBOARDING) }
+                    onStartOnboarding = { navController.navigate(Routes.ANAMNESI) }
                 )
             }
             composable(Routes.PLAN) { PlanScreen(onOpenDiary = { navController.navigate(Routes.DIARY) }) }
@@ -94,7 +99,8 @@ fun FitCoachNavHost(
                 WorkoutScreen(
                     onOpenSession = { navController.navigate(Routes.workoutSession(it)) },
                     onOpenRoutine = { navController.navigate(Routes.routineEditor(it)) },
-                    onOpenExercise = { navController.navigate(Routes.exerciseDetail(it)) }
+                    onOpenExercise = { navController.navigate(Routes.exerciseDetail(it)) },
+                    onOpenManualProgram = { navController.navigate(Routes.MANUAL_PROGRAM) }
                 )
             }
             composable(Routes.CALENDAR) { CalendarScreen() }
@@ -103,9 +109,19 @@ fun FitCoachNavHost(
             }
             composable(Routes.COACH) { CoachScreen() }
             composable(Routes.SETTINGS) {
-                SettingsScreen(onOpenAi = { navController.navigate(Routes.AI_SETTINGS) })
+                SettingsScreen(
+                    onOpenAi = { navController.navigate(Routes.AI_SETTINGS) },
+                    onOpenKnowledge = { navController.navigate(Routes.KNOWLEDGE) }
+                )
             }
             composable(Routes.AI_SETTINGS) { AiSettingsScreen() }
+            composable(Routes.KNOWLEDGE) { KnowledgeScreen() }
+            composable(Routes.MANUAL_PROGRAM) {
+                ManualProgramScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenRoutine = { navController.navigate(Routes.routineEditor(it)) }
+                )
+            }
 
             composable(
                 route = Routes.WORKOUT_SESSION,

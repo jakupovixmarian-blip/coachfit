@@ -12,6 +12,7 @@ import dev.fitcoach.app.data.local.entity.PlanDayEntity
 import dev.fitcoach.app.data.local.entity.RoutineExerciseEntity
 import dev.fitcoach.app.data.local.mapper.*
 import dev.fitcoach.app.data.seed.FoodSeed
+import dev.fitcoach.app.data.seed.TrainingScience
 import dev.fitcoach.app.data.seed.ExerciseSeed
 import dev.fitcoach.app.domain.model.*
 import dev.fitcoach.app.domain.repository.*
@@ -73,6 +74,8 @@ class PhotoRepositoryImpl @Inject constructor(
     override suspend fun add(photo: PhotoEntry): Long =
         dao.insert(photo.copy(createdAt = DateUtils.nowMillis()).toEntity())
     override suspend fun updateNotes(id: Long, notes: String) = dao.updateNotes(id, notes)
+    override suspend fun saveAnalysis(id: Long, analysis: String) =
+        dao.updateAnalysis(id, analysis, DateUtils.nowMillis())
     override suspend fun delete(id: Long) = dao.delete(id)
 }
 
@@ -90,6 +93,7 @@ class ExerciseRepositoryImpl @Inject constructor(
     override suspend fun addCustom(exercise: Exercise): Long = dao.insert(exercise.copy(isCustom = true).toEntity())
     override suspend fun update(exercise: Exercise) = dao.update(exercise.toEntity())
     override suspend fun setFavorite(id: Long, favorite: Boolean) = dao.setFavorite(id, favorite)
+    override suspend fun setDefaultRest(id: Long, seconds: Int) = dao.setDefaultRest(id, seconds)
     override suspend fun deleteCustom(id: Long) = dao.deleteCustom(id)
 }
 
@@ -371,6 +375,39 @@ class CoachRepositoryImpl @Inject constructor(
         dao.insert(proposal.copy(createdAt = if (proposal.createdAt == 0L) DateUtils.nowMillis() else proposal.createdAt).toEntity())
     override suspend fun updateProposal(proposal: CoachProposal) = dao.update(proposal.toEntity())
     override suspend fun deleteProposal(id: Long) = dao.delete(id)
+}
+
+@Singleton
+class CoachChatRepositoryImpl @Inject constructor(
+    private val db: FitCoachDatabase
+) : CoachChatRepository {
+    private val dao = db.coachChatDao()
+    override fun observeMessages(): Flow<List<CoachChatMessage>> =
+        dao.observeAll().map { list -> list.map { it.toDomain() } }
+    override suspend fun getMessages(): List<CoachChatMessage> = dao.getAll().map { it.toDomain() }
+    override suspend fun add(message: CoachChatMessage): Long =
+        dao.insert(message.copy(createdAt = if (message.createdAt == 0L) DateUtils.nowMillis() else message.createdAt).toEntity())
+    override suspend fun clear() = dao.clear()
+}
+
+@Singleton
+class KnowledgeRepositoryImpl @Inject constructor(
+    private val db: FitCoachDatabase
+) : KnowledgeRepository {
+    private val dao = db.knowledgeDao()
+    override fun observeAll(): Flow<List<KnowledgeNote>> =
+        dao.observeAll().map { list -> list.map { it.toDomain() } }
+    override suspend fun getEnabled(): List<KnowledgeNote> = dao.getEnabled().map { it.toDomain() }
+    override suspend fun getAll(): List<KnowledgeNote> = dao.getAll().map { it.toDomain() }
+    override suspend fun add(note: KnowledgeNote): Long =
+        dao.insert(note.copy(createdAt = DateUtils.nowMillis()).toEntity())
+    override suspend fun update(note: KnowledgeNote) = dao.update(note.toEntity())
+    override suspend fun delete(id: Long) = dao.delete(id)
+    override suspend fun ensureSeeded() {
+        if (dao.builtInCount() == 0) {
+            dao.insertAll(TrainingScience.builtIn().map { it.toEntity() })
+        }
+    }
 }
 
 @Singleton

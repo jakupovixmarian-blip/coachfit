@@ -26,9 +26,14 @@ data class RestTimerState(
     val exerciseName: String = "",
     val totalSeconds: Int = 0,
     val remainingSeconds: Int = 0,
-    val running: Boolean = false
+    val running: Boolean = false,
+    /** Seconds counted up when the user runs an open stopwatch for an exercise. */
+    val elapsedSeconds: Int = 0,
+    /** True while the timer counts up instead of down. */
+    val countingUp: Boolean = false
 ) {
     val active: Boolean get() = totalSeconds > 0 && (running || remainingSeconds > 0)
+    val stopwatchActive: Boolean get() = countingUp && (running || elapsedSeconds > 0)
 }
 
 /**
@@ -54,7 +59,9 @@ class RestTimerService : Service() {
             return START_NOT_STICKY
         }
         // Pause/resume/skip arriving while no timer is active are no-ops.
-        if (action != ACTION_START && !_state.value.active) {
+        if (action != ACTION_START && action != ACTION_START_STOPWATCH &&
+            !_state.value.active && !_state.value.stopwatchActive
+        ) {
             stopSelf()
             return START_NOT_STICKY
         }
@@ -65,6 +72,11 @@ class RestTimerService : Service() {
                 intent.getLongExtra(EXTRA_EXERCISE_ID, 0L),
                 intent.getStringExtra(EXTRA_NAME).orEmpty()
             )
+            ACTION_START_STOPWATCH -> startStopwatch(
+                intent.getLongExtra(EXTRA_EXERCISE_ID, 0L),
+                intent.getStringExtra(EXTRA_NAME).orEmpty()
+            )
+            ACTION_ADJUST -> adjust(intent.getIntExtra(EXTRA_DELTA, 0))
             ACTION_PAUSE -> pauseTimer()
             ACTION_RESUME -> resumeTimer()
             ACTION_SKIP -> stopTimer()
@@ -82,6 +94,44 @@ class RestTimerService : Service() {
             running = true
         )
         launchTicker()
+    }
+
+    private fun startStopwatch(exerciseId: Long, name: String) {
+        endRealtime = SystemClock.elapsedRealtime()
+        _state.value = RestTimerState(
+            exerciseId = exerciseId,
+            exerciseName = name,
+            totalSeconds = Int.MAX_VALUE,
+            remainingSeconds = 0,
+            running = true,
+            countingUp = true,
+            elapsedSeconds = 0
+        )
+        tickJob?.cancel()
+        tickJob = scope.launch {
+            while (_state.value.running) {
+                delay(500)
+                val elapsed = ((SystemClock.elapsedRealtime() - endRealtime) / 1000L).toInt().coerceAtLeast(0)
+                _state.value = _state.value.copy(elapsedSeconds = elapsed)
+                updateNotification()
+            }
+        }
+    }
+
+    /** Stretches or shortens a running countdown, never below five seconds. */
+    private fun adjust(deltaSeconds: Int) {
+        val current = _state.value
+        if (deltaSeconds == 0 || !current.active) return
+        val newRemaining = (current.remainingSeconds + deltaSeconds).coerceAtLeast(5)
+        val newTotal = (current.totalSeconds + deltaSeconds).coerceAtLeast(newRemaining)
+        endRealtime = SystemClock.elapsedRealtime() + newRemaining * 1000L
+        _state.value = current.copy(
+            remainingSeconds = newRemaining,
+            totalSeconds = newTotal,
+            running = true
+        )
+        launchTicker()
+        updateNotification()
     }
 
     private fun launchTicker() {
@@ -125,9 +175,13 @@ class RestTimerService : Service() {
 
     private fun buildNotification(): Notification {
         val s = _state.value
-        val text = if (s.active) "${s.remainingSeconds}s - ${s.exerciseName}" else "Recupero completato"
+        val text = when {
+            s.stopwatchActive -> "Cronometro ${s.elapsedSeconds}s - ${s.exerciseName}"
+            s.active -> "${s.remainingSeconds}s - ${s.exerciseName}"
+            else -> "Recupero completato"
+        }
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Recupero")
+            .setContentTitle(if (s.countingUp) "Cronometro" else "Recupero")
             .setContentText(text)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setOngoing(true)
@@ -164,9 +218,12 @@ class RestTimerService : Service() {
         const val ACTION_RESUME = "dev.fitcoach.app.RESUME"
         const val ACTION_SKIP = "dev.fitcoach.app.SKIP"
         const val ACTION_STOP = "dev.fitcoach.app.STOP"
+        const val ACTION_START_STOPWATCH = "dev.fitcoach.app.START_STOPWATCH"
+        const val ACTION_ADJUST = "dev.fitcoach.app.ADJUST"
         const val EXTRA_SECONDS = "seconds"
         const val EXTRA_EXERCISE_ID = "exerciseId"
         const val EXTRA_NAME = "name"
+        const val EXTRA_DELTA = "delta"
 
         private val _state = MutableStateFlow(RestTimerState())
         val state: StateFlow<RestTimerState> = _state.asStateFlow()
@@ -179,6 +236,28 @@ class RestTimerService : Service() {
                     putExtra(EXTRA_SECONDS, seconds)
                     putExtra(EXTRA_EXERCISE_ID, exerciseId)
                     putExtra(EXTRA_NAME, name)
+                }
+            )
+        }
+
+        fun startStopwatch(context: Context, exerciseId: Long, name: String) {
+            startServiceCompat(
+                context,
+                Intent(context, RestTimerService::class.java).apply {
+                    action = ACTION_START_STOPWATCH
+                    putExtra(EXTRA_EXERCISE_ID, exerciseId)
+                    putExtra(EXTRA_NAME, name)
+                }
+            )
+        }
+
+        /** Adds or removes seconds on the running rest, clamped to at least 5s. */
+        fun adjust(context: Context, deltaSeconds: Int) {
+            startServiceCompat(
+                context,
+                Intent(context, RestTimerService::class.java).apply {
+                    action = ACTION_ADJUST
+                    putExtra(EXTRA_DELTA, deltaSeconds)
                 }
             )
         }

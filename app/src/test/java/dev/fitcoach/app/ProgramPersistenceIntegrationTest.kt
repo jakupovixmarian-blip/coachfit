@@ -12,12 +12,12 @@ import dev.fitcoach.app.data.repository.SessionRepositoryImpl
 import dev.fitcoach.app.domain.model.ExperienceLevel
 import dev.fitcoach.app.domain.model.Goal
 import dev.fitcoach.app.domain.model.LoggedSet
+import dev.fitcoach.app.domain.model.Routine
 import dev.fitcoach.app.domain.model.RoutineExercise
 import dev.fitcoach.app.domain.model.SessionStatus
 import dev.fitcoach.app.domain.model.SetType
 import dev.fitcoach.app.domain.model.UserProfile
 import dev.fitcoach.app.domain.model.WorkoutSession
-import dev.fitcoach.app.domain.usecase.ProgramGenerator
 import dev.fitcoach.app.domain.usecase.ProgressionEngine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -72,17 +72,39 @@ class ProgramPersistenceIntegrationTest {
         sessionMinutes = 60
     )
 
+    /**
+     * Persists a program shaped like the one the AI agent produces: one routine per
+     * day, each with its own distinct exercises. The generator was removed, so the
+     * test builds the draft directly and only exercises the persistence contract.
+     */
     private suspend fun persist(days: Int, level: ExperienceLevel = ExperienceLevel.INTERMEDIATE): List<Long> {
         exerciseRepo.ensureSeeded()
         val catalog = exerciseRepo.getAll()
-        val generated = ProgramGenerator.generate(profile(days, level), catalog)
-        val (routines, allExercises) = ProgramGenerator.toRoutines(0L, "Programma $days", generated, createdAt = 1L)
-        val sizes = generated.days.map { it.exercises.size }
-        val perRoutine = mutableListOf<List<RoutineExercise>>()
-        var cursor = 0
-        sizes.forEach { count ->
-            perRoutine += allExercises.subList(cursor, cursor + count)
-            cursor += count
+        val labels = listOf("Spinta", "Trazione", "Gambe", "Spalle", "Braccia", "Full Body", "Cardio")
+        val routines = (0 until days).map { index ->
+            Routine(
+                name = labels.getOrElse(index) { "Giorno ${index + 1}" },
+                description = "programma di test",
+                isActive = true,
+                programId = 0L,
+                dayIndex = index,
+                dayLabel = labels.getOrElse(index) { "Giorno ${index + 1}" }
+            )
+        }
+        val perRoutine = (0 until days).map { dayIndex ->
+            (0 until 3).map { slot ->
+                val exercise = catalog[(dayIndex * 3 + slot) % catalog.size]
+                RoutineExercise(
+                    routineId = 0L,
+                    exerciseId = exercise.id,
+                    orderIndex = slot,
+                    targetSets = 3,
+                    targetRepsMin = 8,
+                    targetRepsMax = 12,
+                    targetRir = 2,
+                    restSeconds = 120
+                )
+            }
         }
         return routineRepo.saveProgram("Programma $days", routines, perRoutine)
     }

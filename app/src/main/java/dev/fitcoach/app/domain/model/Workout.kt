@@ -31,7 +31,9 @@ data class Exercise(
     val setup: String = "",
     val commonMistakes: String = "",
     val isCustom: Boolean = false,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    /** Rest the user wants between sets of this exercise, adjustable from the UI. */
+    val defaultRestSeconds: Int = 90
 )
 
 enum class SetType(val label: String) {

@@ -32,6 +32,7 @@ fun WorkoutScreen(
     onOpenSession: (Long) -> Unit,
     onOpenRoutine: (Long) -> Unit,
     onOpenExercise: (Long) -> Unit,
+    onOpenManualProgram: () -> Unit = {},
     viewModel: WorkoutViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -117,8 +118,14 @@ fun WorkoutScreen(
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                OutlinedButton(onClick = { viewModel.generateProgram() }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Genera programma dai dati")
+                Button(
+                    onClick = { viewModel.generateProgram() },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.generating
+                ) { Text(if (state.generating) "Generazione in corso..." else "Genera programma con l'agente AI") }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(onClick = onOpenManualProgram, modifier = Modifier.fillMaxWidth()) {
+                    Text("Crea il tuo programma personale")
                 }
             }
         }

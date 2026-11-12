@@ -43,5 +43,10 @@ data class PhotoEntry(
     val customLabel: String = "",
     val filePath: String,
     val notes: String = "",
-    val createdAt: Long = 0L
-)
+    val createdAt: Long = 0L,
+    /** Text the AI coach returned for this photo. Empty until an analysis is run. */
+    val analysis: String = "",
+    val analysisAt: Long? = null
+) {
+    val hasAnalysis: Boolean get() = analysis.isNotBlank()
+}

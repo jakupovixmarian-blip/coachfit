@@ -67,14 +67,19 @@ instrumented/on-device test was executed here.
 
 - A `Routine` is one session of a program: `programId`, `dayIndex` and `dayLabel` group the
   sessions. A standalone routine keeps `programId = 0`.
-- `ProgramGenerator.generate(profile, catalog)` returns exactly one `ProgramDay` per declared
-  training day. When the compatible catalog is too thin for a new day it reuses the least-used
-  exercises and adds a warning — it never silently drops a declared session.
+- There is NO deterministic program generator: split, exercises, sets, reps, RIR and rest are
+  decided by the AI agent (`CoachAgent.generateProgram`), grounded on the profile analysis, the
+  exercise catalog and the enabled `KnowledgeNote`s. Do not reintroduce volume/validator rules
+  that prescribe numbers — the app only rejects structurally incoherent answers (unknown ids,
+  impossible numbers) in `CoachAgentPrompts`.
 - Exercise identity is the `Exercise` object, not `id`: a catalog entry can still have `id = 0`
   before it is persisted, so keying de-duplication on the id collapses the whole catalog.
-- Volume rules live in `VolumeCalculator` (direct vs indirect sets, per-level ceilings);
-  program checks live in `ProgramValidator` (duplicates, pattern overuse, imbalance, overload).
-  The generator must stay inside the ceilings the validator enforces.
+- The AI never returns nutrition values: `CoachAgent.generateMealPlan` only picks food ids and
+  grams, so the numbers stay those of Open Food Facts / the user's archive.
+- `CoachAgentPrompts` builds every prompt and parses every answer; `AiGateway` is the seam that
+  wraps the provider, so the agent is testable with a fake gateway (see `CoachAgentPromptsTest`).
+- Manual programming lives only in `ManualProgramScreen`/`ManualProgramViewModel`, independent
+  from the AI: that is the one place the user types sets and reps themselves.
 - `saveProgram` is atomic: it deactivates and deletes the previous program together with its
   `PLANNED` sessions, so regenerating never stacks days.
 - Room schemas are exported to `app/schemas` (`room.schemaLocation`) and exposed as debug assets

@@ -89,20 +89,32 @@ fun WorkoutSessionScreen(
                 .padding(padding)
         ) {
             Column(Modifier.padding(horizontal = 16.dp)) {
-                if (timerState.active) {
+                if (timerState.active || timerState.stopwatchActive) {
                     FitCard {
                         Column {
-                            Text("Recupero: ${timerState.remainingSeconds}s", style = MaterialTheme.typography.titleMedium)
+                            if (timerState.stopwatchActive) {
+                                Text("Cronometro: ${timerState.elapsedSeconds}s", style = MaterialTheme.typography.titleMedium)
+                            } else {
+                                Text("Recupero: ${timerState.remainingSeconds}s", style = MaterialTheme.typography.titleMedium)
+                            }
                             Text(timerState.exerciseName, style = MaterialTheme.typography.bodyMedium)
                             Spacer(Modifier.height(6.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(onClick = { RestTimerService.skip(context) }) { Text("Salta") }
+                                OutlinedButton(
+                                    onClick = { RestTimerService.adjust(context, -15) },
+                                    enabled = !timerState.stopwatchActive
+                                ) { Text("-15s") }
+                                OutlinedButton(
+                                    onClick = { RestTimerService.adjust(context, 15) },
+                                    enabled = !timerState.stopwatchActive
+                                ) { Text("+15s") }
                                 OutlinedButton(
                                     onClick = {
                                         if (timerState.running) RestTimerService.pause(context)
                                         else RestTimerService.resume(context)
                                     }
                                 ) { Text(if (timerState.running) "Pausa" else "Riprendi") }
+                                OutlinedButton(onClick = { RestTimerService.skip(context) }) { Text("Salta") }
                             }
                         }
                     }
@@ -168,7 +180,7 @@ fun WorkoutSessionScreen(
 
                             block.routineExercise?.let { re ->
                                 Text(
-                                    "Obiettivo ${re.targetSets}x${re.targetRepsMin}-${re.targetRepsMax} @RIR ${re.targetRir} - recupero ${re.restSeconds}s",
+                                    "Obiettivo ${re.targetSets}x${re.targetRepsMin}-${re.targetRepsMax} @RIR ${re.targetRir} - recupero ${block.restSeconds}s",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -194,17 +206,26 @@ fun WorkoutSessionScreen(
                             block.sets.forEach { set ->
                                 SetRow(
                                     set = set,
+                                    restSeconds = block.restSeconds,
                                     onUpdate = { w, r, rir, pain -> viewModel.updateSet(set, w, r, rir, pain) },
                                     onToggle = { viewModel.toggleCompleted(set) },
                                     onDelete = { viewModel.deleteSet(set) },
                                     onRest = {
                                         RestTimerService.start(
                                             context,
-                                            block.routineExercise?.restSeconds ?: 90,
+                                            block.restSeconds,
                                             block.exercise.id,
                                             block.exercise.name
                                         )
-                                    }
+                                    },
+                                    onStopwatch = {
+                                        RestTimerService.startStopwatch(
+                                            context,
+                                            block.exercise.id,
+                                            block.exercise.name
+                                        )
+                                    },
+                                    onAdjustRest = { delta -> viewModel.adjustRest(block, delta) }
                                 )
                             }
 
@@ -287,10 +308,13 @@ fun WorkoutSessionScreen(
 @Composable
 private fun SetRow(
     set: LoggedSet,
+    restSeconds: Int,
     onUpdate: (Double?, Int?, Int?, Boolean) -> Unit,
     onToggle: () -> Unit,
     onDelete: () -> Unit,
-    onRest: () -> Unit
+    onRest: () -> Unit,
+    onStopwatch: () -> Unit,
+    onAdjustRest: (Int) -> Unit
 ) {
     var weight by remember(set.id, set.weightKg) { mutableStateOf(set.weightKg?.toString().orEmpty()) }
     var reps by remember(set.id, set.reps) { mutableStateOf(set.reps?.toString().orEmpty()) }
@@ -302,6 +326,7 @@ private fun SetRow(
             Checkbox(checked = set.completed, onCheckedChange = { onToggle() })
             Text("Serie ${set.setIndex}", style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
             IconButton(onClick = onRest) { Text("T", style = MaterialTheme.typography.labelLarge) }
+            IconButton(onClick = onStopwatch) { Text("C", style = MaterialTheme.typography.labelLarge) }
             IconButton(onClick = onDelete) { Icon(Icons.Filled.Delete, contentDescription = "Elimina serie") }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -341,6 +366,11 @@ private fun SetRow(
                 onUpdate(weight.toDoubleOrNull(), reps.toIntOrNull(), rir.toIntOrNull(), it)
             })
             Text("Dolore o disagio durante la serie", style = MaterialTheme.typography.bodyMedium)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Recupero ${restSeconds}s", style = MaterialTheme.typography.labelMedium)
+            OutlinedButton(onClick = { onAdjustRest(-15) }) { Text("-15") }
+            OutlinedButton(onClick = { onAdjustRest(15) }) { Text("+15") }
         }
     }
 }

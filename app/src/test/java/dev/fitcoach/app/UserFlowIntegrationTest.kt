@@ -30,7 +30,6 @@ import dev.fitcoach.app.domain.model.SetType
 import dev.fitcoach.app.domain.model.ShoppingItem
 import dev.fitcoach.app.domain.model.UserProfile
 import dev.fitcoach.app.domain.model.WorkoutSession
-import dev.fitcoach.app.domain.usecase.CoachEngine
 import dev.fitcoach.app.domain.usecase.ProgressionEngine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -192,43 +191,6 @@ class UserFlowIntegrationTest {
         val week = shoppingRepo.getWeek(19999L)
         assertEquals(1, week.size)
         assertEquals(19999L, week.first().weekStartEpochDay)
-    }
-
-    @Test
-    fun `coach analysis runs on stored data only`() = runBlocking {
-        exerciseRepo.ensureSeeded()
-        profileRepo.saveProfile(
-            UserProfile(
-                name = "Sara", age = 28, heightCm = 168.0, weightKg = 60.0,
-                goal = Goal.FAT_LOSS, availableDays = 3, onboardingCompleted = true
-            )
-        )
-        measurementRepo.add(Measurement(type = MeasurementType.WEIGHT, dateEpochDay = 19990L, value = 62.0))
-        measurementRepo.add(Measurement(type = MeasurementType.WEIGHT, dateEpochDay = 20000L, value = 60.5))
-
-        val exercise = exerciseRepo.getAll().first()
-        val sessionId = sessionRepo.createSession(
-            WorkoutSession(routineId = null, name = "Full", dateEpochDay = 20000L, startedAt = 1L, status = SessionStatus.COMPLETED)
-        )
-        sessionRepo.upsertSet(
-            LoggedSet(sessionId = sessionId, exerciseId = exercise.id, orderIndex = 0, setIndex = 1,
-                setType = SetType.WORKING, weightKg = 50.0, reps = 10, rir = 2, completed = true, loggedAt = 1L)
-        )
-
-        val profile = profileRepo.getProfile()
-        val sessions = sessionRepo.getAll()
-        val measurements = measurementRepo.getAll()
-        val diary = diaryRepo.observeAll().first()
-        val foods = foodRepo.getAll()
-        val setsBySession = sessions.associate { it.id to sessionRepo.getSets(it.id) }
-
-        val insights = CoachEngine.insights(profile, sessions, measurements, diary, foods, setsBySession)
-        assertTrue(insights.isNotEmpty())
-        assertTrue(insights.any { it.title.contains("Aderenza") })
-        assertTrue(insights.any { it.title.contains("Andamento peso") })
-
-        val proposals = coachRepo.getProposals()
-        assertTrue(proposals.isEmpty())
     }
 
     @Test

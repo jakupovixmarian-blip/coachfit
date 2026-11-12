@@ -13,7 +13,7 @@ import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.ui.graphics.vector.ImageVector
 
 object Routes {
-    const val ONBOARDING = "onboarding"
+    const val ANAMNESI = "anamnesi"
     const val HOME = "home"
     const val PLAN = "plan"
     const val SHOPPING = "shopping"
@@ -30,6 +30,8 @@ object Routes {
     const val EXERCISE_DETAIL = "workout/exercise/{exerciseId}"
     const val MEASUREMENT_DETAIL = "progress/measurement/{type}"
     const val AI_SETTINGS = "settings/ai"
+    const val KNOWLEDGE = "settings/knowledge"
+    const val MANUAL_PROGRAM = "workout/manual-program"
 
     fun workoutSession(sessionId: Long) = "workout/session/$sessionId"
     fun routineEditor(routineId: Long) = "workout/routine/$routineId"

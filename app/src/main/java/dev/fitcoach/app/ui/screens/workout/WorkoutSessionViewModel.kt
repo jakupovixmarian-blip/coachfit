@@ -35,6 +35,9 @@ data class SessionExerciseBlock(
     val volumeKg: Double get() = ProgressionEngine.volume(sets)
     val completedSets: Int get() = sets.count { it.completed }
     val plannedSets: Int get() = routineExercise?.targetSets ?: sets.size
+
+    /** Rest the user chose for this exercise: the routine value, else the exercise default. */
+    val restSeconds: Int get() = routineExercise?.restSeconds ?: exercise.defaultRestSeconds
 }
 
 data class SessionUiState(
@@ -187,6 +190,28 @@ class WorkoutSessionViewModel @Inject constructor(
         viewModelScope.launch {
             val session = _state.value.session ?: return@launch
             sessionRepository.upsertSet(set.copy(completed = !set.completed))
+            rebuild(session)
+        }
+    }
+
+    /**
+     * Changes the rest of one exercise by [delta] seconds, clamped to a sane range,
+     * and persists it both on the routine (so it survives the session) and on the
+     * exercise default (so a session without a routine keeps it too).
+     */
+    fun adjustRest(block: SessionExerciseBlock, delta: Int) {
+        viewModelScope.launch {
+            val session = _state.value.session ?: return@launch
+            val newRest = (block.restSeconds + delta).coerceIn(15, 600)
+            exerciseRepository.setDefaultRest(block.exercise.id, newRest)
+            block.routineExercise?.let { re ->
+                val updated = routineRepository.getExercises(re.routineId).map { item ->
+                    if (item.id == re.id) item.copy(restSeconds = newRest) else item
+                }
+                routineRepository.getById(re.routineId)?.let { routine ->
+                    routineRepository.saveRoutineWithExercises(routine, updated)
+                }
+            }
             rebuild(session)
         }
     }

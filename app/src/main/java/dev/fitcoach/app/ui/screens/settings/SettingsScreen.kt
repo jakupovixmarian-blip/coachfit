@@ -33,6 +33,7 @@ import dev.fitcoach.app.ui.components.SectionTitle
 @Composable
 fun SettingsScreen(
     onOpenAi: () -> Unit,
+    onOpenKnowledge: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -116,6 +117,10 @@ fun SettingsScreen(
                 )
                 Spacer(Modifier.height(10.dp))
                 Button(onClick = onOpenAi, modifier = Modifier.fillMaxWidth()) { Text("Apri impostazioni AI") }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(onClick = onOpenKnowledge, modifier = Modifier.fillMaxWidth()) {
+                    Text("Fonti e note dell'agente")
+                }
             }
         }
 

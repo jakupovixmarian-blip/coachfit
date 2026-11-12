@@ -59,7 +59,10 @@ data class PhotoEntity(
     val customLabel: String,
     val filePath: String,
     val notes: String,
-    val createdAt: Long
+    val createdAt: Long,
+    /** Analysis returned by the AI coach for this photo, empty until requested. */
+    val analysis: String = "",
+    val analysisAt: Long? = null
 )
 
 @Entity(tableName = "exercise", indices = [Index(value = ["name"], unique = true)])
@@ -74,7 +77,9 @@ data class ExerciseEntity(
     val setup: String,
     val commonMistakes: String,
     val isCustom: Boolean,
-    val isFavorite: Boolean
+    val isFavorite: Boolean,
+    /** Rest the user wants between sets of this exercise, adjustable per exercise. */
+    val defaultRestSeconds: Int = 90
 )
 
 @Entity(tableName = "routine", indices = [Index("programId")])
@@ -244,4 +249,32 @@ data class OnboardingAnswerEntity(
     @PrimaryKey val key: String,
     val value: String,
     val updatedAt: Long
+)
+
+/** One turn of the coach chat. Turns are kept so the model has the full context. */
+@Entity(tableName = "coach_message", indices = [Index("createdAt")])
+data class CoachMessageEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0L,
+    val role: String,
+    val content: String,
+    val createdAt: Long,
+    /** Optional structured summary of an action the assistant applied. */
+    val actionSummary: String = ""
+)
+
+/**
+ * A source the coach may use. The app ships verifiable training principles and the
+ * user can add their own notes (for example from Project Invictus), so the coach
+ * reasons on declared references instead of invented claims.
+ */
+@Entity(tableName = "knowledge_note", indices = [Index("topic")])
+data class KnowledgeNoteEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0L,
+    val topic: String,
+    val title: String,
+    val content: String,
+    val source: String,
+    val builtIn: Boolean,
+    val enabled: Boolean = true,
+    val createdAt: Long = 0L
 )

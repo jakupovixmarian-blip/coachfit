@@ -1,10 +1,12 @@
 package dev.fitcoach.app.data.local.mapper
 
 import dev.fitcoach.app.data.local.entity.AiConfigEntity
+import dev.fitcoach.app.data.local.entity.CoachMessageEntity
 import dev.fitcoach.app.data.local.entity.CoachProposalEntity
 import dev.fitcoach.app.data.local.entity.DiaryEntryEntity
 import dev.fitcoach.app.data.local.entity.ExerciseEntity
 import dev.fitcoach.app.data.local.entity.FoodEntity
+import dev.fitcoach.app.data.local.entity.KnowledgeNoteEntity
 import dev.fitcoach.app.data.local.entity.LoggedSetEntity
 import dev.fitcoach.app.data.local.entity.MealItemEntity
 import dev.fitcoach.app.data.local.entity.MealPlanEntity
@@ -18,8 +20,10 @@ import dev.fitcoach.app.data.local.entity.ShoppingItemEntity
 import dev.fitcoach.app.data.local.entity.WorkoutSessionEntity
 import dev.fitcoach.app.domain.model.AiConfig
 import dev.fitcoach.app.domain.model.AiProvider
+import dev.fitcoach.app.domain.model.ChatRole
 import dev.fitcoach.app.domain.model.CoachChangeStatus
 import dev.fitcoach.app.domain.model.CoachChangeType
+import dev.fitcoach.app.domain.model.CoachChatMessage
 import dev.fitcoach.app.domain.model.CoachProposal
 import dev.fitcoach.app.domain.model.DiaryEntry
 import dev.fitcoach.app.domain.model.Equipment
@@ -29,6 +33,8 @@ import dev.fitcoach.app.domain.model.Food
 import dev.fitcoach.app.domain.model.FoodSource
 import dev.fitcoach.app.domain.model.FoodState
 import dev.fitcoach.app.domain.model.Goal
+import dev.fitcoach.app.domain.model.KnowledgeNote
+import dev.fitcoach.app.domain.model.KnowledgeTopic
 import dev.fitcoach.app.domain.model.LoggedSet
 import dev.fitcoach.app.domain.model.MealItem
 import dev.fitcoach.app.domain.model.MealPlan
@@ -84,18 +90,23 @@ fun Measurement.toEntity() = MeasurementEntity(
     id, type.name, customLabel, dateEpochDay, value, notes, createdAt
 )
 
-fun PhotoEntity.toDomain() = PhotoEntry(id, dateEpochDay, PhotoPose.valueOf(pose), customLabel, filePath, notes, createdAt)
-fun PhotoEntry.toEntity() = PhotoEntity(id, dateEpochDay, pose.name, customLabel, filePath, notes, createdAt)
+fun PhotoEntity.toDomain() = PhotoEntry(
+    id, dateEpochDay, PhotoPose.valueOf(pose), customLabel, filePath, notes, createdAt, analysis, analysisAt
+)
+fun PhotoEntry.toEntity() = PhotoEntity(
+    id, dateEpochDay, pose.name, customLabel, filePath, notes, createdAt, analysis, analysisAt
+)
 
 fun ExerciseEntity.toDomain() = Exercise(
     id, name, MuscleGroup.valueOf(primaryMuscle),
     secondaryMuscles.split(",").filter { it.isNotBlank() }.map { MuscleGroup.valueOf(it) },
     Equipment.valueOf(equipment), MovementPattern.valueOf(pattern), execution, setup,
-    commonMistakes, isCustom, isFavorite
+    commonMistakes, isCustom, isFavorite, defaultRestSeconds
 )
 fun Exercise.toEntity() = ExerciseEntity(
     id, name, primaryMuscle.name, secondaryMuscles.joinToString(",") { it.name },
-    equipment.name, pattern.name, execution, setup, commonMistakes, isCustom, isFavorite
+    equipment.name, pattern.name, execution, setup, commonMistakes, isCustom, isFavorite,
+    defaultRestSeconds
 )
 
 fun RoutineEntity.toDomain() = Routine(
@@ -171,4 +182,20 @@ fun AiConfigEntity.toDomain() = AiConfig(
 )
 fun AiConfig.toEntity() = AiConfigEntity(
     1L, provider.name, baseUrl, modelId, maxOutputTokens, timeoutSeconds, temperature, topP, useJsonMode, sendPhotosToAi
+)
+
+fun CoachMessageEntity.toDomain() = CoachChatMessage(
+    id, ChatRole.fromWire(role), content, createdAt, actionSummary
+)
+fun CoachChatMessage.toEntity() = CoachMessageEntity(
+    id, role.wire, content, createdAt, actionSummary
+)
+
+fun KnowledgeNoteEntity.toDomain() = KnowledgeNote(
+    id,
+    KnowledgeTopic.entries.firstOrNull { it.name == topic } ?: KnowledgeTopic.OTHER,
+    title, content, source, builtIn, enabled, createdAt
+)
+fun KnowledgeNote.toEntity() = KnowledgeNoteEntity(
+    id, topic.name, title, content, source, builtIn, enabled, createdAt
 )

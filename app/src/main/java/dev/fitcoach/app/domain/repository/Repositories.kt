@@ -27,6 +27,8 @@ interface PhotoRepository {
     suspend fun getAll(): List<PhotoEntry>
     suspend fun add(photo: PhotoEntry): Long
     suspend fun updateNotes(id: Long, notes: String)
+    /** Stores the coach analysis for a photo. */
+    suspend fun saveAnalysis(id: Long, analysis: String)
     suspend fun delete(id: Long)
 }
 
@@ -38,6 +40,8 @@ interface ExerciseRepository {
     suspend fun addCustom(exercise: Exercise): Long
     suspend fun update(exercise: Exercise)
     suspend fun setFavorite(id: Long, favorite: Boolean)
+    /** Persists the rest the user wants between sets of this exercise. */
+    suspend fun setDefaultRest(id: Long, seconds: Int)
     suspend fun deleteCustom(id: Long)
 }
 
@@ -141,6 +145,25 @@ interface CoachRepository {
     suspend fun addProposal(proposal: CoachProposal): Long
     suspend fun updateProposal(proposal: CoachProposal)
     suspend fun deleteProposal(id: Long)
+}
+
+/** Persistent conversation with the coach, plus the sources it may reason on. */
+interface CoachChatRepository {
+    fun observeMessages(): Flow<List<CoachChatMessage>>
+    suspend fun getMessages(): List<CoachChatMessage>
+    suspend fun add(message: CoachChatMessage): Long
+    suspend fun clear()
+}
+
+interface KnowledgeRepository {
+    fun observeAll(): Flow<List<KnowledgeNote>>
+    suspend fun getEnabled(): List<KnowledgeNote>
+    suspend fun getAll(): List<KnowledgeNote>
+    suspend fun add(note: KnowledgeNote): Long
+    suspend fun update(note: KnowledgeNote)
+    suspend fun delete(id: Long)
+    /** Seeds the built-in, sourced training principles once. */
+    suspend fun ensureSeeded()
 }
 
 interface AiConfigRepository {
