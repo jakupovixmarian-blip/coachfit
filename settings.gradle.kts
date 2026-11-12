@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "FitCoach"
-include(":app")
+include(":app", ":core", ":domain", ":database", ":data", ":ai", ":nutrition", ":workout", ":calendar", ":progress", ":coaching", ":notifications")
