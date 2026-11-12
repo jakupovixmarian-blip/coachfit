@@ -102,6 +102,53 @@ fun ProgressScreen(
         item {
             SectionCard {
                 Column {
+                    SectionHeader("Composizione corporea", "Circonferenze e massa grassa")
+                    Spacer(Modifier.height(10.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedTextField(
+                            value = state.circumferenceSiteInput,
+                            onValueChange = viewModel::updateCircumferenceSite,
+                            label = { Text("Sede (es. vita)") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = state.circumferenceCmInput,
+                            onValueChange = viewModel::updateCircumferenceCm,
+                            label = { Text("cm") },
+                            singleLine = true,
+                            modifier = Modifier.weight(0.7f)
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(onClick = viewModel::addCircumference) {
+                        Text("Salva circonferenza")
+                    }
+                    val latestBySite = state.circumferences
+                        .groupBy { it.site }
+                        .mapValues { (_, values) -> values.maxBy { it.dateEpochDay } }
+                    latestBySite.toSortedMap().forEach { (site, record) ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(site, style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface)
+                            Text(
+                                "%.1f cm · ${LocalDate.ofEpochDay(record.dateEpochDay).format(dayFmt)}"
+                                    .format(record.valueCm),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            SectionCard {
+                Column {
                     val n = state.weights.size
                     SectionHeader("Peso corporeo", "$n ${if (n == 1) "misurazione" else "misurazioni"}")
                     Spacer(Modifier.height(10.dp))

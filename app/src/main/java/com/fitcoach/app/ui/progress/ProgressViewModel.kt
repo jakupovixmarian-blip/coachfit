@@ -7,6 +7,7 @@ import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
 import com.fitcoach.app.domain.adaptive.WeightAnalyzer
 import com.fitcoach.app.domain.model.CheckIn
+import com.fitcoach.app.domain.model.CircumferenceRecord
 import com.fitcoach.app.domain.model.WeightRecord
 import com.fitcoach.app.domain.model.WeightTrend
 import com.fitcoach.app.domain.usecase.RunWeeklyCheckInUseCase
@@ -24,12 +25,15 @@ data class VolumePoint(val epochDay: Long, val volumeKg: Double)
 data class ProgressUiState(
     val loading: Boolean = true,
     val weights: List<WeightRecord> = emptyList(),
+    val circumferences: List<CircumferenceRecord> = emptyList(),
     val trend: WeightTrend? = null,
     val latestCheckIn: CheckIn? = null,
     val volumeBySession: List<VolumePoint> = emptyList(),
     val message: String? = null,
     val weightInput: String = "",
-    val bfInput: String = ""
+    val bfInput: String = "",
+    val circumferenceSiteInput: String = "",
+    val circumferenceCmInput: String = ""
 )
 
 @HiltViewModel
@@ -50,11 +54,13 @@ class ProgressViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch {
             val weights = progressRepository.getWeights()
+            val circumferences = progressRepository.getCircumferences()
             val sessions = workoutRepository.getRecentSessions(limit = 60)
             val checkIn = progressRepository.getLatestCheckIn()
             _state.value = _state.value.copy(
                 loading = false,
                 weights = weights,
+                circumferences = circumferences,
                 trend = if (weights.size >= 2) WeightAnalyzer.trend(weights) else null,
                 latestCheckIn = checkIn,
                 volumeBySession = sessions
@@ -67,6 +73,12 @@ class ProgressViewModel @Inject constructor(
 
     fun updateWeightInput(v: String) { _state.value = _state.value.copy(weightInput = v) }
     fun updateBfInput(v: String) { _state.value = _state.value.copy(bfInput = v) }
+    fun updateCircumferenceSite(v: String) {
+        _state.value = _state.value.copy(circumferenceSiteInput = v)
+    }
+    fun updateCircumferenceCm(v: String) {
+        _state.value = _state.value.copy(circumferenceCmInput = v)
+    }
 
     fun addWeight() {
         viewModelScope.launch {
@@ -100,6 +112,30 @@ class ProgressViewModel @Inject constructor(
                         "Check-in salvato. ${outcome.proposals} proposta/e di modifica da valutare nel Coach."
                     else -> "Check-in salvato: nessuna modifica necessaria."
                 }
+            )
+            load()
+        }
+    }
+
+    fun addCircumference() {
+        viewModelScope.launch {
+            val site = _state.value.circumferenceSiteInput.trim()
+            val cm = _state.value.circumferenceCmInput.replace(',', '.').toDoubleOrNull()
+            if (site.isBlank() || cm == null || cm !in 5.0..250.0) {
+                _state.value = _state.value.copy(message = "Inserisci una sede e una misura valida in cm.")
+                return@launch
+            }
+            progressRepository.addCircumference(
+                CircumferenceRecord(
+                    dateEpochDay = LocalDate.now().toEpochDay(),
+                    site = site,
+                    valueCm = cm
+                )
+            )
+            _state.value = _state.value.copy(
+                circumferenceSiteInput = "",
+                circumferenceCmInput = "",
+                message = "Misura registrata: $site %.1f cm.".format(cm)
             )
             load()
         }
