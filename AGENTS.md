@@ -62,3 +62,24 @@ instrumented/on-device test was executed here.
 - `MeasurementType.CUSTOM` needs a `customLabel`; `Measurement.label` falls back to the enum label.
 - Room + Robolectric tests need `ApplicationProvider.getApplicationContext<Context>()` and
   `.allowMainThreadQueries()`.
+
+## Workout program model
+
+- A `Routine` is one session of a program: `programId`, `dayIndex` and `dayLabel` group the
+  sessions. A standalone routine keeps `programId = 0`.
+- `ProgramGenerator.generate(profile, catalog)` returns exactly one `ProgramDay` per declared
+  training day. When the compatible catalog is too thin for a new day it reuses the least-used
+  exercises and adds a warning — it never silently drops a declared session.
+- Exercise identity is the `Exercise` object, not `id`: a catalog entry can still have `id = 0`
+  before it is persisted, so keying de-duplication on the id collapses the whole catalog.
+- Volume rules live in `VolumeCalculator` (direct vs indirect sets, per-level ceilings);
+  program checks live in `ProgramValidator` (duplicates, pattern overuse, imbalance, overload).
+  The generator must stay inside the ceilings the validator enforces.
+- `saveProgram` is atomic: it deactivates and deletes the previous program together with its
+  `PLANNED` sessions, so regenerating never stacks days.
+- Room schemas are exported to `app/schemas` (`room.schemaLocation`) and exposed as debug assets
+  so `MigrationTestHelper` can read them. Bump `version` and add a migration — never
+  `fallbackToDestructiveMigration`.
+- `AiModelCapabilities.forModel(provider, modelId)` is the single source of truth for the request
+  body: reasoning models (o-series, gpt-5) need `max_completion_tokens` and reject
+  `temperature`/`top_p`/`response_format`. Verify with `AiRequestPayloadTest`.
