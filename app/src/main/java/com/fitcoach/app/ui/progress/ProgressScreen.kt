@@ -71,6 +71,7 @@ fun ProgressScreen(
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
     val deleteCandidate = remember { mutableStateOf<com.fitcoach.app.domain.model.ProgressPhoto?>(null) }
+    val selectedPhotoIds = remember { mutableStateOf<Set<Long>>(emptySet()) }
     val photoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
             runCatching {
@@ -221,14 +222,30 @@ fun ProgressScreen(
                                         )
                                     }
                                 }
+                                TextButton(onClick = {
+                                    selectedPhotoIds.value = if (photo.id in selectedPhotoIds.value) {
+                                        selectedPhotoIds.value - photo.id
+                                    } else if (selectedPhotoIds.value.size < 2) {
+                                        selectedPhotoIds.value + photo.id
+                                    } else {
+                                        selectedPhotoIds.value
+                                    }
+                                }) {
+                                    Text(if (photo.id in selectedPhotoIds.value) "Selezionata" else "Confronta")
+                                }
                                 TextButton(onClick = { deleteCandidate.value = photo }) { Text("Elimina") }
                             }
                         }
-                        if (state.photos.size >= 2) {
+                        val comparison = state.photos.filter { it.id in selectedPhotoIds.value }
+                            .takeIf { it.size == 2 } ?: state.photos.take(2)
+                        if (comparison.size == 2) {
                             Spacer(Modifier.height(6.dp))
-                            Text("Confronto ultime due date", style = MaterialTheme.typography.labelLarge)
+                            Text(
+                                if (selectedPhotoIds.value.size == 2) "Confronto selezionato" else "Confronto ultime due date",
+                                style = MaterialTheme.typography.labelLarge
+                            )
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                state.photos.take(2).forEach { PhotoThumbnail(it.uri, Modifier.weight(1f)) }
+                                comparison.forEach { PhotoThumbnail(it.uri, Modifier.weight(1f)) }
                             }
                         }
                     }

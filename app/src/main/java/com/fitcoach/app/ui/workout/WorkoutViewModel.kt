@@ -62,6 +62,7 @@ data class WorkoutUiState(
     val history: List<WorkoutSession> = emptyList(),
     val showHistory: Boolean = false,
     val showCalendar: Boolean = false,
+    val calendarWeekStartEpochDay: Long = LocalDate.now().toEpochDay().let { it - Math.floorMod(it + 3, 7) },
     val calendarDays: List<WorkoutDay> = emptyList(),
     val showLibrary: Boolean = false,
     val libraryQuery: String = "",
@@ -145,18 +146,26 @@ class WorkoutViewModel @Inject constructor(
             _state.value = _state.value.copy(showCalendar = false)
             return
         }
+        loadCalendar(_state.value.calendarWeekStartEpochDay)
+    }
+
+    fun changeCalendarWeek(deltaWeeks: Long) {
+        loadCalendar(_state.value.calendarWeekStartEpochDay + deltaWeeks * 7L)
+    }
+
+    private fun loadCalendar(weekStart: Long) {
         viewModelScope.launch {
             _state.value = _state.value.copy(
                 showCalendar = true,
-                calendarDays = workoutRepository.getActiveDays().sortedBy { it.dayIndex }
+                calendarWeekStartEpochDay = weekStart,
+                calendarDays = workoutRepository.getActiveDays(weekStart).sortedBy { it.dayIndex }
             )
         }
     }
 
     fun moveWorkout(dayId: Long, newDayIndex: Int, permanent: Boolean) {
         viewModelScope.launch {
-            val today = LocalDate.now().toEpochDay()
-            val weekStart = today - Math.floorMod(today + 3, 7)
+            val weekStart = _state.value.calendarWeekStartEpochDay
             if (workoutRepository.saveScheduleOverride(dayId, newDayIndex, weekStart, permanent)) {
                 _state.value = _state.value.copy(message = if (permanent) {
                     "Programmazione futura aggiornata."
@@ -168,6 +177,18 @@ class WorkoutViewModel @Inject constructor(
             } else {
                 _state.value = _state.value.copy(message = "Spostamento non disponibile: controlla i conflitti.")
             }
+        }
+    }
+
+    fun addExtraSession(epochDay: Long) {
+        viewModelScope.launch {
+            if (workoutRepository.getSessionForDay(epochDay) != null) {
+                _state.value = _state.value.copy(message = "Esiste già una sessione in questa data.")
+                return@launch
+            }
+            workoutRepository.startFreeSession(epochDay)
+            _state.value = _state.value.copy(message = "Seduta straordinaria salvata per ${LocalDate.ofEpochDay(epochDay)}.")
+            if (epochDay == LocalDate.now().toEpochDay()) load()
         }
     }
 

@@ -343,6 +343,9 @@ fun WorkoutScreen(
     if (state.showCalendar) {
         WorkoutCalendarDialog(
             days = state.calendarDays,
+            weekStartEpochDay = state.calendarWeekStartEpochDay,
+            onWeekChange = viewModel::changeCalendarWeek,
+            onExtraSession = { dayIndex -> viewModel.addExtraSession(state.calendarWeekStartEpochDay + dayIndex) },
             onMove = viewModel::moveWorkout,
             onDismiss = { viewModel.showCalendar(false) }
         )
@@ -402,13 +405,29 @@ private fun SessionHistoryDialog(
 @Composable
 private fun WorkoutCalendarDialog(
     days: List<WorkoutDay>,
+    weekStartEpochDay: Long,
+    onWeekChange: (Long) -> Unit,
+    onExtraSession: (Int) -> Unit,
     onMove: (Long, Int, Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     val permanent = remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Calendario allenamenti") },
+        title = {
+            Column {
+                Text("Calendario allenamenti")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = { onWeekChange(-1) }) { Text("‹") }
+                    Text("Settimana ${LocalDate.ofEpochDay(weekStartEpochDay)}", style = MaterialTheme.typography.labelMedium)
+                    TextButton(onClick = { onWeekChange(1) }) { Text("›") }
+                }
+            }
+        },
         text = {
             Column {
                 Row(
@@ -451,6 +470,9 @@ private fun WorkoutCalendarDialog(
                                     enabled = targetIndex != day.dayIndex
                                 ) { Text(label.take(2)) }
                             }
+                        }
+                        TextButton(onClick = { onExtraSession(day.dayIndex) }) {
+                            Text("+ Seduta straordinaria")
                         }
                     }
                 }

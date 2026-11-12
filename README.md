@@ -24,7 +24,7 @@ Sviluppato per fasi verificabili. Ogni fase è stata compilata e testata.
 
 - **Kotlin**, **Jetpack Compose**, **Material 3**
 - **MVVM + Clean Architecture** (domain / data / ui)
-- **Room** (24 entità, DAO, migrazioni, schema esportato; DB v9)
+- **Room** (24 entità, DAO, migrazioni, schema esportato; DB v10)
 - **Coroutines / Flow**, **WorkManager**, **AlarmManager** (notifiche esatte)
 - **DataStore** per le impostazioni, **Hilt** per la dependency injection
 - **Retrofit / OkHttp + kotlinx.serialization** per le API AI
@@ -137,9 +137,16 @@ cerca), dove ogni candidato passa comunque dal controllo preventivo vincolato.
   **storico delle sessioni** (volume, durata, RPE, dolore).
 - `AdaptiveEngine` + `WeightAnalyzer` – media settimanale del peso, trend, aderenza,
   performance; genera proposte strutturate (situazione, problema, dati, modifica,
-  motivazione, risultato atteso, controindicazioni). Include l'**analisi dell'andamento
-  per singolo esercizio** (regressione → riduzione volume, progressione solida → nessun
-  cambio): non interpreta ogni stagnazione come richiesta di più volume.
+  motivazione, risultato atteso, controindicazioni). `LongitudinalCoachEngine` combina
+  almeno due settimane nutrizionali con trend del peso/vita, aderenza, prestazioni,
+  recupero e dolore: distingue progressione, stagnazione e regressione, blocca le
+  modifiche con aderenza insufficiente e propone azioni concrete su calorie, volume o
+  deload. Le variazioni caloriche scalano target e grammature in una transazione Room,
+  rispettano limiti di sicurezza e sono annullabili. Gli esiti reali delle modifiche
+  applicate vengono rivalutati nel check-in successivo e memorizzati nello storico.
+  Include l'**analisi dell'andamento per singolo esercizio** (regressione → riduzione
+  volume, progressione solida → nessun cambio): non interpreta ogni stagnazione come
+  richiesta di più volume.
 - `BudgetEngine` – costo reale del piano da grammature × prezzo, quota pro capite per budget
   condivisi, stima parziale dichiarata quando mancano prezzi, convenienza per grammo di
   proteine.

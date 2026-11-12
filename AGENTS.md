@@ -53,16 +53,17 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
 - **Integrazione**: le funzionalità nutrizionali (piano, sostituzioni, spesa, diario)
   condividono lo stesso database alimentare e gli stessi identificativi del piano. Non
   creare moduli indipendenti.
-- **Room**: DB version attuale **6**. Aggiungendo entita/DAO ricordarsi di importarli in
+- **Room**: DB version attuale **10**. Aggiungendo entita/DAO ricordarsi di importarli in
   `FitCoachDatabase.kt` (un import mancante causa `[ksp] MissingType`), registrare la
   migrazione in `Migrations.kt` e i mapper in `Mappers.kt`. Lo schema esportato sta in
-  `app/schemas/`.
+  `app/schemas/`. La v10 aggiunge lo storico degli esiti delle modifiche del coach.
 - **UI**: usare i componenti condivisi in `ui/components` (`SectionCard`, `SectionHeader`,
   `StatTile`, `MacroBar`, `Pill`, `EmptyState`, `LoadingBox`) e i colori del tema
   (`Emerald`, `CarbsColor`, `TextSecondary`, ...). Le schermate sono `LazyColumn`.
 - **Gate di generazione**: nessun piano si genera senza anamnesi confermata
   (`UserProfile.isAnamnesisReady`). `GenerateProgramsUseCase` ritorna
   `Result.AnamnesisNotConfirmed`. La dashboard reindirizza all'anamnesi.
+- **Coach longitudinale**: `LongitudinalCoachEngine` richiede almeno 2 settimane di aderenza nutrizionale e 3 settimane di medie peso affidabili. `CoachActionExecutor` applica in transazione gli aggiustamenti calorici alle grammature del piano e salva un payload di rollback; gli esiti vengono valutati nei check-in successivi.
 - **Fonti esterne**: la ricerca alimentare (`FoodSearchRepository`) usa Open Food Facts e
   USDA FoodData Central con URL completi via Retrofit `@Url`. I test di mappatura DTO stanno
   in `data/repository/FoodSearchMappingTest.kt` (nessuna rete: parsing reale delle DTO).

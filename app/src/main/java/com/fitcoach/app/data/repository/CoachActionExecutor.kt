@@ -5,11 +5,42 @@ import com.fitcoach.app.data.local.FitCoachDatabase
 import com.fitcoach.app.domain.coach.CoachAction
 import com.fitcoach.app.domain.model.ChangeStatus
 import com.fitcoach.app.domain.model.ProgramChange
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import kotlin.math.roundToInt
 import javax.inject.Inject
 import javax.inject.Singleton
+
+@Serializable
+private data class NutritionScaleSnapshot(
+    val planId: Long,
+    val weeklyCalories: Double,
+    val weeklyKcalBalance: Double,
+    val days: List<NutritionDaySnapshot>,
+    val entries: List<NutritionEntrySnapshot>
+)
+
+@Serializable
+private data class NutritionDaySnapshot(
+    val id: Long,
+    val kcal: Double,
+    val protein: Double,
+    val carbs: Double,
+    val fat: Double
+)
+
+@Serializable
+private data class NutritionEntrySnapshot(
+    val id: Long,
+    val grams: Double,
+    val kcal: Double,
+    val protein: Double,
+    val carbs: Double,
+    val fat: Double
+)
+
 
 /** Esito dell'applicazione (o dell'annullamento) di una proposta di modifica. */
 sealed interface ApplyResult {
@@ -30,6 +61,7 @@ class CoachActionExecutor @Inject constructor(
     private val json: Json
 ) {
     private val entryDao = db.mealEntryDao()
+    private val mealDao = db.mealDao()
     private val plannedDao = db.plannedExerciseDao()
     private val dayDao = db.nutritionDayDao()
     private val planDao = db.nutritionPlanDao()
@@ -58,6 +90,7 @@ class CoachActionExecutor @Inject constructor(
                     CoachAction.ACTION_SUBSTITUTE_EXERCISE -> applyExerciseSubstitution(action)
                     CoachAction.ACTION_MOVE_WORKOUT -> applyMoveWorkout(action)
                     CoachAction.ACTION_ADJUST_CALORIES -> applyCalorieAdjustment(action)
+                    CoachAction.ACTION_ADJUST_VOLUME -> applyVolumeAdjustment(action)
                     CoachAction.ACTION_DELOAD -> applyDeload(action)
                     else -> throw IllegalArgumentException("Azione non supportata: ${action.action}")
                 }
@@ -120,6 +153,21 @@ class CoachActionExecutor @Inject constructor(
                     )
                 )
             } ?: throw IllegalStateException("Piano non trovato.")
+            "PLAN_SCALE" -> {
+                val snapshot = json.decodeFromString<NutritionScaleSnapshot>(revert.require("snapshot"))
+                val plan = planDao.getById(snapshot.planId)
+                    ?: throw IllegalStateException("Piano non trovato.")
+                planDao.update(plan.copy(
+                    weeklyCalories = snapshot.weeklyCalories,
+                    weeklyKcalBalance = snapshot.weeklyKcalBalance
+                ))
+                snapshot.days.forEach { day ->
+                    dayDao.updateTargets(day.id, day.kcal, day.protein, day.carbs, day.fat)
+                }
+                snapshot.entries.forEach { entry ->
+                    entryDao.updateEntry(entry.id, entry.grams, entry.kcal, entry.protein, entry.carbs, entry.fat)
+                }
+            }
             "WORKOUT_DAY_INDEX" -> dayDao.updateWorkoutDayIndex(
                 id = revert.require("dayId").toLong(),
                 workoutDayIndex = revert["workoutDayIndex"]?.toIntOrNull()
@@ -192,14 +240,64 @@ class CoachActionExecutor @Inject constructor(
         val planId = action.payload.require("planId").toLong()
         val plan = planDao.getById(planId) ?: throw IllegalArgumentException("Piano non trovato.")
         val newWeekly = action.payload.require("weeklyKcal").toDouble()
-        val newBalance = action.payload["weeklyBalance"]?.toDoubleOrNull() ?: 0.0
-        planDao.update(plan.copy(weeklyCalories = newWeekly, weeklyKcalBalance = newBalance))
-        return mapOf(
-            "kind" to "PLAN_CALORIES",
-            "planId" to planId.toString(),
-            "weeklyCalories" to plan.weeklyCalories.toString(),
-            "weeklyKcalBalance" to plan.weeklyKcalBalance.toString()
+        require(newWeekly > 0.0) { "Il target calorico deve essere positivo." }
+        val ratio = newWeekly / plan.weeklyCalories
+        require(ratio in 0.90..1.10) { "La variazione calorica massima è del 10%." }
+        if (plan.bmr > 0.0) {
+            require(newWeekly / 7.0 >= plan.bmr * 0.85) { "Il target scenderebbe sotto la soglia di sicurezza." }
+        }
+
+        val days = dayDao.getForPlan(planId)
+        val entries = days.flatMap { day ->
+            mealDao.getForDay(day.id).flatMap { meal -> entryDao.getForMeal(meal.id) }
+        }
+        val snapshot = NutritionScaleSnapshot(
+            planId = planId,
+            weeklyCalories = plan.weeklyCalories,
+            weeklyKcalBalance = plan.weeklyKcalBalance,
+            days = days.map { NutritionDaySnapshot(it.id, it.targetKcal, it.targetProtein, it.targetCarbs, it.targetFat) },
+            entries = entries.map { NutritionEntrySnapshot(it.id, it.grams, it.kcal, it.protein, it.carbs, it.fat) }
         )
+        val newBalance = newWeekly - plan.tdee * 7.0
+        planDao.update(plan.copy(weeklyCalories = newWeekly, weeklyKcalBalance = newBalance))
+        days.forEach { day ->
+            dayDao.updateTargets(
+                day.id,
+                day.targetKcal * ratio,
+                day.targetProtein * ratio,
+                day.targetCarbs * ratio,
+                day.targetFat * ratio
+            )
+        }
+        entries.forEach { entry ->
+            entryDao.updateEntry(
+                entry.id,
+                entry.grams * ratio,
+                entry.kcal * ratio,
+                entry.protein * ratio,
+                entry.carbs * ratio,
+                entry.fat * ratio
+            )
+        }
+        return mapOf(
+            "kind" to "PLAN_SCALE",
+            "snapshot" to json.encodeToString(NutritionScaleSnapshot.serializer(), snapshot)
+        )
+    }
+
+    private suspend fun applyVolumeAdjustment(action: CoachAction): Map<String, String> {
+        val mesocycleId = action.payload.require("mesocycleId").toLong()
+        val reduction = action.payload["volumeReductionPercent"]?.toDoubleOrNull() ?: 20.0
+        require(reduction in -30.0..80.0) { "Variazione volume fuori dai limiti." }
+        val result = mutableMapOf("kind" to "PLANNED_SETS", "mesocycleId" to mesocycleId.toString())
+        workoutDayDao.getForMesocycle(mesocycleId).forEach { day ->
+            plannedDao.getForDay(day.id).forEach { exercise ->
+                val updated = (exercise.sets * (1.0 - reduction / 100.0)).roundToInt().coerceIn(1, 30)
+                result["sets_${exercise.id}"] = exercise.sets.toString()
+                plannedDao.updateSets(exercise.id, updated)
+            }
+        }
+        return result
     }
 
     private suspend fun applyDeload(action: CoachAction): Map<String, String> {

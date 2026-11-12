@@ -142,8 +142,9 @@ class WorkoutRepository @Inject constructor(
         val byDay = planned.groupBy { it.workoutDayId }
         val base = days.map { it.toDomain(byDay[it.id]?.map { p -> p.toDomain() } ?: emptyList()) }
         val week = weekStartEpochDay ?: LocalDate.now().toEpochDay().let { it - Math.floorMod(it + 3, 7) }
-        val overrides = scheduleOverrideDao.getForWeek(week).filter { !it.permanent }
-        val targets = overrides.associate { it.workoutDayId to it.targetDayIndex }
+        val temporary = scheduleOverrideDao.getForWeek(week).filter { !it.permanent }
+        val permanent = scheduleOverrideDao.getPermanent()
+        val targets = (permanent + temporary).associate { it.workoutDayId to it.targetDayIndex }
         return base.map { day -> day.copy(dayIndex = targets[day.id] ?: day.dayIndex) }
     }
 
@@ -229,6 +230,24 @@ class WorkoutRepository @Inject constructor(
                     )
                 )
             }
+        } else {
+            // Una modifica permanente scambia anche il giorno occupato, evitando due sedute nello stesso giorno.
+            scheduleOverrideDao.deletePermanent(dayId)
+            sibling?.let {
+                scheduleOverrideDao.deletePermanent(it.id)
+                moveWorkoutDay(it.id, day.dayIndex)
+                scheduleOverrideDao.insert(
+                    com.fitcoach.app.data.local.entity.WorkoutScheduleOverrideEntity(
+                        planId = plan.id,
+                        workoutDayId = it.id,
+                        weekStartEpochDay = weekStartEpochDay,
+                        targetDayIndex = day.dayIndex,
+                        permanent = true,
+                        note = "Scambio permanente"
+                    )
+                )
+            }
+            moveWorkoutDay(dayId, targetDayIndex)
         }
         scheduleOverrideDao.insert(
             com.fitcoach.app.data.local.entity.WorkoutScheduleOverrideEntity(
@@ -240,7 +259,6 @@ class WorkoutRepository @Inject constructor(
                 note = note
             )
         )
-        if (permanent) moveWorkoutDay(dayId, targetDayIndex)
         true
     }
 

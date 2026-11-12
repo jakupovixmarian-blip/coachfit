@@ -98,7 +98,7 @@ import com.fitcoach.app.data.local.entity.ProgressPhotoEntity
         ProgressPhotoEntity::class,
         FreeSessionExerciseEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

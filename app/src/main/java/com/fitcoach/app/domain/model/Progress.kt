@@ -71,6 +71,10 @@ data class ProgramChange(
     val payloadJson: String = "",
     val revertPayloadJson: String = "",
     val appliedAt: Long? = null,
+    val outcomeStatus: String = "PENDING",
+    val evaluatedAt: Long? = null,
+    val actualOutcome: String = "",
+    val followUpAction: String = "",
     val source: String = "ADAPTIVE_ENGINE"
 )
 

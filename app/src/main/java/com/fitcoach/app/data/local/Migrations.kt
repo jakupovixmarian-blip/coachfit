@@ -243,3 +243,12 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_free_session_exercises_sessionId` ON `free_session_exercises` (`sessionId`)")
     }
 }
+
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE program_changes ADD COLUMN outcomeStatus TEXT NOT NULL DEFAULT 'PENDING'")
+        db.execSQL("ALTER TABLE program_changes ADD COLUMN evaluatedAt INTEGER")
+        db.execSQL("ALTER TABLE program_changes ADD COLUMN actualOutcome TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE program_changes ADD COLUMN followUpAction TEXT NOT NULL DEFAULT ''")
+    }
+}

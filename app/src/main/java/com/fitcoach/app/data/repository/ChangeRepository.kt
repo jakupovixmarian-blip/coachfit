@@ -19,11 +19,16 @@ class ChangeRepository @Inject constructor(
 
     suspend fun getAll(): List<ProgramChange> = dao.getAll().map { it.toDomain() }
     suspend fun getById(id: Long): ProgramChange? = dao.getById(id)?.toDomain()
+    suspend fun getAppliedPendingOutcome(): List<ProgramChange> = dao.getAppliedPendingOutcome().map { it.toDomain() }
 
     suspend fun add(change: ProgramChange): Long = dao.insert(change.toEntity())
 
     suspend fun updateStatus(id: Long, status: ChangeStatus) =
         dao.updateStatus(id, status, if (status == ChangeStatus.APPLIED) System.currentTimeMillis() else null)
+
+
+    suspend fun recordOutcome(id: Long, status: String, actualOutcome: String, followUpAction: String) =
+        dao.updateOutcome(id, status, System.currentTimeMillis(), actualOutcome, followUpAction)
 
     suspend fun update(change: ProgramChange) = dao.update(change.toEntity())
 }

@@ -435,6 +435,9 @@ interface WorkoutScheduleOverrideDao {
 
     @Query("DELETE FROM workout_schedule_overrides WHERE workoutDayId = :dayId AND weekStartEpochDay = :weekStart AND permanent = 0")
     suspend fun deleteTemporary(dayId: Long, weekStart: Long)
+
+    @Query("DELETE FROM workout_schedule_overrides WHERE workoutDayId = :dayId AND permanent = 1")
+    suspend fun deletePermanent(dayId: Long)
 }
 
 @Dao
@@ -515,6 +518,9 @@ interface ProgramChangeDao {
     @Query("SELECT * FROM program_changes ORDER BY createdAt DESC")
     suspend fun getAll(): List<ProgramChangeEntity>
 
+    @Query("SELECT * FROM program_changes WHERE status = 'APPLIED' AND outcomeStatus = 'PENDING' AND appliedAt IS NOT NULL ORDER BY appliedAt")
+    suspend fun getAppliedPendingOutcome(): List<ProgramChangeEntity>
+
     @Query("SELECT * FROM program_changes WHERE id = :id")
     suspend fun getById(id: Long): ProgramChangeEntity?
 
@@ -526,6 +532,9 @@ interface ProgramChangeDao {
 
     @Query("UPDATE program_changes SET status = :status, appliedAt = :appliedAt WHERE id = :id")
     suspend fun updateStatus(id: Long, status: com.fitcoach.app.domain.model.ChangeStatus, appliedAt: Long?)
+
+    @Query("UPDATE program_changes SET outcomeStatus = :status, evaluatedAt = :evaluatedAt, actualOutcome = :actualOutcome, followUpAction = :followUpAction WHERE id = :id")
+    suspend fun updateOutcome(id: Long, status: String, evaluatedAt: Long, actualOutcome: String, followUpAction: String)
 }
 
 @Dao

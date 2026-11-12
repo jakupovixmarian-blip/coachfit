@@ -198,7 +198,9 @@ object Mappers {
         title = title, situation = situation, problem = problem, dataUsed = dataUsed,
         proposedChange = proposedChange, rationale = rationale, expectedOutcome = expectedOutcome,
         contraindications = contraindications, payloadJson = payloadJson,
-        revertPayloadJson = revertPayloadJson, appliedAt = appliedAt, source = source
+        revertPayloadJson = revertPayloadJson, appliedAt = appliedAt,
+        outcomeStatus = outcomeStatus, evaluatedAt = evaluatedAt, actualOutcome = actualOutcome,
+        followUpAction = followUpAction, source = source
     )
 
     fun ProgramChange.toEntity() = ProgramChangeEntity(
@@ -206,7 +208,9 @@ object Mappers {
         title = title, situation = situation, problem = problem, dataUsed = dataUsed,
         proposedChange = proposedChange, rationale = rationale, expectedOutcome = expectedOutcome,
         contraindications = contraindications, payloadJson = payloadJson,
-        revertPayloadJson = revertPayloadJson, appliedAt = appliedAt, source = source
+        revertPayloadJson = revertPayloadJson, appliedAt = appliedAt,
+        outcomeStatus = outcomeStatus, evaluatedAt = evaluatedAt, actualOutcome = actualOutcome,
+        followUpAction = followUpAction, source = source
     )
 
     fun ChatMessageEntity.toDomain() = ChatMessage(
