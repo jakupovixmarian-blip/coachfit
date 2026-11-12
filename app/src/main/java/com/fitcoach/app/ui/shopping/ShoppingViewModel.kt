@@ -53,6 +53,8 @@ class ShoppingViewModel @Inject constructor(
 
     private fun observePlan() {
         viewModelScope.launch {
+            // Carica anche lo stato già persistito prima di attendere le invalidazioni Room.
+            if (nutritionRepository.getActivePlan() != null) regenerateAndRefresh()
             nutritionRepository.activePlanFlow.collect { plan ->
                 if (plan == null) {
                     _state.value = _state.value.copy(loading = false, items = emptyList())

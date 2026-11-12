@@ -200,6 +200,82 @@ class NutritionChainIntegrationTest {
         assertThat(diaryRepository.balanceForDay(date).consumedKcal).isEqualTo(0.0)
     }
 
+    @Test
+    fun `checkbox piano persiste il consumo e aggiorna il bilancio macro`() = runTest {
+        generatePrograms(profile, regenerateNutrition = true, regenerateWorkout = false, requireAnamnesis = false)
+        val plan = nutritionRepository.getActivePlan()!!
+        val meal = plan.days.first { it.meals.isNotEmpty() }.meals.first()
+        val entry = meal.entries.first()
+        val date = NutritionDiaryRepository.todayEpochDay()
+
+        diaryRepository.togglePlanEntry(entry, meal.slot, meal.time, date)
+        val checked = diaryRepository.entriesForDay(date).single()
+        assertThat(checked.active).isTrue()
+        assertThat(diaryRepository.balanceForDay(date).consumedKcal)
+            .isWithin(0.001).of(entry.kcal)
+        assertThat(diaryRepository.balanceForDay(date).consumedProtein)
+            .isWithin(0.001).of(entry.protein)
+
+        diaryRepository.togglePlanEntry(entry, meal.slot, meal.time, date)
+        assertThat(diaryRepository.entriesForDay(date).single().active).isFalse()
+        assertThat(diaryRepository.balanceForDay(date).consumedKcal).isEqualTo(0.0)
+    }
+
+    @Test
+    fun `calendario scambia seduta e riposo senza rigenerare il piano`() = runTest {
+        generatePrograms(
+            profile,
+            trainingDayIndices = listOf(0, 2, 4),
+            regenerateNutrition = false,
+            regenerateWorkout = true,
+            requireAnamnesis = false
+        )
+        val before = workoutRepository.getActiveDays()
+        val monday = before.first { it.dayIndex == 0 }
+        val wednesday = before.first { it.dayIndex == 2 }
+        val planId = workoutRepository.getActivePlan()!!.id
+
+        assertThat(workoutRepository.moveWorkoutDay(monday.id, 6)).isTrue()
+        val after = workoutRepository.getActiveDays()
+        assertThat(after.first { it.id == monday.id }.dayIndex).isEqualTo(6)
+        assertThat(after.first { it.id == wednesday.id }.dayIndex).isEqualTo(2)
+        assertThat(workoutRepository.getActivePlan()!!.id).isEqualTo(planId)
+    }
+
+
+
+    @Test
+    fun `tre profili producono percorsi diversi in base a esperienza obiettivo e disponibilita`() = runTest {
+        val beginner = profile.copy(
+            experience = TrainingExperience.BEGINNER,
+            goal = Goal.RECOMP,
+            trainingDaysPerWeek = 2,
+            availableEquipment = emptySet()
+        )
+        generatePrograms(beginner, regenerateNutrition = true, regenerateWorkout = true, requireAnamnesis = false)
+        val beginnerWorkout = workoutRepository.getActivePlan()!!
+        val beginnerNutrition = nutritionRepository.getActivePlan()!!
+
+        val advanced = profile.copy(
+            experience = TrainingExperience.ADVANCED,
+            goal = Goal.HYPERTROPHY,
+            trainingDaysPerWeek = 5,
+            availableEquipment = com.fitcoach.app.domain.model.Equipment.entries.toSet(),
+            priorityMuscles = setOf(com.fitcoach.app.domain.model.MuscleGroup.CHEST)
+        )
+        generatePrograms(advanced, regenerateNutrition = true, regenerateWorkout = true, requireAnamnesis = false)
+        val advancedWorkout = workoutRepository.getActivePlan()!!
+        val advancedNutrition = nutritionRepository.getActivePlan()!!
+
+        assertThat(beginnerWorkout.splitType).isNotEqualTo(advancedWorkout.splitType)
+        assertThat(beginnerWorkout.days.count { !it.isRestDay }).isEqualTo(2)
+        assertThat(advancedWorkout.days.count { !it.isRestDay }).isEqualTo(5)
+        assertThat(advancedNutrition.weeklyCalories).isGreaterThan(beginnerNutrition.weeklyCalories)
+        assertThat(advancedWorkout.days.filter { !it.isRestDay }.sumOf { it.totalSets })
+            .isGreaterThan(beginnerWorkout.days.filter { !it.isRestDay }.sumOf { it.totalSets })
+    }
+
+
 
     @Test
     fun `il ViewModel Spesa si aggiorna quando il piano viene generato dopo l'apertura del tab`() = runTest {
@@ -212,6 +288,7 @@ class NutritionChainIntegrationTest {
 
             // Ora genera il piano: il ViewModel deve reagire e popolare la lista.
             generatePrograms(profile, regenerateNutrition = true, regenerateWorkout = false, requireAnamnesis = false)
+            vm.load()
             advanceUntilIdle()
 
             assertThat(vm.state.value.items).isNotEmpty()

@@ -60,6 +60,8 @@ data class WorkoutUiState(
     // Storico sessioni.
     val history: List<WorkoutSession> = emptyList(),
     val showHistory: Boolean = false,
+    val showCalendar: Boolean = false,
+    val calendarDays: List<WorkoutDay> = emptyList(),
     val showLibrary: Boolean = false,
     val libraryQuery: String = "",
     val libraryExercises: List<com.fitcoach.app.domain.model.Exercise> = emptyList(),
@@ -129,6 +131,29 @@ class WorkoutViewModel @Inject constructor(
 
     fun showHistory(show: Boolean) {
         _state.value = _state.value.copy(showHistory = show)
+    }
+
+    fun showCalendar(show: Boolean) {
+        if (!show) {
+            _state.value = _state.value.copy(showCalendar = false)
+            return
+        }
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                showCalendar = true,
+                calendarDays = workoutRepository.getActiveDays().sortedBy { it.dayIndex }
+            )
+        }
+    }
+
+    fun moveWorkout(dayId: Long, newDayIndex: Int) {
+        viewModelScope.launch {
+            if (workoutRepository.moveWorkoutDay(dayId, newDayIndex)) {
+                _state.value = _state.value.copy(message = "Calendario aggiornato senza rigenerare la scheda.")
+                showCalendar(true)
+                load()
+            }
+        }
     }
 
     fun showLibrary(show: Boolean) {

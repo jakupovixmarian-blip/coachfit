@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.PlayArrow
@@ -48,6 +49,7 @@ import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.ExercisePerformance
 import com.fitcoach.app.domain.model.IntensityTechnique
 import com.fitcoach.app.domain.model.PlannedExercise
+import com.fitcoach.app.domain.model.WorkoutDay
 import com.fitcoach.app.domain.model.WorkoutSet
 import com.fitcoach.app.ui.components.EmptyState
 import com.fitcoach.app.ui.components.LoadingBox
@@ -118,6 +120,9 @@ fun WorkoutScreen(
             ) {
                 SectionHeader("Allenamento", plan.splitType.label)
                 Row {
+                    IconButton(onClick = { viewModel.showCalendar(true) }) {
+                        Icon(Icons.Filled.EventNote, contentDescription = "Calendario allenamenti", tint = TextSecondary)
+                    }
                     IconButton(onClick = { viewModel.showLibrary(true) }) {
                         Icon(Icons.Filled.MenuBook, contentDescription = "Libreria esercizi", tint = TextSecondary)
                     }
@@ -306,6 +311,14 @@ fun WorkoutScreen(
         )
     }
 
+    if (state.showCalendar) {
+        WorkoutCalendarDialog(
+            days = state.calendarDays,
+            onMove = viewModel::moveWorkout,
+            onDismiss = { viewModel.showCalendar(false) }
+        )
+    }
+
     if (state.showLibrary) {
         ExerciseLibraryDialog(
             exercises = state.libraryExercises,
@@ -355,6 +368,50 @@ private fun SessionHistoryDialog(
         confirmButton = { TextButton(onClick = onDismiss) { Text("Chiudi") } }
     )
 }
+
+@Composable
+private fun WorkoutCalendarDialog(
+    days: List<WorkoutDay>,
+    onMove: (Long, Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Calendario allenamenti") },
+        text = {
+            LazyColumn {
+                items(days.size) { index ->
+                    val day = days[index]
+                    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                        Text(
+                            "${weekdayNames[day.dayIndex]} · ${day.title}",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            if (day.isRestDay) "Giorno di riposo" else "${day.totalSets} serie programmate",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            weekdayNames.forEachIndexed { targetIndex, label ->
+                                TextButton(
+                                    onClick = { onMove(day.id, targetIndex) },
+                                    enabled = targetIndex != day.dayIndex
+                                ) { Text(label.take(2)) }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Chiudi") } }
+    )
+}
+
 
 
 @Composable

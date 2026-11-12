@@ -12,7 +12,9 @@ import com.fitcoach.app.domain.model.WeeklyNutritionSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -43,23 +45,32 @@ class DiaryViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(DiaryUiState())
     val state: StateFlow<DiaryUiState> = _state.asStateFlow()
+    private var observeJob: Job? = null
 
     init {
         load()
     }
 
+    /**
+     * Observa Room invece di fare una lettura una tantum: il check del piano
+     * viene così riflesso subito nel Diario anche quando cambia da un'altra schermata.
+     */
     fun load() {
-        viewModelScope.launch {
-            val epochDay = _state.value.epochDay
-            val balance = diaryRepository.balanceForDay(epochDay)
-            val entries = diaryRepository.entriesForDay(epochDay)
-            val weekly = diaryRepository.weeklySummary(NutritionDiaryRepository.weekStart(epochDay))
-            _state.value = _state.value.copy(
-                loading = false,
-                balance = balance,
-                entries = entries,
-                weekly = weekly
-            )
+        observeJob?.cancel()
+        val epochDay = _state.value.epochDay
+        observeJob = viewModelScope.launch {
+            suspend fun publish(entries: List<DiaryEntry>) {
+                _state.value = _state.value.copy(
+                    loading = false,
+                    balance = diaryRepository.balanceForDay(epochDay),
+                    entries = entries,
+                    weekly = diaryRepository.weeklySummary(NutritionDiaryRepository.weekStart(epochDay))
+                )
+            }
+
+            // Pubblica subito lo stato corrente, poi resta in ascolto delle invalidazioni Room.
+            publish(diaryRepository.entriesForDay(epochDay))
+            diaryRepository.observeForDay(epochDay).collectLatest { entries -> publish(entries) }
         }
     }
 

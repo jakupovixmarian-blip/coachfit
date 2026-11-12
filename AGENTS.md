@@ -46,6 +46,8 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
   stanno in `domain/` come `object` puri e testabili. L'AI non calcola e non scrive sul DB:
   interpreta e propone, e le modifiche sono applicate solo dopo conferma
   (`CoachActionExecutor`).
+- `DiaryViewModel` pubblica subito la lettura Room e osserva `observeForDay`: il diario deve aggiornarsi anche se l'utente spunta un pasto da Alimentazione prima di aprire Diario. `NutritionDiaryRepository.togglePlanEntry` mantiene una sola voce per coppia piano/data e usa `active` per il consumo effettivo.
+- Il calendario allenamenti usa le sette `WorkoutDayEntity` (incluse quelle di riposo): `WorkoutRepository.moveWorkoutDay` scambia gli indici senza creare una nuova scheda.
 - **Nessun dato inventato**: i valori nutrizionali vengono da `FoodSeedData` (CREA/USDA).
 - **Integrazione**: le funzionalità nutrizionali (piano, sostituzioni, spesa, diario)
   condividono lo stesso database alimentare e gli stessi identificativi del piano. Non

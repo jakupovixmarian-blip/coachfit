@@ -163,6 +163,19 @@ class WorkoutRepository @Inject constructor(
         )
     }
 
+    /** Sposta una seduta nel calendario senza rigenerare il piano. */
+    suspend fun moveWorkoutDay(dayId: Long, newDayIndex: Int): Boolean = db.withTransaction {
+        if (newDayIndex !in 0..6) return@withTransaction false
+        val day = dayDao.getById(dayId) ?: return@withTransaction false
+        val siblings = dayDao.getForMesocycle(day.mesocycleId)
+        val target = siblings.firstOrNull { it.dayIndex == newDayIndex && it.id != dayId }
+        if (target != null) {
+            dayDao.insertAll(listOf(day.copy(dayIndex = 7), target.copy(dayIndex = day.dayIndex)))
+        }
+        dayDao.insertAll(listOf(day.copy(dayIndex = newDayIndex)))
+        true
+    }
+
     suspend fun updateTarget(plannedId: Long, weight: Double?, reps: Int?) =
         plannedDao.updateTarget(plannedId, weight, reps)
 
