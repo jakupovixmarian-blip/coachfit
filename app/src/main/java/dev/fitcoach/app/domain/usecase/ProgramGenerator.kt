@@ -122,7 +122,7 @@ object ProgramGenerator {
                 sessions += picks
                 programDays += ProgramDay(
                     dayIndex = dayIndex,
-                    label = labelFor(focus, dayIndex, split),
+                    label = labelFor(focus, dayIndex, days, level),
                     focus = focus,
                     exercises = picks.map { planned ->
                         PlannedExercise(
@@ -229,40 +229,52 @@ object ProgramGenerator {
         )
     }
 
-    private fun labelFor(focus: List<MuscleGroup>, dayIndex: Int, split: Map<Int, List<MuscleGroup>>): String {
-        val hasUpper = focus.any { it in UPPER }
-        val hasLower = focus.any { it in LOWER }
-        val dayLetter = ('A' + dayIndex)
-        return when {
-            focus.contains(MuscleGroup.FULL_BODY) -> "Giorno $dayLetter - Total body"
-            hasUpper && hasLower -> "Giorno $dayLetter - Total body"
-            hasUpper -> "Giorno $dayLetter - Upper ${ordinalOf(focus, split, UPPER)}"
-            hasLower -> "Giorno $dayLetter - Lower ${ordinalOf(focus, split, LOWER)}"
-            else -> "Giorno $dayLetter - ${focus.firstOrNull()?.label ?: "Seduta"}"
-        }
-    }
-
-    private fun ordinalOf(
+    /**
+     * Human readable name of a session. The split is named after what the session
+     * actually trains, so the calendar shows "Spinta", "Trazione", "Gambe" and not
+     * one repeated generic label.
+     */
+    private fun labelFor(
         focus: List<MuscleGroup>,
-        split: Map<Int, List<MuscleGroup>>,
-        family: Set<MuscleGroup>
-    ): Int {
-        val matching = split.entries
-            .filter { entry -> entry.value.any { it in family } && entry.value.none { it in otherFamily(family) } }
-            .sortedBy { it.key }
-        val position = matching.indexOfFirst { it.value == focus }
-        return if (position >= 0) position + 1 else 1
+        dayIndex: Int,
+        days: Int,
+        level: ExperienceLevel
+    ): String {
+        val dayLetter = 'A' + dayIndex
+        val name = splitName(days, level, dayIndex, focus)
+        return "Giorno $dayLetter - $name"
     }
 
-    private fun otherFamily(family: Set<MuscleGroup>) = if (family == UPPER) LOWER else UPPER
-
-    private val UPPER = setOf(
-        MuscleGroup.CHEST, MuscleGroup.BACK, MuscleGroup.SHOULDERS,
-        MuscleGroup.BICEPS, MuscleGroup.TRICEPS, MuscleGroup.FOREARMS
-    )
-    private val LOWER = setOf(
-        MuscleGroup.QUADS, MuscleGroup.HAMSTRINGS, MuscleGroup.GLUTES, MuscleGroup.CALVES
-    )
+    private fun splitName(
+        days: Int,
+        level: ExperienceLevel,
+        dayIndex: Int,
+        focus: List<MuscleGroup>
+    ): String = when (days) {
+        1 -> "Total body"
+        2 -> if (dayIndex == 0) "Upper" else "Lower"
+        3 -> if (level == ExperienceLevel.BEGINNER) {
+            listOf("Total body A", "Total body B", "Total body C").getOrElse(dayIndex) { "Total body" }
+        } else {
+            listOf("Spinta", "Trazione", "Gambe").getOrElse(dayIndex) { "Total body" }
+        }
+        4 -> listOf("Upper 1", "Lower 1", "Upper 2", "Lower 2").getOrElse(dayIndex) { "Seduta" }
+        5 -> listOf(
+            "Petto e tricipiti",
+            "Schiena e bicipiti",
+            "Quadricipiti e polpacci",
+            "Spalle e core",
+            "Femorali e glutei"
+        ).getOrElse(dayIndex) { "Seduta" }
+        else -> listOf(
+            "Petto e tricipiti",
+            "Schiena e bicipiti",
+            "Quadricipiti e polpacci",
+            "Spalle e core",
+            "Femorali e glutei",
+            "Total body leggero"
+        ).getOrElse(dayIndex) { focus.firstOrNull()?.label ?: "Seduta" }
+    }
 
     // ---- exercise selection ---------------------------------------------
 

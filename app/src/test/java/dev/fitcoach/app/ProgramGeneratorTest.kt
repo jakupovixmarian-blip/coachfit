@@ -10,7 +10,6 @@ import dev.fitcoach.app.domain.model.UserProfile
 import dev.fitcoach.app.domain.usecase.ExerciseWithSets
 import dev.fitcoach.app.domain.usecase.GeneratedProgram
 import dev.fitcoach.app.domain.usecase.ProgramGenerator
-import dev.fitcoach.app.domain.usecase.ProgramIssueType
 import dev.fitcoach.app.domain.usecase.ProgramValidator
 import dev.fitcoach.app.domain.usecase.VolumeCalculator
 import org.junit.Assert.assertEquals
@@ -201,6 +200,28 @@ class ProgramGeneratorTest {
                 assertTrue(planned.restSeconds > 0)
             }
         }
+    }
+
+    @Test
+    fun `three non beginner days are named push pull legs`() {
+        val program = ProgramGenerator.generate(
+            profile(3, level = ExperienceLevel.INTERMEDIATE), catalog
+        )
+        assertEquals(
+            listOf("Giorno A - Spinta", "Giorno B - Trazione", "Giorno C - Gambe"),
+            program.days.map { it.label }
+        )
+    }
+
+    @Test
+    fun `four and five day programs have distinct descriptive labels`() {
+        assertEquals(
+            listOf("Giorno A - Upper 1", "Giorno B - Lower 1", "Giorno C - Upper 2", "Giorno D - Lower 2"),
+            ProgramGenerator.generate(profile(4), catalog).days.map { it.label }
+        )
+        val five = ProgramGenerator.generate(profile(5), catalog).days.map { it.label }
+        assertEquals(5, five.distinct().size)
+        assertTrue(five.all { it.startsWith("Giorno ") })
     }
 
     @Test
