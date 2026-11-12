@@ -110,6 +110,15 @@ data class WeeklyWeightStats(
     val maxWeightKg: Double?
 )
 
+data class ProgressPhoto(
+    val id: Long = 0,
+    val uri: String,
+    val capturedAt: Long,
+    val pose: String = "",
+    val note: String = "",
+    val consentForAi: Boolean = false
+)
+
 data class WeightTrend(
     val weeklyAverages: List<WeeklyWeightStats>,
     val trendKgPerWeek: Double?,

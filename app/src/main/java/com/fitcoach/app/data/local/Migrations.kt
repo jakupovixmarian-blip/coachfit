@@ -219,3 +219,14 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         )
     }
 }
+
+/** Migrazione schema v6 -> v7: override calendario e riferimenti foto locali. */
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS `workout_schedule_overrides` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `profileId` INTEGER NOT NULL, `planId` INTEGER NOT NULL, `workoutDayId` INTEGER NOT NULL, `weekStartEpochDay` INTEGER NOT NULL, `targetDayIndex` INTEGER NOT NULL, `permanent` INTEGER NOT NULL, `note` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_workout_schedule_overrides_weekStartEpochDay` ON `workout_schedule_overrides` (`weekStartEpochDay`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_workout_schedule_overrides_planId` ON `workout_schedule_overrides` (`planId`)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `progress_photos` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `profileId` INTEGER NOT NULL, `uri` TEXT NOT NULL, `capturedAt` INTEGER NOT NULL, `pose` TEXT NOT NULL, `note` TEXT NOT NULL, `consentForAi` INTEGER NOT NULL)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_progress_photos_capturedAt` ON `progress_photos` (`capturedAt`)")
+    }
+}

@@ -403,6 +403,31 @@ interface ExercisePerformanceDao {
 }
 
 @Dao
+interface WorkoutScheduleOverrideDao {
+    @Query("SELECT * FROM workout_schedule_overrides WHERE weekStartEpochDay = :weekStart ORDER BY createdAt DESC")
+    suspend fun getForWeek(weekStart: Long): List<com.fitcoach.app.data.local.entity.WorkoutScheduleOverrideEntity>
+
+    @Query("SELECT * FROM workout_schedule_overrides WHERE permanent = 1 ORDER BY createdAt DESC")
+    suspend fun getPermanent(): List<com.fitcoach.app.data.local.entity.WorkoutScheduleOverrideEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(item: com.fitcoach.app.data.local.entity.WorkoutScheduleOverrideEntity): Long
+}
+
+@Dao
+interface ProgressPhotoDao {
+    @Query("SELECT * FROM progress_photos ORDER BY capturedAt DESC")
+    fun observeAll(): Flow<List<com.fitcoach.app.data.local.entity.ProgressPhotoEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(item: com.fitcoach.app.data.local.entity.ProgressPhotoEntity): Long
+
+    @Delete
+    suspend fun delete(item: com.fitcoach.app.data.local.entity.ProgressPhotoEntity)
+}
+
+
+@Dao
 interface ProgressDao {
     @Query("SELECT * FROM weight_records ORDER BY dateEpochDay DESC")
     fun observeWeights(): Flow<List<WeightRecordEntity>>

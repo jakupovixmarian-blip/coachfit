@@ -666,3 +666,29 @@ data class PlanVersionEntity(
     val snapshotJson: String,
     val isActive: Boolean = false
 )
+
+// -------------------- CALENDARIO E FOTO PROGRESSI --------------------
+
+@Entity(tableName = "workout_schedule_overrides", indices = [Index("weekStartEpochDay"), Index("planId")])
+data class WorkoutScheduleOverrideEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val profileId: Long = 1L,
+    val planId: Long,
+    val workoutDayId: Long,
+    val weekStartEpochDay: Long,
+    val targetDayIndex: Int,
+    val permanent: Boolean = false,
+    val note: String = "",
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "progress_photos", indices = [Index("capturedAt")])
+data class ProgressPhotoEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val profileId: Long = 1L,
+    val uri: String,
+    val capturedAt: Long = System.currentTimeMillis(),
+    val pose: String = "",
+    val note: String = "",
+    val consentForAi: Boolean = false
+)

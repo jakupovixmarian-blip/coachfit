@@ -42,6 +42,7 @@ class WorkoutRepository @Inject constructor(
     private val sessionDao = db.workoutSessionDao()
     private val setDao = db.workoutSetDao()
     private val perfDao = db.exercisePerformanceDao()
+    private val scheduleOverrideDao = db.workoutScheduleOverrideDao()
 
     val activePlanFlow: Flow<WorkoutPlan?> = planDao.observeActive().map { entity ->
         entity?.let { loadFullPlan(it.id) }
@@ -173,6 +174,33 @@ class WorkoutRepository @Inject constructor(
             dayDao.insertAll(listOf(day.copy(dayIndex = 7), target.copy(dayIndex = day.dayIndex)))
         }
         dayDao.insertAll(listOf(day.copy(dayIndex = newDayIndex)))
+        true
+    }
+
+    /** Registra uno spostamento temporaneo senza alterare il piano storico. */
+    suspend fun saveScheduleOverride(
+        dayId: Long,
+        targetDayIndex: Int,
+        weekStartEpochDay: Long,
+        permanent: Boolean,
+        note: String = ""
+    ): Boolean = db.withTransaction {
+        if (targetDayIndex !in 0..6) return@withTransaction false
+        val day = dayDao.getById(dayId) ?: return@withTransaction false
+        val mesocycle = mesoDao.getForPlan(planDao.getActive()?.id ?: 0L).firstOrNull { it.id == day.mesocycleId }
+            ?: return@withTransaction false
+        val plan = planDao.getById(mesocycle.planId) ?: return@withTransaction false
+        scheduleOverrideDao.insert(
+            com.fitcoach.app.data.local.entity.WorkoutScheduleOverrideEntity(
+                planId = plan.id,
+                workoutDayId = dayId,
+                weekStartEpochDay = weekStartEpochDay,
+                targetDayIndex = targetDayIndex,
+                permanent = permanent,
+                note = note
+            )
+        )
+        if (permanent) moveWorkoutDay(dayId, targetDayIndex)
         true
     }
 

@@ -29,6 +29,8 @@ import com.fitcoach.app.data.local.dao.WorkoutDayDao
 import com.fitcoach.app.data.local.dao.WorkoutPlanDao
 import com.fitcoach.app.data.local.dao.WorkoutSessionDao
 import com.fitcoach.app.data.local.dao.WorkoutSetDao
+import com.fitcoach.app.data.local.dao.WorkoutScheduleOverrideDao
+import com.fitcoach.app.data.local.dao.ProgressPhotoDao
 import com.fitcoach.app.data.local.entity.AiProviderSettingsEntity
 import com.fitcoach.app.data.local.entity.CheckInEntity
 import com.fitcoach.app.data.local.entity.ChatMessageEntity
@@ -57,6 +59,8 @@ import com.fitcoach.app.data.local.entity.WorkoutDayEntity
 import com.fitcoach.app.data.local.entity.WorkoutPlanEntity
 import com.fitcoach.app.data.local.entity.WorkoutSessionEntity
 import com.fitcoach.app.data.local.entity.WorkoutSetEntity
+import com.fitcoach.app.data.local.entity.WorkoutScheduleOverrideEntity
+import com.fitcoach.app.data.local.entity.ProgressPhotoEntity
 
 @Database(
     entities = [
@@ -87,9 +91,11 @@ import com.fitcoach.app.data.local.entity.WorkoutSetEntity
         PlanVersionEntity::class,
         DiaryEntryEntity::class,
         ShoppingItemEntity::class,
-        SubstitutionLogEntity::class
+        SubstitutionLogEntity::class,
+        WorkoutScheduleOverrideEntity::class,
+        ProgressPhotoEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -114,6 +120,9 @@ abstract class FitCoachDatabase : RoomDatabase() {
     abstract fun programChangeDao(): ProgramChangeDao
     abstract fun chatDao(): ChatDao
     abstract fun aiSettingsDao(): AiSettingsDao
+    abstract fun workoutScheduleOverrideDao(): WorkoutScheduleOverrideDao
+    abstract fun progressPhotoDao(): ProgressPhotoDao
+
     abstract fun notificationDao(): NotificationDao
     abstract fun scientificSourceDao(): ScientificSourceDao
     abstract fun planVersionDao(): PlanVersionDao
