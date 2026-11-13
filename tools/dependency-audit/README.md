@@ -27,8 +27,10 @@ trasitiva (netty, guava, protobuf) che non finisce nell'APK.
 Esito attuale, con `app/gradle.lockfile` versionato nel repository:
 
 - **157 pacchetti** risolti nel lockfile, di cui **127 presenti solo come transitive**;
-- **174 pacchetti** esaminati dallo scanner (157 del lockfile + 11 dichiarati solo per
-  compilazione/test + 6 plugin di build letti dal version catalog);
+- **321 pacchetti** esaminati dallo scanner, distribuiti su due grafi distinti: 157 coordinate
+  nel grafo dell'app (`app/gradle.lockfile`), 155 nel classpath del buildscript
+  (`buildscript-gradle.lockfile`), 174 voci nel manifest di audit. La separazione è verificata
+  da `scope_check.py`, non solo dichiarata;
 - **0 vulnerabilità note**, 0 bloccanti.
 
 ## Il lockfile deve restare ristretto alle classpath dell'app
@@ -43,11 +45,28 @@ Se il lockfile viene rigenerato con tutte le configurazioni, va riportato a ques
 1. **Build tooling e test**, per scelta: non entrano nell'APK e quindi non sono nel lockfile
    ristretto. Le 11 coordinate dichiarate solo per ksp/test e i 6 plugin di build restano
    comunque coperte dal manifest, con le versioni del catalogo.
-2. **`build.gradle.kts` di root**: lo scanner segnala che non esiste un file risolto per il
-   buildscript di root. I plugin sono ora nel manifest con le versioni del catalogo, ma un
-   lockfile del buildscript richiede Gradle: è la capacità che manca qui.
+2. **`build.gradle.kts` di root**: il lockfile del buildscript ora esiste
+   (`buildscript-gradle.lockfile`, generato con Gradle 8.11.1) e lo scanner lo legge: le 62
+   segnalazioni citano quel file. Il warning viene comunque emesso perché lo scanner si aspetta
+   un nome o un percorso predefinito diverso: è un limite di policy, non un dato mancante.
 3. Il risultato va letto come "0 vulnerabilità note su ciò che è stato risolto", **non** come
    "progetto pulito": non copre codice sorgente, runtime né vulnerabilità non ancora pubblicate.
+
+## Due grafi, un solo scope: perché 62 segnalazioni non riguardano l'app
+
+`scope_check.py` incrocia i due lockfile e verifica a ogni esecuzione che nessuno dei pacchetti
+segnalati compaia nel grafo dell'app. Esito attuale: app 157 coordinate, buildscript 155, 9
+coordinate condivise (tutte infrastrutturali e senza segnalazioni: jsr305, javax.inject,
+kotlin-stdlib, coroutines, listenablefuture, dagger, annotations), **0 pacchetti segnalati
+nell'app**.
+
+Le segnalazioni stanno nel classpath del buildscript: netty 4.1.93, bouncycastle 1.77, guava
+32.0.1, protobuf-java 3.22.3, commons-io 2.13.0, commons-compress 1.21, jdom2 2.0.6,
+kotlin-gradle-plugin 2.0.21. Sono dipendenze di AGP e Gradle, **non dichiarazioni nostre**: non
+si aggiornano nel catalogo, si aggiornano portando AGP e Gradle a versioni più recenti. Forzare
+qui le versioni senza poter compilare significherebbe pin arbitrari sul toolchain e un lockfile
+disallineato rispetto a quello verificato con `assembleDebug`. Restano quindi visibili e vanno
+affrontate insieme a un aggiornamento del toolchain.
 
 ## Finding noto sul toolchain di build (valutato, non nascosto)
 

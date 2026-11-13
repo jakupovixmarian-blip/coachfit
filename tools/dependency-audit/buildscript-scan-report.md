@@ -19,7 +19,7 @@ Verificato che regga: `./gradlew :app:assembleDebug :app:testDebugUnitTest` → 
 | Lockfile | Pacchetti | Esito |
 |---|---|---|
 | `app/gradle.lockfile` (app) | 157 | **No issues found** |
-| `buildscript-gradle.lockfile` (toolchain) | 155 | 15 pacchetti, 61 vulnerabilità |
+| `buildscript-gradle.lockfile` (toolchain) | 155 | 14 pacchetti, 62 segnalazioni (27 high/critical) |
 
 Le 61 vulnerabilità stanno **tutte nella toolchain di build**, zero nell'app. Verificato
 incrociando i nomi: nessuno dei 15 pacchetti colpiti compare in `app/gradle.lockfile`.
@@ -51,6 +51,13 @@ Kotlin) e introdurrebbe una beta in produzione. Va fatto quando esce una stabile
 
 ## Cosa resta aperto, e perché
 
-1. **Lockfile del buildscript**: chiuso con questo file.
+1. **Lockfile del buildscript**: chiuso con questo file. Lo scanner di AppJet lo legge e vi
+   attribuisce 62 segnalazioni, 27 high/critical, tutte qui e **nessuna nell'app**;
+   `tools/dependency-audit/scope_check.py` lo verifica a ogni esecuzione (14/14 pacchetti
+   segnalati presenti solo nel buildscript, 0 nel grafo dell'app).
+
+   Le versioni coinvolte sono quelle che AGP 8.7.3 e Gradle 8.11.1 trascinano con sé: non si
+   aggiornano nel catalogo, si aggiornano portando avanti il toolchain. Un pin forzato qui, senza
+   poter ricompilare, disallineerebbe il lockfile appena verificato con `assembleDebug`.
 2. **Transitive dell'app**: coperte da `app/gradle.lockfile`, 0 problemi.
 3. **Finding Kotlin**: documentato, nessun fix stabile disponibile.
