@@ -154,7 +154,7 @@ TEST_FILES="$TESTS/EnergyEngineTest.kt $TESTS/NutritionMathTest.kt $TESTS/FoodVa
 $TESTS/VolumeAnalyzerTest.kt $TESTS/FoodMatcherTest.kt $TESTS/FoodCatalogTest.kt \
 $TESTS/CreaImportTest.kt $TESTS/ToolEngineTest.kt $TESTS/AiOrchestratorTest.kt \
 $TESTS/PlanGeneratorTest.kt $TESTS/RestTimerTest.kt $TESTS/ResumeSessionTest.kt \
-$TESTS/DietGeneratorTest.kt $TESTS/ProgressionApprovalTest.kt"
+$TESTS/DietGeneratorTest.kt $TESTS/ProgressionApprovalTest.kt $TESTS/ExerciseCatalogIntegrityTest.kt"
 
 TEST_CLASSES="dev.fitcoach.app.EnergyEngineTest dev.fitcoach.app.NutritionMathTest \
 dev.fitcoach.app.FoodValidatorTest dev.fitcoach.app.VolumeAnalyzerTest \
@@ -162,7 +162,7 @@ dev.fitcoach.app.FoodMatcherTest dev.fitcoach.app.FoodCatalogTest \
 dev.fitcoach.app.CreaImportTest dev.fitcoach.app.ToolEngineTest \
 dev.fitcoach.app.AiOrchestratorTest dev.fitcoach.app.PlanGeneratorTest \
 dev.fitcoach.app.RestTimerTest dev.fitcoach.app.ResumeSessionTest \
-dev.fitcoach.app.DietGeneratorTest dev.fitcoach.app.ProgressionApprovalTest"
+dev.fitcoach.app.DietGeneratorTest dev.fitcoach.app.ProgressionApprovalTest dev.fitcoach.app.ExerciseCatalogIntegrityTest"
 
 echo "== compilazione moduli di dominio =="
 java -cp "$JVMCP" org.jetbrains.kotlin.cli.jvm.K2JVMCompiler \
