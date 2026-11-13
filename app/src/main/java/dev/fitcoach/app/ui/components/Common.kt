@@ -196,24 +196,26 @@ fun GhostButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     tint: Color = NeonCyan,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    enabled: Boolean = true
 ) {
     val shape = CircleShape
+    val contentAlpha = if (enabled) 1f else 0.4f
     Row(
         modifier = modifier
             .clip(shape)
-            .background(tint.copy(alpha = 0.08f))
-            .border(1.dp, tint.copy(alpha = 0.45f), shape)
-            .clickable(onClick = onClick)
+            .background(tint.copy(alpha = 0.08f * contentAlpha))
+            .border(1.dp, tint.copy(alpha = 0.45f * contentAlpha), shape)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
         if (icon != null) {
-            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+            Icon(icon, contentDescription = null, tint = tint.copy(alpha = contentAlpha), modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
         }
-        Text(text, style = MaterialTheme.typography.labelLarge, color = tint)
+        Text(text, style = MaterialTheme.typography.labelLarge, color = tint.copy(alpha = contentAlpha))
     }
 }
 

@@ -92,8 +92,8 @@ fun QuickReplyChip(
     text: String,
     icon: ImageVector,
     tint: Color = NeonCyan,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
     Row(
         modifier = modifier
