@@ -51,6 +51,41 @@ Esposizione che il finding aveva, comunque limitata: cache Kotlin solo locale (n
 `buildCache { }`), attacco possibile solo con accesso in scrittura alla macchina che compila, plugin
 non impacchettato nell'APK. Non è più un rischio attivo.
 
+## Prossimo passo: le transitive hanno un fix, ma va provato con Gradle
+
+Tutte le 24 segnalazioni bloccanti hanno una versione corretta pubblicata. Non sono dichiarazioni
+nostre: sono transitive di AGP 8.12.3 e Gradle 8.13, quindi non si aggiornano dal catalogo. Si
+forzano nel classpath del buildscript, in `build.gradle.kts` (root):
+
+```kotlin
+buildscript {
+    configurations.classpath {
+        resolutionStrategy {
+            force(
+                "io.netty:netty-codec:4.1.137.Final",
+                "io.netty:netty-codec-http:4.1.137.Final",
+                "io.netty:netty-codec-http2:4.1.137.Final",
+                "io.netty:netty-common:4.1.137.Final",
+                "io.netty:netty-handler:4.1.137.Final",
+                "io.netty:netty-handler-proxy:4.1.137.Final",
+                "com.google.guava:guava:33.7.2",
+                "org.bouncycastle:bcprov-jdk18on:1.85",
+                "org.bouncycastle:bcpkix-jdk18on:1.84",
+                "org.apache.commons:commons-compress:1.26.0",
+                "org.bitbucket.b_c:jose4j:0.9.6",
+                "org.jdom:jdom2:2.0.6.1",
+            )
+        }
+    }
+}
+```
+
+Le versioni sono quelle indicate da OSV come `fixed_versions`. Due avvertenze oneste: **non è
+verificato**, perché qui non posso compilare, e forzare netty oltre la versione con cui AGP è
+collaudato può rompere il plugin. Dopo la modifica servono `assembleDebug`, i 61 test e la
+rigenerazione dei lockfile (`--write-locks`). Se AGP si lamenta, si toglie il blocco: le 24
+segnalazioni restano confinate al toolchain e non arrivano nell'APK.
+
 ## Cosa resta aperto, e perché
 
 1. **Lockfile del buildscript**: chiuso con questo file. Lo scanner di AppJet lo legge e vi
@@ -59,7 +94,8 @@ non impacchettato nell'APK. Non è più un rischio attivo.
    segnalati presenti solo nel buildscript, 0 nel grafo dell'app).
 
    Le versioni coinvolte sono transitive di AGP 8.12.3 e Gradle 8.13, che restano indietro: non si
-   aggiornano nel catalogo, si aggiornano portando avanti il toolchain. Un pin forzato qui, senza
-   poter ricompilare, disallineerebbe il lockfile appena verificato con `assembleDebug`.
+   aggiornano nel catalogo, si aggiornano portando avanti il toolchain, oppure forzandole come
+   nella sezione precedente — da verificare con `assembleDebug`, perché senza ricompilare un pin
+   disallineerebbe il lockfile appena validato.
 2. **Transitive dell'app**: coperte da `app/gradle.lockfile`, 0 problemi.
 3. **Finding Kotlin**: chiuso. Kotlin 2.4.20 nel buildscript, CVE-2026-53914 non più presente.
