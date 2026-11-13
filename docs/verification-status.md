@@ -4,16 +4,39 @@ Questo file dice cosa è stato realmente verificato e cosa resta da verificare.
 Serve a evitare due errori opposti: dichiarare completo ciò che non è stato provato,
 e rifare controlli già fatti.
 
-## Verificato in questo ambiente
+## Verificato in ambiente Gradle (Android SDK 35, JDK 21, Kotlin 2.4.20)
 
-I motori di dominio sono compilati ed eseguiti con Kotlin 2.0.21 e JUnit 4.13.2,
-usando gli stub Room presenti in `stubs/` per le annotazioni.
+Compilazione reale dell'app completa — non solo i motori di dominio — con Gradle,
+Kotlin, KSP, Hilt e Room:
+
+| Controllo | Comando | Esito |
+|---|---|---|
+| Build APK | `./gradlew assembleDebug` | **BUILD SUCCESSFUL**, APK 20.649.630 byte |
+| Test unitari | `./gradlew :app:testDebugUnitTest` | **188 test, 0 falliti** |
+| Iniezione Hilt (binding `ProgressionPort`) | compilazione | **risolta** (altrimenti fallirebbe il build) |
+| Schermate Compose (`WorkoutSessionScreen`, `PlanScreen`) | compilazione | **compilano** |
+| Migrazione Room 4 → 5 su DB reale | `MigrationToV5Test` (nuovo, Robolectric) | **verde** |
+
+I 188 test sono i 186 della suite di AppJet piu' i 2 nuovi in `MigrationToV5Test`, che
+eseguono la catena 3 → 4 → 5 su un database Robolectric reale e provano che
+`routine_exercise.targetWeightKg` venga aggiunta senza perdere le righe esistenti (che
+restano a NULL, stato corretto) e che il peso sia poi scrivibile e rileggibile. La
+migrazione 4 → 5 era il punto 2 dei "non verificato": ora e' verificata.
+
+Nota: lo schema v4 non e' mai stato esportato dal progetto, quindi il test parte dallo
+schema v3 (esportato) e applica la catena intera: e' l'unico modo di eseguire davvero
+l'anello 4 → 5 senza un `4.json`.
+
+## Verificato senza Gradle (motori di dominio)
+
+Anche in un ambiente senza Android SDK i motori di dominio erano stati compilati ed
+eseguiti con Kotlin e JUnit, usando stub Room:
 
 | Modulo | Test | Esito |
 |---|---|---|
 | EnergyEngine (BMR, TDEE, macro) | EnergyEngineTest | verde |
 | NutritionMath (totali, macro, conversione) | NutritionMathTest | verde |
-| FoodValidator (provenienza, affidabilità, coerenza kcal) | FoodValidatorTest | verde |
+| FoodValidator (provenienza, affidabilita', coerenza kcal) | FoodValidatorTest | verde |
 | VolumeAnalyzer (volume diretto/indiretto, frequenza) | VolumeAnalyzerTest | verde |
 | FoodMatcher (abbinamento nomi, sinonimi, marca) | FoodMatcherTest | verde |
 | FoodCatalog (cache, deduplica, import) | FoodCatalogTest | verde |
@@ -26,27 +49,17 @@ usando gli stub Room presenti in `stubs/` per le annotazioni.
 | DietGenerator (7 giorni, grammi reali, correzione calorie) | DietGeneratorTest | verde |
 | ProgressionApproval (conferma, rifiuto, registro) | ProgressionApprovalTest | verde |
 
-Totale: **125 test, 0 falliti**.
+## Non verificato, e perche'
 
-## Non verificato qui, e perché
-
-AppJet non compila app Android native: mancano Gradle e l'Android SDK in questo
-ambiente. Quindi i punti seguenti vanno verificati sul tuo ambiente:
-
-1. **Compilazione completa con Gradle** (`./gradlew assembleDebug`), comprese le
-   schermate Compose modificate: `WorkoutSessionScreen` (dialog di conferma della
-   progressione) e `PlanScreen` (pulsante "Calcola 7 giorni sui dati in archivio").
-2. **Migrazione Room 4 → 5**: aggiunge `routine_exercise.targetWeightKg`. Le righe
-   esistenti restano con valore nullo, che è lo stato corretto: nessun carico è stato
-   ancora approvato. Va provata su un database già popolato.
-3. **Iniezione Hilt** di `ProgressionPort` → `ProgressionPortImpl` (binding aggiunto
-   in `RepositoryModule`). Un errore qui si vede solo alla compilazione.
-4. **Timer in background** con l'app chiusa: la logica di scadenza è testata, il
-   servizio e le notifiche richiedono un dispositivo.
-5. **Connettori esterni reali** (USDA, Open Food Facts): le chiamate di rete e le
-   chiavi non sono provate qui; la logica di cache e deduplica è testata.
-6. **APK e resa grafica**: nessun emulatore disponibile, quindi la grafica non è
-   stata guardata da qui.
+1. **Timer in background** con l'app chiusa: la logica di scadenza e' testata, il
+   servizio in primo piano e le notifiche richiedono un dispositivo reale.
+2. **Connettori esterni reali** (USDA, CREA, Open Food Facts): la logica di cache e
+   deduplica e' testata; le chiamate di rete vere e le chiavi API no.
+3. **Resa grafica**: nessun emulatore ne' dispositivo, quindi l'aspetto dell'app non e'
+   stato guardato. Serve il riscontro su un telefono.
+4. **Migrazione su un database realmente popolato dall'utente**: il test la esegue su
+   un DB Robolectric. Un DB reale con dati dell'utente resta il caso finale, ma la
+   logica di migrazione e' ora provata.
 
 ## Come procedere
 
