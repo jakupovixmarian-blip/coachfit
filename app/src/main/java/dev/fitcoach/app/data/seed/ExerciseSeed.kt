@@ -298,6 +298,81 @@ object ExerciseSeed {
             "In piedi, pronto a scendere in appoggio.",
             "Scendi in plank, eventuale piegamento, riporta i piedi e salta in alto.",
             "Perdere l'allineamento lombare, atterrare con le ginocchia rigide."
+        ),
+        // ---- AVAMBRACCI ----
+        ex(
+            "Curl inverso con bilanciere", MuscleGroup.FOREARMS, listOf(MuscleGroup.BICEPS),
+            Equipment.BARBELL, MovementPattern.ISOLATION,
+            "In piedi, bilanciere impugnato a presa prona alla larghezza delle spalle, gomiti aderenti ai fianchi.",
+            "Fletti i gomiti portando il bilanciere verso l'alto senza muovere le spalle; scendi controllando il movimento.",
+            "Usare slancio del busto, polsi che cedono in estensione, gomiti che si allontanano dal corpo."
+        ),
+        ex(
+            "Curl al polso con manubri", MuscleGroup.FOREARMS, emptyList(),
+            Equipment.DUMBBELL, MovementPattern.ISOLATION,
+            "Seduto, avambracci appoggiati sulle cosce con i polsi oltre il ginocchio, presa prona.",
+            "Fletti solo il polso verso l'alto, pausa breve in massima contrazione, discesa lenta e completa.",
+            "Sollevare gli avambracci dalle cosce, usare carichi che accorciano il range, rimbalzare in basso."
+        ),
+        ex(
+            "Curl al polso al cavo basso", MuscleGroup.FOREARMS, emptyList(),
+            Equipment.CABLE, MovementPattern.ISOLATION,
+            "In ginocchio davanti al cavo basso, avambracci in appoggio su una panca, polsi liberi di muoversi.",
+            "Estendi e fletti il polso con tensione continua del cavo, senza coinvolgere i gomiti.",
+            "Tirare con le braccia invece che con i polsi, perdere la tensione nel punto basso."
+        ),
+        ex(
+            "Farmer walk con manubri", MuscleGroup.FOREARMS, listOf(MuscleGroup.CORE, MuscleGroup.BACK),
+            Equipment.DUMBBELL, MovementPattern.CARRY,
+            "In piedi con un manubrio per mano, spalle basse, addome in pressione, sguardo avanti.",
+            "Cammina a passi controllati per la distanza o il tempo previsti, mantenendo il busto verticale.",
+            "Spalle che salgono verso le orecchie, busto che oscilla, presa che cede senza controllare la discesa."
+        ),
+        // ---- GLUTEI ----
+        ex(
+            "Hip thrust con bilanciere", MuscleGroup.GLUTES, listOf(MuscleGroup.HAMSTRINGS),
+            Equipment.BARBELL, MovementPattern.HINGE,
+            "Schiena alta su una panca, bilanciere sul bacino con cuscinetto, piedi alla larghezza dei fianchi.",
+            "Spingi con i talloni estendendo l'anca fino alla massima contrazione, mento verso il petto, discesa controllata.",
+            "Iperestendere la lombare in alto, piedi troppo lontani o troppo vicini, rimbalzare in basso."
+        ),
+        ex(
+            "Abduzione alla macchina", MuscleGroup.GLUTES, emptyList(),
+            Equipment.MACHINE, MovementPattern.ISOLATION,
+            "Seduto sulla macchina con la schiena aderente allo schienale e i cuscinetti sulle cosce.",
+            "Apri le gambe contro la resistenza, pausa breve in massima apertura, ritorno lento e controllato.",
+            "Usare slancio del busto, molleggiare, range ridotto per caricare troppo."
+        ),
+        // ---- POLPACCI ----
+        ex(
+            "Calf raise in piedi alla macchina", MuscleGroup.CALVES, emptyList(),
+            Equipment.MACHINE, MovementPattern.ISOLATION,
+            "Spalle sotto i cuscinetti, avampiedi sul bordo della pedana, talloni liberi di scendere.",
+            "Sali in massima estensione delle caviglie, pausa di un secondo, scendi fino allo stiramento completo.",
+            "Rimbalzare senza pausa in alto, range parziale, ginocchia che flettono durante la salita."
+        ),
+        // ---- CORE ----
+        ex(
+            "Plank frontale", MuscleGroup.CORE, listOf(MuscleGroup.SHOULDERS),
+            Equipment.BODYWEIGHT, MovementPattern.CORE,
+            "Avambracci a terra sotto le spalle, gomiti a 90 gradi, corpo in linea dalla testa ai talloni.",
+            "Mantieni l'assetto contraendo addome e glutei, respirazione regolare per tutto il tempo previsto.",
+            "Bacino che scende, glutei in aria, trattenere il respiro, spalle lontane dalle orecchie."
+        ),
+        ex(
+            "Crunch al cavo in ginocchio", MuscleGroup.CORE, emptyList(),
+            Equipment.CABLE, MovementPattern.CORE,
+            "In ginocchio davanti al cavo alto, corda dietro la testa, anche leggermente flesse.",
+            "Fletti il busto verso il bacino arrotondando la colonna, poi distendi controllando il ritorno.",
+            "Tirare con le braccia, flettere le anche invece della colonna, carico eccessivo."
+        ),
+        // ---- FULL BODY ----
+        ex(
+            "Swing con kettlebell", MuscleGroup.FULL_BODY, listOf(MuscleGroup.GLUTES, MuscleGroup.HAMSTRINGS),
+            Equipment.KETTLEBELL, MovementPattern.HINGE,
+            "Kettlebell davanti ai piedi, piedi poco piu larghi dei fianchi, schiena neutra e addome attivo.",
+            "Porta il kettlebell all'altezza del petto con uno snap violento dell'anca, non con le braccia; guida la discesa.",
+            "Trasformarlo in uno squat, iperestendere la lombare in alto, braccia che sollevano il peso."
         )
     )
 }
