@@ -25,7 +25,21 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 LOCKFILE = ROOT / "app" / "gradle.lockfile"
+CATALOG = ROOT / "gradle" / "libs.versions.toml"
 POM = HERE / "pom.xml"
+
+# Mappa id plugin Gradle -> artefatto Maven che lo implementa. Le versioni NON sono
+# scritte qui: si leggono dal version catalog (version.ref), cosi' il manifest segue
+# il catalogo invece di duplicarlo. Senza queste voci il toolchain di build non viene
+# controllato da nessuno scan, perche' non compare nel lockfile dell'app.
+PLUGIN_ARTIFACTS = {
+    "com.android.application": "com.android.tools.build:gradle",
+    "org.jetbrains.kotlin.android": "org.jetbrains.kotlin:kotlin-gradle-plugin",
+    "org.jetbrains.kotlin.plugin.compose": "org.jetbrains.kotlin:compose-compiler-gradle-plugin",
+    "org.jetbrains.kotlin.plugin.serialization": "org.jetbrains.kotlin:kotlin-serialization",
+    "com.google.devtools.ksp": "com.google.devtools.ksp:symbol-processing-gradle-plugin",
+    "com.google.dagger.hilt.android": "com.google.dagger:hilt-android-gradle-plugin",
+}
 
 ANDROID_PREFIXES = (
     "androidx.",
@@ -44,8 +58,9 @@ HEADER = """<?xml version="1.0" encoding="UTF-8"?>
 
   GENERATO da tools/dependency-audit/sync_pom_from_lockfile.py a partire da
   app/gradle.lockfile: contiene le {resolved} coordinate risolte (runtime e transitive)
-  piu' {build_only} coordinate usate solo in compilazione/test. Non modificarlo a mano:
-  rigeneralo dopo aver aggiornato il lockfile.
+  piu' {build_only} coordinate usate solo in compilazione/test e {plugins} plugin di build
+  letti da gradle/libs.versions.toml. Non modificarlo a mano: rigeneralo dopo aver
+  aggiornato il lockfile o il catalogo.
 
   Il lockfile deve restare ristretto alle classpath dell'app (release/debug
   Compile+Runtime). Con lockAllConfigurations() compaiono ~51 segnalazioni di build
@@ -70,6 +85,46 @@ def read_lockfile(path: Path) -> dict[str, str]:
         group, artifact, version = parts
         resolved[f"{group}:{artifact}"] = version
     return resolved
+
+
+def read_catalog_plugins(path: Path = CATALOG) -> dict[str, str]:
+    """coordinata Maven del plugin -> versione dichiarata nel version catalog."""
+    if not path.is_file():
+        return {}
+    versions: dict[str, str] = {}
+    plugin_versions: list[tuple[str, str | None]] = []
+    section = ""
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("["):
+            section = line.strip("[]")
+            continue
+        if "=" not in line:
+            continue
+        name, _, value = line.partition("=")
+        if section == "versions":
+            versions[name.strip()] = value.strip().strip('"')
+        elif section == "plugins":
+            id_match = re.search(r'id\s*=\s*"([^"]+)"', value)
+            ref_match = re.search(r'version\.ref\s*=\s*"([^"]+)"', value)
+            literal_match = re.search(r'version\s*=\s*"([^"]+)"', value)
+            if not id_match:
+                continue
+            version = None
+            if ref_match:
+                version = versions.get(ref_match.group(1))
+            elif literal_match:
+                version = literal_match.group(1)
+            plugin_versions.append((id_match.group(1), version))
+
+    plugins: dict[str, str] = {}
+    for plugin_id, version in plugin_versions:
+        coordinate = PLUGIN_ARTIFACTS.get(plugin_id)
+        if coordinate and version:
+            plugins[coordinate] = version
+    return plugins
 
 
 DEP_RE = re.compile(r"<dependency>(.*?)</dependency>", re.S)
@@ -117,7 +172,11 @@ def render_dependency(key: str, version: str, scope: str = "", type_: str = "") 
     return "\n".join(parts)
 
 
-def build_pom(resolved: dict[str, str], previous: dict[str, dict[str, str]]) -> str:
+def build_pom(
+    resolved: dict[str, str],
+    previous: dict[str, dict[str, str]],
+    plugins: dict[str, str],
+) -> str:
     runtime: list[str] = []
     for key in sorted(resolved):
         group, artifact = key.split(":", 1)
@@ -127,14 +186,19 @@ def build_pom(resolved: dict[str, str], previous: dict[str, dict[str, str]]) -> 
 
     build_only: list[str] = []
     for key in sorted(previous):
-        if key in resolved:
+        if key in resolved or key in plugins:
             continue
         info = previous[key]
         type_ = info["type"] or ("aar" if is_android(*key.split(":", 1)) else "")
         build_only.append(render_dependency(key, info["version"], scope=info["scope"], type_=type_))
 
+    plugin_block = [
+        render_dependency(key, version, scope="provided")
+        for key, version in sorted(plugins.items())
+    ]
+
     blocks = [
-        HEADER.format(resolved=len(resolved), build_only=len(build_only)),
+        HEADER.format(resolved=len(resolved), build_only=len(build_only), plugins=len(plugin_block)),
         '<project xmlns="http://maven.apache.org/POM/4.0.0"\n'
         '         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n'
         '         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 '
@@ -167,6 +231,9 @@ def build_pom(resolved: dict[str, str], previous: dict[str, dict[str, str]]) -> 
         "",
         f"        <!-- Solo compilazione/test: non entrano nel classpath runtime ({len(build_only)}) -->",
         *build_only,
+        "",
+        f"        <!-- Plugin di build dal version catalog: non finiscono nell'APK, ma le versioni vanno controllate ({len(plugin_block)}) -->",
+        *plugin_block,
         "    </dependencies>",
         "</project>",
     ]
@@ -183,14 +250,17 @@ def main(argv: list[str]) -> int:
         print("ERRORE: nessuna coordinata nel lockfile")
         return 2
     previous = read_pom(POM)
-    generated = build_pom(resolved, previous)
+    plugins = read_catalog_plugins()
+    generated = build_pom(resolved, previous, plugins)
     current = POM.read_text(encoding="utf-8")
     changed = generated.strip() != current.strip()
 
-    total = len(resolved) + sum(1 for key in previous if key not in resolved)
+    kept = sum(1 for key in previous if key not in resolved and key not in plugins)
+    total = len(resolved) + kept + len(plugins)
     print(f"lockfile: {len(resolved)} coordinate risolte")
-    print(f"pom: {len(previous)} voci prima, {total} dopo (runtime + build/test)")
-    print(f"coordinate solo build/test conservate: {sum(1 for k in previous if k not in resolved)}")
+    print(f"pom: {len(previous)} voci prima, {total} dopo (runtime + build/test + plugin)")
+    print(f"coordinate solo build/test conservate: {kept}")
+    print(f"plugin di build letti dal catalogo: {len(plugins)}")
 
     if check_only:
         if changed:

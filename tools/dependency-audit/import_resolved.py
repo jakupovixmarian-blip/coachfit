@@ -42,13 +42,20 @@ SKIP_MARKERS = ("(c)", "FAILED", "project :", "constraint")
 # Dipendenze dichiarate che per natura non entrano nel grafo runtime dell'app:
 # processori di annotazioni (ksp/kapt) e librerie usate solo dai test.
 TEST_GROUP_PREFIXES = ("androidx.test",)
-BUILD_ONLY_HINTS = ("compiler", "junit", "mockk", "robolectric", "turbine", "espresso", "testing")
+# Gruppi che sono toolchain di build: i plugin Gradle e i loro artefatti di supporto.
+BUILD_ONLY_GROUPS = ("com.android.tools.build", "com.google.devtools.ksp")
+BUILD_ONLY_HINTS = (
+    "compiler", "junit", "mockk", "robolectric", "turbine", "espresso",
+    "testing", "gradle-plugin", "kotlin-serialization",
+)
 
 
 def is_build_or_test_only(coordinate):
     """True se la coordinata non è attesa nel classpath runtime dell'app."""
     group, _, artifact = coordinate.partition(":")
     if group.lower().startswith(TEST_GROUP_PREFIXES):
+        return True
+    if group.lower().startswith(BUILD_ONLY_GROUPS):
         return True
     return any(hint in artifact.lower() for hint in BUILD_ONLY_HINTS)
 
