@@ -1,5 +1,6 @@
 package dev.fitcoach.app.data.bootstrap
 
+import android.util.Log
 import dev.fitcoach.app.domain.repository.ExerciseRepository
 import dev.fitcoach.app.domain.repository.FoodRepository
 import dev.fitcoach.app.domain.repository.KnowledgeRepository
@@ -21,9 +22,20 @@ class CatalogInitializer @Inject constructor(
 
     fun initialize() {
         scope.launch {
-            runCatching { exerciseRepository.ensureSeeded() }
-            runCatching { foodRepository.ensureSeeded() }
-            runCatching { knowledgeRepository.ensureSeeded() }
+            seed("exercises") { exerciseRepository.ensureSeeded() }
+            seed("foods") { foodRepository.ensureSeeded() }
+            seed("knowledge") { knowledgeRepository.ensureSeeded() }
         }
+    }
+
+    /** A failed seed used to disappear silently; now it is at least visible in logcat. */
+    private suspend fun seed(label: String, block: suspend () -> Unit) {
+        runCatching { block() }.onFailure { error ->
+            Log.e(TAG, "Seed $label non riuscito", error)
+        }
+    }
+
+    private companion object {
+        const val TAG = "CatalogInitializer"
     }
 }

@@ -84,11 +84,22 @@ class ExerciseRepositoryImpl @Inject constructor(
     private val db: FitCoachDatabase
 ) : ExerciseRepository {
     private val dao = db.exerciseDao()
-    override fun observeAll(): Flow<List<Exercise>> = dao.observeAll().map { list -> list.map { it.toDomain() } }
-    override suspend fun getAll(): List<Exercise> = dao.getAll().map { it.toDomain() }
-    override suspend fun getById(id: Long): Exercise? = dao.getById(id)?.toDomain()
+    // Rows whose stored enum values are no longer recognisable are skipped one by one
+    // instead of failing the whole query, so a single bad row cannot empty the catalog.
+    override fun observeAll(): Flow<List<Exercise>> =
+        dao.observeAll().map { list -> list.mapNotNull { it.toDomainOrNull() } }
+    override suspend fun getAll(): List<Exercise> = dao.getAll().mapNotNull { it.toDomainOrNull() }
+    override suspend fun getById(id: Long): Exercise? = dao.getById(id)?.toDomainOrNull()
+
+    /**
+     * Inserts every curated exercise that is not stored yet, matched by name. Seeding used
+     * to run only when the table was completely empty, so a partially seeded or restored
+     * database stayed without a catalog and the editable lists opened with no exercises.
+     */
     override suspend fun ensureSeeded() {
-        if (dao.count() == 0) dao.insertAll(ExerciseSeed.all().map { it.toEntity() })
+        val stored = dao.getAll().map { it.name.trim().lowercase() }.toSet()
+        val missing = ExerciseSeed.all().filter { it.name.trim().lowercase() !in stored }
+        if (missing.isNotEmpty()) dao.insertAll(missing.map { it.toEntity() })
     }
     override suspend fun addCustom(exercise: Exercise): Long = dao.insert(exercise.copy(isCustom = true).toEntity())
     override suspend fun update(exercise: Exercise) = dao.update(exercise.toEntity())

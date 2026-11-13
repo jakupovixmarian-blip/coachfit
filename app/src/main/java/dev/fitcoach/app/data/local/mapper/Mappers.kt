@@ -97,11 +97,46 @@ fun PhotoEntry.toEntity() = PhotoEntity(
     id, dateEpochDay, pose.name, customLabel, filePath, notes, createdAt, analysis, analysisAt
 )
 
-fun ExerciseEntity.toDomain() = Exercise(
-    id, name, MuscleGroup.valueOf(primaryMuscle),
-    secondaryMuscles.split(",").filter { it.isNotBlank() }.map { MuscleGroup.valueOf(it) },
-    Equipment.valueOf(equipment), MovementPattern.valueOf(pattern), execution, setup,
-    commonMistakes, isCustom, isFavorite, defaultRestSeconds
+/**
+ * Tolerant enum lookup. A stored value written by an older build (or renamed later) must
+ * never take down a whole list, which is what plain valueOf() did: one bad row threw and
+ * every screen reading the catalog stayed empty with no message.
+ */
+private inline fun <reified T : Enum<T>> enumOrNull(raw: String): T? =
+    enumValues<T>().firstOrNull { it.name.equals(raw.trim(), ignoreCase = true) }
+
+/** Null when the stored primary muscle is unknown, so the caller can skip just that row. */
+fun ExerciseEntity.toDomainOrNull(): Exercise? {
+    val primary = enumOrNull<MuscleGroup>(primaryMuscle) ?: return null
+    return Exercise(
+        id = id,
+        name = name,
+        primaryMuscle = primary,
+        secondaryMuscles = secondaryMuscles.split(",").mapNotNull { enumOrNull<MuscleGroup>(it) },
+        equipment = enumOrNull<Equipment>(equipment) ?: Equipment.OTHER,
+        pattern = enumOrNull<MovementPattern>(pattern) ?: MovementPattern.HORIZONTAL_PUSH,
+        execution = execution,
+        setup = setup,
+        commonMistakes = commonMistakes,
+        isCustom = isCustom,
+        isFavorite = isFavorite,
+        defaultRestSeconds = defaultRestSeconds
+    )
+}
+
+/** Never throws: unknown optional fields fall back, an unknown primary muscle is kept as CORE. */
+fun ExerciseEntity.toDomain(): Exercise = toDomainOrNull() ?: Exercise(
+    id = id,
+    name = name,
+    primaryMuscle = MuscleGroup.CORE,
+    equipment = Equipment.OTHER,
+    pattern = MovementPattern.HORIZONTAL_PUSH,
+    execution = execution,
+    setup = setup,
+    commonMistakes = commonMistakes,
+    isCustom = isCustom,
+    isFavorite = isFavorite,
+    defaultRestSeconds = defaultRestSeconds
 )
 fun Exercise.toEntity() = ExerciseEntity(
     id, name, primaryMuscle.name, secondaryMuscles.joinToString(",") { it.name },
