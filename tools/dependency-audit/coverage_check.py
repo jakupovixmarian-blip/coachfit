@@ -19,7 +19,9 @@ POM_PATH = ROOT / "tools" / "dependency-audit" / "pom.xml"
 NS = {"m": "http://maven.apache.org/POM/4.0.0"}
 
 MODULE_RE = re.compile(r'module\s*=\s*"([^"]+)"')
-STRING_RE = re.compile(r'=\s*"([A-Za-z0-9_.\-]+:[A-Za-z0-9_.\-]+(?::[^"]*)?)"')
+GROUP_RE = re.compile(r'group\s*=\s*"([^"]+)"')
+NAME_RE = re.compile(r'name\s*=\s*"([^"]+)"')
+STRING_RE = re.compile(r'^\s*"([A-Za-z0-9_.\-]+:[A-Za-z0-9_.\-]+(?::[^"]*)?)"')
 
 
 def catalog_coordinates(text):
@@ -31,12 +33,23 @@ def catalog_coordinates(text):
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
-        key = line.split("=", 1)[0].strip()
-        match = MODULE_RE.search(line) or STRING_RE.search(line)
-        if not match:
-            continue
-        parts = match.group(1).split(":")
-        found[key] = ":".join(parts[:2])
+        key, value = line.split("=", 1)
+        key = key.strip()
+        coord = None
+        match = MODULE_RE.search(value)
+        if match:
+            coord = ":".join(match.group(1).split(":")[:2])
+        else:
+            group = GROUP_RE.search(value)
+            name = NAME_RE.search(value)
+            if group and name:
+                coord = f"{group.group(1)}:{name.group(1)}"
+            else:
+                match = STRING_RE.search(value)
+                if match:
+                    coord = ":".join(match.group(1).split(":")[:2])
+        if coord:
+            found[key] = coord
     return found
 
 
@@ -54,6 +67,10 @@ def pom_coordinates(path):
 
 def main():
     catalog = catalog_coordinates(TOML_PATH.read_text())
+    if not catalog:
+        print("ERRORE: nessuna voce letta da gradle/libs.versions.toml.")
+        print("Controlla percorso e formato del catalogo: un esito vuoto non dimostra copertura.")
+        return 2
     covered = pom_coordinates(POM_PATH)
     missing = sorted({coord for coord in catalog.values() if coord not in covered})
 
