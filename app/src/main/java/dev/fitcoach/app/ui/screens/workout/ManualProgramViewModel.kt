@@ -51,6 +51,7 @@ class ManualProgramViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            exerciseRepository.ensureSeeded()
             val catalog = exerciseRepository.getAll()
             _state.update { it.copy(allExercises = catalog, exercisesById = catalog.associateBy { e -> e.id }) }
         }

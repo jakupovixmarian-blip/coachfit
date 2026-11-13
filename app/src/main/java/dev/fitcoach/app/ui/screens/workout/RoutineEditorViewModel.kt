@@ -39,6 +39,9 @@ class RoutineEditorViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            // Seeding runs in the background at app start: without this the editor could
+            // open against a still empty catalog and show names with no exercise to add.
+            exerciseRepository.ensureSeeded()
             val exercises = exerciseRepository.getAll().associateBy { it.id }
             val routine = routineRepository.getById(routineId)
             loadedRoutine = routine

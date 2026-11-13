@@ -100,6 +100,7 @@ class WorkoutSessionViewModel @Inject constructor(
     private suspend fun rebuild(session: WorkoutSession) {
         val logged = sessionRepository.getSets(session.id)
         val routineExercises = session.routineId?.let { routineRepository.getExercises(it) }.orEmpty()
+        exerciseRepository.ensureSeeded()
         val exercises = exerciseRepository.getAll().associateBy { it.id }
 
         val blocks = mutableListOf<SessionExerciseBlock>()

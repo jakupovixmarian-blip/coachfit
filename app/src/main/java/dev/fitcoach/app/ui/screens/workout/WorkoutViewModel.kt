@@ -65,6 +65,7 @@ class WorkoutViewModel @Inject constructor(
     }
 
     private suspend fun refresh() {
+        exerciseRepository.ensureSeeded()
         val exercises = exerciseRepository.getAll()
         val exercisesById = exercises.associateBy { it.id }
         val routines = routineRepository.getActiveProgram()
