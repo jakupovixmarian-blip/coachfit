@@ -118,6 +118,24 @@ def test_real_lockfile_is_aligned(tmp):
     assert data["transitive_count"] > 0, "il lockfile non ha transitive: non è il grafo atteso"
 
 
+def test_pom_matches_lockfile(tmp):
+    """Il pom di audit deve corrispondere a quanto genera il lockfile (nessuna deriva)."""
+    sync = HERE / "sync_pom_from_lockfile.py"
+    lockfile = HERE.parents[1] / "app" / "gradle.lockfile"
+    if not (sync.is_file() and lockfile.is_file()):
+        print("SKIP test_pom_matches_lockfile: script o lockfile assenti")
+        return
+    proc = subprocess.run(
+        [sys.executable, str(sync), "--check"], capture_output=True, text=True
+    )
+    assert proc.returncode == 0, f"pom non allineato al lockfile: {proc.stdout}{proc.stderr}"
+    assert "ALLINEATO" in proc.stdout, f"esito inatteso: {proc.stdout}"
+    text = (HERE / "pom.xml").read_text(encoding="utf-8")
+    entries = text.count("<dependency>")
+    assert entries >= 150, f"pom con troppe poche voci ({entries}): manca il grafo risolto"
+    assert "<scope>test</scope>" in text, "le voci di test non sono state conservate"
+
+
 def main():
     tests = [
         test_lockfile_detects_drift_and_transitives,
@@ -125,6 +143,7 @@ def main():
         test_unreadable_input_exits_two,
         test_missing_file_exits_two,
         test_real_lockfile_is_aligned,
+        test_pom_matches_lockfile,
     ]
     failures = 0
     with tempfile.TemporaryDirectory() as raw:
