@@ -17,7 +17,8 @@ import org.junit.Test
  */
 class ResumeSessionTest {
 
-    private var now = 10_000_000L
+    /** Realistic wall clock: a session started an hour ago must stay a positive timestamp. */
+    private var now = 1_700_000_000_000L
 
     private class FakeSource(
         private val session: WorkoutSession?,
@@ -27,7 +28,7 @@ class ResumeSessionTest {
         override suspend fun sets(sessionId: Long): List<LoggedSet> = sets
     }
 
-    private fun session(startedAt: Long = 10_000_000L - 3_600_000L) = WorkoutSession(
+    private fun session(startedAt: Long = 1_700_000_000_000L - 3_600_000L) = WorkoutSession(
         id = 7L,
         routineId = 1L,
         name = "Upper A",

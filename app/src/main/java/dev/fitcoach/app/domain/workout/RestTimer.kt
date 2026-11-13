@@ -31,9 +31,12 @@ class RestTimer(private val clock: () -> Long) {
     val isPaused: Boolean get() = pausedRemainingSeconds != null
     val isIdle: Boolean get() = endsAtMillis == null && pausedRemainingSeconds == null
 
-    /** True when the timer reached zero and is waiting to be dismissed. */
+    /**
+     * True when the rest is over and waits to be dismissed: either the deadline passed
+     * or the user skipped it, which also leaves zero seconds left.
+     */
     val isFinished: Boolean
-        get() = endsAtMillis != null && (remainingSeconds() ?: 1) == 0
+        get() = !isIdle && (remainingSeconds() ?: 1) == 0
 
     val configuredSeconds: Int get() = durationSeconds
 

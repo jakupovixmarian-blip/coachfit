@@ -99,11 +99,11 @@ class RestTimerTest {
         val saved = first.snapshot()
 
         // Process death: a brand new instance is rebuilt from the persisted snapshot.
-        now += 300_000L
+        now += 20_000L
         val restored = timer()
         restored.restore(saved)
 
-        assertEquals(110, restored.remainingSeconds())
+        assertEquals(90, restored.remainingSeconds())
         assertTrue(restored.isRunning)
     }
 
