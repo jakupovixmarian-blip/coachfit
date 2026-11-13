@@ -65,6 +65,21 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+// Dependency locking scoped to the app classpaths: pins resolved versions,
+// transitives included, into app/gradle.lockfile for the security audit.
+// AGP-internal and test-only configurations stay unlocked so the file tracks
+// what the app ships, not the build toolchain.
+configurations
+    .matching {
+        it.name in setOf(
+            "releaseRuntimeClasspath",
+            "releaseCompileClasspath",
+            "debugRuntimeClasspath",
+            "debugCompileClasspath"
+        )
+    }
+    .configureEach { resolutionStrategy.activateDependencyLocking() }
+
 // Robolectric merges the debug variant assets, so the exported schemas are
 // available to MigrationTestHelper without shipping them in the release APK.
 android {
