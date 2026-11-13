@@ -11,10 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fitcoach.app.core.util.Format
 import dev.fitcoach.app.domain.model.Food
 import dev.fitcoach.app.ui.components.NumberField
+import dev.fitcoach.app.ui.components.FitSecondaryButton
 
 @Composable
 fun FoodPickerDialog(
@@ -64,10 +63,10 @@ fun FoodPickerDialog(
                     )
                     Spacer(Modifier.height(6.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        OutlinedButton(onClick = { viewModel.onQueryChange(query); viewModel.searchOpenFoodFacts() }) {
+                        FitSecondaryButton(onClick = { viewModel.onQueryChange(query); viewModel.searchOpenFoodFacts() }) {
                             Text("Cerca Open Food Facts")
                         }
-                        OutlinedButton(onClick = { showCreate = true }) { Text("Nuovo") }
+                        FitSecondaryButton(onClick = { showCreate = true }) { Text("Nuovo") }
                     }
                     search.info?.let {
                         Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

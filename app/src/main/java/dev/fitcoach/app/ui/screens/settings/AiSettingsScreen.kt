@@ -12,18 +12,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -39,6 +36,9 @@ import dev.fitcoach.app.ui.components.KeyValueRow
 import dev.fitcoach.app.ui.components.LabeledField
 import dev.fitcoach.app.ui.components.NumberField
 import dev.fitcoach.app.ui.components.SectionTitle
+import dev.fitcoach.app.ui.components.FitPrimaryButton
+import dev.fitcoach.app.ui.components.FitSecondaryButton
+import dev.fitcoach.app.ui.components.FitTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +47,7 @@ fun AiSettingsScreen(viewModel: AiSettingsViewModel = hiltViewModel()) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FitTopBar(
                 title = { Text("Impostazioni AI") },
                 navigationIcon = {}
             )
@@ -97,15 +97,15 @@ fun AiSettingsScreen(viewModel: AiSettingsViewModel = hiltViewModel()) {
                         )
                         Spacer(Modifier.height(8.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { viewModel.saveApiKey() }, modifier = Modifier.weight(1f)) {
+                            FitPrimaryButton(onClick = { viewModel.saveApiKey() }, modifier = Modifier.weight(1f)) {
                                 Text("Salva chiave")
                             }
-                            OutlinedButton(onClick = { viewModel.clearApiKey() }, modifier = Modifier.weight(1f)) {
+                            FitSecondaryButton(onClick = { viewModel.clearApiKey() }, modifier = Modifier.weight(1f)) {
                                 Text("Rimuovi")
                             }
                         }
                         Spacer(Modifier.height(8.dp))
-                        Button(
+                        FitPrimaryButton(
                             onClick = { viewModel.testConnection() },
                             modifier = Modifier.fillMaxWidth(),
                             enabled = !state.testing

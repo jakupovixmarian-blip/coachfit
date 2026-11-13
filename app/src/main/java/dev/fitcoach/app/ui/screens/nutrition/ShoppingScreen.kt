@@ -14,12 +14,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -41,6 +39,8 @@ import dev.fitcoach.app.ui.components.KeyValueRow
 import dev.fitcoach.app.ui.components.LabeledField
 import dev.fitcoach.app.ui.components.NumberField
 import dev.fitcoach.app.ui.components.SectionTitle
+import dev.fitcoach.app.ui.components.FitPrimaryButton
+import dev.fitcoach.app.ui.components.FitSecondaryButton
 
 @Composable
 fun ShoppingScreen(viewModel: ShoppingViewModel = hiltViewModel()) {
@@ -64,15 +64,15 @@ fun ShoppingScreen(viewModel: ShoppingViewModel = hiltViewModel()) {
                 KeyValueRow("Da acquistare", Format.money(state.remaining))
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { viewModel.generateFromPlan() }, modifier = Modifier.weight(1f)) {
+                    FitPrimaryButton(onClick = { viewModel.generateFromPlan() }, modifier = Modifier.weight(1f)) {
                         Text("Genera dal piano")
                     }
-                    OutlinedButton(onClick = { showAdd = true }, modifier = Modifier.weight(1f)) {
+                    FitSecondaryButton(onClick = { showAdd = true }, modifier = Modifier.weight(1f)) {
                         Text("Aggiungi")
                     }
                 }
                 Spacer(Modifier.height(6.dp))
-                OutlinedButton(onClick = { viewModel.clearWeek() }, modifier = Modifier.fillMaxWidth()) {
+                FitSecondaryButton(onClick = { viewModel.clearWeek() }, modifier = Modifier.fillMaxWidth()) {
                     Text("Svuota settimana")
                 }
                 Text(

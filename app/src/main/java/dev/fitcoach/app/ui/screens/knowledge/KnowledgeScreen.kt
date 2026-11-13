@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,7 +21,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +37,8 @@ import dev.fitcoach.app.ui.components.ChipSelector
 import dev.fitcoach.app.ui.components.FitCard
 import dev.fitcoach.app.ui.components.LabeledField
 import dev.fitcoach.app.ui.components.SectionTitle
+import dev.fitcoach.app.ui.components.FitPrimaryButton
+import dev.fitcoach.app.ui.components.FitTopBar
 
 /**
  * The sources the agent may use. Built-in notes carry the citation they come from;
@@ -52,7 +52,7 @@ fun KnowledgeScreen(viewModel: KnowledgeViewModel = hiltViewModel()) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FitTopBar(
                 title = { Text("Fonti e note") },
                 navigationIcon = {}
             )
@@ -74,7 +74,7 @@ fun KnowledgeScreen(viewModel: KnowledgeViewModel = hiltViewModel()) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(Modifier.height(10.dp))
-                        Button(onClick = { showAdd = true }, modifier = Modifier.fillMaxWidth()) {
+                        FitPrimaryButton(onClick = { showAdd = true }, modifier = Modifier.fillMaxWidth()) {
                             Text("Aggiungi una nota")
                         }
                     }

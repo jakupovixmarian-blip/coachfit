@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Manifest di SOLO AUDIT per il controllo advisory delle dipendenze.
+
+  Questo file NON fa parte del build: il progetto è un'app Android costruita con
+  Gradle + version catalog (gradle/libs.versions.toml). Serve unicamente a dare
+  allo scanner di dipendenze (OSV) un elenco di coordinate risolvibili, perché
+  Gradle risolve le versioni a build-time e nel repository non esiste un lockfile.
+
+  Regola: ogni voce qui deve rispecchiare gradle/libs.versions.toml.
+  Quando aggiorni una versione nel catalogo, aggiornala anche qui.
+  Le coordinate senza versione nel catalogo (BOM Compose) usano la versione
+  fornita dal BOM 2024.12.01.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>dev.fitcoach</groupId>
+    <artifactId>dependency-audit</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>FitCoach dependency audit manifest</name>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!-- Gli artefatti AndroidX/Compose sono pubblicati su Google Maven, non su Central. -->
+    <repositories>
+        <repository>
+            <id>google</id>
+            <url>https://dl.google.com/dl/android/maven2/</url>
+        </repository>
+        <repository>
+            <id>central</id>
+            <url>https://repo1.maven.org/maven2/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!-- AndroidX base / lifecycle / activity -->
+        <dependency><groupId>androidx.core</groupId><artifactId>core-ktx</artifactId><version>1.15.0</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.lifecycle</groupId><artifactId>lifecycle-runtime-ktx</artifactId><version>2.8.7</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.lifecycle</groupId><artifactId>lifecycle-viewmodel-compose</artifactId><version>2.8.7</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.lifecycle</groupId><artifactId>lifecycle-runtime-compose</artifactId><version>2.8.7</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.activity</groupId><artifactId>activity-compose</artifactId><version>1.9.3</version>    <type>aar</type>
+        </dependency>
+
+        <!-- Compose (versioni fornite dal BOM 2024.12.01) -->
+        <dependency><groupId>androidx.compose</groupId><artifactId>compose-bom</artifactId><version>2024.12.01</version><type>pom</type></dependency>
+        <dependency><groupId>androidx.compose.ui</groupId><artifactId>ui</artifactId><version>1.7.6</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.compose.ui</groupId><artifactId>ui-graphics</artifactId><version>1.7.6</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.compose.ui</groupId><artifactId>ui-tooling</artifactId><version>1.7.6</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.compose.ui</groupId><artifactId>ui-tooling-preview</artifactId><version>1.7.6</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.compose.material3</groupId><artifactId>material3</artifactId><version>1.3.1</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.compose.material</groupId><artifactId>material-icons-extended</artifactId><version>1.7.6</version>    <type>aar</type>
+        </dependency>
+
+        <!-- Navigazione, persistenza, work -->
+        <dependency><groupId>androidx.navigation</groupId><artifactId>navigation-compose</artifactId><version>2.8.5</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.room</groupId><artifactId>room-runtime</artifactId><version>2.6.1</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.room</groupId><artifactId>room-ktx</artifactId><version>2.6.1</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.room</groupId><artifactId>room-compiler</artifactId><version>2.6.1</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.datastore</groupId><artifactId>datastore-preferences</artifactId><version>1.1.1</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.work</groupId><artifactId>work-runtime-ktx</artifactId><version>2.10.0</version>    <type>aar</type>
+        </dependency>
+
+        <!-- Dependency injection -->
+        <dependency><groupId>com.google.dagger</groupId><artifactId>hilt-android</artifactId><version>2.52</version></dependency>
+        <dependency><groupId>com.google.dagger</groupId><artifactId>hilt-android-compiler</artifactId><version>2.52</version></dependency>
+        <dependency><groupId>androidx.hilt</groupId><artifactId>hilt-navigation-compose</artifactId><version>1.2.0</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.hilt</groupId><artifactId>hilt-work</artifactId><version>1.2.0</version>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.hilt</groupId><artifactId>hilt-compiler</artifactId><version>1.2.0</version>    <type>aar</type>
+        </dependency>
+
+        <!-- Coroutines, serializzazione, rete, immagini -->
+        <dependency><groupId>org.jetbrains.kotlinx</groupId><artifactId>kotlinx-coroutines-android</artifactId><version>1.9.0</version></dependency>
+        <dependency><groupId>org.jetbrains.kotlinx</groupId><artifactId>kotlinx-serialization-json</artifactId><version>1.7.3</version></dependency>
+        <dependency><groupId>com.squareup.okhttp3</groupId><artifactId>okhttp</artifactId><version>4.12.0</version></dependency>
+        <dependency><groupId>com.squareup.okhttp3</groupId><artifactId>logging-interceptor</artifactId><version>4.12.0</version></dependency>
+        <dependency><groupId>com.squareup.retrofit2</groupId><artifactId>retrofit</artifactId><version>2.11.0</version></dependency>
+        <dependency><groupId>com.jakewharton.retrofit</groupId><artifactId>retrofit2-kotlinx-serialization-converter</artifactId><version>1.0.0</version></dependency>
+        <dependency><groupId>io.coil-kt</groupId><artifactId>coil-compose</artifactId><version>2.7.0</version></dependency>
+
+        <!-- Test -->
+        <dependency><groupId>junit</groupId><artifactId>junit</artifactId><version>4.13.2</version><scope>test</scope></dependency>
+        <dependency><groupId>androidx.test.ext</groupId><artifactId>junit</artifactId><version>1.2.1</version><scope>test</scope>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>androidx.test.espresso</groupId><artifactId>espresso-core</artifactId><version>3.6.1</version><scope>test</scope>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>io.mockk</groupId><artifactId>mockk</artifactId><version>1.13.13</version><scope>test</scope></dependency>
+        <dependency><groupId>app.cash.turbine</groupId><artifactId>turbine</artifactId><version>1.2.0</version><scope>test</scope></dependency>
+        <dependency><groupId>androidx.test</groupId><artifactId>core</artifactId><version>1.6.1</version><scope>test</scope>    <type>aar</type>
+        </dependency>
+        <dependency><groupId>org.robolectric</groupId><artifactId>robolectric</artifactId><version>4.14.1</version><scope>test</scope></dependency>
+        <dependency><groupId>androidx.room</groupId><artifactId>room-testing</artifactId><version>2.6.1</version><scope>test</scope>    <type>aar</type>
+        </dependency>
+
+        <!-- Pin espliciti: Maven non applica la conflict resolution di Gradle sui range di navigazione -->
+        <dependency><groupId>androidx.navigation</groupId><artifactId>navigation-runtime-ktx</artifactId><version>2.8.5</version><type>aar</type></dependency>
+        <dependency><groupId>androidx.navigation</groupId><artifactId>navigation-runtime</artifactId><version>2.8.5</version><type>aar</type></dependency>
+        <dependency><groupId>androidx.navigation</groupId><artifactId>navigation-common</artifactId><version>2.8.5</version><type>aar</type></dependency>
+    </dependencies>
+</project>

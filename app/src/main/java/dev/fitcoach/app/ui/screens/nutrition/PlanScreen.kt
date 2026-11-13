@@ -16,13 +16,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,6 +44,9 @@ import dev.fitcoach.app.ui.components.ProgressTrack
 import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.SectionTitle
 import dev.fitcoach.app.ui.components.StatTile
+import dev.fitcoach.app.ui.components.FitChip
+import dev.fitcoach.app.ui.components.FitPrimaryButton
+import dev.fitcoach.app.ui.components.FitSecondaryButton
 import dev.fitcoach.app.ui.theme.BlueAccent
 import dev.fitcoach.app.ui.theme.VioletAccent
 
@@ -85,11 +85,11 @@ fun PlanScreen(
                 Spacer(Modifier.height(8.dp))
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             } else {
-                Button(onClick = { viewModel.generateWithAi() }, modifier = Modifier.fillMaxWidth()) {
+                FitPrimaryButton(onClick = { viewModel.generateWithAi() }, modifier = Modifier.fillMaxWidth()) {
                     Text("Genera con l'agente AI")
                 }
                 Spacer(Modifier.height(8.dp))
-                OutlinedButton(onClick = { viewModel.createEmptyPlan() }, modifier = Modifier.fillMaxWidth()) {
+                FitSecondaryButton(onClick = { viewModel.createEmptyPlan() }, modifier = Modifier.fillMaxWidth()) {
                     Text("Crea piano manuale (7 giorni)")
                 }
             }
@@ -131,7 +131,7 @@ fun PlanScreen(
                     StatTile("Grassi", Format.grams(totals.fat), accent = VioletAccent)
                 }
                 Spacer(Modifier.height(8.dp))
-                Button(onClick = onOpenDiary, modifier = Modifier.fillMaxWidth()) { Text("Registra nel diario") }
+                FitPrimaryButton(onClick = onOpenDiary, modifier = Modifier.fillMaxWidth()) { Text("Registra nel diario") }
                 Spacer(Modifier.height(8.dp))
                 if (generating != null) {
                     Text(
@@ -142,7 +142,7 @@ fun PlanScreen(
                     Spacer(Modifier.height(6.dp))
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 } else {
-                    OutlinedButton(
+                    FitSecondaryButton(
                         onClick = { viewModel.generateWithAi() },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text("Rigenera con l'agente AI") }
@@ -153,7 +153,7 @@ fun PlanScreen(
         Spacer(Modifier.height(10.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             items((0..6).toList()) { index ->
-                FilterChip(
+                FitChip(
                     selected = state.selectedDayIndex == index,
                     onClick = { viewModel.selectDay(index) },
                     label = { Text(DAY_NAMES.getOrElse(index) { "$index" }) }
@@ -206,7 +206,7 @@ fun PlanScreen(
                             }
                             Spacer(Modifier.height(6.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(onClick = { editingItem = item }) { Text("Modifica grammi") }
+                                FitSecondaryButton(onClick = { editingItem = item }) { Text("Modifica grammi") }
                                 IconButton(onClick = { viewModel.deleteItem(item) }) {
                                     Icon(Icons.Filled.Delete, contentDescription = "Rimuovi")
                                 }

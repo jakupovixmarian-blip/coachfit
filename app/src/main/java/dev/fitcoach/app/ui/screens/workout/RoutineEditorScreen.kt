@@ -16,16 +16,13 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +37,9 @@ import dev.fitcoach.app.domain.model.RoutineExercise
 import dev.fitcoach.app.ui.components.FitCard
 import dev.fitcoach.app.ui.components.LabeledField
 import dev.fitcoach.app.ui.components.NumberField
+import dev.fitcoach.app.ui.components.FitPrimaryButton
+import dev.fitcoach.app.ui.components.FitSecondaryButton
+import dev.fitcoach.app.ui.components.FitTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +55,7 @@ fun RoutineEditorScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FitTopBar(
                 title = { Text("Scheda") },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.save(); onBack() }) {
@@ -79,7 +79,7 @@ fun RoutineEditorScreen(
                         Spacer(Modifier.height(6.dp))
                         LabeledField("Descrizione", state.description, { viewModel.setDescription(it) }, singleLine = false)
                         Spacer(Modifier.height(10.dp))
-                        Button(onClick = { showPicker = true }, modifier = Modifier.fillMaxWidth()) {
+                        FitPrimaryButton(onClick = { showPicker = true }, modifier = Modifier.fillMaxWidth()) {
                             Text("Aggiungi esercizio")
                         }
                     }
@@ -107,11 +107,11 @@ fun RoutineEditorScreen(
                             }
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = { editing = index }) { Text("Modifica") }
-                            OutlinedButton(onClick = { viewModel.move(index, -1) }) { Text("Su") }
-                            OutlinedButton(onClick = { viewModel.move(index, 1) }) { Text("Giu") }
+                            FitSecondaryButton(onClick = { editing = index }) { Text("Modifica") }
+                            FitSecondaryButton(onClick = { viewModel.move(index, -1) }) { Text("Su") }
+                            FitSecondaryButton(onClick = { viewModel.move(index, 1) }) { Text("Giu") }
                             exercise?.let {
-                                OutlinedButton(onClick = { onOpenExercise(it.id) }) { Text("Dettagli") }
+                                FitSecondaryButton(onClick = { onOpenExercise(it.id) }) { Text("Dettagli") }
                             }
                         }
                     }
