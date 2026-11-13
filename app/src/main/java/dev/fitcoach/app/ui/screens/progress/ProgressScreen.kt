@@ -213,7 +213,7 @@ fun ProgressScreen(
                         }
                         LineChart(
                             points = weights.sortedBy { it.dateEpochDay }
-                                .map { ChartPoint(DateUtils.toLocalDate(it.dateEpochDay), it.value) }
+                                .map { ChartPoint(DateUtils.fromEpochDay(it.dateEpochDay), it.value) }
                         )
                         Spacer(Modifier.height(8.dp))
                         KeyValueRow("Rilevazioni", weights.size.toString())
@@ -411,7 +411,7 @@ private fun HistoryRow(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                DateUtils.format(DateUtils.toLocalDate(measurement.dateEpochDay)),
+                DateUtils.format(DateUtils.fromEpochDay(measurement.dateEpochDay)),
                 style = MaterialTheme.typography.labelSmall,
                 color = TextLow
             )
