@@ -2,8 +2,8 @@
   "source": "app/gradle.lockfile",
   "source_kind": "gradle.lockfile",
   "resolved_count": 157,
-  "declared_count": 41,
-  "transitive_count": 127,
+  "declared_count": 168,
+  "transitive_count": 0,
   "drift": [],
   "declared_not_resolved": [
     "androidx.hilt:hilt-compiler",
@@ -18,6 +18,20 @@
     "junit:junit",
     "org.robolectric:robolectric"
   ],
+  "declared_build_or_test_only": [
+    "androidx.hilt:hilt-compiler",
+    "androidx.room:room-compiler",
+    "androidx.room:room-testing",
+    "androidx.test.espresso:espresso-core",
+    "androidx.test.ext:junit",
+    "androidx.test:core",
+    "app.cash.turbine:turbine",
+    "com.google.dagger:hilt-android-compiler",
+    "io.mockk:mockk",
+    "junit:junit",
+    "org.robolectric:robolectric"
+  ],
+  "declared_unexpected_absent": [],
   "coordinates": [
     {
       "coordinate": "androidx.activity:activity",
