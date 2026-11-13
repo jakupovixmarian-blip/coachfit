@@ -140,13 +140,57 @@ fun LoggedSet.toEntity() = LoggedSetEntity(
 )
 
 fun FoodEntity.toDomain() = Food(
-    id, name, brand, category, kcalPer100g, proteinPer100g, carbsPer100g, fatPer100g,
-    fiberPer100g, FoodSource.valueOf(source), barcode, FoodState.valueOf(state), pricePerKg, isCustom
+    id = id,
+    name = name,
+    brand = brand,
+    category = category,
+    kcalPer100g = kcalPer100g,
+    proteinPer100g = proteinPer100g,
+    carbsPer100g = carbsPer100g,
+    fatPer100g = fatPer100g,
+    fiberPer100g = fiberPer100g,
+    source = FoodSource.valueOf(source),
+    barcode = barcode,
+    state = FoodState.valueOf(state),
+    pricePerKg = pricePerKg,
+    isCustom = isCustom,
+    provenance = dev.fitcoach.app.domain.model.FoodProvenance(
+        sourceId = sourceId,
+        acquiredAt = acquiredAt,
+        sourceUpdatedAt = sourceUpdatedAt,
+        reliability = reliability,
+        verification = verification.asVerificationStatus(),
+        limitations = limitations
+    )
 )
+
 fun Food.toEntity() = FoodEntity(
-    id, name, brand, category, kcalPer100g, proteinPer100g, carbsPer100g, fatPer100g,
-    fiberPer100g, source.name, barcode, state.name, pricePerKg, isCustom
+    id = id,
+    name = name,
+    brand = brand,
+    category = category,
+    kcalPer100g = kcalPer100g,
+    proteinPer100g = proteinPer100g,
+    carbsPer100g = carbsPer100g,
+    fatPer100g = fatPer100g,
+    fiberPer100g = fiberPer100g,
+    source = source.name,
+    barcode = barcode,
+    state = state.name,
+    pricePerKg = pricePerKg,
+    isCustom = isCustom,
+    sourceId = provenance.sourceId,
+    acquiredAt = provenance.acquiredAt,
+    sourceUpdatedAt = provenance.sourceUpdatedAt,
+    reliability = provenance.reliability,
+    verification = provenance.verification.name,
+    limitations = provenance.limitations
 )
+
+/** Unknown statuses from older rows degrade to the honest default, never to "verified". */
+private fun String.asVerificationStatus(): dev.fitcoach.app.domain.model.VerificationStatus =
+    dev.fitcoach.app.domain.model.VerificationStatus.entries.firstOrNull { it.name == this }
+        ?: dev.fitcoach.app.domain.model.VerificationStatus.ESTIMATED
 
 fun MealPlanEntity.toDomain() = MealPlan(
     id, name, isActive, targetKcal, targetProtein, targetCarbs, targetFat, createdAt, FoodSource.valueOf(source)

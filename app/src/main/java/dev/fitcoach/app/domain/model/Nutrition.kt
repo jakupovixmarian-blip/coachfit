@@ -15,7 +15,9 @@ data class Food(
     val barcode: String? = null,
     val state: FoodState = FoodState.RAW,
     val pricePerKg: Double? = null,
-    val isCustom: Boolean = false
+    val isCustom: Boolean = false,
+    /** Where the values come from. Foods typed by hand carry no source. */
+    val provenance: FoodProvenance = FoodProvenance.NONE
 )
 
 enum class FoodSource(val label: String) {

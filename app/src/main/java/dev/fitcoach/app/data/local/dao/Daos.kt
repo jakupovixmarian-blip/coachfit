@@ -328,6 +328,28 @@ interface FoodDao {
 
     @Query("DELETE FROM food")
     suspend fun clear()
+
+    /**
+     * Deduplication key for imports: the same record from the same source must
+     * update in place instead of being inserted again.
+     */
+    @Query("SELECT * FROM food WHERE source = :source AND sourceId = :sourceId LIMIT 1")
+    suspend fun bySourceRef(source: String, sourceId: String): FoodEntity?
+
+    @Query("SELECT * FROM food WHERE name LIKE '%' || :query || '%' ORDER BY name ASC LIMIT :limit")
+    suspend fun searchByName(query: String, limit: Int): List<FoodEntity>
+
+    @Query(
+        "UPDATE food SET verification = :verification, limitations = :limitations, " +
+            "reliability = :reliability, acquiredAt = :acquiredAt WHERE id = :id"
+    )
+    suspend fun setProvenance(
+        id: Long,
+        verification: String,
+        limitations: String,
+        reliability: Double,
+        acquiredAt: Long
+    )
 }
 
 @Dao

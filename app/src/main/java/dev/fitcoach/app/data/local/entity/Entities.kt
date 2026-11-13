@@ -143,7 +143,10 @@ data class LoggedSetEntity(
     val loggedAt: Long
 )
 
-@Entity(tableName = "food", indices = [Index("name"), Index("barcode")])
+@Entity(
+    tableName = "food",
+    indices = [Index("name"), Index("barcode"), Index(value = ["source", "sourceId"])]
+)
 data class FoodEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     val name: String,
@@ -158,7 +161,16 @@ data class FoodEntity(
     val barcode: String?,
     val state: String,
     val pricePerKg: Double?,
-    val isCustom: Boolean
+    val isCustom: Boolean,
+    /** Identifier inside the source, so a refresh updates instead of duplicating. */
+    val sourceId: String = "",
+    val acquiredAt: Long = 0L,
+    val sourceUpdatedAt: Long? = null,
+    val reliability: Double = 0.0,
+    /** Name of [dev.fitcoach.app.domain.model.VerificationStatus]. */
+    val verification: String = "MANUAL",
+    /** What the record does not state, instead of a guessed value. */
+    val limitations: String = ""
 )
 
 @Entity(tableName = "meal_plan")

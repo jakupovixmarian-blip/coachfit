@@ -19,12 +19,11 @@ data class ValidationIssue(
  * food so the app can always tell a verified official table from a crowdsourced
  * product or a value typed by hand.
  */
-enum class VerificationStatus(val label: String) {
-    VERIFIED("Verificato su fonte ufficiale"),
-    IMPORTED("Importato da fonte esterna"),
-    MANUAL("Inserito a mano"),
-    ESTIMATED("Stimato")
-}
+/**
+ * One type shared by the model and by this layer: the status describes the
+ * record, not the check that produced it.
+ */
+typealias VerificationStatus = dev.fitcoach.app.domain.model.VerificationStatus
 
 data class FoodValidation(
     val issues: List<ValidationIssue>,

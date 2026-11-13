@@ -66,7 +66,7 @@ import dev.fitcoach.app.data.local.entity.WorkoutSessionEntity
         CoachMessageEntity::class,
         KnowledgeNoteEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
