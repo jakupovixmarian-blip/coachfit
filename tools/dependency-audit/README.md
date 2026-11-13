@@ -7,6 +7,10 @@
   qualcosa di leggibile, **non** fa parte del build Gradle dell'app.
 - `coverage_check.py` verifica che ogni libreria dichiarata nel catalogo Gradle sia presente nel
   manifest, così nessuna dipendenza **dichiarata** resta fuori dal controllo.
+- `import_resolved.py` legge un file risolto da Gradle (`app/gradle.lockfile` o `deps.txt`) e lo
+  confronta con il manifest: segnala le versioni diverse da quelle dichiarate e quante coordinate
+  esistono **solo come transitive**. È il passo che permette di portare nel manifest le versioni
+  realmente usate nell'APK.
 
 Esito attuale: 38 voci nel catalogo `[libraries]`, 41 coordinate nel manifest, 0 dichiarate scoperte.
 
@@ -63,6 +67,21 @@ Prerequisiti: JDK 17+ e Android SDK installati, progetto aperto in Android Studi
 
 4. Riporta qui `deps.txt` o `app/gradle.lockfile`: aggiorno il manifest con le versioni
    effettivamente risolte e rilancio il controllo, così la copertura include anche le transitive.
+
+   L'import è automatizzato, quindi il passaggio è verificabile anche in locale:
+
+   ```bash
+   python3 tools/dependency-audit/import_resolved.py deps.txt
+   # oppure: python3 tools/dependency-audit/import_resolved.py app/gradle.lockfile
+   ```
+
+   Lo script riconosce entrambi i formati (righe `group:artifact:version=config` del lockfile e
+   nodi `+--- group:artifact:version` del report, incluse le correzioni `-> x.y.z`), scrive
+   `resolved.json` con tutte le coordinate risolte ed esce con:
+
+   - `0` manifest allineato alle versioni risolte;
+   - `1` disallineamenti da correggere (drift di versione o coordinate dichiarate assenti dal grafo);
+   - `2` file illeggibile o senza coordinate riconoscibili (esito vuoto: non è una copertura).
 
 ## Manutenzione
 
