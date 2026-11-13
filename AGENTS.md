@@ -143,3 +143,13 @@ instrumented/on-device test was executed here.
   `https://work-1-jqldlxqmurlrokks.prod-runtime.all-hands.dev/<file>`.
 - Il token `$GITHUB_TOKEN` in ambiente è di **sola lettura**. Per il push serve il PAT fornito
   dall'utente, passato inline nell'URL e mai salvato in git config.
+
+## Lockfile del buildscript di root
+
+- `build.gradle.kts` attiva il locking sulla `classpath` del buildscript, così i 6 plugin di build
+  entrano in `buildscript-gradle.lockfile` (155 pacchetti).
+- Il buildscript riporta 61 vulnerabilità in 15 pacchetti, **tutte nella toolchain**: nessuna
+  compare in `app/gradle.lockfile`. L'app resta pulita (157 pacchetti, nessun problema).
+- Finding noto e accettato: `kotlin-gradle-plugin` 2.0.21 → CVE-2026-53914 (moderata). Fix solo in
+  2.4.20-Beta1, ultima stabile 2.2.0. Da rivedere quando esce una stabile con la patch.
+- Dettagli in `tools/dependency-audit/buildscript-scan-report.md`.
