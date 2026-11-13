@@ -52,7 +52,9 @@ data class RoutineExercise(
     val targetRepsMax: Int = 12,
     val targetRir: Int = 2,
     val restSeconds: Int = 90,
-    val notes: String = ""
+    val notes: String = "",
+    /** Load accepted from a confirmed progression. Null until the user approves one. */
+    val targetWeightKg: Double? = null
 )
 
 data class Routine(

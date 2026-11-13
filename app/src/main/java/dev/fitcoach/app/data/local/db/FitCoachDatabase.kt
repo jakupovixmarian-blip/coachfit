@@ -66,7 +66,7 @@ import dev.fitcoach.app.data.local.entity.WorkoutSessionEntity
         CoachMessageEntity::class,
         KnowledgeNoteEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -168,7 +168,18 @@ abstract class FitCoachDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Stores the load accepted from a confirmed progression. Existing rows keep
+         * their plan and start with no accepted load, which is the honest state.
+         */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE routine_exercise ADD COLUMN targetWeightKg REAL")
+            }
+        }
+
         /** Every migration, in order, so the database builder can never miss one. */
-        val ALL: Array<Migration> get() = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+        val ALL: Array<Migration>
+            get() = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
     }
 }

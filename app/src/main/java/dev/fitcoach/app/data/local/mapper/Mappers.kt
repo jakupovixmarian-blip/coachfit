@@ -117,10 +117,12 @@ fun Routine.toEntity() = RoutineEntity(
 )
 
 fun RoutineExerciseEntity.toDomain() = RoutineExercise(
-    id, routineId, exerciseId, orderIndex, targetSets, targetRepsMin, targetRepsMax, targetRir, restSeconds, notes
+    id, routineId, exerciseId, orderIndex, targetSets, targetRepsMin, targetRepsMax, targetRir, restSeconds,
+    notes, targetWeightKg
 )
 fun RoutineExercise.toEntity() = RoutineExerciseEntity(
-    id, routineId, exerciseId, orderIndex, targetSets, targetRepsMin, targetRepsMax, targetRir, restSeconds, notes
+    id, routineId, exerciseId, orderIndex, targetSets, targetRepsMin, targetRepsMax, targetRir, restSeconds,
+    notes, targetWeightKg
 )
 
 fun WorkoutSessionEntity.toDomain() = WorkoutSession(

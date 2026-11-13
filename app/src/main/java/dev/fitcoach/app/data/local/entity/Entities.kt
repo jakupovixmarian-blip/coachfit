@@ -109,7 +109,8 @@ data class RoutineExerciseEntity(
     val targetRepsMax: Int,
     val targetRir: Int,
     val restSeconds: Int,
-    val notes: String
+    val notes: String,
+    val targetWeightKg: Double? = null
 )
 
 @Entity(tableName = "workout_session", indices = [Index("dateEpochDay"), Index("routineId")])
