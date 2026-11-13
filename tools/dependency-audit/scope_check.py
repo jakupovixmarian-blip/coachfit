@@ -8,7 +8,7 @@ Perché esiste: il repository contiene due lockfile con scopi diversi.
                                   loro transitive (netty, guava, protobuf, bouncycastle...)
 
 Lo scanner di AppJet tratta il repository come un unico scope, quindi somma i due grafi:
-318 pacchetti, 49 segnalazioni. Senza questa verifica quel numero sembra
+324 pacchetti, 49 segnalazioni (24 high/critical). Senza questa verifica quel numero sembra
 riguardare l'app. Non è così: qui si dimostra, in modo ripetibile, che nessuno dei pacchetti
 segnalati compare nel grafo dell'app.
 
@@ -23,9 +23,11 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 APP_LOCK = ROOT / "app" / "gradle.lockfile"
 BUILDSCRIPT_LOCK = ROOT / "buildscript-gradle.lockfile"
 
-# Pacchetti con almeno una segnalazione nel buildscript, secondo OSV-Scanner.
+# Pacchetti con almeno una segnalazione nel buildscript, secondo OSV-Scanner (rev. 50).
 # Elenco esplicito: se un domani uno di questi entra nel grafo dell'app, il controllo
 # fallisce invece di aggiornarsi da solo e nascondere la regressione.
+# Aggiornato dopo la chiusura di CVE-2026-53914: kotlin-gradle-plugin, protobuf-java e
+# commons-io non hanno più segnalazioni; jose4j (transitiva di AGP) è entrato nell'elenco.
 FLAGGED = (
     "io.netty:netty-codec",
     "io.netty:netty-codec-http",
@@ -36,11 +38,9 @@ FLAGGED = (
     "org.bouncycastle:bcpkix-jdk18on",
     "org.bouncycastle:bcprov-jdk18on",
     "com.google.guava:guava",
-    "com.google.protobuf:protobuf-java",
-    "commons-io:commons-io",
     "org.apache.commons:commons-compress",
+    "org.bitbucket.b_c:jose4j",
     "org.jdom:jdom2",
-    "org.jetbrains.kotlin:kotlin-gradle-plugin",
 )
 
 LOCK_RE = re.compile(r"^([A-Za-z0-9_.\-]+:[A-Za-z0-9_.\-]+):([^=\s]+)\s*=")
