@@ -145,7 +145,7 @@ annotation class Upsert
 KOTLIN
 
 # Moduli di dominio: Kotlin puro, nessuna dipendenza da Android o Hilt.
-PURE="$(find "$SRC/domain" "$SRC/core" "$SRC/data/catalog" "$SRC/data/ai" -name '*.kt' \
+PURE="$(find "$SRC/domain" "$SRC/core" "$SRC/data/catalog" "$SRC/data/ai" "$SRC/data/seed" -name '*.kt' \
   -exec grep -L -e 'import android' -e 'import androidx' -e 'import dagger' {} \;)"
 FULL="$PURE $(find "$SRC/data/local/entity" -name '*.kt') \
 $SRC/data/local/mapper/Mappers.kt $SRC/data/local/dao/Daos.kt"
