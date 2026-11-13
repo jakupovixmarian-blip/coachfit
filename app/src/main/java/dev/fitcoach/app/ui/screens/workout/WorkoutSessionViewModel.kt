@@ -16,6 +16,10 @@ import dev.fitcoach.app.domain.repository.ExerciseRepository
 import dev.fitcoach.app.domain.repository.RoutineRepository
 import dev.fitcoach.app.domain.repository.SessionRepository
 import dev.fitcoach.app.domain.usecase.ProgressionEngine
+import dev.fitcoach.app.domain.usecase.ProgressionApprovalUseCase
+import dev.fitcoach.app.domain.usecase.ProgressionOutcome
+import dev.fitcoach.app.domain.usecase.ProgressionPort
+import dev.fitcoach.app.domain.usecase.ProgressionProposal
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,7 +51,9 @@ data class SessionUiState(
     val message: String? = null,
     val finished: Boolean = false,
     /** Set when the user asked to close a session with no recorded set. */
-    val confirmEmptyFinish: Boolean = false
+    val confirmEmptyFinish: Boolean = false,
+    /** A progression waiting for the user's confirmation. Never applied on its own. */
+    val proposal: ProgressionProposal? = null
 ) {
     val totalVolumeKg: Double get() = blocks.sumOf { it.volumeKg }
     val totalSets: Int get() = blocks.sumOf { it.completedSets }
@@ -66,8 +72,11 @@ class WorkoutSessionViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val sessionRepository: SessionRepository,
     private val exerciseRepository: ExerciseRepository,
-    private val routineRepository: RoutineRepository
+    private val routineRepository: RoutineRepository,
+    private val progressionPort: ProgressionPort
 ) : ViewModel() {
+
+    private val progression = ProgressionApprovalUseCase(progressionPort)
 
     private val sessionId: Long = savedStateHandle.get<Long>("sessionId") ?: 0L
     private val _state = MutableStateFlow(SessionUiState())
@@ -165,7 +174,8 @@ class WorkoutSessionViewModel @Inject constructor(
                     orderIndex = block.routineExercise?.orderIndex ?: 0,
                     setIndex = nextIndex,
                     setType = SetType.WORKING,
-                    weightKg = last?.weightKg ?: block.suggestedWeightKg,
+                    weightKg = last?.weightKg ?: block.routineExercise?.targetWeightKg
+                        ?: block.suggestedWeightKg,
                     reps = block.suggestedReps ?: block.routineExercise?.targetRepsMin,
                     rir = null,
                     restSeconds = block.routineExercise?.restSeconds,
@@ -276,4 +286,56 @@ class WorkoutSessionViewModel @Inject constructor(
     }
 
     fun allExercises(): List<Exercise> = _state.value.blocks.map { it.exercise }
+
+    /** Builds the proposal and shows it. Nothing is written before [approveProgression]. */
+    fun proposeProgression(block: SessionExerciseBlock) {
+        viewModelScope.launch {
+            val routineExercise = block.routineExercise ?: return@launch
+            val proposal = progression.propose(routineExercise.id)
+            _state.update {
+                it.copy(
+                    proposal = proposal,
+                    message = if (proposal == null) "Esercizio non trovato nella scheda" else null
+                )
+            }
+        }
+    }
+
+    fun dismissProgression() = _state.update { it.copy(proposal = null) }
+
+    /** Applies the proposal after the user confirmed it, then reloads the session. */
+    fun approveProgression() {
+        viewModelScope.launch {
+            val proposal = _state.value.proposal ?: return@launch
+            when (val outcome = progression.approve(proposal)) {
+                is ProgressionOutcome.Applied -> {
+                    val weight = outcome.exercise.targetWeightKg?.let { " a $it kg" }.orEmpty()
+                    _state.update {
+                        it.copy(
+                            proposal = null,
+                            message = "Progressione applicata$weight. ${outcome.entry.note}".trim()
+                        )
+                    }
+                    _state.value.session?.let { rebuild(it) }
+                }
+
+                is ProgressionOutcome.Rejected ->
+                    _state.update { it.copy(proposal = null, message = outcome.reason) }
+
+                is ProgressionOutcome.Unavailable ->
+                    _state.update { it.copy(proposal = null, message = outcome.message) }
+            }
+        }
+    }
+
+    /** Keeps the plan untouched and records why the user refused the proposal. */
+    fun rejectProgression(reason: String) {
+        viewModelScope.launch {
+            val proposal = _state.value.proposal ?: return@launch
+            val outcome = progression.reject(proposal, reason.ifBlank { "Rifiutata dall'utente" })
+            _state.update {
+                it.copy(proposal = null, message = "Proposta rifiutata: ${outcome.reason}")
+            }
+        }
+    }
 }
