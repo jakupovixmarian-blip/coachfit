@@ -21,21 +21,21 @@ Verificato che regga: `./gradlew :app:assembleDebug :app:testDebugUnitTest` → 
 | `app/gradle.lockfile` (app) | 157 | **No issues found** |
 | `buildscript-gradle.lockfile` (toolchain) | 155 | 14 pacchetti, 62 segnalazioni (27 high/critical) |
 
-Le 61 vulnerabilità stanno **tutte nella toolchain di build**, zero nell'app. Verificato
-incrociando i nomi: nessuno dei 15 pacchetti colpiti compare in `app/gradle.lockfile`.
+Le 62 segnalazioni stanno **tutte nella toolchain di build**, zero nell'app. Verificato
+incrociando i nomi: nessuno dei 14 pacchetti colpiti compare in `app/gradle.lockfile`.
 
 Pacchetti colpiti nel buildscript: guava, protobuf-java, commons-io, netty (codec, codec-http,
 codec-http2, common, handler, handler-proxy), commons-compress, jdom2, bouncycastle
 (bcpkix, bcprov), kotlin-gradle-plugin.
 
-## Il finding Kotlin: reale, senza fix stabile
+## Il finding Kotlin: fix disponibile, bloccato da Hilt
 
 `org.jetbrains.kotlin:kotlin-gradle-plugin` 2.0.21 → GHSA-r937-wjx7-w2jp (CVE-2026-53914),
 severità moderata (6.7): deserializzazione non sicura nella Kotlin Build Cache.
 
-Verificato sull'API OSV: l'intervallo corretto è `fixed: 2.4.20-Beta1`. Su Maven Central l'ultima
-release **stabile** è 2.2.0, che resta vulnerabile. Quindi **non esiste una versione stabile con
-la patch**: l'unico fix pubblicato è una beta.
+Verificato sull'API OSV il 2026-11-13: l'intervallo corretto è `fixed: 2.4.20-Beta1`, ma **2.4.20
+è una release stabile** e non ha vulnerabilità. Il fix quindi esiste ed è stabile: il blocco non è
+più l'assenza di una versione di Kotlin.
 
 Esposizione reale, valutata sui file del progetto:
 
@@ -45,9 +45,18 @@ Esposizione reale, valutata sui file del progetto:
   in scrittura alla macchina che compila.
 - Il plugin non viene impacchettato nell'APK.
 
-Conclusione: rischio accettato e documentato. L'aggiornamento a 2.4.20-Beta1 comporterebbe un
-salto 2.0.21 → 2.4.x che trascina Compose compiler, serialization e KSP (legato alla versione di
-Kotlin) e introdurrebbe una beta in produzione. Va fatto quando esce una stabile con la patch.
+Conclusione: il fix esiste (Kotlin 2.4.20 stabile) ma l'aggiornamento è una catena di sei
+dipendenze — Kotlin → KSP → AGP → Gradle → Hilt → Room — e si ferma su Hilt 2.56.2, che incorpora
+`kotlin-metadata-jvm` 2.2.0 e non legge il metadata di Kotlin 2.4:
+
+```
+error: [Hilt] Provided metadata instance has version 2.4.0, while maximum supported
+version is 2.2.0.
+```
+
+Toolchain ripristinata e riverificata (`assembleDebug`, 61 test, APK 20.222.928 byte). Dettagli e
+comando di ricontrollo in `kotlin-upgrade-attempt.md`. L'attesa ora è su Dagger/Hilt, non su
+JetBrains.
 
 ## Cosa resta aperto, e perché
 
@@ -60,4 +69,6 @@ Kotlin) e introdurrebbe una beta in produzione. Va fatto quando esce una stabile
    aggiornano nel catalogo, si aggiornano portando avanti il toolchain. Un pin forzato qui, senza
    poter ricompilare, disallineerebbe il lockfile appena verificato con `assembleDebug`.
 2. **Transitive dell'app**: coperte da `app/gradle.lockfile`, 0 problemi.
-3. **Finding Kotlin**: documentato, nessun fix stabile disponibile.
+3. **Finding Kotlin**: fix stabile disponibile (2.4.20), bloccato dal tetto di metadata di Hilt
+   2.56.2. Vedi `kotlin-upgrade-attempt.md`; ipotesi da provare: `languageVersion` 2.2 su Kotlin
+   2.4.20, così il metadata emesso resta 2.2.0.

@@ -86,11 +86,40 @@ Conseguenza: l'attacco richiede di piazzare una voce malevola nella cache locale
 già accesso in scrittura alla macchina che compila. Il rischio reale qui è basso, ma il finding
 resta valido e visibile.
 
-Perché non è stato corretto: l'unica `fixed_version` pubblicata è **2.4.20-Beta1**, una beta. Un
-salto 2.0.21 → 2.4.x trascina Compose compiler, serialization e KSP (oggi 2.0.21-1.0.28, legato
-alla versione di Kotlin) e va verificato con `assembleDebug` e i 61 test. Va fatto dove Gradle e
-l'SDK Android esistono, non qui. Quando esce una release **stabile** con la patch, la sequenza è:
-aggiornare `kotlin` nel catalogo, allineare `ksp`, ricompilare, rilanciare gli scan.
+Perché non è stato corretto qui, e qual è il vero blocco: la `fixed_version` 2.4.20-Beta1 non è
+più l'unica. Il 2026-11-13 l'API OSV conferma che **2.4.20 è stabile e senza vulnerabilità**, quindi
+l'aggiornamento è stato tentato davvero — e ha rivelato che non è una patch ma una catena:
+Kotlin 2.4.20 → KSP 2.3.13 (vuole AGP ≥ 8.12) → AGP 8.11.2 (vuole Gradle ≥ 8.13) → Gradle 8.13
+(`jvmTarget` solo in `compilerOptions`) → Hilt 2.56.2 (Room 2.6.1 incompatibile col KSP nuovo) →
+Room 2.8.5. Il muro è l'ultimo passo:
+
+```
+error: [Hilt] Provided Metadata instance has version 2.4.0, while maximum supported
+version is 2.2.0. To support newer versions, update the kotlin-metadata-jvm library.
+```
+
+Hilt 2.56.2, l'ultima stabile, incorpora `kotlin-metadata-jvm` 2.2.0 e non legge il metadata di
+Kotlin 2.4. L'attesa quindi non è su JetBrains ma su **Dagger/Hilt**. La toolchain è stata
+ripristinata (Kotlin 2.0.21, KSP 2.0.21-1.0.28, AGP 8.7.3, Gradle 8.11.1, Hilt 2.52, Room 2.6.1) e
+riverificata: `assembleDebug` ok, 61 test, APK 20.222.928 byte. Passo-passo e comando di
+ricontrollo in `kotlin-upgrade-attempt.md`.
+
+Pista non ancora verificata, da provare dove Gradle esiste: far emettere a Kotlin 2.4.20 metadata
+2.2, che Hilt 2.56.2 sa leggere. Nessun pin arbitrario, solo il livello di linguaggio:
+
+```kotlin
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+        languageVersion.set(KotlinVersion.KOTLIN_2_2)
+        apiVersion.set(KotlinVersion.KOTLIN_2_2)
+    }
+}
+```
+
+Se il compilatore accetta `languageVersion` 2.2 su 2.4.20 (di norma due versioni indietro restano
+supportate), l'errore di Hilt sparisce e la CVE si chiude senza aspettare Dagger. Va confermato con
+`assembleDebug` e i 61 test: qui non posso compilare, quindi resta un'ipotesi, non un fix.
 
 ## Perché il lockfile va generato fuori da AppJet
 
