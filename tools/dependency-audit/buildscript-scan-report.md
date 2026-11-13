@@ -19,14 +19,16 @@ Verificato che regga: `./gradlew :app:assembleDebug :app:testDebugUnitTest` → 
 | Lockfile | Pacchetti | Esito |
 |---|---|---|
 | `app/gradle.lockfile` (app) | 162 | **No issues found** |
-| `buildscript-gradle.lockfile` (toolchain) | 156 | 14 pacchetti, 49 segnalazioni (3 critical, 21 high) |
+| `buildscript-gradle.lockfile` (toolchain) | 156 | 12 pacchetti, 49 segnalazioni (3 critical, 21 high) |
 
 Le 49 segnalazioni stanno **tutte nella toolchain di build**, zero nell'app. Verificato
-incrociando i nomi: nessuno dei 14 pacchetti colpiti compare in `app/gradle.lockfile`.
+incrociando i nomi: nessuno dei 12 pacchetti colpiti compare in `app/gradle.lockfile`.
 
-Pacchetti colpiti nel buildscript: guava, protobuf-java, commons-io, netty (codec, codec-http,
-codec-http2, common, handler, handler-proxy), commons-compress, jdom2, bouncycastle
-(bcpkix, bcprov), kotlin-gradle-plugin.
+Pacchetti colpiti nel buildscript: guava 33.3.1-jre, netty 4.1.110.Final (codec, codec-http,
+codec-http2, common, handler, handler-proxy), commons-compress 1.21, jose4j 0.9.5, jdom2 2.0.6,
+bouncycastle (bcpkix, bcprov) 1.79. `kotlin-gradle-plugin`, `protobuf-java` e `commons-io` non
+sono più segnalati: il primo per la chiusura della CVE, gli altri perché la toolchain aggiornata
+ne risolve versioni pulite.
 
 ## Il finding Kotlin: CHIUSO
 
@@ -53,7 +55,7 @@ non impacchettato nell'APK. Non è più un rischio attivo.
 
 1. **Lockfile del buildscript**: chiuso con questo file. Lo scanner di AppJet lo legge e vi
    attribuisce 49 segnalazioni, tutte qui e **nessuna nell'app**;
-   `tools/dependency-audit/scope_check.py` lo verifica a ogni esecuzione (14/14 pacchetti
+   `tools/dependency-audit/scope_check.py` lo verifica a ogni esecuzione (12/12 pacchetti
    segnalati presenti solo nel buildscript, 0 nel grafo dell'app).
 
    Le versioni coinvolte sono transitive di AGP 8.12.3 e Gradle 8.13, che restano indietro: non si

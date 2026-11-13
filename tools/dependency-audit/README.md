@@ -19,7 +19,7 @@ quindi senza queste voci le loro versioni non venivano controllate da nessuno sc
 `<scope>provided</scope>` e la mappa id plugin → artefatto Maven è in
 `sync_pom_from_lockfile.py`; le versioni non sono mai scritte a mano, si leggono dal catalogo.
 Sono le 6 coordinate **dirette**, non l'intero grafo di build: resta esclusa l'infrastruttura
-trasitiva (netty, guava, protobuf) che non finisce nell'APK.
+trasitiva (netty, guava, bouncycastle) che non finisce nell'APK.
   confronta con il manifest: segnala le versioni diverse da quelle dichiarate e quante coordinate
   esistono **solo come transitive**. È il passo che permette di portare nel manifest le versioni
   realmente usate nell'APK.
@@ -27,17 +27,20 @@ trasitiva (netty, guava, protobuf) che non finisce nell'APK.
 Esito attuale, con `app/gradle.lockfile` versionato nel repository:
 
 - **162 pacchetti** risolti nel lockfile, di cui **127 presenti solo come transitive**;
-- **318 pacchetti** esaminati dallo scanner, distribuiti su due grafi distinti: 162 coordinate
+- **324 pacchetti** esaminati dallo scanner, distribuiti su due grafi distinti: 162 coordinate
   nel grafo dell'app (`app/gradle.lockfile`), 156 nel classpath del buildscript
   (`buildscript-gradle.lockfile`), 174 voci nel manifest di audit. La separazione è verificata
   da `scope_check.py`, non solo dichiarata;
-- **0 vulnerabilità note**, 0 bloccanti.
+- **app: 0 vulnerabilità note, 0 bloccanti.** Il repository intero, invece, riporta **49
+  segnalazioni e 24 bloccanti** (3 critical, 21 high): stanno tutte nel classpath del buildscript.
+  Le due cifre non vanno confuse — vedi la sezione sui due grafi.
 
 ## Il lockfile deve restare ristretto alle classpath dell'app
 
 `app/gradle.lockfile` copre solo `release`/`debug` Compile+Runtime. **Non** usare
 `lockAllConfigurations()`: quel grafo include l'infrastruttura di build di Android e produce
-51 segnalazioni (netty, guava, protobuf, commons-io, bouncycastle) che non finiscono nell'APK.
+49 segnalazioni (netty, guava, bouncycastle, commons-compress, jdom2, jose4j) che non
+finiscono nell'APK.
 Se il lockfile viene rigenerato con tutte le configurazioni, va riportato a queste sole classpath.
 
 ## Cosa resta fuori
@@ -60,8 +63,8 @@ coordinate condivise (tutte infrastrutturali e senza segnalazioni: jsr305, javax
 kotlin-stdlib, coroutines, listenablefuture, dagger, annotations), **0 pacchetti segnalati
 nell'app**.
 
-Le segnalazioni stanno nel classpath del buildscript: netty 4.1.93, bouncycastle 1.77, guava
-33.3.1-jre, protobuf-java 3.25.5, commons-io 2.16.1, commons-compress 1.21, jdom2 2.0.6. Sono dipendenze di AGP e Gradle, **non dichiarazioni nostre**: non
+Le segnalazioni stanno nel classpath del buildscript: netty 4.1.110.Final, bouncycastle 1.79,
+guava 33.3.1-jre, commons-compress 1.21, jdom2 2.0.6, jose4j 0.9.5. Sono dipendenze di AGP e Gradle, **non dichiarazioni nostre**: non
 si aggiornano nel catalogo, si aggiornano portando AGP e Gradle a versioni più recenti. Forzare
 qui le versioni senza poter compilare significherebbe pin arbitrari sul toolchain e un lockfile
 disallineato rispetto a quello verificato con `assembleDebug`. Restano quindi visibili e vanno
