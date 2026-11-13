@@ -119,3 +119,27 @@ instrumented/on-device test was executed here.
   shortcuts (`SecondaryDestinations`). Theme tokens live in `ui/theme`; shared widgets
   (`FitCard`, `HeroCard`, `StatTile`, `ProgressTrack`, `Tag`, `ScreenHeader`) in
   `ui/components/Common.kt`. Prefer these over ad-hoc `Card`/`Text` styling so screens stay consistent.
+
+## Dependency locking e audit dipendenze
+
+- `app/build.gradle.kts` attiva il dependency locking **solo** sulle classpath dell'app
+  (`release/debug` `Compile`+`Runtime`), non con `lockAllConfigurations()`. Motivo: il lockfile
+  di tutte le configurazioni include la toolchain di build e le lib di test, e OSV-Scanner vi
+  trova 51 vulnerabilità in 12 pacchetti (netty, guava, protobuf-java, commons-io, bouncycastle)
+  che **non finiscono nell'APK**. Ristretto alle classpath dell'app: 157 pacchetti, nessun problema.
+- Rigenerare dopo ogni cambio di dipendenze:
+  `./gradlew :app:dependencies --write-locks`  → produce `app/gradle.lockfile`
+- `tools/dependency-audit/` contiene il manifest di solo audit per AppJet (`pom.xml`), lo script di
+  import `import_resolved.py`, `coverage_check.py`, il collaudo `test_import_resolved.py`, più
+  `deps.txt` (albero release) e `resolved.json` (329 coordinate, 0 disallineamenti).
+- Non serve più `lockAllConfigurations()`: il lockfile versionato va committato, altrimenti il
+  build successivo fallisce per lock mancante.
+
+## Ambiente
+
+- L'ambiente di lavoro si azzera tra le sessioni: Java, Android SDK (`/opt/android-sdk`) e la
+  cartella `~/apk-share` vanno reinstallati/ricreati. `sudo` è disponibile (utente in gruppo sudo).
+- Publish APK: `python3 -m http.server 12000 --directory ~/apk-share` →
+  `https://work-1-jqldlxqmurlrokks.prod-runtime.all-hands.dev/<file>`.
+- Il token `$GITHUB_TOKEN` in ambiente è di **sola lettura**. Per il push serve il PAT fornito
+  dall'utente, passato inline nell'URL e mai salvato in git config.
