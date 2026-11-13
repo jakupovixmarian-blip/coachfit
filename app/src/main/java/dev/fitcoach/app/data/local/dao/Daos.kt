@@ -200,6 +200,9 @@ interface RoutineExerciseDao {
     @Query("SELECT * FROM routine_exercise WHERE routineId = :routineId ORDER BY orderIndex ASC")
     suspend fun getForRoutine(routineId: Long): List<RoutineExerciseEntity>
 
+    @Query("SELECT * FROM routine_exercise WHERE id = :id")
+    suspend fun getById(id: Long): RoutineExerciseEntity?
+
     @Query("SELECT * FROM routine_exercise")
     suspend fun getAll(): List<RoutineExerciseEntity>
 

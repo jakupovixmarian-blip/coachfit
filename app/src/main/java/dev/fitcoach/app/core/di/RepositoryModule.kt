@@ -9,6 +9,7 @@ import dev.fitcoach.app.data.backup.BackupRepositoryImpl
 import dev.fitcoach.app.data.repository.*
 import dev.fitcoach.app.domain.repository.*
 import dev.fitcoach.app.domain.usecase.AiGateway
+import dev.fitcoach.app.domain.usecase.ProgressionPort
 import javax.inject.Singleton
 
 @Module
@@ -61,4 +62,7 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindAiGateway(impl: AiGatewayImpl): AiGateway
+
+    @Binds @Singleton
+    abstract fun bindProgressionPort(impl: ProgressionPortImpl): ProgressionPort
 }
