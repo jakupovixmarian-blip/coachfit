@@ -345,6 +345,23 @@ fun WorkoutSessionScreen(
                                 Spacer(Modifier.height(4.dp))
                                 Text(it, style = MaterialTheme.typography.labelMedium, color = NeonGreen)
                             }
+                            if (block.routineExercise != null) {
+                                Spacer(Modifier.height(6.dp))
+                                Row(
+                                    Modifier
+                                        .clip(RoundedCornerShape(50))
+                                        .background(NeonViolet.copy(alpha = 0.12f))
+                                        .clickable { viewModel.proposeProgression(block) }
+                                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                                ) {
+                                    Text(
+                                        "Valuta progressione",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = NeonViolet,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
 
                             Spacer(Modifier.height(10.dp))
                             Row(
@@ -467,6 +484,41 @@ fun WorkoutSessionScreen(
             onPick = { exercise ->
                 viewModel.addExercise(exercise.id)
                 showAddExercise = false
+            }
+        )
+    }
+
+    state.proposal?.let { proposal ->
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissProgression() },
+            title = {
+                Text(if (proposal.canProgress) "Proposta di progressione" else "Mantenimento del carico")
+            },
+            text = {
+                Column {
+                    Text(proposal.reason, style = MaterialTheme.typography.bodyMedium, color = TextMid)
+                    Spacer(Modifier.height(8.dp))
+                    val load = proposal.suggestedWeightKg?.let { Format.kg(it) } ?: "carico attuale"
+                    Text(
+                        "$load x ${proposal.suggestedReps} rip (obiettivo ${proposal.targetRepsMin}-${proposal.targetRepsMax})",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "La scheda cambia solo se confermi. Se rifiuti, la proposta resta registrata e non viene applicata.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextLow
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.approveProgression() }) { Text("Applica alla scheda") }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.rejectProgression("Rifiutata dall'utente") }) {
+                    Text("Non ora")
+                }
             }
         )
     }
