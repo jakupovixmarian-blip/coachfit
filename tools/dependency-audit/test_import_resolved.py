@@ -124,8 +124,8 @@ def test_real_lockfile_is_aligned(tmp):
     assert data["transitive_count"] == 0, (
         "il pom deve contenere tutto il grafo risolto: rigeneralo con sync_pom_from_lockfile.py"
     )
-    assert len(data["declared_build_or_test_only"]) == 11, (
-        f"attese 11 coordinate ksp/test, trovate {len(data['declared_build_or_test_only'])}"
+    assert len(data["declared_build_or_test_only"]) == 17, (
+        f"attese 17 coordinate ksp/test/plugin, trovate {len(data['declared_build_or_test_only'])}"
     )
 
 
@@ -147,6 +147,25 @@ def test_pom_matches_lockfile(tmp):
     assert "<scope>test</scope>" in text, "le voci di test non sono state conservate"
 
 
+def test_catalog_plugins_are_in_manifest(tmp):
+    """I plugin di build del catalogo devono essere nel manifest, con la versione del catalogo."""
+    sys.path.insert(0, str(HERE))
+    import sync_pom_from_lockfile as sync
+
+    plugins = sync.read_catalog_plugins()
+    assert len(plugins) == 6, f"attesi 6 plugin nel catalogo, trovati {len(plugins)}: {plugins}"
+    assert "com.android.tools.build:gradle" in plugins, "AGP assente dal catalogo dei plugin"
+    pom = (HERE / "pom.xml").read_text(encoding="utf-8")
+    for coordinate, version in plugins.items():
+        group, artifact = coordinate.split(":", 1)
+        pattern = (
+            f"<groupId>{group}</groupId>\n            <artifactId>{artifact}</artifactId>\n"
+            f"            <version>{version}</version>"
+        )
+        assert pattern in pom, f"plugin assente o con versione diversa nel manifest: {coordinate}:{version}"
+    assert "<scope>provided</scope>" in pom, "i plugin devono essere marcati provided, non runtime"
+
+
 def main():
     tests = [
         test_lockfile_detects_drift_and_transitives,
@@ -155,6 +174,7 @@ def main():
         test_missing_file_exits_two,
         test_real_lockfile_is_aligned,
         test_pom_matches_lockfile,
+        test_catalog_plugins_are_in_manifest,
     ]
     failures = 0
     with tempfile.TemporaryDirectory() as raw:
