@@ -61,9 +61,14 @@ def test_lockfile_detects_drift_and_transitives(tmp):
     for index, (group, artifact, version) in enumerate(deps):
         resolved = "9.9.9" if index == 0 else version
         lines.append(f"{group}:{artifact}:{resolved}=releaseRuntimeClasspath")
-    lines.append("com.squareup.okio:okio:3.9.1=releaseRuntimeClasspath")
+    lines.append("com.example:fake-transitive:1.0.0=releaseRuntimeClasspath")
     lockfile = tmp / "gradle.lockfile"
     lockfile.write_text("\n".join(lines) + "\n")
+
+    declared = {f"{group}:{artifact}" for group, artifact, _ in deps}
+    assert "com.example:fake-transitive" not in declared, (
+        "la coordinata fittizia deve essere assente dal pom, altrimenti non è una transitiva"
+    )
 
     code, out = run(lockfile, tmp / "lock.json")
     assert code == 1, f"atteso 1 con una versione in drift, ottenuto {code}: {out}"
@@ -115,7 +120,13 @@ def test_real_lockfile_is_aligned(tmp):
     data = json.loads((tmp / "real.json").read_text())
     assert data["drift"] == [], f"drift inatteso: {data['drift']}"
     assert data["declared_unexpected_absent"] == [], "coordinate runtime assenti dal grafo"
-    assert data["transitive_count"] > 0, "il lockfile non ha transitive: non è il grafo atteso"
+    assert data["resolved_count"] >= 150, f"lockfile troppo piccolo: {data['resolved_count']}"
+    assert data["transitive_count"] == 0, (
+        "il pom deve contenere tutto il grafo risolto: rigeneralo con sync_pom_from_lockfile.py"
+    )
+    assert len(data["declared_build_or_test_only"]) == 11, (
+        f"attese 11 coordinate ksp/test, trovate {len(data['declared_build_or_test_only'])}"
+    )
 
 
 def test_pom_matches_lockfile(tmp):
