@@ -38,6 +38,35 @@
         </repository>
     </repositories>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency><groupId>androidx.compose.animation</groupId><artifactId>animation</artifactId><version>1.7.6</version><type>jar</type></dependency>
+            <dependency><groupId>androidx.compose.animation</groupId><artifactId>animation</artifactId><version>1.7.6</version><type>aar</type></dependency>
+            <dependency><groupId>androidx.compose.animation</groupId><artifactId>animation-android</artifactId><version>1.7.6</version><type>jar</type></dependency>
+            <dependency><groupId>androidx.compose.animation</groupId><artifactId>animation-android</artifactId><version>1.7.6</version><type>aar</type></dependency>
+            <dependency><groupId>androidx.compose.animation</groupId><artifactId>animation-core</artifactId><version>1.7.6</version><type>jar</type></dependency>
+            <dependency><groupId>androidx.compose.animation</groupId><artifactId>animation-core</artifactId><version>1.7.6</version><type>aar</type></dependency>
+            <dependency><groupId>androidx.compose.animation</groupId><artifactId>animation-core-android</artifactId><version>1.7.6</version><type>jar</type></dependency>
+            <dependency><groupId>androidx.compose.animation</groupId><artifactId>animation-core-android</artifactId><version>1.7.6</version><type>aar</type></dependency>
+            <dependency><groupId>androidx.compose.foundation</groupId><artifactId>foundation</artifactId><version>1.7.6</version><type>jar</type></dependency>
+            <dependency><groupId>androidx.compose.foundation</groupId><artifactId>foundation</artifactId><version>1.7.6</version><type>aar</type></dependency>
+            <dependency><groupId>androidx.compose.foundation</groupId><artifactId>foundation-android</artifactId><version>1.7.6</version><type>jar</type></dependency>
+            <dependency><groupId>androidx.compose.foundation</groupId><artifactId>foundation-android</artifactId><version>1.7.6</version><type>aar</type></dependency>
+            <dependency><groupId>androidx.compose.foundation</groupId><artifactId>foundation-layout</artifactId><version>1.7.6</version><type>jar</type></dependency>
+            <dependency><groupId>androidx.compose.foundation</groupId><artifactId>foundation-layout</artifactId><version>1.7.6</version><type>aar</type></dependency>
+            <dependency><groupId>androidx.compose.foundation</groupId><artifactId>foundation-layout-android</artifactId><version>1.7.6</version><type>jar</type></dependency>
+            <dependency><groupId>androidx.compose.foundation</groupId><artifactId>foundation-layout-android</artifactId><version>1.7.6</version><type>aar</type></dependency>
+            <dependency><groupId>androidx.compose.runtime</groupId><artifactId>runtime</artifactId><version>1.7.6</version><type>jar</type></dependency>
+            <dependency><groupId>androidx.compose.runtime</groupId><artifactId>runtime</artifactId><version>1.7.6</version><type>aar</type></dependency>
+            <dependency><groupId>androidx.compose.runtime</groupId><artifactId>runtime-android</artifactId><version>1.7.6</version><type>jar</type></dependency>
+            <dependency><groupId>androidx.compose.runtime</groupId><artifactId>runtime-android</artifactId><version>1.7.6</version><type>aar</type></dependency>
+            <dependency><groupId>androidx.compose.material3</groupId><artifactId>material3</artifactId><version>1.3.1</version><type>jar</type></dependency>
+            <dependency><groupId>androidx.compose.material3</groupId><artifactId>material3</artifactId><version>1.3.1</version><type>aar</type></dependency>
+            <dependency><groupId>androidx.compose.material3</groupId><artifactId>material3-android</artifactId><version>1.3.1</version><type>jar</type></dependency>
+            <dependency><groupId>androidx.compose.material3</groupId><artifactId>material3-android</artifactId><version>1.3.1</version><type>aar</type></dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <!-- AndroidX base / lifecycle / activity -->
         <dependency><groupId>androidx.core</groupId><artifactId>core-ktx</artifactId><version>1.15.0</version>    <type>aar</type>
