@@ -1,7 +1,28 @@
-# Tentativo di aggiornamento Kotlin 2.0.21 → 2.4.20 (fix CVE-2026-53914)
+# Aggiornamento Kotlin 2.0.21 → 2.4.20 (fix CVE-2026-53914) — RIUSCITO
 
 Eseguito il 2026-11-13 con Gradle + Android SDK 35 (JDK 21), per chiudere il finding
 `kotlin-gradle-plugin` 2.0.21 → GHSA-r937-wjx7-w2jp.
+
+## Esito: chiuso
+
+La CVE è chiusa. `buildscript-gradle.lockfile` ora risolve `kotlin-gradle-plugin:2.4.20`,
+che OSV non segnala più. Il muro Hilt è stato aggirato con l'idea di AppJet: forzare
+`languageVersion`/`apiVersion` a 2.2 su Kotlin 2.4.20, così il compilatore emette metadata
+2.2 — leggibile da Hilt 2.56.2 senza aspettare Dagger.
+
+Verifica diretta sul bytecode (`javap -v` su `FitCoachApp.class`): `mv=[2,2,0]`, cioè
+metadata 2.2.0. Non è una supposizione: è il metadata effettivamente prodotto.
+
+- `assembleDebug` + `testDebugUnitTest` → BUILD SUCCESSFUL, 61 test passati, 0 falliti
+- app/gradle.lockfile: 162 pacchetti, OSV "No issues found"
+- buildscript-gradle.lockfile: 156 pacchetti, 49 vulnerabilità (erano 61), **nessuna** Kotlin
+- `scope_check.py`: 14/14 pacchetti segnalati restano fuori dal grafo dell'app
+
+Toolchain finale: Kotlin 2.4.20, KSP 2.3.13, AGP 8.12.3, Gradle 8.13, Hilt 2.56.2, Room 2.8.5.
+
+La sezione sotto resta come cronaca del percorso: i sei passi sono i vincoli reali che
+l'aggiornamento impone, e sono la ragione per cui il passo 7 (`languageVersion 2.2`) è la
+chiave che ha sbloccato tutto.
 
 ## Perché il tentativo era giustificato
 
@@ -43,24 +64,39 @@ Kotlin 2.4.20 → KSP 2.3.13 → AGP 8.12.3 → Gradle 8.13+ → Hilt (bloccato)
 Sei dipendenze, e l'ultima non ha ancora una release che sblocchi. Aggiornare tutto e fermarsi su
 Hilt non produce un APK funzionante: produce una toolchain rotta.
 
-## Decisione
+## Il passo che ha sbloccato tutto (idea di AppJet)
 
-Ripristinata la toolchain di lavoro (Kotlin 2.0.21, KSP 2.0.21-1.0.28, AGP 8.7.3, Gradle 8.11.1,
-Hilt 2.52, Room 2.6.1). Verificato: `assembleDebug` ok, 61 test passati, APK 20.222.928 byte.
+I sei passi sotto portano a un muro: Hilt 2.56.2 non legge il metadata di Kotlin 2.4. AppJet ha
+proposto di non aggiornare Hilt, ma di far emettere a Kotlin un metadata più vecchio:
 
-Rischio accettato e documentato: la vulnerabilità è nella build cache di Kotlin, cache solo
-locale, nessuna cache remota, plugin non impacchettato nell'APK. L'attacco richiede accesso in
-scrittura alla macchina che compila.
+```kotlin
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+        languageVersion.set(KotlinVersion.KOTLIN_2_2)
+        apiVersion.set(KotlinVersion.KOTLIN_2_2)
+    }
+}
+```
 
-## Quando riprovare
+Kotlin supporta due versioni di linguaggio indietro, quindi 2.2 su 2.4.20 è legale. Con
+`languageVersion 2.2` il compilatore 2.4.20 emette metadata 2.2.0, che Hilt 2.56.2 legge.
 
-Serve una release di Hilt con `kotlin-metadata-jvm` ≥ 2.4. Controllo rapido:
+**Verificato, non ipotizzato:** `javap -v` su `FitCoachApp.class` mostra `mv=[2,2,0]`. Il
+metadata prodotto è davvero 2.2.0. Build verde, 61 test passati, CVE chiusa.
+
+Questo è il vantaggio di avere due ambienti: AppJet ha avuto l'intuizione (non può verificarla,
+non ha Gradle), io ho avuto Gradle per provarla.
+
+## Nota per il futuro
+
+Se un domani Hilt pubblica una release con `kotlin-metadata-jvm` ≥ 2.4, si può togliere il pin
+`languageVersion`/`apiVersion` 2.2 e tornare al linguaggio pieno. Finché non accade, il pin resta:
+è ciò che permette a Kotlin 2.4.20 (senza CVE) di convivere con Hilt 2.56.2.
+
+Controllo rapido per la nuova release:
 
 ```bash
 curl -s https://repo1.maven.org/maven2/com/google/dagger/hilt-android-gradle-plugin/maven-metadata.xml \
   | grep -oE "<version>[^<]+</version>" | tail -5
 ```
-
-Quando compare, la sequenza è: aggiornare in `gradle/libs.versions.toml` kotlin, ksp, agp, hilt,
-room e il wrapper Gradle; migrare `kotlinOptions` a `compilerOptions`; poi `assembleDebug` e i 61
-test. Il punto 4 della tabella è una modifica di codice già nota e pronta.

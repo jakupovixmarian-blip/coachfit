@@ -1,10 +1,96 @@
 {
   "source": "app/gradle.lockfile",
   "source_kind": "gradle.lockfile",
-  "resolved_count": 157,
-  "declared_count": 168,
-  "transitive_count": 0,
-  "drift": [],
+  "resolved_count": 162,
+  "declared_count": 174,
+  "transitive_count": 5,
+  "drift": [
+    {
+      "coordinate": "androidx.annotation:annotation",
+      "dichiarata": "1.8.1",
+      "risolta": "1.9.1"
+    },
+    {
+      "coordinate": "androidx.annotation:annotation-experimental",
+      "dichiarata": "1.4.1",
+      "risolta": "1.5.0"
+    },
+    {
+      "coordinate": "androidx.annotation:annotation-jvm",
+      "dichiarata": "1.8.1",
+      "risolta": "1.9.1"
+    },
+    {
+      "coordinate": "androidx.collection:collection",
+      "dichiarata": "1.4.4",
+      "risolta": "1.5.0"
+    },
+    {
+      "coordinate": "androidx.collection:collection-jvm",
+      "dichiarata": "1.4.4",
+      "risolta": "1.5.0"
+    },
+    {
+      "coordinate": "androidx.collection:collection-ktx",
+      "dichiarata": "1.4.4",
+      "risolta": "1.5.0"
+    },
+    {
+      "coordinate": "androidx.room:room-common",
+      "dichiarata": "2.6.1",
+      "risolta": "2.8.5"
+    },
+    {
+      "coordinate": "androidx.room:room-ktx",
+      "dichiarata": "2.6.1",
+      "risolta": "2.8.5"
+    },
+    {
+      "coordinate": "androidx.room:room-runtime",
+      "dichiarata": "2.6.1",
+      "risolta": "2.8.5"
+    },
+    {
+      "coordinate": "androidx.sqlite:sqlite",
+      "dichiarata": "2.4.0",
+      "risolta": "2.6.2"
+    },
+    {
+      "coordinate": "androidx.sqlite:sqlite-framework",
+      "dichiarata": "2.4.0",
+      "risolta": "2.6.2"
+    },
+    {
+      "coordinate": "com.google.dagger:dagger",
+      "dichiarata": "2.52",
+      "risolta": "2.56.2"
+    },
+    {
+      "coordinate": "com.google.dagger:dagger-lint-aar",
+      "dichiarata": "2.52",
+      "risolta": "2.56.2"
+    },
+    {
+      "coordinate": "com.google.dagger:hilt-android",
+      "dichiarata": "2.52",
+      "risolta": "2.56.2"
+    },
+    {
+      "coordinate": "com.google.dagger:hilt-core",
+      "dichiarata": "2.52",
+      "risolta": "2.56.2"
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib",
+      "dichiarata": "2.0.21",
+      "risolta": "2.4.20"
+    },
+    {
+      "coordinate": "org.jetbrains.kotlin:kotlin-stdlib-common",
+      "dichiarata": "2.0.21",
+      "risolta": "2.4.20"
+    }
+  ],
   "declared_not_resolved": [
     "androidx.hilt:hilt-compiler",
     "androidx.room:room-compiler",
@@ -13,9 +99,15 @@
     "androidx.test.ext:junit",
     "androidx.test:core",
     "app.cash.turbine:turbine",
+    "com.android.tools.build:gradle",
     "com.google.dagger:hilt-android-compiler",
+    "com.google.dagger:hilt-android-gradle-plugin",
+    "com.google.devtools.ksp:symbol-processing-gradle-plugin",
     "io.mockk:mockk",
     "junit:junit",
+    "org.jetbrains.kotlin:compose-compiler-gradle-plugin",
+    "org.jetbrains.kotlin:kotlin-gradle-plugin",
+    "org.jetbrains.kotlin:kotlin-serialization",
     "org.robolectric:robolectric"
   ],
   "declared_build_or_test_only": [
@@ -26,9 +118,15 @@
     "androidx.test.ext:junit",
     "androidx.test:core",
     "app.cash.turbine:turbine",
+    "com.android.tools.build:gradle",
     "com.google.dagger:hilt-android-compiler",
+    "com.google.dagger:hilt-android-gradle-plugin",
+    "com.google.devtools.ksp:symbol-processing-gradle-plugin",
     "io.mockk:mockk",
     "junit:junit",
+    "org.jetbrains.kotlin:compose-compiler-gradle-plugin",
+    "org.jetbrains.kotlin:kotlin-gradle-plugin",
+    "org.jetbrains.kotlin:kotlin-serialization",
     "org.robolectric:robolectric"
   ],
   "declared_unexpected_absent": [],
@@ -47,15 +145,15 @@
     },
     {
       "coordinate": "androidx.annotation:annotation",
-      "version": "1.8.1"
+      "version": "1.9.1"
     },
     {
       "coordinate": "androidx.annotation:annotation-experimental",
-      "version": "1.4.1"
+      "version": "1.5.0"
     },
     {
       "coordinate": "androidx.annotation:annotation-jvm",
-      "version": "1.8.1"
+      "version": "1.9.1"
     },
     {
       "coordinate": "androidx.appcompat:appcompat-resources",
@@ -75,15 +173,15 @@
     },
     {
       "coordinate": "androidx.collection:collection",
-      "version": "1.4.4"
+      "version": "1.5.0"
     },
     {
       "coordinate": "androidx.collection:collection-jvm",
-      "version": "1.4.4"
+      "version": "1.5.0"
     },
     {
       "coordinate": "androidx.collection:collection-ktx",
-      "version": "1.4.4"
+      "version": "1.5.0"
     },
     {
       "coordinate": "androidx.compose.animation:animation",
@@ -459,15 +557,23 @@
     },
     {
       "coordinate": "androidx.room:room-common",
-      "version": "2.6.1"
+      "version": "2.8.5"
+    },
+    {
+      "coordinate": "androidx.room:room-common-jvm",
+      "version": "2.8.5"
     },
     {
       "coordinate": "androidx.room:room-ktx",
-      "version": "2.6.1"
+      "version": "2.8.5"
     },
     {
       "coordinate": "androidx.room:room-runtime",
-      "version": "2.6.1"
+      "version": "2.8.5"
+    },
+    {
+      "coordinate": "androidx.room:room-runtime-android",
+      "version": "2.8.5"
     },
     {
       "coordinate": "androidx.savedstate:savedstate",
@@ -479,11 +585,19 @@
     },
     {
       "coordinate": "androidx.sqlite:sqlite",
-      "version": "2.4.0"
+      "version": "2.6.2"
+    },
+    {
+      "coordinate": "androidx.sqlite:sqlite-android",
+      "version": "2.6.2"
     },
     {
       "coordinate": "androidx.sqlite:sqlite-framework",
-      "version": "2.4.0"
+      "version": "2.6.2"
+    },
+    {
+      "coordinate": "androidx.sqlite:sqlite-framework-android",
+      "version": "2.6.2"
     },
     {
       "coordinate": "androidx.startup:startup-runtime",
@@ -531,19 +645,19 @@
     },
     {
       "coordinate": "com.google.dagger:dagger",
-      "version": "2.52"
+      "version": "2.56.2"
     },
     {
       "coordinate": "com.google.dagger:dagger-lint-aar",
-      "version": "2.52"
+      "version": "2.56.2"
     },
     {
       "coordinate": "com.google.dagger:hilt-android",
-      "version": "2.52"
+      "version": "2.56.2"
     },
     {
       "coordinate": "com.google.dagger:hilt-core",
-      "version": "2.52"
+      "version": "2.56.2"
     },
     {
       "coordinate": "com.google.guava:listenablefuture",
@@ -607,11 +721,11 @@
     },
     {
       "coordinate": "org.jetbrains.kotlin:kotlin-stdlib",
-      "version": "2.0.21"
+      "version": "2.4.20"
     },
     {
       "coordinate": "org.jetbrains.kotlin:kotlin-stdlib-common",
-      "version": "2.0.21"
+      "version": "2.4.20"
     },
     {
       "coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk7",
@@ -660,6 +774,10 @@
     {
       "coordinate": "org.jetbrains:annotations",
       "version": "23.0.0"
+    },
+    {
+      "coordinate": "org.jspecify:jspecify",
+      "version": "1.0.0"
     }
   ]
 }

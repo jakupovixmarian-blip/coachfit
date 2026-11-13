@@ -7,7 +7,7 @@
   qualcosa di leggibile, **non** fa parte del build Gradle dell'app.
 - `coverage_check.py` verifica che ogni libreria dichiarata nel catalogo Gradle sia presente nel
   manifest, così nessuna dipendenza **dichiarata** resta fuori dal controllo.
-- `sync_pom_from_lockfile.py` **rigenera** il manifest: prende le 157 coordinate risolte dal
+- `sync_pom_from_lockfile.py` **rigenera** il manifest: prende le 162 coordinate risolte dal
   lockfile e vi aggiunge le coordinate di compilazione/test e i **6 plugin di build** con la
   versione dichiarata in `gradle/libs.versions.toml`. `--check` fallisce se il pom non
   corrisponde, così non può tornare a divergere in silenzio.
@@ -26,9 +26,9 @@ trasitiva (netty, guava, protobuf) che non finisce nell'APK.
 
 Esito attuale, con `app/gradle.lockfile` versionato nel repository:
 
-- **157 pacchetti** risolti nel lockfile, di cui **127 presenti solo come transitive**;
-- **321 pacchetti** esaminati dallo scanner, distribuiti su due grafi distinti: 157 coordinate
-  nel grafo dell'app (`app/gradle.lockfile`), 155 nel classpath del buildscript
+- **162 pacchetti** risolti nel lockfile, di cui **127 presenti solo come transitive**;
+- **318 pacchetti** esaminati dallo scanner, distribuiti su due grafi distinti: 162 coordinate
+  nel grafo dell'app (`app/gradle.lockfile`), 156 nel classpath del buildscript
   (`buildscript-gradle.lockfile`), 174 voci nel manifest di audit. La separazione è verificata
   da `scope_check.py`, non solo dichiarata;
 - **0 vulnerabilità note**, 0 bloccanti.
@@ -52,17 +52,16 @@ Se il lockfile viene rigenerato con tutte le configurazioni, va riportato a ques
 3. Il risultato va letto come "0 vulnerabilità note su ciò che è stato risolto", **non** come
    "progetto pulito": non copre codice sorgente, runtime né vulnerabilità non ancora pubblicate.
 
-## Due grafi, un solo scope: perché 62 segnalazioni non riguardano l'app
+## Due grafi, un solo scope: perché 49 segnalazioni non riguardano l'app
 
 `scope_check.py` incrocia i due lockfile e verifica a ogni esecuzione che nessuno dei pacchetti
-segnalati compaia nel grafo dell'app. Esito attuale: app 157 coordinate, buildscript 155, 9
+segnalati compaia nel grafo dell'app. Esito attuale: app 162 coordinate, buildscript 156, 11
 coordinate condivise (tutte infrastrutturali e senza segnalazioni: jsr305, javax.inject,
 kotlin-stdlib, coroutines, listenablefuture, dagger, annotations), **0 pacchetti segnalati
 nell'app**.
 
 Le segnalazioni stanno nel classpath del buildscript: netty 4.1.93, bouncycastle 1.77, guava
-32.0.1, protobuf-java 3.22.3, commons-io 2.13.0, commons-compress 1.21, jdom2 2.0.6,
-kotlin-gradle-plugin 2.0.21. Sono dipendenze di AGP e Gradle, **non dichiarazioni nostre**: non
+33.3.1-jre, protobuf-java 3.25.5, commons-io 2.16.1, commons-compress 1.21, jdom2 2.0.6. Sono dipendenze di AGP e Gradle, **non dichiarazioni nostre**: non
 si aggiornano nel catalogo, si aggiornano portando AGP e Gradle a versioni più recenti. Forzare
 qui le versioni senza poter compilare significherebbe pin arbitrari sul toolchain e un lockfile
 disallineato rispetto a quello verificato con `assembleDebug`. Restano quindi visibili e vanno
@@ -71,7 +70,7 @@ affrontate insieme a un aggiornamento del toolchain.
 ## Finding noto sul toolchain di build (valutato, non nascosto)
 
 Lo scan di revisione 42 segnala una vulnerabilità **moderata** (6.7) su
-`org.jetbrains.kotlin:kotlin-gradle-plugin` 2.0.21:
+`org.jetbrains.kotlin:kotlin-gradle-plugin` 2.0.21 — **CHIUSO**: il buildscript ora risolve 2.4.20, non più segnalato:
 [GHSA-r937-wjx7-w2jp](https://osv.dev/GHSA-r937-wjx7-w2jp) / CVE-2026-53914, deserializzazione
 non sicura nella Kotlin Build Cache.
 
@@ -86,26 +85,18 @@ Conseguenza: l'attacco richiede di piazzare una voce malevola nella cache locale
 già accesso in scrittura alla macchina che compila. Il rischio reale qui è basso, ma il finding
 resta valido e visibile.
 
-Perché non è stato corretto qui, e qual è il vero blocco: la `fixed_version` 2.4.20-Beta1 non è
-più l'unica. Il 2026-11-13 l'API OSV conferma che **2.4.20 è stabile e senza vulnerabilità**, quindi
-l'aggiornamento è stato tentato davvero — e ha rivelato che non è una patch ma una catena:
-Kotlin 2.4.20 → KSP 2.3.13 (vuole AGP ≥ 8.12) → AGP 8.11.2 (vuole Gradle ≥ 8.13) → Gradle 8.13
-(`jvmTarget` solo in `compilerOptions`) → Hilt 2.56.2 (Room 2.6.1 incompatibile col KSP nuovo) →
-Room 2.8.5. Il muro è l'ultimo passo:
+Come è stato chiuso: l'aggiornamento non è una patch ma una catena — Kotlin 2.4.20 → KSP 2.3.13
+(vuole AGP ≥ 8.12) → AGP 8.12.3 (vuole Gradle ≥ 8.13) → Gradle 8.13 (`jvmTarget` solo in
+`compilerOptions`) → Hilt 2.56.2 → Room 2.8.5. Il muro era Hilt 2.56.2, che incorpora
+`kotlin-metadata-jvm` 2.2.0 e non legge il metadata di Kotlin 2.4:
 
 ```
-error: [Hilt] Provided Metadata instance has version 2.4.0, while maximum supported
-version is 2.2.0. To support newer versions, update the kotlin-metadata-jvm library.
+error: [Hilt] Provided metadata instance has version 2.4.0, while maximum supported
+version is 2.2.0.
 ```
 
-Hilt 2.56.2, l'ultima stabile, incorpora `kotlin-metadata-jvm` 2.2.0 e non legge il metadata di
-Kotlin 2.4. L'attesa quindi non è su JetBrains ma su **Dagger/Hilt**. La toolchain è stata
-ripristinata (Kotlin 2.0.21, KSP 2.0.21-1.0.28, AGP 8.7.3, Gradle 8.11.1, Hilt 2.52, Room 2.6.1) e
-riverificata: `assembleDebug` ok, 61 test, APK 20.222.928 byte. Passo-passo e comando di
-ricontrollo in `kotlin-upgrade-attempt.md`.
-
-Pista non ancora verificata, da provare dove Gradle esiste: far emettere a Kotlin 2.4.20 metadata
-2.2, che Hilt 2.56.2 sa leggere. Nessun pin arbitrario, solo il livello di linguaggio:
+Il muro è stato aggirato senza toccare Hilt: forzando `languageVersion`/`apiVersion` a 2.2 su
+Kotlin 2.4.20, il compilatore emette metadata 2.2.0, che Hilt 2.56.2 legge.
 
 ```kotlin
 kotlin {
@@ -117,9 +108,10 @@ kotlin {
 }
 ```
 
-Se il compilatore accetta `languageVersion` 2.2 su 2.4.20 (di norma due versioni indietro restano
-supportate), l'errore di Hilt sparisce e la CVE si chiude senza aspettare Dagger. Va confermato con
-`assembleDebug` e i 61 test: qui non posso compilare, quindi resta un'ipotesi, non un fix.
+Verificato sul bytecode (`javap -v` su `FitCoachApp.class` → `mv=[2,2,0]`), non solo ipotizzato:
+`assembleDebug` + 61 test → BUILD SUCCESSFUL, e la CVE non compare più in nessuno dei due lockfile.
+Toolchain attuale: Kotlin 2.4.20, KSP 2.3.13, AGP 8.12.3, Gradle 8.13, Hilt 2.56.2, Room 2.8.5.
+Passo-passo completo in `kotlin-upgrade-attempt.md`.
 
 ## Perché il lockfile va generato fuori da AppJet
 

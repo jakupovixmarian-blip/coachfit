@@ -126,7 +126,7 @@ instrumented/on-device test was executed here.
   (`release/debug` `Compile`+`Runtime`), non con `lockAllConfigurations()`. Motivo: il lockfile
   di tutte le configurazioni include la toolchain di build e le lib di test, e OSV-Scanner vi
   trova 51 vulnerabilità in 12 pacchetti (netty, guava, protobuf-java, commons-io, bouncycastle)
-  che **non finiscono nell'APK**. Ristretto alle classpath dell'app: 157 pacchetti, nessun problema.
+  che **non finiscono nell'APK**. Ristretto alle classpath dell'app: 162 pacchetti, nessun problema.
 - Rigenerare dopo ogni cambio di dipendenze:
   `./gradlew :app:dependencies --write-locks`  → produce `app/gradle.lockfile`
 - `tools/dependency-audit/` contiene il manifest di solo audit per AppJet (`pom.xml`), lo script di
@@ -147,21 +147,24 @@ instrumented/on-device test was executed here.
 ## Lockfile del buildscript di root
 
 - `build.gradle.kts` attiva il locking sulla `classpath` del buildscript, così i 6 plugin di build
-  entrano in `buildscript-gradle.lockfile` (155 pacchetti).
-- Il buildscript riporta 61 vulnerabilità in 15 pacchetti, **tutte nella toolchain**: nessuna
-  compare in `app/gradle.lockfile`. L'app resta pulita (157 pacchetti, nessun problema).
+  entrano in `buildscript-gradle.lockfile` (156 pacchetti).
+- Il buildscript riporta 49 vulnerabilità in 14 pacchetti, **tutte nella toolchain**: nessuna
+  compare in `app/gradle.lockfile`. L'app resta pulita (162 pacchetti, nessun problema).
 - Finding noto e accettato: `kotlin-gradle-plugin` 2.0.21 → CVE-2026-53914 (moderata). Fix solo in
   2.4.20-Beta1, ultima stabile 2.2.0. Da rivedere quando esce una stabile con la patch.
 - Dettagli in `tools/dependency-audit/buildscript-scan-report.md`.
 
-## Aggiornamento Kotlin e il vincolo Hilt (CVE-2026-53914)
+## Aggiornamento Kotlin 2.4.20 e il vincolo Hilt (CVE-2026-53914) — CHIUSO
 
-- Il fix della CVE sta in Kotlin 2.4.20 (stabile, 0 vulnerabilità). Ma l'aggiornamento non è
-  isolato: trascina KSP → AGP → Gradle → Hilt → Room (6 dipendenze).
-- **Muro attuale:** Hilt 2.56.2 (l'ultima stabile) incorpora `kotlin-metadata-jvm` 2.2.0 e non
-  legge il metadata di Kotlin 2.4: `Provided Metadata instance has version 2.4.0, while maximum
-  supported version is 2.2.0`. Il blocco è Dagger/Hilt, non JetBrains.
-- Dettagli, tabella dei passi e quando riprovare: `tools/dependency-audit/kotlin-upgrade-attempt.md`.
-- Migrazione di codice già nota e pronta per quando Hilt si sblocca: in `app/build.gradle.kts`
-  sostituire `kotlinOptions { jvmTarget = "17" }` con
-  `kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }`.
+- Toolchain attuale: Kotlin **2.4.20**, KSP **2.3.13**, AGP **8.12.3**, Gradle **8.13**,
+  Hilt **2.56.2**, Room **2.8.5**. La CVE-2026-53914 non e' piu' presente.
+- L'aggiornamento trascina 6 dipendenze in catena: Kotlin -> KSP -> AGP >= 8.12 -> Gradle >= 8.13
+  -> Hilt -> Room.
+- **Chiave del fix:** Hilt 2.56.2 non legge il metadata di Kotlin 2.4 (`kotlin-metadata-jvm`
+  interno fermo a 2.2.0). Soluzione: in `app/build.gradle.kts` forzare `languageVersion` e
+  `apiVersion` a `KOTLIN_2_2`, cosi Kotlin 2.4.20 emette metadata 2.2. Verificato con
+  `javap -v`: `mv=[2,2,0]`.
+- `kotlinOptions { jvmTarget = "17" }` non e' piu' accettato: usare `kotlin { compilerOptions {} }`.
+- Verifiche: `assembleDebug` ok, 61 test passati, app 162 pacchetti (OSV pulito), buildscript 156
+  pacchetti (49 finding, tutti toolchain), `scope_check.py` 14/14 fuori dall'app.
+- Dettagli e percorso completo: `tools/dependency-audit/kotlin-upgrade-attempt.md`.

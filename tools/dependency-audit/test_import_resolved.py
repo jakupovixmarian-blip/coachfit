@@ -188,8 +188,8 @@ def test_app_graph_has_no_toolchain_findings(tmp):
 
     app = scope_check.read_lock(scope_check.APP_LOCK)
     toolchain = scope_check.read_lock(scope_check.BUILDSCRIPT_LOCK)
-    assert len(app) == 157, f"attese 157 coordinate nell'app, trovate {len(app)}"
-    assert len(toolchain) == 155, f"attese 155 coordinate nel buildscript, trovate {len(toolchain)}"
+    assert len(app) == 162, f"attese 162 coordinate nell'app, trovate {len(app)}"
+    assert len(toolchain) == 156, f"attese 156 coordinate nel buildscript, trovate {len(toolchain)}"
     assert not [key for key in scope_check.FLAGGED if key in app], "pacchetto segnalato nel grafo app"
     # guava nell'app è solo listenablefuture: non è il guava segnalato.
     assert "com.google.guava:guava" not in app, "guava completo non deve essere nell'app"

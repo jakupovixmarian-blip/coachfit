@@ -6,7 +6,7 @@
   Gradle + version catalog (gradle/libs.versions.toml).
 
   GENERATO da tools/dependency-audit/sync_pom_from_lockfile.py a partire da
-  app/gradle.lockfile: contiene le 157 coordinate risolte (runtime e transitive)
+  app/gradle.lockfile: contiene le 162 coordinate risolte (runtime e transitive)
   piu' 11 coordinate usate solo in compilazione/test e 6 plugin di build
   letti da gradle/libs.versions.toml. Non modificarlo a mano: rigeneralo dopo aver
   aggiornato il lockfile o il catalogo.
@@ -43,7 +43,7 @@
     </repositories>
 
     <dependencies>
-        <!-- Runtime e transitive risolte da app/gradle.lockfile (157) -->
+        <!-- Runtime e transitive risolte da app/gradle.lockfile (162) -->
         <dependency>
             <groupId>androidx.activity</groupId>
             <artifactId>activity</artifactId>
@@ -65,19 +65,19 @@
         <dependency>
             <groupId>androidx.annotation</groupId>
             <artifactId>annotation</artifactId>
-            <version>1.8.1</version>
+            <version>1.9.1</version>
             <type>aar</type>
         </dependency>
         <dependency>
             <groupId>androidx.annotation</groupId>
             <artifactId>annotation-experimental</artifactId>
-            <version>1.4.1</version>
+            <version>1.5.0</version>
             <type>aar</type>
         </dependency>
         <dependency>
             <groupId>androidx.annotation</groupId>
             <artifactId>annotation-jvm</artifactId>
-            <version>1.8.1</version>
+            <version>1.9.1</version>
             <type>aar</type>
         </dependency>
         <dependency>
@@ -107,19 +107,19 @@
         <dependency>
             <groupId>androidx.collection</groupId>
             <artifactId>collection</artifactId>
-            <version>1.4.4</version>
+            <version>1.5.0</version>
             <type>aar</type>
         </dependency>
         <dependency>
             <groupId>androidx.collection</groupId>
             <artifactId>collection-jvm</artifactId>
-            <version>1.4.4</version>
+            <version>1.5.0</version>
             <type>aar</type>
         </dependency>
         <dependency>
             <groupId>androidx.collection</groupId>
             <artifactId>collection-ktx</artifactId>
-            <version>1.4.4</version>
+            <version>1.5.0</version>
             <type>aar</type>
         </dependency>
         <dependency>
@@ -683,19 +683,31 @@
         <dependency>
             <groupId>androidx.room</groupId>
             <artifactId>room-common</artifactId>
-            <version>2.6.1</version>
+            <version>2.8.5</version>
+            <type>aar</type>
+        </dependency>
+        <dependency>
+            <groupId>androidx.room</groupId>
+            <artifactId>room-common-jvm</artifactId>
+            <version>2.8.5</version>
             <type>aar</type>
         </dependency>
         <dependency>
             <groupId>androidx.room</groupId>
             <artifactId>room-ktx</artifactId>
-            <version>2.6.1</version>
+            <version>2.8.5</version>
             <type>aar</type>
         </dependency>
         <dependency>
             <groupId>androidx.room</groupId>
             <artifactId>room-runtime</artifactId>
-            <version>2.6.1</version>
+            <version>2.8.5</version>
+            <type>aar</type>
+        </dependency>
+        <dependency>
+            <groupId>androidx.room</groupId>
+            <artifactId>room-runtime-android</artifactId>
+            <version>2.8.5</version>
             <type>aar</type>
         </dependency>
         <dependency>
@@ -713,13 +725,25 @@
         <dependency>
             <groupId>androidx.sqlite</groupId>
             <artifactId>sqlite</artifactId>
-            <version>2.4.0</version>
+            <version>2.6.2</version>
+            <type>aar</type>
+        </dependency>
+        <dependency>
+            <groupId>androidx.sqlite</groupId>
+            <artifactId>sqlite-android</artifactId>
+            <version>2.6.2</version>
             <type>aar</type>
         </dependency>
         <dependency>
             <groupId>androidx.sqlite</groupId>
             <artifactId>sqlite-framework</artifactId>
-            <version>2.4.0</version>
+            <version>2.6.2</version>
+            <type>aar</type>
+        </dependency>
+        <dependency>
+            <groupId>androidx.sqlite</groupId>
+            <artifactId>sqlite-framework-android</artifactId>
+            <version>2.6.2</version>
             <type>aar</type>
         </dependency>
         <dependency>
@@ -789,23 +813,23 @@
         <dependency>
             <groupId>com.google.dagger</groupId>
             <artifactId>dagger</artifactId>
-            <version>2.52</version>
+            <version>2.56.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.dagger</groupId>
             <artifactId>dagger-lint-aar</artifactId>
-            <version>2.52</version>
+            <version>2.56.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.dagger</groupId>
             <artifactId>hilt-android</artifactId>
-            <version>2.52</version>
+            <version>2.56.2</version>
             <type>aar</type>
         </dependency>
         <dependency>
             <groupId>com.google.dagger</groupId>
             <artifactId>hilt-core</artifactId>
-            <version>2.52</version>
+            <version>2.56.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -885,12 +909,12 @@
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
-            <version>2.0.21</version>
+            <version>2.4.20</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-common</artifactId>
-            <version>2.0.21</version>
+            <version>2.4.20</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
@@ -951,6 +975,11 @@
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
             <version>23.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+            <version>1.0.0</version>
         </dependency>
 
         <!-- Solo compilazione/test: non entrano nel classpath runtime (11) -->
@@ -1028,37 +1057,37 @@
         <dependency>
             <groupId>com.android.tools.build</groupId>
             <artifactId>gradle</artifactId>
-            <version>8.7.3</version>
+            <version>8.12.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.google.dagger</groupId>
             <artifactId>hilt-android-gradle-plugin</artifactId>
-            <version>2.52</version>
+            <version>2.56.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.google.devtools.ksp</groupId>
             <artifactId>symbol-processing-gradle-plugin</artifactId>
-            <version>2.0.21-1.0.28</version>
+            <version>2.3.13</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>compose-compiler-gradle-plugin</artifactId>
-            <version>2.0.21</version>
+            <version>2.4.20</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-gradle-plugin</artifactId>
-            <version>2.0.21</version>
+            <version>2.4.20</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-serialization</artifactId>
-            <version>2.0.21</version>
+            <version>2.4.20</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

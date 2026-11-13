@@ -8,7 +8,7 @@ Perché esiste: il repository contiene due lockfile con scopi diversi.
                                   loro transitive (netty, guava, protobuf, bouncycastle...)
 
 Lo scanner di AppJet tratta il repository come un unico scope, quindi somma i due grafi:
-321 pacchetti, 62 segnalazioni, 27 high/critical. Senza questa verifica quel numero sembra
+318 pacchetti, 49 segnalazioni. Senza questa verifica quel numero sembra
 riguardare l'app. Non è così: qui si dimostra, in modo ripetibile, che nessuno dei pacchetti
 segnalati compare nel grafo dell'app.
 
