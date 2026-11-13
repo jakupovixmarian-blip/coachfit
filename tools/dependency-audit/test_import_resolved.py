@@ -20,6 +20,16 @@ SCRIPT = HERE / "import_resolved.py"
 POM = HERE / "pom.xml"
 NS = {"m": "http://maven.apache.org/POM/4.0.0"}
 
+
+def _run_script(name):
+    proc = subprocess.run(
+        [sys.executable, str(HERE / name)],
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+    )
+    return proc.returncode, proc.stdout + proc.stderr
+
 REPORT_FIXTURE = """------------------------------------------------------------
 Project :app
 ------------------------------------------------------------
@@ -166,6 +176,24 @@ def test_catalog_plugins_are_in_manifest(tmp):
     assert "<scope>provided</scope>" in pom, "i plugin devono essere marcati provided, non runtime"
 
 
+def test_app_graph_has_no_toolchain_findings(tmp):
+    """I pacchetti segnalati nel buildscript non devono comparire nel grafo dell'app."""
+    sys.path.insert(0, str(HERE))
+    import scope_check
+
+    code, out = _run_script("scope_check.py")
+    assert code == 0, f"scope_check ha fallito ({code}): {out}"
+    assert "OK: nessuno dei pacchetti segnalati" in out, f"esito non riconosciuto: {out}"
+
+    app = scope_check.read_lock(scope_check.APP_LOCK)
+    toolchain = scope_check.read_lock(scope_check.BUILDSCRIPT_LOCK)
+    assert len(app) == 157, f"attese 157 coordinate nell'app, trovate {len(app)}"
+    assert len(toolchain) == 155, f"attese 155 coordinate nel buildscript, trovate {len(toolchain)}"
+    assert not [key for key in scope_check.FLAGGED if key in app], "pacchetto segnalato nel grafo app"
+    # guava nell'app è solo listenablefuture: non è il guava segnalato.
+    assert "com.google.guava:guava" not in app, "guava completo non deve essere nell'app"
+
+
 def main():
     tests = [
         test_lockfile_detects_drift_and_transitives,
@@ -175,6 +203,7 @@ def main():
         test_real_lockfile_is_aligned,
         test_pom_matches_lockfile,
         test_catalog_plugins_are_in_manifest,
+        test_app_graph_has_no_toolchain_findings,
     ]
     failures = 0
     with tempfile.TemporaryDirectory() as raw:
