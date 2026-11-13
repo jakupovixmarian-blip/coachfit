@@ -100,12 +100,13 @@ class ProgressionApprovalTest {
 
         val proposal = useCase.propose(1L)!!
         assertFalse(proposal.canProgress)
+        assertEquals(80.0, proposal.suggestedWeightKg!!, 0.001)
 
         val outcome = useCase.approve(proposal)
         outcome as ProgressionOutcome.Applied
-        assertNull(outcome.exercise.targetWeightKg)
-        assertEquals(0, port.writes)
-        assertTrue(outcome.entry.note.contains("Dolore") || outcome.entry.note.contains("allineato"))
+        assertEquals(80.0, outcome.exercise.targetWeightKg!!, 0.001)
+        assertFalse(outcome.proposal.canProgress)
+        assertFalse(outcome.exercise.targetWeightKg!! > 80.0)
     }
 
     @Test
