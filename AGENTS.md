@@ -153,3 +153,15 @@ instrumented/on-device test was executed here.
 - Finding noto e accettato: `kotlin-gradle-plugin` 2.0.21 → CVE-2026-53914 (moderata). Fix solo in
   2.4.20-Beta1, ultima stabile 2.2.0. Da rivedere quando esce una stabile con la patch.
 - Dettagli in `tools/dependency-audit/buildscript-scan-report.md`.
+
+## Aggiornamento Kotlin e il vincolo Hilt (CVE-2026-53914)
+
+- Il fix della CVE sta in Kotlin 2.4.20 (stabile, 0 vulnerabilità). Ma l'aggiornamento non è
+  isolato: trascina KSP → AGP → Gradle → Hilt → Room (6 dipendenze).
+- **Muro attuale:** Hilt 2.56.2 (l'ultima stabile) incorpora `kotlin-metadata-jvm` 2.2.0 e non
+  legge il metadata di Kotlin 2.4: `Provided Metadata instance has version 2.4.0, while maximum
+  supported version is 2.2.0`. Il blocco è Dagger/Hilt, non JetBrains.
+- Dettagli, tabella dei passi e quando riprovare: `tools/dependency-audit/kotlin-upgrade-attempt.md`.
+- Migrazione di codice già nota e pronta per quando Hilt si sblocca: in `app/build.gradle.kts`
+  sostituire `kotlinOptions { jvmTarget = "17" }` con
+  `kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }`.
