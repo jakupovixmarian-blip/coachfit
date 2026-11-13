@@ -147,7 +147,6 @@ class AiOrchestratorTest {
         val client = ScriptedClient(
             listOf(
                 ModelReply(toolCalls = listOf(ToolCallRequest("1", "salva_dieta", mapOf("piano" to "7 giorni")))),
-                ModelReply(text = "fatto"),
                 ModelReply(toolCalls = listOf(ToolCallRequest("1", "salva_dieta", mapOf("piano" to "7 giorni")))),
                 ModelReply(text = "dieta salvata")
             )
