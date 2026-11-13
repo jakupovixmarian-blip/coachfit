@@ -49,6 +49,30 @@ Se il lockfile viene rigenerato con tutte le configurazioni, va riportato a ques
 3. Il risultato va letto come "0 vulnerabilità note su ciò che è stato risolto", **non** come
    "progetto pulito": non copre codice sorgente, runtime né vulnerabilità non ancora pubblicate.
 
+## Finding noto sul toolchain di build (valutato, non nascosto)
+
+Lo scan di revisione 42 segnala una vulnerabilità **moderata** (6.7) su
+`org.jetbrains.kotlin:kotlin-gradle-plugin` 2.0.21:
+[GHSA-r937-wjx7-w2jp](https://osv.dev/GHSA-r937-wjx7-w2jp) / CVE-2026-53914, deserializzazione
+non sicura nella Kotlin Build Cache.
+
+Esposizione in questo repository, verificata sui file:
+
+- `gradle.properties` ha `org.gradle.caching=true`, quindi la cache è attiva;
+- **non** esiste alcuna cache remota: nessun blocco `buildCache { }` in `settings.gradle.kts` né
+  `remote(...)`, quindi si usa solo la cache locale sotto `~/.gradle/caches/build-cache-1`;
+- il plugin è tooling di build: non viene impacchettato nell'APK.
+
+Conseguenza: l'attacco richiede di piazzare una voce malevola nella cache locale, cioè di avere
+già accesso in scrittura alla macchina che compila. Il rischio reale qui è basso, ma il finding
+resta valido e visibile.
+
+Perché non è stato corretto: l'unica `fixed_version` pubblicata è **2.4.20-Beta1**, una beta. Un
+salto 2.0.21 → 2.4.x trascina Compose compiler, serialization e KSP (oggi 2.0.21-1.0.28, legato
+alla versione di Kotlin) e va verificato con `assembleDebug` e i 61 test. Va fatto dove Gradle e
+l'SDK Android esistono, non qui. Quando esce una release **stabile** con la patch, la sequenza è:
+aggiornare `kotlin` nel catalogo, allineare `ksp`, ricompilare, rilanciare gli scan.
+
 ## Perché il lockfile va generato fuori da AppJet
 
 - `gradle` non è installato (solo il wrapper nel repo) e non esiste alcuna distribuzione in cache.
