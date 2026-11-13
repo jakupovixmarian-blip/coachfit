@@ -19,7 +19,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -33,6 +32,7 @@ import dev.fitcoach.app.ui.components.FitCard
 import dev.fitcoach.app.ui.components.KeyValueRow
 import dev.fitcoach.app.ui.components.LineChart
 import dev.fitcoach.app.ui.components.SectionTitle
+import dev.fitcoach.app.ui.components.FitTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +45,7 @@ fun MeasurementDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FitTopBar(
                 title = { Text(state.type.label) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

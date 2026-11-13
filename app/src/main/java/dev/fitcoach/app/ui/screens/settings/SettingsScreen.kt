@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,6 +28,8 @@ import dev.fitcoach.app.ui.components.KeyValueRow
 import dev.fitcoach.app.ui.components.LabeledField
 import dev.fitcoach.app.ui.components.NumberField
 import dev.fitcoach.app.ui.components.SectionTitle
+import dev.fitcoach.app.ui.components.FitPrimaryButton
+import dev.fitcoach.app.ui.components.FitSecondaryButton
 
 @Composable
 fun SettingsScreen(
@@ -117,9 +117,9 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(10.dp))
-                Button(onClick = onOpenAi, modifier = Modifier.fillMaxWidth()) { Text("Apri impostazioni AI") }
+                FitPrimaryButton(onClick = onOpenAi, modifier = Modifier.fillMaxWidth()) { Text("Apri impostazioni AI") }
                 Spacer(Modifier.height(8.dp))
-                OutlinedButton(onClick = onOpenKnowledge, modifier = Modifier.fillMaxWidth()) {
+                FitSecondaryButton(onClick = onOpenKnowledge, modifier = Modifier.fillMaxWidth()) {
                     Text("Fonti e note dell'agente")
                 }
             }
@@ -135,12 +135,12 @@ fun SettingsScreen(
                 )
                 Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
+                    FitPrimaryButton(
                         onClick = { exportLauncher.launch("fitcoach-backup.json") },
                         modifier = Modifier.weight(1f),
                         enabled = !state.busy
                     ) { Text("Esporta") }
-                    OutlinedButton(
+                    FitSecondaryButton(
                         onClick = { importLauncher.launch(arrayOf("application/json")) },
                         modifier = Modifier.weight(1f),
                         enabled = !state.busy

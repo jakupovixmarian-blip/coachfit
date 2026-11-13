@@ -12,10 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -36,6 +34,8 @@ import dev.fitcoach.app.ui.components.ChatBubble
 import dev.fitcoach.app.ui.components.FitCard
 import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.SectionTitle
+import dev.fitcoach.app.ui.components.FitPrimaryButton
+import dev.fitcoach.app.ui.components.FitSecondaryButton
 
 @Composable
 fun AnamnesiScreen(
@@ -84,11 +84,11 @@ fun AnamnesiScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(Modifier.height(10.dp))
-                        Button(onClick = onOpenAiSettings, modifier = Modifier.fillMaxWidth()) {
+                        FitPrimaryButton(onClick = onOpenAiSettings, modifier = Modifier.fillMaxWidth()) {
                             Text("Configura provider AI")
                         }
                         Spacer(Modifier.height(6.dp))
-                        OutlinedButton(
+                        FitSecondaryButton(
                             onClick = { viewModel.refreshConfiguration() },
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -135,7 +135,7 @@ fun AnamnesiScreen(
                             modifier = Modifier.weight(1f),
                             maxLines = 4
                         )
-                        Button(
+                        FitPrimaryButton(
                             onClick = { viewModel.send(draft); draft = "" },
                             enabled = state.canSend && draft.isNotBlank(),
                             modifier = Modifier.padding(start = 8.dp)
@@ -144,7 +144,7 @@ fun AnamnesiScreen(
 
                     if (state.profile.name.isNotBlank()) {
                         Spacer(Modifier.height(8.dp))
-                        OutlinedButton(onClick = { viewModel.finish() }, modifier = Modifier.fillMaxWidth()) {
+                        FitSecondaryButton(onClick = { viewModel.finish() }, modifier = Modifier.fillMaxWidth()) {
                             Text("Ho finito, salva l'anamnesi")
                         }
                     }

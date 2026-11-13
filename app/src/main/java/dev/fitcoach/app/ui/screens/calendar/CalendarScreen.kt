@@ -18,9 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -41,6 +39,8 @@ import dev.fitcoach.app.domain.model.WorkoutSession
 import dev.fitcoach.app.ui.components.FitCard
 import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.SectionTitle
+import dev.fitcoach.app.ui.components.FitPrimaryButton
+import dev.fitcoach.app.ui.components.FitSecondaryButton
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -64,13 +64,13 @@ fun CalendarScreen(viewModel: CalendarViewModel = hiltViewModel()) {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedButton(onClick = { viewModel.previousMonth() }) { Text("<") }
+                        FitSecondaryButton(onClick = { viewModel.previousMonth() }) { Text("<") }
                         Text(
                             state.month.month.getDisplayName(TextStyle.FULL, Locale.ITALY)
                                 .replaceFirstChar { it.uppercase() } + " " + state.month.year,
                             style = MaterialTheme.typography.titleLarge
                         )
-                        OutlinedButton(onClick = { viewModel.nextMonth() }) { Text(">") }
+                        FitSecondaryButton(onClick = { viewModel.nextMonth() }) { Text(">") }
                     }
                     Spacer(Modifier.height(8.dp))
                     Row(Modifier.fillMaxWidth()) {
@@ -146,7 +146,7 @@ fun CalendarScreen(viewModel: CalendarViewModel = hiltViewModel()) {
                     }
                     Spacer(Modifier.height(10.dp))
                     if (state.program.isEmpty()) {
-                        Button(onClick = { viewModel.addSession() }, modifier = Modifier.fillMaxWidth()) {
+                        FitPrimaryButton(onClick = { viewModel.addSession() }, modifier = Modifier.fillMaxWidth()) {
                             Text("Aggiungi seduta in questa data")
                         }
                     } else {
@@ -156,7 +156,7 @@ fun CalendarScreen(viewModel: CalendarViewModel = hiltViewModel()) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         state.program.forEach { routine ->
-                            OutlinedButton(
+                            FitSecondaryButton(
                                 onClick = { viewModel.addSession(routine.id) },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -187,7 +187,7 @@ fun CalendarScreen(viewModel: CalendarViewModel = hiltViewModel()) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf(-1, 0, 1, 2, 7).forEach { offset ->
                             val target = state.selectedDate.plusDays(offset.toLong())
-                            OutlinedButton(onClick = {
+                            FitSecondaryButton(onClick = {
                                 viewModel.moveSession(session, target)
                                 moving = null
                             }) {

@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -61,6 +60,7 @@ import dev.fitcoach.app.ui.components.RingProgress
 import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.SectionTitle
 import dev.fitcoach.app.ui.components.Tag
+import dev.fitcoach.app.ui.components.FitSecondaryButton
 import dev.fitcoach.app.ui.theme.BgDeep
 import dev.fitcoach.app.ui.theme.CardNavy
 import dev.fitcoach.app.ui.theme.GradientGreen
@@ -473,9 +473,9 @@ private fun AddMeasurementDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedButton(onClick = { date = date.minusDays(1) }) { Text("Giorno -") }
+                    FitSecondaryButton(onClick = { date = date.minusDays(1) }) { Text("Giorno -") }
                     Text(DateUtils.format(date), style = MaterialTheme.typography.bodyMedium)
-                    OutlinedButton(onClick = { date = date.plusDays(1) }) { Text("Giorno +") }
+                    FitSecondaryButton(onClick = { date = date.plusDays(1) }) { Text("Giorno +") }
                 }
                 LabeledField("Note", notes, { notes = it }, singleLine = false)
             }

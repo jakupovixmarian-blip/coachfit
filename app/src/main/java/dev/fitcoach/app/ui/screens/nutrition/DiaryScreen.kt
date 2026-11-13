@@ -17,12 +17,10 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,6 +45,7 @@ import dev.fitcoach.app.ui.components.NumberField
 import dev.fitcoach.app.ui.components.ProgressTrack
 import dev.fitcoach.app.ui.components.SectionTitle
 import dev.fitcoach.app.ui.components.StatTile
+import dev.fitcoach.app.ui.components.FitSecondaryButton
 import dev.fitcoach.app.ui.theme.BlueAccent
 import dev.fitcoach.app.ui.theme.VioletAccent
 
@@ -84,7 +83,7 @@ fun DiaryScreen(viewModel: DiaryViewModel = hiltViewModel()) {
                         Icon(Icons.Filled.ChevronRight, contentDescription = "Giorno successivo")
                     }
                 }
-                OutlinedButton(onClick = { viewModel.goToToday() }, modifier = Modifier.fillMaxWidth()) {
+                FitSecondaryButton(onClick = { viewModel.goToToday() }, modifier = Modifier.fillMaxWidth()) {
                     Text("Vai a oggi")
                 }
                 Spacer(Modifier.height(10.dp))

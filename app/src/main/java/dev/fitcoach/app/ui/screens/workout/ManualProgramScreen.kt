@@ -12,16 +12,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +33,9 @@ import dev.fitcoach.app.ui.components.FitCard
 import dev.fitcoach.app.ui.components.LabeledField
 import dev.fitcoach.app.ui.components.NumberField
 import dev.fitcoach.app.ui.components.SectionTitle
+import dev.fitcoach.app.ui.components.FitPrimaryButton
+import dev.fitcoach.app.ui.components.FitSecondaryButton
+import dev.fitcoach.app.ui.components.FitTopBar
 
 /**
  * Manual builder for a personal program, fully independent from the AI. It is the
@@ -55,7 +55,7 @@ fun ManualProgramScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FitTopBar(
                 title = { Text("Crea il tuo programma") },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, contentDescription = "Indietro") }
@@ -80,7 +80,7 @@ fun ManualProgramScreen(
                         Spacer(Modifier.height(10.dp))
                         LabeledField("Nome del programma", state.programName, { viewModel.setProgramName(it) })
                         Spacer(Modifier.height(8.dp))
-                        OutlinedButton(onClick = { viewModel.addDay() }, modifier = Modifier.fillMaxWidth()) {
+                        FitSecondaryButton(onClick = { viewModel.addDay() }, modifier = Modifier.fillMaxWidth()) {
                             Text("Aggiungi giornata")
                         }
                     }
@@ -126,7 +126,7 @@ fun ManualProgramScreen(
                             }
                         }
                         Spacer(Modifier.height(6.dp))
-                        OutlinedButton(
+                        FitSecondaryButton(
                             onClick = { showPickerForDay = dayIndex },
                             modifier = Modifier.fillMaxWidth()
                         ) { Text("Aggiungi esercizio") }
@@ -136,7 +136,7 @@ fun ManualProgramScreen(
             }
 
             item {
-                Button(onClick = { viewModel.save() }, modifier = Modifier.fillMaxWidth()) {
+                FitPrimaryButton(onClick = { viewModel.save() }, modifier = Modifier.fillMaxWidth()) {
                     Text("Salva programma")
                 }
             }

@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,6 +27,8 @@ import dev.fitcoach.app.ui.components.ScreenHeader
 import dev.fitcoach.app.ui.components.SectionTitle
 import dev.fitcoach.app.ui.components.StatTile
 import dev.fitcoach.app.ui.components.Tag
+import dev.fitcoach.app.ui.components.FitPrimaryButton
+import dev.fitcoach.app.ui.components.FitSecondaryButton
 
 @Composable
 fun WorkoutScreen(
@@ -56,7 +56,7 @@ fun WorkoutScreen(
                     KeyValueRow("Nome", session.name)
                     KeyValueRow("Iniziata", DateUtils.format(DateUtils.fromEpochDay(session.dateEpochDay)))
                     Spacer(Modifier.height(8.dp))
-                    Button(onClick = { onOpenSession(session.id) }, modifier = Modifier.fillMaxWidth()) {
+                    FitPrimaryButton(onClick = { onOpenSession(session.id) }, modifier = Modifier.fillMaxWidth()) {
                         Text("Riprendi seduta")
                     }
                 }
@@ -118,12 +118,12 @@ fun WorkoutScreen(
                             }
                         }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
+                            FitPrimaryButton(
                                 onClick = { viewModel.startSession(day.routine.id) },
                                 modifier = Modifier.weight(1f),
                                 enabled = state.inProgressSession == null
                             ) { Text("Inizia ${day.routine.dayLabel.ifBlank { day.routine.name }}") }
-                            OutlinedButton(
+                            FitSecondaryButton(
                                 onClick = { onOpenRoutine(day.routine.id) },
                                 modifier = Modifier.weight(1f)
                             ) { Text("Modifica") }
@@ -131,13 +131,13 @@ fun WorkoutScreen(
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                Button(
+                FitPrimaryButton(
                     onClick = { viewModel.generateProgram() },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.generating
                 ) { Text(if (state.generating) "Generazione in corso..." else "Genera programma con l'agente AI") }
                 Spacer(Modifier.height(8.dp))
-                OutlinedButton(onClick = onOpenManualProgram, modifier = Modifier.fillMaxWidth()) {
+                FitSecondaryButton(onClick = onOpenManualProgram, modifier = Modifier.fillMaxWidth()) {
                     Text("Crea il tuo programma personale")
                 }
             }
