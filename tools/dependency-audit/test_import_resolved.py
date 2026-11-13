@@ -18,6 +18,7 @@ import xml.etree.ElementTree as ET
 HERE = pathlib.Path(__file__).resolve().parent
 SCRIPT = HERE / "import_resolved.py"
 POM = HERE / "pom.xml"
+ROOT = HERE.parents[1]
 NS = {"m": "http://maven.apache.org/POM/4.0.0"}
 
 
