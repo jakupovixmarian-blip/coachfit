@@ -89,6 +89,13 @@ fun PlanScreen(
                     Text("Genera con l'agente AI")
                 }
                 Spacer(Modifier.height(8.dp))
+                FitSecondaryButton(
+                    onClick = { viewModel.generateWeekLocally() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Calcola 7 giorni sui dati in archivio")
+                }
+                Spacer(Modifier.height(8.dp))
                 FitSecondaryButton(onClick = { viewModel.createEmptyPlan() }, modifier = Modifier.fillMaxWidth()) {
                     Text("Crea piano manuale (7 giorni)")
                 }
