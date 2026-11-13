@@ -12,18 +12,30 @@
   esistono **solo come transitive**. È il passo che permette di portare nel manifest le versioni
   realmente usate nell'APK.
 
-Esito attuale: 38 voci nel catalogo `[libraries]`, 41 coordinate nel manifest, 0 dichiarate scoperte.
+Esito attuale, con `app/gradle.lockfile` versionato nel repository:
 
-## Cosa NON è coperto
+- **157 pacchetti** risolti nel lockfile, di cui **127 presenti solo come transitive**;
+- **168 pacchetti** esaminati dallo scanner (157 del lockfile + 11 dichiarati usati solo in
+  compilazione/test);
+- **0 vulnerabilità note**, 0 bloccanti.
 
-1. **Dipendenze transitive.** Lo scanner di AppJet non le risolve per i manifest Maven.
-2. **Nessun file di dipendenze risolto** per `app/build.gradle.kts` e `build.gradle.kts`
-   (il progetto non ha dependency locking attivo).
+## Il lockfile deve restare ristretto alle classpath dell'app
 
-Questo significa che il risultato va letto come "0 vulnerabilità note tra i pacchetti dichiarati",
-**non** come "progetto pulito".
+`app/gradle.lockfile` copre solo `release`/`debug` Compile+Runtime. **Non** usare
+`lockAllConfigurations()`: quel grafo include l'infrastruttura di build di Android e produce
+51 segnalazioni (netty, guava, protobuf, commons-io, bouncycastle) che non finiscono nell'APK.
+Se il lockfile viene rigenerato con tutte le configurazioni, va riportato a queste sole classpath.
 
-## Perché non si chiude in AppJet
+## Cosa resta fuori
+
+1. **Build tooling e test**, per scelta: non entrano nell'APK e quindi non sono nel lockfile
+   ristretto. Le 11 coordinate dichiarate solo per ksp/test restano comunque coperte dal manifest.
+2. **`build.gradle.kts` di root**: lo scanner segnala che non esiste un file risolto per il
+   buildscript di root (solo versioni dei plugin). Va generato con Gradle.
+3. Il risultato va letto come "0 vulnerabilità note su ciò che è stato risolto", **non** come
+   "progetto pulito": non copre codice sorgente, runtime né vulnerabilità non ancora pubblicate.
+
+## Perché il lockfile va generato fuori da AppJet
 
 - `gradle` non è installato (solo il wrapper nel repo) e non esiste alcuna distribuzione in cache.
 - Non c'è Android SDK: `ANDROID_HOME`/`ANDROID_SDK_ROOT` vuoti, `sdkmanager` assente, nessuna
