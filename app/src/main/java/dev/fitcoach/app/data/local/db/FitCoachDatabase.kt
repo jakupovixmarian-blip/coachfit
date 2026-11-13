@@ -137,7 +137,38 @@ abstract class FitCoachDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Adds the provenance columns to the food table: source identifier, dates,
+         * reliability, verification status and declared limitations. Existing rows
+         * keep their data and receive the reliability of the source they declared.
+         */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE food ADD COLUMN sourceId TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE food ADD COLUMN acquiredAt INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE food ADD COLUMN sourceUpdatedAt INTEGER")
+                db.execSQL("ALTER TABLE food ADD COLUMN reliability REAL NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE food ADD COLUMN verification TEXT NOT NULL DEFAULT 'MANUAL'")
+                db.execSQL("ALTER TABLE food ADD COLUMN limitations TEXT NOT NULL DEFAULT ''")
+                db.execSQL(
+                    "UPDATE food SET verification = CASE source " +
+                        "WHEN 'CREA' THEN 'VERIFIED' WHEN 'USDA' THEN 'VERIFIED' " +
+                        "WHEN 'OPEN_FOOD_FACTS' THEN 'IMPORTED' WHEN 'AI_PLAN' THEN 'ESTIMATED' " +
+                        "ELSE 'MANUAL' END"
+                )
+                db.execSQL(
+                    "UPDATE food SET reliability = CASE source " +
+                        "WHEN 'CREA' THEN 0.95 WHEN 'USDA' THEN 0.9 " +
+                        "WHEN 'OPEN_FOOD_FACTS' THEN 0.7 WHEN 'AI_PLAN' THEN 0.25 " +
+                        "WHEN 'MANUAL' THEN 0.55 ELSE 0.25 END"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_food_source_sourceId ON food(source, sourceId)"
+                )
+            }
+        }
+
         /** Every migration, in order, so the database builder can never miss one. */
-        val ALL: Array<Migration> get() = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
+        val ALL: Array<Migration> get() = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
     }
 }
