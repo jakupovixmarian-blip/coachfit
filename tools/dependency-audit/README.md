@@ -7,7 +7,19 @@
   qualcosa di leggibile, **non** fa parte del build Gradle dell'app.
 - `coverage_check.py` verifica che ogni libreria dichiarata nel catalogo Gradle sia presente nel
   manifest, così nessuna dipendenza **dichiarata** resta fuori dal controllo.
-- `import_resolved.py` legge un file risolto da Gradle (`app/gradle.lockfile` o `deps.txt`) e lo
+- `sync_pom_from_lockfile.py` **rigenera** il manifest: prende le 157 coordinate risolte dal
+  lockfile e vi aggiunge le coordinate di compilazione/test e i **6 plugin di build** con la
+  versione dichiarata in `gradle/libs.versions.toml`. `--check` fallisce se il pom non
+  corrisponde, così non può tornare a divergere in silenzio.
+
+## Perché i plugin di build sono nel manifest
+
+AGP, Kotlin, Compose compiler, serialization, KSP e Hilt non compaiono nel lockfile dell'app,
+quindi senza queste voci le loro versioni non venivano controllate da nessuno scan. Sono marcati
+`<scope>provided</scope>` e la mappa id plugin → artefatto Maven è in
+`sync_pom_from_lockfile.py`; le versioni non sono mai scritte a mano, si leggono dal catalogo.
+Sono le 6 coordinate **dirette**, non l'intero grafo di build: resta esclusa l'infrastruttura
+trasitiva (netty, guava, protobuf) che non finisce nell'APK.
   confronta con il manifest: segnala le versioni diverse da quelle dichiarate e quante coordinate
   esistono **solo come transitive**. È il passo che permette di portare nel manifest le versioni
   realmente usate nell'APK.
@@ -15,8 +27,8 @@
 Esito attuale, con `app/gradle.lockfile` versionato nel repository:
 
 - **157 pacchetti** risolti nel lockfile, di cui **127 presenti solo come transitive**;
-- **168 pacchetti** esaminati dallo scanner (157 del lockfile + 11 dichiarati usati solo in
-  compilazione/test);
+- **174 pacchetti** esaminati dallo scanner (157 del lockfile + 11 dichiarati solo per
+  compilazione/test + 6 plugin di build letti dal version catalog);
 - **0 vulnerabilità note**, 0 bloccanti.
 
 ## Il lockfile deve restare ristretto alle classpath dell'app
@@ -29,9 +41,11 @@ Se il lockfile viene rigenerato con tutte le configurazioni, va riportato a ques
 ## Cosa resta fuori
 
 1. **Build tooling e test**, per scelta: non entrano nell'APK e quindi non sono nel lockfile
-   ristretto. Le 11 coordinate dichiarate solo per ksp/test restano comunque coperte dal manifest.
+   ristretto. Le 11 coordinate dichiarate solo per ksp/test e i 6 plugin di build restano
+   comunque coperte dal manifest, con le versioni del catalogo.
 2. **`build.gradle.kts` di root**: lo scanner segnala che non esiste un file risolto per il
-   buildscript di root (solo versioni dei plugin). Va generato con Gradle.
+   buildscript di root. I plugin sono ora nel manifest con le versioni del catalogo, ma un
+   lockfile del buildscript richiede Gradle: è la capacità che manca qui.
 3. Il risultato va letto come "0 vulnerabilità note su ciò che è stato risolto", **non** come
    "progetto pulito": non copre codice sorgente, runtime né vulnerabilità non ancora pubblicate.
 

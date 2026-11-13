@@ -7,8 +7,9 @@
 
   GENERATO da tools/dependency-audit/sync_pom_from_lockfile.py a partire da
   app/gradle.lockfile: contiene le 157 coordinate risolte (runtime e transitive)
-  piu' 11 coordinate usate solo in compilazione/test. Non modificarlo a mano:
-  rigeneralo dopo aver aggiornato il lockfile.
+  piu' 11 coordinate usate solo in compilazione/test e 6 plugin di build
+  letti da gradle/libs.versions.toml. Non modificarlo a mano: rigeneralo dopo aver
+  aggiornato il lockfile o il catalogo.
 
   Il lockfile deve restare ristretto alle classpath dell'app (release/debug
   Compile+Runtime). Con lockAllConfigurations() compaiono ~51 segnalazioni di build
@@ -1021,6 +1022,44 @@
             <artifactId>robolectric</artifactId>
             <version>4.14.1</version>
             <scope>test</scope>
+        </dependency>
+
+        <!-- Plugin di build dal version catalog: non finiscono nell'APK, ma le versioni vanno controllate (6) -->
+        <dependency>
+            <groupId>com.android.tools.build</groupId>
+            <artifactId>gradle</artifactId>
+            <version>8.7.3</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.dagger</groupId>
+            <artifactId>hilt-android-gradle-plugin</artifactId>
+            <version>2.52</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.devtools.ksp</groupId>
+            <artifactId>symbol-processing-gradle-plugin</artifactId>
+            <version>2.0.21-1.0.28</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>compose-compiler-gradle-plugin</artifactId>
+            <version>2.0.21</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-gradle-plugin</artifactId>
+            <version>2.0.21</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-serialization</artifactId>
+            <version>2.0.21</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>
