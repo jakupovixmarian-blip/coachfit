@@ -164,8 +164,16 @@ object VolumeAnalyzer {
 
         for (muscle in MAJOR_MUSCLES) {
             val volume = perMuscle.firstOrNull { it.muscle == muscle }
-            if (volume == null || volume.directSets <= 0.0) {
-                issues += "!Nessun esercizio diretto per ${muscle.label}."
+            when {
+                // Blocking: the muscle receives no stimulus at all, direct or indirect.
+                volume == null || volume.effectiveSets <= 0.0 ->
+                    issues += "!Nessun lavoro per ${muscle.label}: nessun esercizio diretto o indiretto."
+                // Not blocking: a compound movement already loads it indirectly, which is
+                // how most real programs train glutes and hamstrings.
+                volume.directSets <= 0.0 ->
+                    issues += "Nessun esercizio diretto per ${muscle.label}: " +
+                        "${volume.indirectSets.roundToInt()} serie indirette, " +
+                        "${volume.effectiveSets.roundToInt()} serie utili."
             }
         }
 
