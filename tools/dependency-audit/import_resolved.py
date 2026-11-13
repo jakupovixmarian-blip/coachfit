@@ -15,8 +15,8 @@ Uso:
     python3 tools/dependency-audit/import_resolved.py app/gradle.lockfile --out report.json
 
 Exit code:
-    0  manifest allineato: ogni coordinata dichiarata e' risolta e alla stessa versione
-    1  disallineamenti da correggere (versioni diverse o coordinate dichiarate non risolte)
+    0  manifest allineato: nessuna versione diversa e nessuna coordinata runtime assente
+    1  disallineamenti da correggere (versioni diverse o coordinate runtime assenti dal grafo)
     2  file illeggibile o nessuna coordinata riconosciuta (esito vuoto: non e' una copertura)
 """
 import argparse
@@ -39,6 +39,18 @@ TREE_RE = re.compile(
 )
 RESOLVED_ARROW_RE = re.compile(r"->\s*([A-Za-z0-9_.\-+]+)")
 SKIP_MARKERS = ("(c)", "FAILED", "project :", "constraint")
+# Dipendenze dichiarate che per natura non entrano nel grafo runtime dell'app:
+# processori di annotazioni (ksp/kapt) e librerie usate solo dai test.
+TEST_GROUP_PREFIXES = ("androidx.test",)
+BUILD_ONLY_HINTS = ("compiler", "junit", "mockk", "robolectric", "turbine", "espresso", "testing")
+
+
+def is_build_or_test_only(coordinate):
+    """True se la coordinata non è attesa nel classpath runtime dell'app."""
+    group, _, artifact = coordinate.partition(":")
+    if group.lower().startswith(TEST_GROUP_PREFIXES):
+        return True
+    return any(hint in artifact.lower() for hint in BUILD_ONLY_HINTS)
 
 
 def parse_lockfile(text):
@@ -127,6 +139,8 @@ def main():
         if key in declared and declared[key] and declared[key] != version:
             drift.append({"coordinate": key, "dichiarata": declared[key], "risolta": version})
     not_resolved = sorted(key for key in declared if key not in resolved)
+    build_only = [key for key in not_resolved if is_build_or_test_only(key)]
+    unexpected = [key for key in not_resolved if not is_build_or_test_only(key)]
     transitive_only = sorted(key for key in resolved if key not in declared)
 
     report = {
@@ -137,6 +151,8 @@ def main():
         "transitive_count": len(transitive_only),
         "drift": drift,
         "declared_not_resolved": not_resolved,
+        "declared_build_or_test_only": build_only,
+        "declared_unexpected_absent": unexpected,
         "coordinates": [{"coordinate": k, "version": v} for k, v in sorted(resolved.items())],
     }
 
@@ -150,12 +166,18 @@ def main():
     print(f"versioni diverse dal manifest: {len(drift)}")
     for item in drift:
         print(f"  DRIFT: {item['coordinate']}  manifest={item['dichiarata']}  risolta={item['risolta']}")
-    print(f"dichiarate non risolte: {len(not_resolved)}")
-    for key in not_resolved:
-        print(f"  ASSENTE NEL GRAFO: {key}")
+    print(f"dichiarate assenti dal grafo runtime: {len(not_resolved)}")
+    if build_only:
+        print(f"  di cui solo compilazione/test, atteso: {len(build_only)}")
+        for key in build_only:
+            print(f"    BUILD/TEST: {key}")
+    if unexpected:
+        print(f"  INATTESE, dovrebbero essere nel runtime: {len(unexpected)}")
+        for key in unexpected:
+            print(f"    INATTESA: {key}")
     print(f"\nreport scritto in {out}")
 
-    if drift or not_resolved:
+    if drift or unexpected:
         print("\nAggiorna tools/dependency-audit/pom.xml con le versioni risolte e rilancia lo scan.")
         return 1
     print("\nManifest allineato alle versioni risolte: lo scan ora copre anche le transitive elencate.")

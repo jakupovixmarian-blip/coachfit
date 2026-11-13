@@ -103,12 +103,28 @@ def test_missing_file_exits_two(tmp):
     assert code == 2, f"atteso 2 su file assente, ottenuto {code}: {out}"
 
 
+def test_real_lockfile_is_aligned(tmp):
+    """Il lockfile versionato deve risultare allineato al manifest."""
+    lockfile = HERE.parents[1] / "app" / "gradle.lockfile"
+    if not lockfile.is_file():
+        print("SKIP test_real_lockfile_is_aligned: app/gradle.lockfile assente")
+        return
+    code, out = run(lockfile, tmp / "real.json")
+    assert code == 0, f"il lockfile del repo non è allineato (exit {code}): {out}"
+    assert "solo compilazione/test, atteso" in out, f"classificazione build/test assente: {out}"
+    data = json.loads((tmp / "real.json").read_text())
+    assert data["drift"] == [], f"drift inatteso: {data['drift']}"
+    assert data["declared_unexpected_absent"] == [], "coordinate runtime assenti dal grafo"
+    assert data["transitive_count"] > 0, "il lockfile non ha transitive: non è il grafo atteso"
+
+
 def main():
     tests = [
         test_lockfile_detects_drift_and_transitives,
         test_report_tree_handles_gradle_annotations,
         test_unreadable_input_exits_two,
         test_missing_file_exits_two,
+        test_real_lockfile_is_aligned,
     ]
     failures = 0
     with tempfile.TemporaryDirectory() as raw:
