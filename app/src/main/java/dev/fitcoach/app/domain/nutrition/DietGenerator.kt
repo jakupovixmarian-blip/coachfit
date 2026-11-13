@@ -144,6 +144,18 @@ class DietGenerator {
         var remainingCarbs = mealTargets.carbsG
         var remainingFat = mealTargets.fatG
 
+        // Le verdure fanno parte del pasto: entrano nel conteggio invece di aggiungersi
+        // alle calorie già assegnate, altrimenti il giorno supera il target.
+        pick(byRole[FoodRole.VEGETABLE], rotation + 3)?.let { food ->
+            if (food.kcalPer100g > 0) {
+                val item = PlannedFood(food, if (share >= 0.2) 150.0 else 100.0)
+                foods += item
+                remainingProtein -= item.proteinG
+                remainingCarbs -= item.carbsG
+                remainingFat -= item.fatG
+            }
+        }
+
         pick(byRole[FoodRole.PROTEIN], rotation)?.let { food ->
             if (food.proteinPer100g > 0 && remainingProtein > 0) {
                 val item = PlannedFood(food, roundTo5(remainingProtein / (food.proteinPer100g / 100.0)).coerceIn(20.0, 400.0))
@@ -172,11 +184,29 @@ class DietGenerator {
             }
         }
 
-        pick(byRole[FoodRole.VEGETABLE], rotation + 3)?.let { food ->
-            if (food.kcalPer100g > 0) foods += PlannedFood(food, 150.0)
-        }
+        return correctMeal(PlannedMeal(slot, foods.filter { it.grams > 0 }), mealTargets)
+    }
 
-        return PlannedMeal(slot, foods)
+    /** Adjusts the carbohydrate food of one meal when its calories drift too far. */
+    private fun correctMeal(meal: PlannedMeal, targets: DietTargets): PlannedMeal {
+        if (targets.kcal <= 0) return meal
+        var current = meal
+        repeat(2) {
+            val deviation = current.kcal - targets.kcal
+            if (abs(deviation) / targets.kcal <= MEAL_TOLERANCE) return current
+            val carb = current.foods
+                .filter { it.food.carbsPer100g >= 10 }
+                .maxByOrNull { it.grams } ?: return current
+            val kcalPerGram = carb.food.kcalPer100g / 100.0
+            if (kcalPerGram <= 0) return current
+            val grams = roundTo5((carb.grams - deviation / kcalPerGram).coerceAtLeast(0.0))
+            current = current.copy(
+                foods = current.foods
+                    .map { if (it.food.id == carb.food.id) it.copy(grams = grams) else it }
+                    .filter { it.grams > 0 }
+            )
+        }
+        return current
     }
 
     /**
@@ -192,11 +222,11 @@ class DietGenerator {
             if (deviationPct <= request.maxKcalDeviationPct) return current
 
             val meal = current.meals.firstOrNull { candidate ->
-                candidate.foods.any { it.food.carbsPer100g >= 10 }
+                candidate.foods.any { it.food.carbsPer100g >= 10 && it.grams > 0 }
             } ?: return current
 
             val carbItem = meal.foods
-                .filter { it.food.carbsPer100g >= 10 }
+                .filter { it.food.carbsPer100g >= 10 && it.grams > 0 }
                 .maxByOrNull { it.grams } ?: return current
 
             val kcalPerGram = carbItem.food.kcalPer100g / 100.0
@@ -213,6 +243,7 @@ class DietGenerator {
             current = current.copy(
                 meals = current.meals.map { if (it.slot == meal.slot) updatedMeal else it }
             )
+            if (updatedMeal.foods.isEmpty()) return current
         }
 
         val finalPct = current.deviationPct(request.targets)
@@ -269,6 +300,7 @@ class DietGenerator {
     private fun roundTo5(value: Double): Double = (value / 5.0).roundToInt() * 5.0
 
     private companion object {
-        const val MAX_CORRECTIONS = 3
+        const val MAX_CORRECTIONS = 5
+        const val MEAL_TOLERANCE = 0.10
     }
 }
