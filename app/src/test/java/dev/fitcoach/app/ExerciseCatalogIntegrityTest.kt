@@ -87,4 +87,26 @@ class ExerciseCatalogIntegrityTest {
         assertTrue("muscoli secondari sconosciuti vanno ignorati", back.secondaryMuscles.isEmpty())
         assertEquals(catalog.first().name, back.name)
     }
+
+    @Test
+    fun `no exercise is a near duplicate of another`() {
+        // Two rows for the same movement with the same equipment would give the picker two
+        // indistinguishable choices and double count the volume for that muscle.
+        fun base(raw: String): String {
+            var name = raw.lowercase()
+            listOf(
+                " con bilanciere", " con manubri", " con manubrio", " ai cavi",
+                " al cavo basso", " alla macchina", " a corpo libero",
+                " con elastici", " con kettlebell", " frontale", " in piedi"
+            ).forEach { name = name.replace(it, "") }
+            return name.trim()
+        }
+
+        val duplicates = catalog
+            .groupBy { Triple(it.primaryMuscle, it.equipment, base(it.name)) }
+            .filterValues { it.size > 1 }
+            .map { (key, items) -> "${items.map { it.name }} (${key.first}/${key.second})" }
+
+        assertTrue("esercizi quasi identici: $duplicates", duplicates.isEmpty())
+    }
 }
