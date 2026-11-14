@@ -84,7 +84,7 @@ class AiProgramGenerationService @Inject constructor(
             is AiResult.Success -> first.content
         }
 
-        val proposal = decode(firstText) ?: run {
+        var proposal = decode(firstText) ?: run {
             val repair = requestRepair(config, context, firstText)
             val repairText = when (repair) {
                 is AiResult.Failure -> return Result.Failure(
@@ -97,23 +97,42 @@ class AiProgramGenerationService @Inject constructor(
             )
         }
 
-        val validated = validateAndMap(profile, proposal, foods, exercises)
-            ?: return Result.Failure(
-                "Il programma AI non rispetta i vincoli del profilo o i target matematici. Nessun programma è stato salvato."
-            )
+        var validated = validateAndMap(profile, proposal, foods, exercises)
+        if (validated == null) {
+            val diagnostics = diagnose(profile, proposal, foods, exercises)
+            val repair = requestValidationRepair(config, context, firstText, diagnostics)
+            val repairedText = when (repair) {
+                is AiResult.Success -> repair.content
+                is AiResult.Failure -> null
+            }
+            val repaired = repairedText?.let(::decode)
+            if (repaired != null) {
+                proposal = repaired
+                validated = validateAndMap(profile, proposal, foods, exercises)
+            }
+            if (validated == null) {
+                return Result.Failure(
+                    "Il programma AI non è valido e non è stato salvato. " +
+                        diagnostics.joinToString(separator = " ", prefix = "Controlli falliti: ")
+                )
+            }
+        }
+        val valid = validated ?: return Result.Failure(
+            "Il programma AI non è valido e non è stato salvato."
+        )
 
         return runCatching {
             db.withTransaction {
                 val nutritionId = nutritionRepository.savePlan(
                     profile = profile,
-                    energy = validated.energy,
-                    cycling = validated.cycling,
-                    generatedDays = validated.days,
-                    dayTypes = validated.dayTypes,
-                    trainingDayIndices = validated.trainingDays,
-                    carbCyclingApplied = validated.carbCyclingApplied
+                    energy = valid.energy,
+                    cycling = valid.cycling,
+                    generatedDays = valid.days,
+                    dayTypes = valid.dayTypes,
+                    trainingDayIndices = valid.trainingDays,
+                    carbCyclingApplied = valid.carbCyclingApplied
                 )
-                val workoutId = workoutRepository.savePlan(profile, validated.workout)
+                val workoutId = workoutRepository.savePlan(profile, valid.workout)
                 nutritionRepository.getActivePlan()?.let {
                     planVersionRepository.snapshotNutrition(it, "Programma generato dal Coach AI e validato dai motori matematici.")
                 }
@@ -173,6 +192,35 @@ class AiProgramGenerationService @Inject constructor(
             maxTokens = maxOf(config.maxTokens, 8_000),
             responseFormat = null
         )
+
+    private suspend fun requestValidationRepair(
+        config: AiProviderConfig,
+        context: String,
+        invalid: String,
+        diagnostics: List<String>
+    ): AiResult = aiClient.complete(
+        config = config,
+        messages = listOf(
+            ChatMessageDto("system", generationSystemPrompt),
+            ChatMessageDto(
+                "user",
+                "La proposta è JSON decodificabile ma fallisce i controlli matematici o di profilo. " +
+                    "Correggi SOLO i valori necessari e restituisci l'intero oggetto JSON, senza markdown.\n" +
+                    "ERRORI DA CORREGGERE:\n${diagnostics.joinToString("\n")}\n" +
+                    "CONTESTO:\n$context\nPROPOSTA:\n$invalid"
+            )
+        ),
+        temperature = 0.0,
+        maxTokens = maxOf(config.maxTokens, 8_000),
+        responseFormat = null
+    )
+
+    private fun diagnose(
+        profile: UserProfile,
+        proposal: AiProgramProposal,
+        foods: List<FoodItem>,
+        exercises: List<com.fitcoach.app.domain.model.Exercise>
+    ): List<String> = AiProposalDiagnostics.analyze(profile, proposal, foods, exercises)
 
     private fun decode(raw: String): AiProgramProposal? = AiProgramProposalJson.decode(json, raw)
 
@@ -267,6 +315,12 @@ class AiProgramGenerationService @Inject constructor(
         }.sortedBy { it.dayIndex }
 
         val workout = mapWorkout(profile, proposal, exercises) ?: return null
+        val plannedDays = workout.days.filterNot { it.isRestDay }
+        if (plannedDays.size != profile.trainingDaysPerWeek || plannedDays.any { it.exercises.isEmpty() }) return null
+        if (plannedDays.any { it.totalSets !in 6..24 }) return null
+        if (plannedDays.flatMap { it.exercises }.groupBy { it.exerciseId }.any { (_, items) ->
+                items.sumOf { it.sets } > 24
+            }) return null
         val weeklyKcal = generatedDays.sumOf { it.actual.kcal }
         if (!close(weeklyKcal, cycling.weeklyKcal, 0.20)) return null
         return Validated(
@@ -320,7 +374,10 @@ class AiProgramGenerationService @Inject constructor(
             )
         }
         val actualDays = days
-        val volume = actualDays.flatMap { it.exercises }.groupingBy { it.primaryMuscle }.fold(0) { acc, ex -> acc + ex.sets }
+        val volume = com.fitcoach.app.domain.workout.EffectiveVolumeCalculator
+            .forExercises(actualDays.flatMap { it.exercises }, exercises.associateBy { it.id })
+            .effective
+            .mapValues { (_, value) -> kotlin.math.round(value).toInt() }
         val split = runCatching { SplitType.valueOf(proposal.workout.split.uppercase()) }.getOrDefault(SplitType.CUSTOM)
         return com.fitcoach.app.domain.workout.WorkoutPlanBuilder.BuiltPlan(
             splitType = split,
@@ -372,6 +429,9 @@ class AiProgramGenerationService @Inject constructor(
             Rispondi con un singolo JSON valido, senza markdown. I grammi sono quantita reali.
             `dayType` deve essere HIGH, MEDIUM o LOW; `slot` un valore MealSlot; `unit` RAW, COOKED o AS_SOLD.
             `split` deve essere FULL_BODY, UPPER_LOWER, PUSH_PULL_LEGS o CUSTOM.
+            La scheda deve avere esattamente i giorni dichiarati dal profilo, 6-24 serie allenanti per seduta,
+            nessuna seduta vuota, nessun esercizio vietato e giornate diverse quando lo split lo consente.
+            Il volume è validato offline: non assegnare una serie completa ai muscoli secondari.
             Schema obbligatorio:
             {
               "schemaVersion":1,"strategy":"...","objectives":["..."],"monitoring":["..."],

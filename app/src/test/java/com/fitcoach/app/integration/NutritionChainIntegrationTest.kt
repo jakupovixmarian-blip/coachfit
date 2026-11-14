@@ -29,6 +29,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
@@ -276,6 +277,24 @@ class NutritionChainIntegrationTest {
     }
 
 
+
+    @Test
+    fun `rigenerazioni concorrenti non lasciano la lista vuota`() = runTest {
+        generatePrograms(profile, regenerateNutrition = true, regenerateWorkout = false, requireAnamnesis = false)
+        val weekStart = NutritionDiaryRepository.weekStart(NutritionDiaryRepository.todayEpochDay())
+
+        // Il bug: due rigenerazioni sovrapposte (collect del piano + load del
+        // ViewModel) potevano lasciare la lista vuota per una corsa tra delete e insert.
+        repeat(20) {
+            val results = List(4) {
+                async { shoppingRepository.regenerateAndRead(weekStart) }
+            }.map { it.await() }
+            results.forEach { result ->
+                assertThat(result.items).isNotEmpty()
+            }
+            assertThat(shoppingRepository.itemsForWeek(weekStart)).isNotEmpty()
+        }
+    }
 
     @Test
     fun `il ViewModel Spesa si aggiorna quando il piano viene generato dopo l'apertura del tab`() = runTest {

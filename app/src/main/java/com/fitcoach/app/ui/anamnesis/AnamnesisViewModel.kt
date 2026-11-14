@@ -6,6 +6,7 @@ import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.coach.AiProgramGenerationService
+import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,7 +42,8 @@ data class AnamnesisUiState(
 @HiltViewModel
 class AnamnesisViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val aiProgramGeneration: AiProgramGenerationService
+    private val aiProgramGeneration: AiProgramGenerationService,
+    private val generatePrograms: GenerateProgramsUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AnamnesisUiState())
@@ -184,10 +186,51 @@ class AnamnesisViewModel @Inject constructor(
                 generationMessage = "Percorso generato dal Coach AI e validato: piano alimentare di 7 giorni e scheda salvati.",
                 generationWarnings = result.warnings
             )
-            is AiProgramGenerationService.Result.Failure -> _state.value = _state.value.copy(
+            is AiProgramGenerationService.Result.Failure -> fallbackToDeterministic(profile, result.message)
+        }
+    }
+
+    /**
+     * Se il provider AI non è configurato, è offline o restituisce dati non
+     * validabili, i motori matematici deterministici generano comunque un
+     * programma completo e sicuro: l'utente non resta mai senza piano dopo
+     * l'anamnesi. L'errore AI viene riportato come avviso, non come blocco.
+     */
+    private suspend fun fallbackToDeterministic(profile: UserProfile, aiError: String) {
+        val trainingDays = com.fitcoach.app.domain.workout.WorkoutPlanBuilder
+            .defaultTrainingDays(profile.trainingDaysPerWeek)
+        when (val fallback = generatePrograms(
+            profile = profile,
+            trainingDayIndices = trainingDays,
+            regenerateNutrition = true,
+            regenerateWorkout = true,
+            requireAnamnesis = true
+        )) {
+            is GenerateProgramsUseCase.Result.Success -> _state.value = _state.value.copy(
                 generatingPrograms = false,
-                generationMessage = "Generazione AI non completata. Nessun programma è stato salvato.",
-                error = result.message
+                generationMessage = "Percorso generato dal motore matematico FitCoach e validato " +
+                    "(piano alimentare di 7 giorni e scheda salvati).",
+                generationWarnings = listOf(
+                    "Generazione AI non disponibile: $aiError",
+                    "È stato usato il motore deterministico interno, basato sui tuoi dati reali. " +
+                        "Puoi riprovare con l'AI quando il provider è configurato."
+                ) + fallback.warnings,
+                error = null
+            )
+            is GenerateProgramsUseCase.Result.MissingData -> _state.value = _state.value.copy(
+                generatingPrograms = false,
+                generationMessage = "Generazione non completata.",
+                error = "Dati insufficienti: ${fallback.missing.joinToString()}. Errore AI: $aiError"
+            )
+            is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed -> _state.value = _state.value.copy(
+                generatingPrograms = false,
+                generationMessage = "Generazione non completata.",
+                error = "Anamnesi non confermata. Errore AI: $aiError"
+            )
+            is GenerateProgramsUseCase.Result.Error -> _state.value = _state.value.copy(
+                generatingPrograms = false,
+                generationMessage = "Generazione non completata.",
+                error = "${fallback.message} Errore AI: $aiError"
             )
         }
     }

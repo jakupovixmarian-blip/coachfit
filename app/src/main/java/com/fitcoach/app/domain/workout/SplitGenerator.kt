@@ -149,7 +149,8 @@ object SplitGenerator {
         groups: Set<MuscleGroup>,
         all: List<Exercise>,
         profile: UserProfile,
-        count: Int
+        count: Int,
+        rotationSeed: Int = 0
     ): List<SelectedExercise> {
         val equipment = profile.availableEquipment.ifEmpty { null }
         val excluded = profile.movementsToAvoid.map { it.lowercase() }
@@ -180,11 +181,13 @@ object SplitGenerator {
                 .thenByDescending { it.primaryMuscle in groups }
                 .thenBy { it.difficulty }
         )
+        val rotation = if (scored.isEmpty()) 0 else Math.floorMod(rotationSeed, scored.size)
+        val rotated = scored.drop(rotation) + scored.take(rotation)
 
         val selected = mutableListOf<SelectedExercise>()
         val perGroup = mutableMapOf<MuscleGroup, Int>()
         val perPattern = mutableMapOf<com.fitcoach.app.domain.model.MovementPattern, Int>()
-        for (ex in scored) {
+        for (ex in rotated) {
             if (selected.size >= count) break
             val groupCount = perGroup[ex.primaryMuscle] ?: 0
             val maxPerGroup = if (ex.primaryMuscle in priorities) 3

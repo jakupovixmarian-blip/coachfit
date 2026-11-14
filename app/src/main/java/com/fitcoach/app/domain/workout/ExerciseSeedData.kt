@@ -14,7 +14,7 @@ import com.fitcoach.app.domain.model.MuscleGroup
  */
 object ExerciseSeedData {
 
-    val exercises: List<Exercise> = listOf(
+    private val rawExercises: List<Exercise> = listOf(
         // ---------------- PETTO ----------------
         e(
             "Panca piana con bilanciere", MuscleGroup.CHEST,
@@ -330,6 +330,11 @@ object ExerciseSeedData {
             subs = listOf("Plank")
         )
     )
+
+    /** Stable IDs keep pure-domain generation and Room seeding consistent. */
+    val exercises: List<Exercise> = rawExercises.mapIndexed { index, exercise ->
+        exercise.copy(id = index + 1L)
+    }
 
     private fun e(
         name: String,

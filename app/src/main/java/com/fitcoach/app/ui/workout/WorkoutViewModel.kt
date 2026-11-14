@@ -402,7 +402,7 @@ class WorkoutViewModel @Inject constructor(
             val reps = form.reps.toIntOrNull() ?: form.planned.minReps
             val rir = form.rir.toIntOrNull()
 
-            workoutRepository.saveSet(
+            val savedId = workoutRepository.saveSet(
                 sessionId = session.id,
                 set = WorkoutSet(
                     exerciseId = form.planned.exerciseId,
@@ -415,6 +415,13 @@ class WorkoutViewModel @Inject constructor(
                     completed = true
                 )
             )
+            if (savedId == 0L) {
+                _state.value = _state.value.copy(
+                    message = "Serie non registrata: la sessione non è attiva o i dati non sono validi.",
+                    form = null
+                )
+                return@launch
+            }
 
             // Se l'utente segnala dolore/tecnica scorretta, salviamo la nota nella sessione.
             if (form.painReported) {
@@ -496,7 +503,7 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             val session = _state.value.session ?: return@launch
             val duration = session.startedAt?.let { ((System.currentTimeMillis() - it) / 60000).toInt() }
-            workoutRepository.completeSession(
+            val completed = workoutRepository.completeSession(
                 sessionId = session.id,
                 durationMinutes = duration,
                 perceivedEffort = _state.value.perceivedEffort.replace(',', '.').toDoubleOrNull(),
@@ -506,8 +513,9 @@ class WorkoutViewModel @Inject constructor(
                 painNotes = _state.value.painNotes
             )
             _state.value = _state.value.copy(
-                finishDialog = false,
-                message = "Allenamento completato. Ottimo lavoro!"
+                finishDialog = !completed,
+                message = if (completed) "Allenamento completato. Ottimo lavoro!"
+                else "Sessione non completata: registra almeno una serie valida."
             )
             load()
         }

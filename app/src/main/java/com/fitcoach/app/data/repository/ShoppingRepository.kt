@@ -9,6 +9,8 @@ import com.fitcoach.app.domain.model.ShoppingItem
 import com.fitcoach.app.domain.nutrition.ShoppingListEngine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,6 +30,14 @@ class ShoppingRepository @Inject constructor(
 ) {
     private val shoppingDao = db.shoppingItemDao()
 
+    /**
+     * Le rigenerazioni concorrenti (collect del piano + load() del ViewModel)
+     * altrimenti si sovrappongono: una cancella le voci generate mentre l'altra
+     * le sta inserendo, lasciando la lista vuota. Il Mutex serializza l'intera
+     * operazione di rigenerazione.
+     */
+    private val regenerateMutex = Mutex()
+
     fun observeWeek(weekStart: Long): Flow<List<ShoppingItem>> =
         shoppingDao.observeForWeek(weekStart).map { list -> list.map { it.toDomain() } }
 
@@ -41,7 +51,26 @@ class ShoppingRepository @Inject constructor(
      * spunta e "gia in casa" per gli alimenti ancora presenti. Ritorna gli
      * alimenti il cui stato spuntato e stato perso (sostituzione), da segnalare.
      */
-    suspend fun regenerate(weekStart: Long): List<String> = db.withTransaction {
+    suspend fun regenerate(weekStart: Long): List<String> = regenerateMutex.withLock {
+        regenerateLocked(weekStart)
+    }
+
+    /**
+     * Rigenera e rilegge la lista nella stessa sezione critica. Senza questo
+     * accoppiamento una lettura concorrente puo avvenire tra la cancellazione e
+     * l'inserimento di un'altra rigenerazione, restituendo una lista vuota.
+     */
+    suspend fun regenerateAndRead(weekStart: Long): Regenerated = regenerateMutex.withLock {
+        val invalidated = regenerateLocked(weekStart)
+        Regenerated(
+            invalidated = invalidated,
+            items = shoppingDao.getForWeek(weekStart).map { it.toDomain() }
+        )
+    }
+
+    data class Regenerated(val invalidated: List<String>, val items: List<ShoppingItem>)
+
+    private suspend fun regenerateLocked(weekStart: Long): List<String> = db.withTransaction {
         val plan = nutritionRepository.getActivePlan()
             ?: return@withTransaction emptyList()
         val foodsById: Map<Long, FoodItem> = foodRepository.getAll().associateBy { it.id }

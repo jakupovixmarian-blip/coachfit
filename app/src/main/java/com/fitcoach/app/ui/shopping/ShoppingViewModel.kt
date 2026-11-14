@@ -67,13 +67,12 @@ class ShoppingViewModel @Inject constructor(
 
     private suspend fun regenerateAndRefresh() {
         val weekStart = _state.value.weekStart
-        val invalidated = shoppingRepository.regenerate(weekStart)
-        val items = shoppingRepository.itemsForWeek(weekStart)
+        val result = shoppingRepository.regenerateAndRead(weekStart)
         _state.value = _state.value.copy(
             loading = false,
-            items = items,
-            message = if (invalidated.isNotEmpty()) {
-                "Sostituzione rilevata: ricontrolla ${invalidated.joinToString()}."
+            items = result.items,
+            message = if (result.invalidated.isNotEmpty()) {
+                "Sostituzione rilevata: ricontrolla ${result.invalidated.joinToString()}."
             } else _state.value.message
         )
     }

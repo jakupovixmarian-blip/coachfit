@@ -342,10 +342,7 @@ class WorkoutRepository @Inject constructor(
     suspend fun startSession(workoutDay: WorkoutDay, epochDay: Long): Long {
         val existing = sessionDao.getForDay(epochDay)
         if (existing != null) {
-            // Una seduta già completata oggi viene riaperta: l'utente può aggiungere altre serie.
-            if (existing.status == SessionStatus.COMPLETED) {
-                sessionDao.update(existing.copy(status = SessionStatus.IN_PROGRESS, completedAt = null))
-            }
+            // Una seduta completata resta immutabile: evitare duplicati e riaperture implicite.
             return existing.id
         }
         val planId = planDao.getActive()?.id ?: 0L
@@ -365,9 +362,6 @@ class WorkoutRepository @Inject constructor(
     suspend fun startFreeSession(epochDay: Long): Long {
         val existing = sessionDao.getForDay(epochDay)
         if (existing != null) {
-            if (existing.status == SessionStatus.COMPLETED) {
-                sessionDao.update(existing.copy(status = SessionStatus.IN_PROGRESS, completedAt = null))
-            }
             return existing.id
         }
         return sessionDao.insert(
@@ -455,13 +449,37 @@ class WorkoutRepository @Inject constructor(
         restReason = "Recupero standard dell'esercizio."
     )
 
+    /**
+     * Riapre le sessioni marcate COMPLETED ma prive di serie allenanti valide:
+     * erano sessioni chiuse per errore. Non elimina dati e lascia intatte le
+     * sessioni realmente completate. Ritorna il numero di sessioni riaperte.
+     */
+    suspend fun repairInvalidCompletedSessions(): Int {
+        var repaired = 0
+        sessionDao.getAll().filter { it.status == SessionStatus.COMPLETED }.forEach { session ->
+            val validSets = setDao.getForSession(session.id).count {
+                it.completed && !it.isWarmup && it.actualReps > 0 && it.weightKg >= 0.0
+            }
+            if (validSets == 0) {
+                sessionDao.update(
+                    session.copy(status = SessionStatus.IN_PROGRESS, completedAt = null)
+                )
+                repaired++
+            }
+        }
+        return repaired
+    }
+
     suspend fun getSessionForDay(epochDay: Long): WorkoutSession? {
+        repairInvalidCompletedSessions()
         val entity = sessionDao.getForDay(epochDay) ?: return null
         return entity.toDomainWithSets()
     }
 
-    suspend fun getRecentSessions(limit: Int = 20): List<WorkoutSession> =
-        sessionDao.getRecent(limit).map { it.toDomainWithSets() }
+    suspend fun getRecentSessions(limit: Int = 20): List<WorkoutSession> {
+        repairInvalidCompletedSessions()
+        return sessionDao.getRecent(limit).map { it.toDomainWithSets() }
+    }
 
     suspend fun getSessionById(id: Long): WorkoutSession? {
         val entity = sessionDao.getById(id) ?: return null
@@ -472,10 +490,17 @@ class WorkoutRepository @Inject constructor(
         list.map { it.toDomainWithSets() }
     }
 
-    suspend fun saveSet(sessionId: Long, set: WorkoutSet): Long =
-        setDao.insert(
+    suspend fun saveSet(sessionId: Long, set: WorkoutSet): Long {
+        val session = sessionDao.getById(sessionId) ?: return 0L
+        if (session.status != SessionStatus.IN_PROGRESS || !set.completed ||
+            set.actualReps <= 0 || set.weightKg < 0.0 || set.setIndex < 0
+        ) return 0L
+        val existing = setDao.getForSession(sessionId).firstOrNull {
+            it.exerciseId == set.exerciseId && it.setIndex == set.setIndex
+        }
+        return setDao.insert(
             WorkoutSetEntity(
-                id = set.id,
+                id = existing?.id ?: set.id,
                 sessionId = sessionId,
                 exerciseId = set.exerciseId,
                 exerciseName = set.exerciseName,
@@ -490,6 +515,7 @@ class WorkoutRepository @Inject constructor(
                 notes = set.notes
             )
         )
+    }
 
     suspend fun completeSession(
         sessionId: Long,
@@ -498,8 +524,13 @@ class WorkoutRepository @Inject constructor(
         sleepQuality: Int?,
         painReported: Boolean,
         painNotes: String
-    ) {
-        val entity = sessionDao.getById(sessionId) ?: return
+    ): Boolean = db.withTransaction {
+        val entity = sessionDao.getById(sessionId) ?: return@withTransaction false
+        if (entity.status != SessionStatus.IN_PROGRESS) return@withTransaction false
+        val validSets = setDao.getForSession(sessionId).filter {
+            it.completed && !it.isWarmup && it.actualReps > 0 && it.weightKg >= 0.0
+        }
+        if (validSets.isEmpty()) return@withTransaction false
         sessionDao.update(
             entity.copy(
                 status = SessionStatus.COMPLETED,
@@ -512,6 +543,7 @@ class WorkoutRepository @Inject constructor(
             )
         )
         aggregatePerformance(sessionId)
+        true
     }
 
     /** Calcola e salva l'aggregato di performance per ogni esercizio della sessione. */

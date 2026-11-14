@@ -254,18 +254,23 @@ app/src/main/java/com/fitcoach/app/
 
 ## Test
 
-Test unitari dei motori matematici (**199 test**, 24 classi): energia (incl. NEAT da stile
+Test unitari dei motori matematici (**248 test**, 27 classi): energia (incl. NEAT da stile
 di vita), carb cycling (incl. attivazione condizionale), generazione pasti (incl. n° pasti e
 preferenza colazione), sostituzione alimentare vincolata (pollo→tonno, rifiuto oltre il
 limite calorico, sostituzione combinata, tolleranze), lista della spesa (somma alimenti
-ripetuti, categorie, conservazione spunta), diario nutrizionale (obiettivo/consumato/
+ripetuti, categorie, conservazione spunta, **rigenerazioni concorrenti senza lista vuota**),
+diario nutrizionale (obiettivo/consumato/
 rimanente, niente doppio conteggio, extra, isolamento giorni), split, recuperi, tecniche
 d'intensità, fatica, progressive overload, analisi peso, motore adattivo, **anamnesi guidata**
 (parsing risposte, gate di generazione, contraddizioni), **budget mensile** (costo reale,
 quota pro capite, stima parziale), **mappatura fonti alimentari** (Open Food Facts, USDA),
 **analisi dell'andamento per esercizio** (regressione, progressione, stabilità),
 **parametri AI per provider** (max_tokens vs max_completion_tokens, mai entrambi, retry
-controllato), **layout schermata anamnesi** (nessuna sovrapposizione, pulsante unico).
+controllato), **layout schermata anamnesi** (nessuna sovrapposizione, pulsante unico),
+**persistenza sessione di allenamento** (serie valide richieste per completare, riapertura
+non distruttiva di sessioni chiuse per errore), **diagnostica proposta AI** (valore atteso
+vs ricevuto per ogni vincolo fallito), **regressione scenario allenamento** (attrezzatura
+limitata, movimenti da evitare).
 
 ```bash
 ./gradlew :app:testDebugUnitTest

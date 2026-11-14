@@ -55,8 +55,13 @@ object WorkoutPlanBuilder {
                 val count = SplitGenerator.exercisesPerSession(
                     profile.experience, day.muscleGroups.size, profile.maxSessionMinutes
                 )
+                val compatibleExercises = exercises.filter { exercise ->
+                    profile.availableEquipment.isEmpty() || exercise.bodyweightOnly ||
+                        exercise.equipment.isEmpty() ||
+                        exercise.equipment.any { it in profile.availableEquipment }
+                }
                 val selected = SplitGenerator.selectExercisesDetailed(
-                    day.muscleGroups, exercises, profile, count
+                    day.muscleGroups, compatibleExercises, profile, count, rotationSeed = day.dayIndex
                 )
                 if (selected.isEmpty()) {
                     notes += "Nessun esercizio compatibile per ${day.title}: verifica l'attrezzatura disponibile."
@@ -123,7 +128,12 @@ object WorkoutPlanBuilder {
             notes += "Volume aumentato per i gruppi prioritari: $prio."
         }
 
-        return BuiltPlan(splitType, days, volume, notes)
+        val allPlanned = days.asSequence().flatMap { it.exercises.asSequence() }.toList()
+        val effectiveVolume = EffectiveVolumeCalculator
+            .forExercises(allPlanned, exercises.associateBy { it.id })
+            .effective
+            .mapValues { (_, value) -> kotlin.math.round(value).toInt() }
+        return BuiltPlan(splitType, days, effectiveVolume, notes)
     }
 
     /** Rapporto tra carico attuale dichiarato e carico tipico (per stimare l'intensita). */
