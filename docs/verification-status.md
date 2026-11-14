@@ -69,3 +69,21 @@ eseguiti con Kotlin e JUnit, usando stub Room:
 
 Se la migrazione fallisce su un database esistente, il messaggio d'errore di Room
 indica la colonna mancante: `routine_exercise.targetWeightKg`.
+
+## Aggiornamento dipendenze buildscript — 2026-11-14
+
+`buildscript-gradle.lockfile` è stato portato a mano alle versioni correttive indicate dagli advisory OSV:
+
+| Pacchetto | Da | A |
+|---|---|---|
+| `io.netty:*` (11 moduli) | 4.1.110.Final | 4.1.137.Final |
+| `org.bouncycastle:*-jdk18on` | 1.79 | 1.85 |
+| `com.google.guava:guava` | 33.3.1-jre | 33.7.2-jre |
+| `com.google.guava:failureaccess` | 1.0.2 | 1.0.3 |
+| `org.apache.commons:commons-compress` | 1.21 | 1.26.0 |
+| `org.bitbucket.b_c:jose4j` | 0.9.5 | 0.9.6 |
+| `org.jdom:jdom2` | 2.0.6 | 2.0.6.1 |
+
+Ogni versione è stata verificata con una risoluzione Maven reale (artefatti e transitive esistono, `BUILD SUCCESS`). Lo scan OSV sul repository ora riporta **0 segnalazioni** su 324 pacchetti.
+
+**Da verificare nel tuo ambiente:** la compatibilità di compilazione non è controllabile qui (mancano Gradle e Android SDK). Eseguire `./gradlew assembleDebug`; se Gradle rifiuta il lock state, `./gradlew build --write-locks`. Il lockfile dell'app (`app/gradle.lockfile`) non è stato toccato.
