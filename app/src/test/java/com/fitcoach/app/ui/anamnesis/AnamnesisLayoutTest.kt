@@ -1,12 +1,13 @@
 package com.fitcoach.app.ui.anamnesis
 
-import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import com.fitcoach.app.MainActivity
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
@@ -33,7 +34,7 @@ import org.robolectric.annotation.GraphicsMode
 class AnamnesisLayoutTest {
 
     @get:Rule
-    val composeRule = createAndroidComposeRule<ComponentActivity>()
+    val composeRule = createAndroidComposeRule<MainActivity>()
 
     private fun finalState(): AnamnesisUiState {
         val total = AnamnesisEngine.questions.size
@@ -53,7 +54,7 @@ class AnamnesisLayoutTest {
     }
 
     private fun setContent() {
-        composeRule.setContent {
+        composeRule.activity.setContent {
             FitCoachTheme {
                 Surface(Modifier.fillMaxSize()) {
                     AnamnesisContent(

@@ -1,13 +1,13 @@
 package com.fitcoach.app.ui.anamnesis
 
+import androidx.activity.compose.setContent
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onRoot
+import com.fitcoach.app.MainActivity
 import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.ui.theme.FitCoachTheme
@@ -32,7 +32,7 @@ import java.io.File
 class AnamnesisScreenRenderTest {
 
     @get:Rule
-    val composeRule = createAndroidComposeRule<ComponentActivity>()
+    val composeRule = createAndroidComposeRule<MainActivity>()
 
     private fun finalState(): AnamnesisUiState {
         val total = AnamnesisEngine.questions.size
@@ -52,7 +52,7 @@ class AnamnesisScreenRenderTest {
     }
 
     private fun render(name: String) {
-        composeRule.setContent {
+        composeRule.activity.setContent {
             FitCoachTheme {
                 Surface(Modifier.fillMaxSize()) {
                     AnamnesisContent(
