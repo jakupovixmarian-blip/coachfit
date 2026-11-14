@@ -330,13 +330,6 @@ object ExerciseSeed {
         ),
         // ---- GLUTEI ----
         ex(
-            "Hip thrust con bilanciere", MuscleGroup.GLUTES, listOf(MuscleGroup.HAMSTRINGS),
-            Equipment.BARBELL, MovementPattern.HINGE,
-            "Schiena alta su una panca, bilanciere sul bacino con cuscinetto, piedi alla larghezza dei fianchi.",
-            "Spingi con i talloni estendendo l'anca fino alla massima contrazione, mento verso il petto, discesa controllata.",
-            "Iperestendere la lombare in alto, piedi troppo lontani o troppo vicini, rimbalzare in basso."
-        ),
-        ex(
             "Abduzione alla macchina", MuscleGroup.GLUTES, emptyList(),
             Equipment.MACHINE, MovementPattern.ISOLATION,
             "Seduto sulla macchina con la schiena aderente allo schienale e i cuscinetti sulle cosce.",
@@ -344,21 +337,7 @@ object ExerciseSeed {
             "Usare slancio del busto, molleggiare, range ridotto per caricare troppo."
         ),
         // ---- POLPACCI ----
-        ex(
-            "Calf raise in piedi alla macchina", MuscleGroup.CALVES, emptyList(),
-            Equipment.MACHINE, MovementPattern.ISOLATION,
-            "Spalle sotto i cuscinetti, avampiedi sul bordo della pedana, talloni liberi di scendere.",
-            "Sali in massima estensione delle caviglie, pausa di un secondo, scendi fino allo stiramento completo.",
-            "Rimbalzare senza pausa in alto, range parziale, ginocchia che flettono durante la salita."
-        ),
         // ---- CORE ----
-        ex(
-            "Plank frontale", MuscleGroup.CORE, listOf(MuscleGroup.SHOULDERS),
-            Equipment.BODYWEIGHT, MovementPattern.CORE,
-            "Avambracci a terra sotto le spalle, gomiti a 90 gradi, corpo in linea dalla testa ai talloni.",
-            "Mantieni l'assetto contraendo addome e glutei, respirazione regolare per tutto il tempo previsto.",
-            "Bacino che scende, glutei in aria, trattenere il respiro, spalle lontane dalle orecchie."
-        ),
         ex(
             "Crunch al cavo in ginocchio", MuscleGroup.CORE, emptyList(),
             Equipment.CABLE, MovementPattern.CORE,
