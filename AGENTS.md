@@ -1,26 +1,92 @@
-# FitCoach repository guide
+# AGENTS.md — FitCoach
 
-## Current state
+Guida per gli agenti che lavorano su questo repository.
 
-FitCoach 2.0 is a clean native Android rebuild. The previous application was archived outside the working tree before the reset. This branch intentionally contains no imports from the archived implementation.
+## Progetto
 
-## Build
+App Android nativa (`com.fitcoach.app`, UI/testi in italiano) che si comporta come un
+coach personale: piano alimentare con carb cycling, programmazione di allenamento
+periodizzata con progressive overload, motore adattivo e coach AI conversazionale.
 
-Use `/workspace/build.sh :app:assembleDebug` from the repository root. The wrapper uses the repository-local Android SDK and JDK 17. Run `/workspace/build.sh test` for JVM/unit tests and `/workspace/build.sh connectedDebugAndroidTest` only when an Android device or emulator is available.
+- **Stack**: Kotlin, Jetpack Compose, Material 3, MVVM + Clean Architecture, Room,
+  Coroutines/Flow, WorkManager, AlarmManager, DataStore, Retrofit/OkHttp, Hilt,
+  grafici con Compose Canvas. `minSdk 26`, `targetSdk 35`.
+- **Architettura**: offline-first. Solo la chat AI richiede rete.
+- **Lingua**: tutto il codice, i commenti e i testi UI sono in italiano. Evitare accenti
+  nei commenti dove il file usa gia lo stile senza accenti.
 
-## Architecture
+## Struttura
 
-- `app`: Android application, Compose navigation, screens, dependency injection.
-- `domain`: platform-light models and use-case contracts.
-- `database`: Room entities, DAOs, migrations, and database configuration.
-- `data`: repository implementations and local persistence adapters.
-- `nutrition`, `workout`, `calendar`, `progress`, `coaching`, `notifications`, `ai`: feature modules with deterministic engines and infrastructure adapters.
-- UI state is exposed by ViewModels using Kotlin Flow. Mathematical decisions remain deterministic and are separate from conversational AI.
+```
+app/src/main/java/com/fitcoach/app/
+├── data/            # Room (entity, dao, db, Mappers, Migrations), repository, remote (AI), datastore
+├── domain/          # modelli, motori (nutrition, workout, adaptive), coach, usecase
+├── di/              # moduli Hilt (DatabaseModule, RepositoryModule, NetworkModule)
+├── notifications/   # scheduler, receiver, boot receiver
+├── ui/              # theme, components, navigation, screens + viewmodels
+└── FitCoachApplication.kt
+```
 
-## Product rules
+## Ricostruzione FitCoach 2.0
 
-Do not fabricate user measurements or food values. Keep estimated values distinct from recorded values. Important plan changes must be represented as reviewable proposals before application. Provider/API keys must never be committed or bundled in the APK. Safety limits must reject extreme nutrition targets, unsafe progressions, pain-related progression, and medical claims.
+- La ricostruzione procede sul branch `fitcoach-2.0-rebuild`; il baseline v1 è conservato in `archive/fitcoach-1.0-a2bea9a`.
+- Backup verificato: `/workspace/backups/fitcoach-1.0-20261112/` contiene bundle Git, archivio sorgente, artefatti, dati Room copiati e `SHA256SUMS`.
+- Roadmap e confini architetturali: `docs/FITCOACH_2_ROADMAP.md`.
+- Il nuovo layer provider è isolato in `app/src/main/java/com/fitcoach/app/v2/ai/`: capability, transport OkHttp, classificazione errori, discovery modelli e job di generazione non dipendono dai repository v1.
+- Le chiavi sono referenziate per alias e lette da `SecureKeyStore`; non inserire mai chiavi in Room, log, test o codice.
+- Un test provider locale non equivale a un test provider reale: riportare sempre separatamente `PROVIDER_REAL` e `UI_E2E`.
 
-## Working rules
+## Comandi
 
-Keep changes focused. Add tests for deterministic calculations and persistence behavior. Build after each feature slice. Do not mark features complete unless the implementation and verification exist.
+Lo script `/workspace/build.sh` avvolge Gradle e imposta l'ambiente:
+
+```bash
+/workspace/build.sh :app:compileDebugKotlin   # compilazione veloce
+/workspace/build.sh :app:testDebugUnitTest    # test unitari (235 test all'ultimo run)
+/workspace/build.sh :app:assembleDebug        # APK debug
+/workspace/build.sh :app:assembleRelease      # APK release (firmabile)
+```
+
+L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
+
+## Convenzioni
+
+- **Motori deterministici**: tutti i calcoli (calorie, macro, sostituzioni, spesa, diario)
+  stanno in `domain/` come `object` puri e testabili. L'AI non calcola e non scrive sul DB:
+  interpreta e propone, e le modifiche sono applicate solo dopo conferma
+  (`CoachActionExecutor`).
+- `DiaryViewModel` pubblica subito la lettura Room e osserva `observeForDay`: il diario deve aggiornarsi anche se l'utente spunta un pasto da Alimentazione prima di aprire Diario. `NutritionDiaryRepository.togglePlanEntry` mantiene una sola voce per coppia piano/data e usa `active` per il consumo effettivo.
+- Il calendario allenamenti usa le sette `WorkoutDayEntity` (incluse quelle di riposo): `WorkoutRepository.moveWorkoutDay` scambia gli indici senza creare una nuova scheda.
+- `AiProgramGenerationService` avvia la generazione online dopo la conferma dell'anamnesi: costruisce il contesto completo, richiede il contratto JSON, tenta una correzione per JSON invalido e salva solo dopo la validazione di macro, calorie, alimenti, esercizi, attrezzatura e calendario. Se il provider è assente o la proposta non è valida, non usa fallback silenziosi.
+- **Nessun dato inventato**: i valori nutrizionali vengono da `FoodSeedData` (CREA/USDA).
+- **Integrazione**: le funzionalità nutrizionali (piano, sostituzioni, spesa, diario)
+  condividono lo stesso database alimentare e gli stessi identificativi del piano. Non
+  creare moduli indipendenti.
+- **Room**: DB version attuale **11**. Aggiungendo entita/DAO ricordarsi di importarli in
+  `FitCoachDatabase.kt` (un import mancante causa `[ksp] MissingType`), registrare la
+  migrazione in `Migrations.kt` e i mapper in `Mappers.kt`. Lo schema esportato sta in
+  `app/schemas/`. La v10 aggiunge lo storico degli esiti delle modifiche del coach; la v11 aggiunge la persistenza Room isolata per anamnesi e checkpoint di generazione 2.0.
+- **UI**: usare i componenti condivisi in `ui/components` (`SectionCard`, `SectionHeader`,
+  `StatTile`, `MacroBar`, `Pill`, `EmptyState`, `LoadingBox`) e i colori del tema
+  (`Emerald`, `CarbsColor`, `TextSecondary`, ...). Le schermate sono `LazyColumn`.
+- **Gate di generazione**: nessun piano si genera senza anamnesi confermata
+  (`UserProfile.isAnamnesisReady`). `GenerateProgramsUseCase` ritorna
+  `Result.AnamnesisNotConfirmed`. La dashboard reindirizza all'anamnesi.
+- **Coach longitudinale**: `LongitudinalCoachEngine` richiede almeno 2 settimane di aderenza nutrizionale e 3 settimane di medie peso affidabili. `CoachActionExecutor` applica in transazione gli aggiustamenti calorici alle grammature del piano e salva un payload di rollback; gli esiti vengono valutati nei check-in successivi.
+- **Fonti esterne**: la ricerca alimentare (`FoodSearchRepository`) usa Open Food Facts e
+  USDA FoodData Central con URL completi via Retrofit `@Url`. I test di mappatura DTO stanno
+  in `data/repository/FoodSearchMappingTest.kt` (nessuna rete: parsing reale delle DTO).
+
+## Punti chiave del motore nutrizionale
+
+- `FoodSubstitutionEngine` — sostituzione vincolata: quantita calcolata sul macro dominante,
+  verifica calorie/macro di pasto e giornata entro tolleranze configurabili (kcal 5%,
+  P/C/G 10%), blocco se si supera il limite calorico approvato, sostituzione combinata.
+- `ShoppingListEngine` — aggregazione dal piano effettivo, categorie, conservazione stato.
+- `NutritionDiaryEngine` — obiettivo/consumato/rimanente, niente doppio conteggio, extra.
+- `BudgetEngine` — costo reale del piano (grammature × prezzo/kg), ambito personale/condiviso/
+  spesa totale, stima parziale dichiarata, convenienza per grammo di proteine.
+- `AnamnesisEngine` — intervista guidata, validazione risposte, contraddizioni, riepilogo,
+  gate di generazione.
+- Repository: `NutritionDiaryRepository`, `ShoppingRepository`, `SubstitutionRepository`,
+  `FoodSearchRepository`.

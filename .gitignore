@@ -1,14 +1,32 @@
-*.iml
+# Gradle
 .gradle/
-.kotlin/
+build/
+!gradle/wrapper/gradle-wrapper.jar
 
-/local.properties
-/.idea/
-/build/
-**/build/
-/captures/
-.externalNativeBuild/
+# Android
+local.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+captures/
 .cxx/
-*.hprof
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+
+# Keystore (mai versionare chiavi di firma reali)
 *.jks
 *.keystore
+keystore.properties
+
+# Kotlin
+.kotlin/
+
+# Build artifacts / dist
+/dist/
