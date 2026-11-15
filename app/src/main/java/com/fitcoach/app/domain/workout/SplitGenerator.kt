@@ -174,34 +174,69 @@ object SplitGenerator {
         }
 
         val priorities = profile.priorityMuscles
-        val scored = usable.sortedWith(
-            compareByDescending<Exercise> { preferred.any { p -> it.name.lowercase().contains(p) } }
-                .thenByDescending { it.primaryMuscle in priorities }
-                .thenByDescending { it.category == ExerciseCategory.COMPOUND }
-                .thenByDescending { it.primaryMuscle in groups }
-                .thenBy { it.difficulty }
-        )
-        val rotation = if (scored.isEmpty()) 0 else Math.floorMod(rotationSeed, scored.size)
-        val rotated = scored.drop(rotation) + scored.take(rotation)
+        // Prima gli esercizi il cui muscolo PRINCIPALE appartiene alla giornata:
+        // un muscolo secondario non deve "portare" un esercizio in una seduta dove
+        // non e previsto (es. Military press in una giornata gambe).
+        val primaryMatches = usable.filter { it.primaryMuscle in groups }
+        val secondaryMatches = usable.filter { it.primaryMuscle !in groups }
+        val bestFirst = compareByDescending<Exercise> { preferred.any { p -> it.name.lowercase().contains(p) } }
+            .thenByDescending { it.primaryMuscle in priorities }
+            .thenByDescending { it.category == ExerciseCategory.COMPOUND }
+            .thenByDescending { it.primaryMuscle in groups }
+            .thenBy { it.difficulty }
+
+        val rotationSeedSafe = if (primaryMatches.isEmpty()) 0 else Math.floorMod(rotationSeed, primaryMatches.size)
+        val rotatedPrimary = (primaryMatches.sortedWith(bestFirst).let { it.drop(rotationSeedSafe) + it.take(rotationSeedSafe) })
+        val rotatedSecondary = secondaryMatches.sortedWith(bestFirst)
 
         val selected = mutableListOf<SelectedExercise>()
         val perGroup = mutableMapOf<MuscleGroup, Int>()
         val perPattern = mutableMapOf<com.fitcoach.app.domain.model.MovementPattern, Int>()
-        for (ex in rotated) {
-            if (selected.size >= count) break
-            val groupCount = perGroup[ex.primaryMuscle] ?: 0
-            val maxPerGroup = if (ex.primaryMuscle in priorities) 3
-            else if (ex.primaryMuscle.isLargeGroup) 3 else 2
-            if (groupCount >= maxPerGroup) continue
-            // Evita piu di 2 esercizi con lo stesso pattern di movimento.
-            val patternCount = perPattern[ex.movementPattern] ?: 0
-            if (ex.movementPattern != com.fitcoach.app.domain.model.MovementPattern.OTHER &&
-                patternCount >= 2
-            ) continue
+        val chosenIds = mutableSetOf<Long>()
 
+        fun maxPerGroup(g: MuscleGroup): Int = when {
+            g in priorities -> 3
+            g.isLargeGroup -> 3
+            else -> 2
+        }
+
+        fun tryAdd(ex: Exercise): Boolean {
+            if (selected.size >= count) return false
+            if (ex.id in chosenIds) return false
+            if ((perGroup[ex.primaryMuscle] ?: 0) >= maxPerGroup(ex.primaryMuscle)) return false
+            if (ex.movementPattern != com.fitcoach.app.domain.model.MovementPattern.OTHER &&
+                (perPattern[ex.movementPattern] ?: 0) >= 2
+            ) return false
             selected += SelectedExercise(ex, reasonFor(ex, profile, groups))
-            perGroup[ex.primaryMuscle] = groupCount + 1
-            perPattern[ex.movementPattern] = patternCount + 1
+            chosenIds += ex.id
+            perGroup[ex.primaryMuscle] = (perGroup[ex.primaryMuscle] ?: 0) + 1
+            perPattern[ex.movementPattern] = (perPattern[ex.movementPattern] ?: 0) + 1
+            return true
+        }
+
+        // 1) COPERTURA: almeno un esercizio per ogni gruppo previsto dalla giornata,
+        //    privilegiando i gruppi prioritari e i gruppi grandi.
+        val groupOrder = groups.sortedWith(
+            compareByDescending<MuscleGroup> { it in priorities }.thenByDescending { it.isLargeGroup }
+        )
+        for (g in groupOrder) {
+            if (selected.size >= count) break
+            if (perGroup[g] != null) continue
+            rotatedPrimary.firstOrNull { it.primaryMuscle == g && it.id !in chosenIds && tryAdd(it) }
+        }
+
+        // 2) RIEMPIMENTO: completa fino al numero previsto con i migliori esercizi
+        //    principali, rispettando i limiti per gruppo e per pattern.
+        for (ex in rotatedPrimary) {
+            if (selected.size >= count) break
+            tryAdd(ex)
+        }
+
+        // 3) ULTIMA RISORSA: esercizi con muscolo principale fuori giornata ma con
+        //    un muscolo secondario utile (solo se la copertura non basta).
+        for (ex in rotatedSecondary) {
+            if (selected.size >= count) break
+            tryAdd(ex)
         }
         return selected
     }

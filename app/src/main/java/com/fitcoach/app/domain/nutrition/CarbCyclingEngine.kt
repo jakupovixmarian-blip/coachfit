@@ -116,19 +116,27 @@ object CarbCyclingEngine {
     /**
      * Distribuzione settimanale dei giorni HIGH/MEDIUM/LOW.
      * HIGH = giorni di allenamento piu pesanti, LOW = riposo/leggeri.
+     *
+     * Vincolo: i giorni NON-LOW (HIGH + MEDIUM) non possono essere meno dei
+     * giorni di allenamento, altrimenti un giorno di allenamento finirebbe LOW
+     * (carboidrati ridotti nel giorno in cui serve piu energia). Quindi MEDIUM
+     * assorbe almeno i giorni di allenamento che eccedono i giorni HIGH.
      */
     fun distributeDays(trainingDays: Int): Triple<Int, Int, Int> {
         val td = trainingDays.coerceIn(0, 7)
-        return when (td) {
+        val (high, medium, low) = when (td) {
             0 -> Triple(0, 0, 7)
             1 -> Triple(0, 1, 6)
             2 -> Triple(1, 1, 5)
-            3 -> Triple(1, 1, 5)
-            4 -> Triple(2, 1, 4)
-            5 -> Triple(2, 2, 3)
-            6 -> Triple(3, 2, 2)
-            else -> Triple(4, 2, 1)
+            3 -> Triple(1, 2, 4)
+            4 -> Triple(2, 2, 3)
+            5 -> Triple(2, 3, 2)
+            6 -> Triple(3, 3, 1)
+            else -> Triple(4, 3, 0)
         }
+        // Garanzia esplicita: nessun giorno di allenamento resta LOW.
+        val mediumFixed = maxOf(medium, td - high)
+        return Triple(high, mediumFixed, 7 - high - mediumFixed)
     }
 
     /**

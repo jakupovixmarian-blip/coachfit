@@ -128,12 +128,71 @@ object WorkoutPlanBuilder {
             notes += "Volume aumentato per i gruppi prioritari: $prio."
         }
 
-        val allPlanned = days.asSequence().flatMap { it.exercises.asSequence() }.toList()
+        val normalized = normalizeVolume(days, exercises.associateBy { it.id })
         val effectiveVolume = EffectiveVolumeCalculator
-            .forExercises(allPlanned, exercises.associateBy { it.id })
+            .forExercises(normalized.asSequence().flatMap { it.exercises.asSequence() }.toList(), exercises.associateBy { it.id })
             .effective
             .mapValues { (_, value) -> kotlin.math.round(value).toInt() }
-        return BuiltPlan(splitType, days, effectiveVolume, notes)
+        return BuiltPlan(splitType, normalized, effectiveVolume, notes)
+    }
+
+    /** Limiti allineati a [WorkoutPlanValidator]: oltre questi il piano non e valido. */
+    private const val MAX_SETS_PER_SESSION = 24
+    private const val MAX_WEEKLY_EFFECTIVE_SETS = 26
+    private const val MIN_WEEKLY_EFFECTIVE_SETS = 8
+    private const val MIN_SETS_PER_EXERCISE = 2
+    private const val MAX_SETS_PER_EXERCISE = 5
+
+    /**
+     * Normalizza il volume per rispettare i vincoli dell'app: serie per seduta
+     * entro il tetto, volume settimanale effettivo per gruppo entro i range
+     * raccomandati. Riduce prima gli esercizi con piu serie; se un gruppo e sotto
+     * il minimo, aumenta le sue serie (senza superare i limiti di seduta).
+     */
+    private fun normalizeVolume(days: List<WorkoutDay>, exercisesById: Map<Long, Exercise>): List<WorkoutDay> {
+        val work: List<MutableList<PlannedExercise>> = days.map { it.exercises.toMutableList() }
+
+        fun daySets(i: Int) = work[i].sumOf { it.sets }
+
+        // 1) Tetto per seduta.
+        days.indices.filter { !days[it].isRestDay }.forEach { i ->
+            while (daySets(i) > MAX_SETS_PER_SESSION) {
+                val target = work[i].filter { it.sets > MIN_SETS_PER_EXERCISE }.maxByOrNull { it.sets } ?: break
+                val idx = work[i].indexOf(target)
+                work[i][idx] = target.copy(sets = target.sets - 1)
+            }
+        }
+
+        fun weeklyEffective(): Map<MuscleGroup, Double> =
+            EffectiveVolumeCalculator
+                .forExercises(work.flatten(), exercisesById)
+                .effective
+
+        // 2a) Riduci i gruppi sopra il massimo settimanale.
+        var guard = 0
+        while (guard++ < 500) {
+            val over = weeklyEffective().filter { it.value > MAX_WEEKLY_EFFECTIVE_SETS }.keys.firstOrNull() ?: break
+            val found = work.withIndex().asSequence()
+                .flatMap { (i, list) -> list.withIndex().asSequence().map { (j, pe) -> Triple(i, j, pe) } }
+                .filter { it.third.primaryMuscle == over && it.third.sets > MIN_SETS_PER_EXERCISE }
+                .maxByOrNull { it.third.sets } ?: break
+            if (daySets(found.first) - 1 < 6) break
+            work[found.first][found.second] = found.third.copy(sets = found.third.sets - 1)
+        }
+
+        // 2b) Alza i gruppi sotto il minimo settimanale (senza sfondare il tetto di seduta).
+        guard = 0
+        while (guard++ < 500) {
+            val under = weeklyEffective().filter { it.value < MIN_WEEKLY_EFFECTIVE_SETS }.keys.firstOrNull() ?: break
+            val found = work.withIndex().asSequence()
+                .flatMap { (i, list) -> list.withIndex().asSequence().map { (j, pe) -> Triple(i, j, pe) } }
+                .filter { it.third.primaryMuscle == under && it.third.sets < MAX_SETS_PER_EXERCISE }
+                .minByOrNull { it.third.sets } ?: break
+            if (daySets(found.first) + 1 > MAX_SETS_PER_SESSION) break
+            work[found.first][found.second] = found.third.copy(sets = found.third.sets + 1)
+        }
+
+        return days.mapIndexed { i, day -> day.copy(exercises = work[i].toList()) }
     }
 
     /** Rapporto tra carico attuale dichiarato e carico tipico (per stimare l'intensita). */
