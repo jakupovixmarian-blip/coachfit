@@ -2,6 +2,7 @@ package com.fitcoach.app.data.remote
 
 import com.fitcoach.app.domain.model.AiProvider
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import retrofit2.Response
 import java.io.IOException
 import javax.inject.Inject
@@ -9,7 +10,12 @@ import javax.inject.Singleton
 
 /** Esito di una chiamata al provider AI. */
 sealed interface AiResult {
-    data class Success(val content: String, val model: String?) : AiResult
+    data class Success(
+        val content: String,
+        val model: String?,
+        /** Tool calls richiesti dal modello (function calling), se presenti. */
+        val toolCalls: List<ToolCallDto> = emptyList()
+    ) : AiResult
     data class Failure(val message: String, val httpCode: Int? = null) : AiResult
 }
 
@@ -28,7 +34,9 @@ class AiClient @Inject constructor(
         messages: List<ChatMessageDto>,
         temperature: Double? = config.temperature,
         maxTokens: Int = config.maxTokens,
-        responseFormat: ChatCompletionRequest.ResponseFormat? = null
+        responseFormat: ChatCompletionRequest.ResponseFormat? = null,
+        tools: List<ToolDefinition>? = null,
+        toolChoice: JsonElement? = null
     ): AiResult {
         if (config.baseUrl.isBlank()) {
             return AiResult.Failure("Base URL non configurato. Vai in Impostazioni > Provider AI.")
@@ -54,7 +62,9 @@ class AiClient @Inject constructor(
             messages = messages,
             temperature = effectiveTemperature,
             maxTokens = maxTokens,
-            responseFormat = responseFormat
+            responseFormat = responseFormat,
+            tools = tools,
+            toolChoice = toolChoice
         )
         if (learned?.alternateTokenParam == true) {
             request = ChatCompletionRequest.withAlternateTokenParam(request)
@@ -143,8 +153,12 @@ class AiClient @Inject constructor(
         message?.refusal?.takeIf { it.isNotBlank() }?.let {
             return AiResult.Failure("Il modello ha rifiutato la richiesta: $it", response.code())
         }
+        // Tool calling: il modello puo chiedere di eseguire strumenti senza testo.
+        val toolCalls = message?.toolCalls.orEmpty()
+            .filter { it.function?.name?.isNotBlank() == true }
+            .map { it.toRequestDto() }
         val content = body.content
-        if (content.isNullOrBlank()) {
+        if (content.isNullOrBlank() && toolCalls.isEmpty()) {
             val reason = when (body.finishReason) {
                 "length" -> "Risposta troncata: aumenta i token massimi o accorcia la richiesta."
                 "content_filter" -> "Contenuto filtrato dal provider."
@@ -153,7 +167,7 @@ class AiClient @Inject constructor(
             }
             return AiResult.Failure(reason, response.code())
         }
-        return AiResult.Success(content.trim(), body.model)
+        return AiResult.Success((content ?: "").trim(), body.model, toolCalls)
     }
 
     /** Verifica rapida della connessione con un messaggio minimale. */

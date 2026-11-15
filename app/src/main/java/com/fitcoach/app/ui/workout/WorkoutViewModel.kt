@@ -67,9 +67,18 @@ data class WorkoutUiState(
     val showLibrary: Boolean = false,
     val libraryQuery: String = "",
     val libraryExercises: List<com.fitcoach.app.domain.model.Exercise> = emptyList(),
+    // Sezione attiva: PROGRAMMA (scheda generata) o DIARIO (carichi e ripetizioni registrati).
+    val section: WorkoutSection = WorkoutSection.PROGRAM,
+    val performancesByExercise: Map<String, List<ExercisePerformance>> = emptyMap(),
     // Cronometro durata sessione.
     val sessionElapsedSeconds: Int = 0
 )
+
+/** Le due sotto-sezioni della schermata Allenamento. */
+enum class WorkoutSection(val label: String) {
+    PROGRAM("Programma"),
+    LOG("Diario carichi")
+}
 
 @HiltViewModel
 class WorkoutViewModel @Inject constructor(
@@ -108,13 +117,15 @@ class WorkoutViewModel @Inject constructor(
                 ?.toMap()
                 ?: emptyMap()
             val history = workoutRepository.getRecentSessions(30)
+            val performancesByExercise = workoutRepository.getPerformanceByExercise()
             _state.value = _state.value.copy(
                 loading = false,
                 plan = plan,
                 today = effectiveToday,
                 session = session,
                 lastPerformances = lastPerformances,
-                history = history
+                history = history,
+                performancesByExercise = performancesByExercise
             )
             syncStopwatch(session)
         }
@@ -257,6 +268,8 @@ class WorkoutViewModel @Inject constructor(
     }
 
     fun openEdit(planned: PlannedExercise) { _state.value = _state.value.copy(editingExercise = planned) }
+
+    fun selectSection(section: WorkoutSection) { _state.value = _state.value.copy(section = section) }
     fun closeEdit() { _state.value = _state.value.copy(editingExercise = null) }
 
     fun generateWorkout() {

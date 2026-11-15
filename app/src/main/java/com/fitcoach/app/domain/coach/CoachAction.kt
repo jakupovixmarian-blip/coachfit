@@ -47,5 +47,7 @@ data class CoachAction(
 data class CoachReply(
     val text: String,
     val proposedAction: CoachAction? = null,
-    val providerError: String? = null
+    val providerError: String? = null,
+    /** Proposta gia registrata (PROPOSED) da uno strumento di scrittura, da confermare. */
+    val pendingChange: com.fitcoach.app.domain.model.ProgramChange? = null
 )

@@ -25,7 +25,11 @@ data class ChatCompletionRequest(
      * Alcuni provider (OpenRouter) accettano un oggetto `response_format`.
      * Non e sempre supportato: il chiamante decide se richiedere il JSON.
      */
-    @SerialName("response_format") val responseFormat: ResponseFormat? = null
+    @SerialName("response_format") val responseFormat: ResponseFormat? = null,
+    /** Strumenti (function calling) disponibili per il modello. */
+    val tools: List<ToolDefinition>? = null,
+    /** Politica di scelta degli strumenti: auto/none/required oppure oggetto forzato. */
+    @SerialName("tool_choice") val toolChoice: JsonElement? = null
 ) {
     @Serializable
     data class ResponseFormat(val type: String = "json_object")
@@ -41,7 +45,9 @@ data class ChatCompletionRequest(
             messages: List<ChatMessageDto>,
             temperature: Double? = null,
             maxTokens: Int? = null,
-            responseFormat: ResponseFormat? = null
+            responseFormat: ResponseFormat? = null,
+            tools: List<ToolDefinition>? = null,
+            toolChoice: JsonElement? = null
         ): ChatCompletionRequest {
             val newParam = AiParameterPolicy.tokenParamFor(provider, model) ==
                 TokenParam.MAX_COMPLETION_TOKENS
@@ -51,7 +57,9 @@ data class ChatCompletionRequest(
                 temperature = temperature,
                 maxTokens = if (newParam) null else maxTokens,
                 maxCompletionTokens = if (newParam) maxTokens else null,
-                responseFormat = responseFormat
+                responseFormat = responseFormat,
+                tools = tools,
+                toolChoice = if (tools.isNullOrEmpty()) null else toolChoice
             )
         }
 
@@ -80,7 +88,12 @@ data class ChatCompletionRequest(
 @Serializable
 data class ChatMessageDto(
     val role: String,
-    val content: String
+    /** Nullo per i messaggi assistant che contengono solo tool_calls. */
+    val content: String? = null,
+    @SerialName("tool_calls") val toolCalls: List<ToolCallDto>? = null,
+    @SerialName("tool_call_id") val toolCallId: String? = null,
+    /** Nome della funzione per i messaggi role=tool. */
+    val name: String? = null
 )
 
 /**

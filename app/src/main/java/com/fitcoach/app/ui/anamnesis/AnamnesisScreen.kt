@@ -53,6 +53,7 @@ fun AnamnesisScreen(
         onCloseSummary = viewModel::closeSummary,
         onConfirm = viewModel::confirm,
         onRetryGeneration = viewModel::retryGeneration,
+        onUseOfflineEngine = viewModel::useOfflineEngine,
         onSubmit = viewModel::submit,
         onBack = viewModel::goBack,
         onSkip = viewModel::skip,
@@ -73,6 +74,7 @@ internal fun AnamnesisContent(
     onCloseSummary: () -> Unit,
     onConfirm: () -> Unit,
     onRetryGeneration: () -> Unit = {},
+    onUseOfflineEngine: () -> Unit = {},
     onSubmit: () -> Unit,
     onBack: () -> Unit,
     onSkip: () -> Unit,
@@ -147,6 +149,20 @@ internal fun AnamnesisContent(
                             onClick = onRetryGeneration,
                             modifier = Modifier.fillMaxWidth()
                         ) { Text("Riprova generazione AI") }
+                        if (state.offlineFallbackAvailable) {
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "In alternativa puoi generare il percorso con il motore offline " +
+                                    "(calcoli deterministici sui tuoi dati reali). Non sostituisce il Coach AI: " +
+                                    "e una scelta esplicita.",
+                                style = MaterialTheme.typography.labelSmall, color = TextSecondary
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            OutlinedButton(
+                                onClick = onUseOfflineEngine,
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text("Usa il motore offline") }
+                        }
                     }
                     state.generationWarnings.forEach { warning ->
                         Spacer(Modifier.height(4.dp))

@@ -1,0 +1,171 @@
+package com.fitcoach.app.domain.coach.tools
+
+import com.fitcoach.app.data.repository.UserRepository
+import com.fitcoach.app.domain.model.CarbDayType
+import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
+import com.fitcoach.app.domain.nutrition.EnergyCalculator
+import kotlinx.serialization.json.JsonObject
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Calcolo energetico deterministico come STRUMENTO subordinato: l'AI lo consulta
+ * per decidere il target calorico, ma la decisione finale resta sua. Il calcolo
+ * usa formule documentate e stile di vita reale (NEAT), senza inventare valori.
+ */
+@Singleton
+class ComputeEnergyTargetsTool @Inject constructor(
+    private val userRepository: UserRepository
+) : CoachTool {
+    override val name = "compute_energy_targets"
+    override val description =
+        "Calcola BMR, TDEE (con stile di vita reale), target calorico e fabbisogno proteico per " +
+            "obiettivo, con la formula usata e la soglia di sicurezza. Usalo come base per decidere " +
+            "la nutrizione. I valori sono STIME: distingui sempre stimato da misurato."
+
+    override val parameters: JsonObject = Schema.obj(
+        "obiettivo" to Schema.enumOf(
+            "Obiettivo per il quale calcolare i target (default: quello del profilo).",
+            "RECOMP", "HYPERTROPHY", "CUT", "MAINTENANCE", "STRENGTH"
+        )
+    )
+
+    override suspend fun execute(arguments: JsonObject): String {
+        val profile = userRepository.get()
+            ?: return JsonOut.encode(JsonOut.obj("ok" to JsonOut.bool(false), "error" to JsonOut.str("Nessun profilo.")))
+        val goalName = JsonArgs(arguments).string("obiettivo")
+        val goal = goalName?.let { runCatching { com.fitcoach.app.domain.model.Goal.valueOf(it.uppercase()) }.getOrNull() }
+        val effective = if (goal != null) profile.copy(goal = goal) else profile
+        val energy = EnergyCalculator.compute(effective)
+            ?: return JsonOut.encode(
+                JsonOut.obj(
+                    "ok" to JsonOut.bool(false),
+                    "error" to JsonOut.str("Dati insufficienti (età/altezza/peso) per il calcolo energetico."),
+                    "datiMancanti" to JsonOut.strings(profile.missingEssentialData)
+                )
+            )
+        return JsonOut.encode(
+            JsonOut.obj(
+                "ok" to JsonOut.bool(true),
+                "obiettivoUsato" to JsonOut.str(effective.goal.name),
+                "bmr" to JsonOut.num(energy.bmr),
+                "tdee" to JsonOut.num(energy.tdee),
+                "formulaBmr" to JsonOut.str(energy.bmrFormula),
+                "formulaTdee" to JsonOut.str(energy.tdeeFormula),
+                "massaMagraKg" to JsonOut.num(energy.leanMassKg),
+                "kcalSettimanali" to JsonOut.num(energy.weeklyCalories),
+                "proteineGPerKg" to JsonOut.num(CarbCyclingEngine.proteinPerKg(effective.goal)),
+                "sogliaSicurezzaKcal" to JsonOut.num(CarbCyclingEngine.safetyFloor(effective, energy)),
+                "note" to JsonOut.strings(energy.notes),
+                "overridePresenti" to JsonOut.obj(
+                    "activityFactor" to JsonOut.num(effective.activityFactorOverride),
+                    "targetCalorico" to JsonOut.num(effective.calorieTargetOverride)
+                )
+            )
+        )
+    }
+}
+
+/**
+ * Calcolo della distribuzione dei carboidrati (carb cycling o uniforme) come
+ * strumento di supporto: l'AI decide SE e QUANTO applicarla, questo strumento
+ * mostra i target coerenti per ogni tipologia di giornata.
+ */
+@Singleton
+class ComputeCarbCyclingTool @Inject constructor(
+    private val userRepository: UserRepository
+) : CoachTool {
+    override val name = "compute_carb_cycling"
+    override val description =
+        "Calcola la distribuzione settimanale dei carboidrati (HIGH/MEDIUM/LOW) o uniforme, con " +
+            "target kcal/proteine/carboidrati/grassi per giornata e verifica di coerenza. " +
+            "Usalo per decidere la ciclicita in base al carico di allenamento. Non crea deficit arbitrari."
+
+    override val parameters: JsonObject = Schema.obj(
+        "giornateHigh" to Schema.integer("Numero di giornate HIGH (opzionale: default dal profilo)."),
+        "giornateMedium" to Schema.integer("Numero di giornate MEDIUM (opzionale)."),
+        "giornateLow" to Schema.integer("Numero di giornate LOW (opzionale).")
+    )
+
+    override suspend fun execute(arguments: JsonObject): String {
+        val profile = userRepository.get()
+            ?: return JsonOut.encode(JsonOut.obj("ok" to JsonOut.bool(false), "error" to JsonOut.str("Nessun profilo.")))
+        val energy = EnergyCalculator.compute(profile)
+            ?: return JsonOut.encode(
+                JsonOut.obj("ok" to JsonOut.bool(false), "error" to JsonOut.str("Dati insufficienti per il calcolo."))
+            )
+        val args = JsonArgs(arguments)
+        val cycling = if (CarbCyclingEngine.shouldApplyCarbCycling(profile)) {
+            CarbCyclingEngine.build(profile, energy)
+        } else {
+            CarbCyclingEngine.buildUniform(profile, energy)
+        }
+        val targets = cycling.targets.map { (type, t) ->
+            JsonOut.obj(
+                "tipo" to JsonOut.str(type.name),
+                "kcal" to JsonOut.num(t.kcal),
+                "proteine" to JsonOut.num(t.protein),
+                "carboidrati" to JsonOut.num(t.carbs),
+                "grassi" to JsonOut.num(t.fat)
+            )
+        }
+        return JsonOut.encode(
+            JsonOut.obj(
+                "ok" to JsonOut.bool(true),
+                "consigliatoApplicare" to JsonOut.bool(CarbCyclingEngine.shouldApplyCarbCycling(profile)),
+                "applicato" to JsonOut.bool(cycling.applied),
+                "coerente" to JsonOut.bool(cycling.isValid),
+                "giornateHigh" to JsonOut.num(cycling.highDays),
+                "giornateMedium" to JsonOut.num(cycling.mediumDays),
+                "giornateLow" to JsonOut.num(cycling.lowDays),
+                "richiestaPersonalizzazione" to JsonOut.obj(
+                    "high" to JsonOut.num(args.int("giornateHigh")),
+                    "medium" to JsonOut.num(args.int("giornateMedium")),
+                    "low" to JsonOut.num(args.int("giornateLow"))
+                ),
+                "kcalSettimanali" to JsonOut.num(cycling.weeklyKcal),
+                "target" to JsonOut.arr(targets),
+                "avvisi" to JsonOut.strings(cycling.warnings)
+            )
+        )
+    }
+}
+
+/** Calcolo del volume settimanale per gruppo muscolare (serie dirette + indirette). */
+@Singleton
+class ComputeWeeklyVolumeTool @Inject constructor(
+    private val userRepository: UserRepository,
+    private val workoutRepository: com.fitcoach.app.data.repository.WorkoutRepository
+) : CoachTool {
+    override val name = "compute_weekly_volume"
+    override val description =
+        "Calcola il volume settimanale effettivo per gruppo muscolare (serie dirette a peso 1.0 e " +
+            "indirette a peso ridotto) della scheda attiva. Confrontalo con i range raccomandati " +
+            "(circa 10-20 serie/gruppo) per valutare equilibrio e recuperabilita."
+
+    override val parameters: JsonObject = Schema.obj()
+
+    override suspend fun execute(arguments: JsonObject): String {
+        val plan = workoutRepository.getActivePlan()
+            ?: return JsonOut.encode(JsonOut.obj("ok" to JsonOut.bool(true), "pianoPresente" to JsonOut.bool(false)))
+        val volume = plan.weeklyVolumePerGroup
+        val total = volume.values.sum()
+        return JsonOut.encode(
+            JsonOut.obj(
+                "ok" to JsonOut.bool(true),
+                "pianoPresente" to JsonOut.bool(true),
+                "serieTotaliSettimana" to JsonOut.num(total),
+                "volumePerGruppo" to JsonOut.obj(
+                    *volume.map { (k, v) -> k.name to JsonOut.num(v) }.toTypedArray()
+                ),
+                "rangeRaccomandato" to JsonOut.obj(
+                    "min" to JsonOut.num(10),
+                    "max" to JsonOut.num(20),
+                    "nota" to JsonOut.str("Serie settimanali per gruppo per ipertrofia (indicativo).")
+                ),
+                "sottoVolume" to JsonOut.strings(volume.filter { it.value < 8 }.map { it.key.name }),
+                "sopraVolume" to JsonOut.strings(volume.filter { it.value > 22 }.map { it.key.name })
+            )
+        )
+    }
+}

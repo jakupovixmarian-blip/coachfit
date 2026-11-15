@@ -155,6 +155,37 @@ Separazione netta tra **motore matematico deterministico**, **motore di analisi*
 **AI conversazionale**: l'AI interpreta e propone, non calcola né modifica i database
 direttamente.
 
+## L'AI come autorità decisionale (tool calling)
+
+L'AI **non è un semplice chatbot**: è il cervello decisionale del coach. Opera in un
+**ciclo agentico** (`CoachOrchestrator`) con **tool calling**: il modello legge dati reali,
+calcola e propone, mentre l'app verifica e l'utente conferma.
+
+Strumenti (in `domain/coach/tools`, iniettati come `Set<CoachTool>` via Hilt):
+
+- **Lettura (gli "occhi" dell'AI)** – anamnesi/profilo, riepilogo catalogo, elenco
+  alimenti ed esercizi, piano nutrizionale attivo, scheda attiva, storico allenamenti,
+  progressi, diario alimentare, foto progressi. Restituiscono solo dati reali dai
+  repository; se un dato manca, l'AI deve chiederlo, mai inventarlo.
+- **Calcolo/analisi (strumenti deterministici)** – fabbisogno energetico e macro,
+  carb cycling, volume settimanale per gruppo muscolare, stima 1RM, **calcolo porzioni**
+  (`compute_portion`), **sostituzione equivalente** (`compute_substitution`) e
+  **validazione di una giornata alimentare** (`validate_nutrition_day`). Sono i mattoni
+  con cui l'AI **costruisce i pasti da sola**, senza un piano preimpostato.
+- **Validazione** – `validate_workout_plan` (delegato a `WorkoutPlanValidator` puro):
+  copertura muscolare, volume, attrezzatura, sicurezza.
+- **Scrittura controllata** – `propose_*` (sostituzione alimento/esercizio, spostamento
+  allenamento, aggiustamento calorie/volume, deload): registrano una **proposta** che
+  l'utente conferma o annulla tramite il flusso esistente. L'AI non applica mai una
+  modifica direttamente.
+
+La generazione del percorso (piano alimentare + scheda) avviene tramite il **Coach AI**:
+il modello produce il JSON con strategia e struttura, l'app risolve gli identificativi
+locali e **rifiuta** ogni piano che non rispetta i valori nutrizionali, il database
+esercizi o i vincoli utente. Il motore matematico offline resta disponibile ma **solo
+come scelta esplicita dell'utente** quando il provider AI non è configurato: non
+sostituisce mai l'autorità decisionale dell'AI.
+
 ## Base di conoscenza
 
 Le indicazioni applicate dai motori sono tracciate in `ScientificSourceSeedData`: ogni

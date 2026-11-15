@@ -34,6 +34,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -139,6 +141,29 @@ fun WorkoutScreen(
                 }
             }
         }
+
+        item {
+            TabRow(
+                selectedTabIndex = if (state.section == WorkoutSection.PROGRAM) 0 else 1
+            ) {
+                WorkoutSection.entries.forEach { section ->
+                    Tab(
+                        selected = state.section == section,
+                        onClick = { viewModel.selectSection(section) },
+                        text = { Text(section.label) }
+                    )
+                }
+            }
+        }
+
+        if (state.section == WorkoutSection.LOG) {
+            item {
+                ExerciseLogSection(
+                    today = today,
+                    performancesByExercise = state.performancesByExercise
+                )
+            }
+        } else {
 
         item {
             SectionCard {
@@ -285,6 +310,7 @@ fun WorkoutScreen(
                 }
             }
         }
+        }
     }
 
     state.form?.let { form ->
@@ -362,6 +388,87 @@ fun WorkoutScreen(
     }
 
     SnackbarHost(snackbar)
+}
+
+@Composable
+private fun ExerciseLogSection(
+    today: WorkoutDay?,
+    performancesByExercise: Map<String, List<ExercisePerformance>>
+) {
+    SectionCard {
+        Column {
+            SectionHeader("Diario carichi", "Carichi e ripetizioni registrati")
+            Spacer(Modifier.height(8.dp))
+            if (performancesByExercise.isEmpty()) {
+                Text(
+                    "Nessuna prestazione registrata. Durante l'allenamento inserisci carico, " +
+                        "ripetizioni e RIR: compariranno qui con l'andamento nel tempo.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary
+                )
+                return@Column
+            }
+
+            val todayIds = today?.exercises?.map { it.exerciseId }?.toSet() ?: emptySet()
+
+            // Prima gli esercizi della seduta odierna, poi gli altri in ordine alfabetico.
+            val ordered = performancesByExercise.entries
+                .sortedWith(
+                    compareByDescending<Map.Entry<String, List<ExercisePerformance>>> { entry ->
+                        entry.value.any { it.exerciseId in todayIds }
+                    }.thenBy { it.key }
+                )
+
+            ordered.forEach { (name, history) ->
+                val recent = history.sortedByDescending { it.dateEpochDay }
+                val last = recent.firstOrNull()
+                val previous = recent.getOrNull(1)
+                Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(name, style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface)
+                        if (last != null) {
+                            val delta = if (previous != null) {
+                                (last.topWeightKg - previous.topWeightKg).let {
+                                    if (it > 0) " (+${"%.1f".format(it)} kg)" else if (it < 0) " (${"%.1f".format(it)} kg)" else ""
+                                }
+                            } else ""
+                            Text(
+                                "${"%.1f".format(last.topWeightKg)} kg × ${last.topReps}$delta",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Emerald
+                            )
+                        }
+                    }
+                    if (last != null) {
+                        Text(
+                            buildString {
+                                append("${last.totalSets} serie · volume ${last.volumeKg.toInt()} kg")
+                                last.estimated1Rm?.let { append(" · 1RM ≈ ${it.toInt()} kg") }
+                                last.avgRir?.let { append(" · RIR ${"%.1f".format(it)}") }
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                    // Mini andamento: ultimi carichi top.
+                    if (recent.size > 1) {
+                        Text(
+                            "Ultimi: " + recent.take(6).reversed().joinToString(" → ") {
+                                "${"%.0f".format(it.topWeightKg)}×${it.topReps}"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable

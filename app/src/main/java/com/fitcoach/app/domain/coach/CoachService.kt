@@ -44,7 +44,8 @@ class CoachService @Inject constructor(
     private val substitutionRepository: SubstitutionRepository,
     private val foodRepository: FoodRepository,
     private val aiClient: AiClient,
-    private val secureKeyStore: SecureKeyStore
+    private val secureKeyStore: SecureKeyStore,
+    private val orchestrator: CoachOrchestrator
 ) {
 
     suspend fun buildContext(historyLimit: Int = 12): CoachContext {
@@ -106,12 +107,25 @@ class CoachService @Inject constructor(
         }
 
         val context = buildContext()
-        val messages = buildMessageList(context, text)
-
-        return when (val result = aiClient.complete(config, messages)) {
-            is AiResult.Success -> CoachActionParser.parse(result.content)
-            is AiResult.Failure -> CoachReply(text = "", providerError = result.message)
+        val history = buildHistory(context)
+        val turn = orchestrator.run(
+            config = config,
+            systemPrompt = CoachPromptBuilder.systemPrompt,
+            contextPrompt = CoachPromptBuilder.buildContext(context),
+            history = history,
+            userMessage = text
+        )
+        if (turn.providerError != null && turn.text.isBlank()) {
+            return CoachReply(text = "", providerError = turn.providerError)
         }
+        // Le modifiche proposte dagli strumenti di scrittura sono gia registrate come
+        // PROPOSED: ritorna la piu recente per il flusso di conferma esistente.
+        val pendingChange = turn.pendingChangeIds.lastOrNull()?.let { changeRepository.getById(it) }
+        return CoachReply(
+            text = turn.text,
+            proposedAction = null,
+            pendingChange = pendingChange
+        )
     }
 
     /** Verifica la connessione al provider configurato. */
@@ -148,22 +162,15 @@ class CoachService @Inject constructor(
         )
     }
 
-    private fun buildMessageList(context: CoachContext, userMessage: String): List<ChatMessageDto> {
-        val messages = mutableListOf<ChatMessageDto>()
-        messages += ChatMessageDto(role = "system", content = CoachPromptBuilder.systemPrompt)
-        messages += ChatMessageDto(
-            role = "system",
-            content = CoachPromptBuilder.buildContext(context)
-        )
-        // Storico conversazione (esclude l'ultimo messaggio utente gia incluso).
+    private fun buildHistory(context: CoachContext): List<ChatMessageDto> {
+        val history = mutableListOf<ChatMessageDto>()
         context.history
             .filter { it.role != ChatRole.SYSTEM && !it.isError }
             .takeLast(10)
             .forEach { msg ->
                 val role = if (msg.role == ChatRole.USER) "user" else "assistant"
-                if (msg.content.isNotBlank()) messages += ChatMessageDto(role = role, content = msg.content)
+                if (msg.content.isNotBlank()) history += ChatMessageDto(role = role, content = msg.content)
             }
-        messages += ChatMessageDto(role = "user", content = userMessage)
-        return messages
+        return history
     }
 }

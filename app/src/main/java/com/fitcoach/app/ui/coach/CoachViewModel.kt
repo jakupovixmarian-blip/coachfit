@@ -93,21 +93,27 @@ class CoachViewModel @Inject constructor(
             val assistantText = reply.text.ifBlank { "Ho elaborato la richiesta." }
             chatRepository.add(ChatMessage(role = ChatRole.ASSISTANT, content = assistantText))
 
-            reply.proposedAction?.let { action ->
-                val changeId = actionExecutor.registerProposal(action)
-                val mode = preferencesRepository.getOrCreate().coachAuthorizationMode
-                val ordinary = action.action in setOf(
-                    com.fitcoach.app.domain.coach.CoachAction.ACTION_ADJUST_CALORIES,
-                    com.fitcoach.app.domain.coach.CoachAction.ACTION_SUBSTITUTE_FOOD
-                )
-                if (mode == com.fitcoach.app.domain.model.CoachAuthorizationMode.ADAPTIVE && ordinary) {
-                    when (val result = actionExecutor.apply(changeId)) {
-                        is ApplyResult.Applied -> _state.value = _state.value.copy(message = "Applicata automaticamente: ${result.message}")
-                        is ApplyResult.Failed -> _state.value = _state.value.copy(message = result.message)
-                        else -> Unit
+            // Le proposte degli strumenti di scrittura arrivano gia registrate (PROPOSED).
+            val pendingFromTool = reply.pendingChange
+            if (pendingFromTool != null) {
+                _state.value = _state.value.copy(pendingChange = pendingFromTool)
+            } else {
+                reply.proposedAction?.let { action ->
+                    val changeId = actionExecutor.registerProposal(action)
+                    val mode = preferencesRepository.getOrCreate().coachAuthorizationMode
+                    val ordinary = action.action in setOf(
+                        com.fitcoach.app.domain.coach.CoachAction.ACTION_ADJUST_CALORIES,
+                        com.fitcoach.app.domain.coach.CoachAction.ACTION_SUBSTITUTE_FOOD
+                    )
+                    if (mode == com.fitcoach.app.domain.model.CoachAuthorizationMode.ADAPTIVE && ordinary) {
+                        when (val result = actionExecutor.apply(changeId)) {
+                            is ApplyResult.Applied -> _state.value = _state.value.copy(message = "Applicata automaticamente: ${result.message}")
+                            is ApplyResult.Failed -> _state.value = _state.value.copy(message = result.message)
+                            else -> Unit
+                        }
+                    } else {
+                        _state.value = _state.value.copy(pendingChange = changeRepository.getById(changeId))
                     }
-                } else {
-                    _state.value = _state.value.copy(pendingChange = changeRepository.getById(changeId))
                 }
             }
 
