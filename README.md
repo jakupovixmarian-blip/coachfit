@@ -76,7 +76,7 @@ valida ogni risposta, rileva le **contraddizioni** (es. frequenza dichiarata sup
 giorni disponibili) e impedisce la conferma finché i dati essenziali non sono completi.
 
 La generazione dei programmi è **bloccata finché l'anamnesi non è confermata**
-(`GenerateProgramsUseCase.Result.AnamnesisNotConfirmed`): nessun piano viene costruito su
+(`ProgramGenerationResult.AnamnesisNotConfirmed`): nessun piano viene costruito su
 dati incompleti. La dashboard mostra un avviso e riporta l'utente all'anamnesi finché non è
 completata. Il riepilogo confermato viene salvato e fornito anche al Coach AI.
 
@@ -100,61 +100,57 @@ nutrizionale è inventato: i risultati privi di macronutrienti vengono scartati.
 integrata nel flusso di **sostituzione alimentare** (Impostazioni del piano → sostituisci →
 cerca), dove ogni candidato passa comunque dal controllo preventivo vincolato.
 
-## Motori principali (deterministici, testati)
+## Componenti matematiche (deterministiche, testate)
+
+> **Architettura AI-native.** FitCoach **non ha motori decisionali offline**: l'unica
+> autorità che decide piani, schede e modifiche è il **Coach AI**. Il codice
+> deterministico rimasto **non genera e non decide**: fornisce *calcoli* (energia, macro,
+> carb cycling), *cataloghi* (alimenti, esercizi) e *validatori* che **giudicano** una
+> proposta dell'AI (la bloccano se non è valida). L'AI propone, i vincoli matematici
+> giudicano, l'utente conferma.
 
 - `EnergyCalculator` – BMR (Mifflin-St Jeor / Katch-McArdle se nota la massa grassa),
   TDEE, target calorico, distribuzione macro, bilancio settimanale. Il fattore di attività
   parte dai giorni di allenamento e viene **corretto dal NEAT reale** (tipo di lavoro,
   passi giornalieri, mezzo di trasporto, camminate pianificate, sport aggiuntivi).
-- `CarbCyclingEngine` – assegnazione giorni HIGH/MEDIUM/LOW con verifica di coerenza
+- `CarbCyclingEngine` – calcola i target HIGH/MEDIUM/LOW con verifica di coerenza
   calorie/macro e bilancio settimanale (nessun deficit estremo nei giorni LOW). Il carb
   cycling viene **applicato solo quando è giustificato** dal profilo (obiettivo e numero di
-  allenamenti); altrimenti si usa una distribuzione uniforme con motivazione esplicita.
-- `MealPlanGenerator` – piano di 7 giorni, grammature, crudo/cotto, totali pasto e
-  sostituzioni con quantità ricalcolate. Gestisce **3/4/5/6 pasti**, la **preferenza
-  colazione dolce/salata/entrambe** (o nessuna colazione), budget, semplicità e alimenti
-  graditi/non graditi.
-- `SplitGenerator` – split Full Body, Upper/Lower, Push/Pull/Legs, frequenza e volume
-  settimanale per gruppo muscolare.
-- `WorkoutPlanBuilder` – selezione esercizi guidata da attrezzatura, limitazioni, esercizi
-  preferiti/non graditi/non conosciuti, gruppi prioritari e durata massima di sessione;
-  ogni scelta è **motivata**.
-- `RestCalculator` – recuperi **individualizzati** (non più valori fissi): categoria
-  esercizio, obiettivo, RIR, carico relativo, esperienza, fatica accumulata e tecniche
-  d'intensità, con motivazione.
-- `IntensityTechniquesEngine` – decide **se e quando** applicare tecniche d'intensità
-  (drop set, rest-pause, myo-reps, superset, back-off, cluster, cedimento, eccentriche),
-  con motivazione e motivo per cui le tecniche più avanzate NON vengono usate.
-- `PeriodizationEngine` + `ProgressiveOverloadEngine` – **double progression**: mantiene il
-  carico e sale di ripetizioni fino al top del range, poi incrementa il carico. Non aumenta
-  il carico in caso di dolore, tecnica scorretta o RIR insufficiente.
+  allenamenti); altrimenti si usa una distribuzione uniforme. Fornisce anche i target che
+  l'AI usa per costruire i pasti.
+- `MealPlanGenerator` – restano gli **helper matematici** riutilizzati (grammi per macro,
+  sostituzione equivalente, macro dominante, totali pasto). La costruzione autonoma del
+  piano è stata **rimossa**: la struttura dei 7 giorni la decide l'AI.
+- `WorkoutPlanBuilder` – restano il **calendario dei giorni** e la **sostituzione degli
+  esercizi** (contratti usati dall'interfaccia). La costruzione autonoma di schede è stata
+  **rimossa**.
+- `WorkoutPlanValidator` – **validatore** della scheda proposta: copertura dei gruppi
+  previsti, volume per gruppo, compatibilità con attrezzatura/limitazioni/livello, uso di
+  esercizi realmente esistenti e sicurezza (serie per seduta). È il **vincolo** che l'AI
+  deve soddisfare, non un generatore.
+- `ProgramGenerationEngine` – **validatore** della proposta completa (nutrizione + scheda):
+  verifica coerenza calorie/macro, bilancio settimanale, presenza degli alimenti/esercizi
+  nel catalogo e vincoli del profilo; se non è valida la **blocca** e restituisce la
+  diagnosi (`AiProposalDiagnostics`) così l'AI può correggersi. Non genera alternative.
+- `ProgressiveOverloadEngine` – **double progression**: mantiene il carico e sale di
+  ripetizioni fino al top del range, poi incrementa il carico. Non aumenta il carico in caso
+  di dolore, tecnica scorretta o RIR insufficiente. Fornisce la raccomandazione all'utente.
 - `FatigueManager` – valuta calo di prestazioni, stagnazione, volume settimanale, qualità
-  del recupero (sonno/RPE), dolore; non interpreta ogni stagnazione come richiesta di più
-  volume.
+  del recupero (sonno/RPE), dolore; alimenta il report di check-in, senza decidere.
 - **Sessione guidata** – cronometro della durata sessione, **cronometro di recupero**
-  (con la durata consigliata dal motore), registrazione carico/ripetizioni/RIR per ogni
-  serie, promemoria dell'**ultima volta** per esercizio (top serie, serie, ripetizioni) e
-  **storico delle sessioni** (volume, durata, RPE, dolore).
-- `AdaptiveEngine` + `WeightAnalyzer` – media settimanale del peso, trend, aderenza,
-  performance; genera proposte strutturate (situazione, problema, dati, modifica,
-  motivazione, risultato atteso, controindicazioni). `LongitudinalCoachEngine` è il
-  **motore di analisi di supporto** del check-in: combina almeno due settimane
-  nutrizionali con trend del peso/vita, aderenza, prestazioni, recupero e dolore e
-  produce **classificazioni** (progressione, stagnazione, regressione) e advisory, ma
-  **non decide più**: la decisione spetta all'AI (vedi sotto). Blocca le modifiche con
-  aderenza insufficiente e non interpreta ogni stagnazione come richiesta di più volume.
-  Le variazioni caloriche scalano target e grammature in una transazione Room, rispettano
-  limiti di sicurezza e sono annullabili. Gli esiti reali delle modifiche applicate
-  vengono rivalutati nel check-in successivo e memorizzati nello storico.
-  Include l'**analisi dell'andamento per singolo esercizio** (regressione → riduzione
-  volume, progressione solida → nessun cambio).
+  (con la durata consigliata), registrazione carico/ripetizioni/RIR per ogni serie,
+  promemoria dell'**ultima volta** per esercizio e **storico delle sessioni**.
+- `WeightAnalyzer` + `WeeklyCheckInAnalyzer` – **misurano** (media settimanale del peso,
+  trend con affidabilità, aderenza, prestazioni, recupero) e producono un **report** per
+  l'AI. Non classificano come decisione e non propongono modifiche: l'analisi è un input
+  per l'AI.
 - `BudgetEngine` – costo reale del piano da grammature × prezzo, quota pro capite per budget
   condivisi, stima parziale dichiarata quando mancano prezzi, convenienza per grammo di
   proteine.
 
-Separazione netta tra **motore matematico deterministico**, **motore di analisi** e
-**AI conversazionale**: l'AI interpreta e propone, non calcola né modifica i database
-direttamente.
+Separazione netta tra **calcolo/validazione deterministica**, **analisi** e **AI
+conversazionale**: l'AI interpreta e propone, i vincoli matematici giudicano, l'AI non
+calcola né modifica i database direttamente.
 
 ## L'AI come autorità decisionale (tool calling)
 
@@ -178,10 +174,9 @@ Strumenti (in `domain/coach/tools`, iniettati come `Set<CoachTool>` via Hilt):
 - **Check-in settimanale** – `analyze_weekly_checkin`: aggrega i dati **reali** degli
   ultimi 7 giorni e il confronto con le settimane precedenti (tendenza del peso con
   affidabilità, composizione, aderenza, calorie/macro consumati, allenamenti
-  completati/pianificati, andamento delle prestazioni, recupero, sonno, dolore). Include
-  classificazioni di **supporto** (advisory) ma **non decide**: l'AI le interpreta e
-  propone solo se giustificato. Se un campo è null il dato non è disponibile e non va
-  inventato.
+  completati/pianificati, andamento delle prestazioni, recupero, sonno, dolore). È una
+  **misura**, non una decisione: l'AI interpreta il report e propone solo se giustificato.
+  Se un campo è null il dato non è disponibile e non va inventato.
 - **Scrittura controllata** – `propose_*` (sostituzione alimento/esercizio, spostamento
   allenamento, aggiustamento calorie/volume, deload): registrano una **proposta** che
   l'utente conferma o annulla tramite il flusso esistente. L'AI non applica mai una
@@ -198,9 +193,9 @@ Strumenti (in `domain/coach/tools`, iniettati come `Set<CoachTool>` via Hilt):
 La generazione del percorso (piano alimentare + scheda) avviene tramite il **Coach AI**:
 il modello produce il JSON con strategia e struttura, l'app risolve gli identificativi
 locali e **rifiuta** ogni piano che non rispetta i valori nutrizionali, il database
-esercizi o i vincoli utente. Il motore matematico offline resta disponibile ma **solo
-come scelta esplicita dell'utente** quando il provider AI non è configurato: non
-sostituisce mai l'autorità decisionale dell'AI.
+esercizi o i vincoli utente. **Non esiste un motore deterministico di fallback**: se il
+provider AI non è configurato o non risponde, l'app **non genera** un piano alternativo —
+mostra l'errore e invita a configurare il provider.
 
 Il collegamento **chat → rigenerazione per ambito** è verificato end-to-end
 (`CoachChatRegenerationIntegrationTest`): la chat propone, l'utente conferma, il motore
@@ -217,8 +212,9 @@ Il **check-in settimanale** è condotto dall'**AI centrale** (`WeeklyCheckInServ
    trend con affidabilità), composizione, aderenza, calorie/macro effettivamente
    registrati, allenamenti completati/pianificati, andamento dei carichi per esercizio,
    recupero, sonno e dolore. La fotografia viene salvata come `CheckIn` (storico).
-2. **Analisi di supporto** (`LongitudinalCoachEngine`) – produce **classificazioni** e
-   advisory (stagnazione, regressione, aderenza insufficiente, ricomposizione, deload).
+2. **Analisi di supporto** (`WeeklyCheckInAnalyzer`) – produce un **report** con i numeri
+   misurati e le tendenze (peso con affidabilità, aderenza, prestazioni, recupero). Non
+   classifica come decisione e non propone modifiche: è un input per l'AI.
 3. **Decisione dell'AI** – il modello riceve il report e propone modifiche con gli
    strumenti `propose_*`. Le proposte restano **`PROPOSED`**: non vengono mai applicate
    automaticamente.
@@ -332,23 +328,26 @@ app/src/main/java/com/fitcoach/app/
 
 ## Test
 
-Test unitari dei motori matematici (**248 test**, 27 classi): energia (incl. NEAT da stile
-di vita), carb cycling (incl. attivazione condizionale), generazione pasti (incl. n° pasti e
-preferenza colazione), sostituzione alimentare vincolata (pollo→tonno, rifiuto oltre il
-limite calorico, sostituzione combinata, tolleranze), lista della spesa (somma alimenti
-ripetuti, categorie, conservazione spunta, **rigenerazioni concorrenti senza lista vuota**),
-diario nutrizionale (obiettivo/consumato/
-rimanente, niente doppio conteggio, extra, isolamento giorni), split, recuperi, tecniche
-d'intensità, fatica, progressive overload, analisi peso, motore adattivo, **anamnesi guidata**
-(parsing risposte, gate di generazione, contraddizioni), **budget mensile** (costo reale,
-quota pro capite, stima parziale), **mappatura fonti alimentari** (Open Food Facts, USDA),
-**analisi dell'andamento per esercizio** (regressione, progressione, stabilità),
-**parametri AI per provider** (max_tokens vs max_completion_tokens, mai entrambi, retry
-controllato), **layout schermata anamnesi** (nessuna sovrapposizione, pulsante unico),
-**persistenza sessione di allenamento** (serie valide richieste per completare, riapertura
-non distruttiva di sessioni chiuse per errore), **diagnostica proposta AI** (valore atteso
-vs ricevuto per ogni vincolo fallito), **regressione scenario allenamento** (attrezzatura
-limitata, movimenti da evitare).
+Test automatici (**263 test**, 40 classi). Coprono i calcoli matematici e i validatori, la
+catena di generazione dal Coach AI (proposta → validazione → persistenza), il check-in
+settimanale end-to-end, la chat con rigenerazione per ambito e la persistenza su Room reale:
+
+- **Calcoli e vincoli**: energia (incl. NEAT da stile di vita), carb cycling (incl.
+  attivazione condizionale), helper di generazione pasti, sostituzione alimentare vincolata
+  (pollo→tonno, rifiuto oltre il limite calorico, tolleranze), validatore scheda
+  (copertura gruppi, volume, attrezzatura, sicurezza), **diagnostica proposta AI** (valore
+  atteso vs ricevuto per ogni vincolo fallito), progressive overload (double progression),
+  fatica, analisi peso, anamnesi guidata (parsing, gate, contraddizioni), budget mensile,
+  mappatura fonti alimentari, parametri AI per provider.
+- **Catena AI su Room reale**: `AiProgramGenerationFlowIntegrationTest` (proposta AI →
+  `submit_full_program` → validazione → persistenza), `NutritionChainIntegrationTest`
+  (generazione → spesa → diario, incl. rigenerazioni concorrenti senza lista vuota),
+  `WorkoutSessionFlowIntegrationTest` (registro serie e aggregazione prestazioni),
+  `WeeklyCheckInFlowIntegrationTest` (proposta, rifiuto, conferma, rollback),
+  `CoachChatRegenerationIntegrationTest` (chat → rigenerazione per ambito),
+  `NutritionBuildToolsIntegrationTest` (porzioni, sostituzioni, validazione giornata).
+- **Collaudo**: `FitCoachCollaudoTest` esegue l'intero percorso sul profilo reale "Marjan".
+- **UI**: layout schermata anamnesi (nessuna sovrapposizione, pulsante unico).
 
 ```bash
 ./gradlew :app:testDebugUnitTest

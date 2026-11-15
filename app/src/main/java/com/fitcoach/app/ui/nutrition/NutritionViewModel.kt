@@ -13,8 +13,8 @@ import com.fitcoach.app.domain.model.MealEntry
 import com.fitcoach.app.domain.model.NutritionDay
 import com.fitcoach.app.domain.model.NutritionPlan
 import com.fitcoach.app.domain.nutrition.FoodSubstitutionEngine
-import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
 import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
+import com.fitcoach.app.domain.usecase.ProgramGenerationResult
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -92,7 +92,7 @@ class NutritionViewModel @Inject constructor(
         }
     }
 
-    fun generatePlan(offline: Boolean = false) {
+    fun generatePlan() {
         viewModelScope.launch {
             val profile = userRepository.get()
             if (profile == null || !profile.isComplete) {
@@ -102,18 +102,15 @@ class NutritionViewModel @Inject constructor(
             _state.value = _state.value.copy(generating = true, message = null)
             val result = generationCoordinator.generate(
                 profile = profile,
-                scope = ProgramGenerationCoordinator.Scope.NUTRITION,
-                useOfflineEngine = offline
+                scope = ProgramGenerationCoordinator.Scope.NUTRITION
             )
             val message = when (result) {
-                is GenerateProgramsUseCase.Result.Success ->
-                    if (offline) "Piano alimentare generato dal motore offline."
-                    else "Piano alimentare generato dal Coach AI."
-                is GenerateProgramsUseCase.Result.MissingData ->
+                is ProgramGenerationResult.Success -> "Piano alimentare generato dal Coach AI."
+                is ProgramGenerationResult.MissingData ->
                     "Dati mancanti: ${result.missing.joinToString()}."
-                is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed ->
+                is ProgramGenerationResult.AnamnesisNotConfirmed ->
                     "Completa l'anamnesi guidata prima di generare."
-                is GenerateProgramsUseCase.Result.Error -> result.message
+                is ProgramGenerationResult.Error -> result.message
             }
             val plan = nutritionRepository.getActivePlan()
             _state.value = _state.value.copy(generating = false, plan = plan, message = message)

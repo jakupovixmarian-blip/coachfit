@@ -42,10 +42,13 @@ import com.fitcoach.app.domain.model.TrainingExperience
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WeightRecord
 import com.fitcoach.app.domain.nutrition.FoodSeedData
-import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
 import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
 import com.fitcoach.app.domain.usecase.RunWeeklyCheckInUseCase
 import com.fitcoach.app.domain.workout.ExerciseSeedData
+import com.fitcoach.app.support.ScriptedApi
+import com.fitcoach.app.support.TestProgramGenerator
+import com.fitcoach.app.support.textResponse
+import com.fitcoach.app.support.toolCallResponse
 import com.google.common.truth.Truth.assertThat
 import dagger.Lazy
 import kotlinx.coroutines.test.runTest
@@ -58,10 +61,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import retrofit2.Response
 import java.time.LocalDate
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.ResponseBody.Companion.toResponseBody
 
 /**
  * Verifica end-to-end del CHECK-IN SETTIMANALE attraverso l'UNICA autorita
@@ -141,53 +141,9 @@ class WeeklyCheckInFlowIntegrationTest {
 
     // ---------------------------------------------------------------- provider
 
-    private class ScriptedApi(
-        private val responses: MutableList<Response<ChatCompletionResponse>>
-    ) : AiApi {
-        val sent = mutableListOf<ChatCompletionRequest>()
-        override suspend fun chatCompletions(
-            url: String, authorization: String?, contentType: String,
-            referer: String?, title: String?, body: ChatCompletionRequest
-        ): Response<ChatCompletionResponse> {
-            sent += body
-            // Nessuna risposta programmata: comportamento "provider irraggiungibile".
-            return if (responses.isEmpty()) {
-                Response.error(503, "service unavailable".toResponseBody("text/plain".toMediaType()))
-            } else responses.removeAt(0)
-        }
-    }
+    private fun toolCallResponse(name: String, args: String) = com.fitcoach.app.support.toolCallResponse(name, args)
 
-    private fun toolCallResponse(name: String, args: String) = Response.success(
-        ChatCompletionResponse(
-            choices = listOf(
-                ChatCompletionResponse.Choice(
-                    index = 0,
-                    message = ChatCompletionResponse.Message(
-                        content = null,
-                        toolCalls = listOf(
-                            ChatCompletionResponse.ToolCall(
-                                id = "c1", type = "function",
-                                function = ChatCompletionResponse.FunctionCall(name = name, arguments = args)
-                            )
-                        )
-                    ),
-                    finishReason = "tool_calls"
-                )
-            )
-        )
-    )
-
-    private fun textResponse(text: String) = Response.success(
-        ChatCompletionResponse(
-            choices = listOf(
-                ChatCompletionResponse.Choice(
-                    index = 0,
-                    message = ChatCompletionResponse.Message(content = JsonPrimitive(text)),
-                    finishReason = "stop"
-                )
-            )
-        )
-    )
+    private fun textResponse(text: String) = com.fitcoach.app.support.textResponse(text)
 
     // ---------------------------------------------------------------- wiring
 
@@ -201,13 +157,7 @@ class WeeklyCheckInFlowIntegrationTest {
         val aiGeneration = AiProgramGenerationService(
             orchestrator, chatRepository, SecureKeyStore(context), json, foodRepository, exerciseRepository
         )
-        return ProgramGenerationCoordinator(
-            aiGeneration = aiGeneration,
-            offlineEngine = GenerateProgramsUseCase(
-                userRepository, foodRepository, exerciseRepository,
-                nutritionRepository, workoutRepository, planVersionRepository
-            )
-        )
+        return ProgramGenerationCoordinator(aiGeneration = aiGeneration)
     }
 
     /** Costruisce il servizio di check-in con lo STESSO provider scriptato per il turno AI. */
@@ -232,13 +182,20 @@ class WeeklyCheckInFlowIntegrationTest {
     // ---------------------------------------------------------------- data setup
 
     private suspend fun seedProgram() {
-        // Programma iniziale deterministico (offline): piani reali su cui il check-in opera.
-        val engine = GenerateProgramsUseCase(
-            userRepository, foodRepository, exerciseRepository,
-            nutritionRepository, workoutRepository, planVersionRepository
+        // Programma iniziale generato dall'UNICO percorso (Coach AI + submit_full_program).
+        val result = TestProgramGenerator.generate(
+            json = json,
+            userRepository = userRepository,
+            foodRepository = foodRepository,
+            exerciseRepository = exerciseRepository,
+            nutritionRepository = nutritionRepository,
+            workoutRepository = workoutRepository,
+            planVersionRepository = planVersionRepository,
+            chatRepository = chatRepository,
+            db = db,
+            profile = profile
         )
-        val result = engine(profile, requireAnamnesis = false)
-        assertThat(result).isInstanceOf(GenerateProgramsUseCase.Result.Success::class.java)
+        assertThat(result).isInstanceOf(com.fitcoach.app.domain.coach.AiProgramGenerationService.Result.Success::class.java)
     }
 
     private suspend fun seedWeightsAndDiary() {

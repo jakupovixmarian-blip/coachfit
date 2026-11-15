@@ -5,25 +5,39 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.fitcoach.app.data.local.FitCoachDatabase
 import com.fitcoach.app.data.local.Mappers.toEntity
+import com.fitcoach.app.data.remote.AiClient
+import com.fitcoach.app.data.remote.SecureKeyStore
+import com.fitcoach.app.data.repository.ChatRepository
 import com.fitcoach.app.data.repository.ExerciseRepository
 import com.fitcoach.app.data.repository.FoodRepository
 import com.fitcoach.app.data.repository.NutritionRepository
 import com.fitcoach.app.data.repository.PlanVersionRepository
-import com.fitcoach.app.data.repository.ProgressRepository
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
+import com.fitcoach.app.domain.coach.AiProgramGenerationService
+import com.fitcoach.app.domain.coach.CoachOrchestrator
+import com.fitcoach.app.domain.coach.ProgramGenerationEngine
+import com.fitcoach.app.domain.coach.tools.CoachTool
+import com.fitcoach.app.domain.coach.tools.CoachToolRegistry
+import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
+import com.fitcoach.app.domain.model.AiProviderSettings
 import com.fitcoach.app.domain.model.Goal
 import com.fitcoach.app.domain.model.Sex
 import com.fitcoach.app.domain.model.TrainingExperience
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WorkoutSet
+import com.fitcoach.app.domain.nutrition.FoodFilter
 import com.fitcoach.app.domain.nutrition.FoodSeedData
-import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
 import com.fitcoach.app.domain.workout.ExerciseSeedData
 import com.fitcoach.app.domain.workout.ProgressiveOverloadEngine
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
+import com.fitcoach.app.support.ScriptedApi
+import com.fitcoach.app.support.SimulatedAiPrograms
+import com.fitcoach.app.support.textResponse
+import com.fitcoach.app.support.toolCallResponse
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -33,13 +47,20 @@ import org.robolectric.annotation.Config
 
 /**
  * Verifica funzionale del ciclo di allenamento su database Room reale:
- * generazione scheda -> dettaglio seduta (esercizi, serie, rep, recupero, RIR,
- * carico target) -> registrazione serie (carico/rep/RIR) -> completamento ->
+ * generazione scheda (dal Coach AI) -> dettaglio seduta (esercizi, serie, rep,
+ * recupero, RIR) -> registrazione serie (carico/rep/RIR) -> completamento ->
  * persistenza e aggregazione delle prestazioni -> progressione dei carichi.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class WorkoutSessionFlowIntegrationTest {
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        encodeDefaults = true
+        explicitNulls = false
+    }
 
     private lateinit var db: FitCoachDatabase
     private lateinit var userRepository: UserRepository
@@ -47,13 +68,15 @@ class WorkoutSessionFlowIntegrationTest {
     private lateinit var exerciseRepository: ExerciseRepository
     private lateinit var nutritionRepository: NutritionRepository
     private lateinit var workoutRepository: WorkoutRepository
-    private lateinit var generatePrograms: GenerateProgramsUseCase
+    private lateinit var planVersionRepository: PlanVersionRepository
+    private lateinit var chatRepository: ChatRepository
 
     private val profile = UserProfile(
         id = 1L, name = "Test", ageYears = 30, sex = Sex.MALE,
         heightCm = 175.0, weightKg = 80.0, bodyFatPercent = 18.0,
         experience = TrainingExperience.BEGINNER, goal = Goal.RECOMP,
-        trainingDaysPerWeek = 3
+        trainingDaysPerWeek = 3, mealsPerDay = 5,
+        anamnesisCompleted = true, anamnesisConfirmedAt = 1L, anamnesisSummary = "confermata"
     )
 
     @Before
@@ -67,21 +90,49 @@ class WorkoutSessionFlowIntegrationTest {
         exerciseRepository = ExerciseRepository(db.exerciseDao())
         nutritionRepository = NutritionRepository(db)
         workoutRepository = WorkoutRepository(db)
-        generatePrograms = GenerateProgramsUseCase(
-            userRepository, foodRepository, exerciseRepository,
-            nutritionRepository, workoutRepository, PlanVersionRepository(db.planVersionDao())
-        )
+        planVersionRepository = PlanVersionRepository(db.planVersionDao())
+        chatRepository = ChatRepository(db.chatDao(), db.aiSettingsDao())
         db.foodDao().insertAll(FoodSeedData.foods.map { it.toEntity() })
         db.exerciseDao().insertAll(ExerciseSeedData.exercises.map { it.toEntity() })
         userRepository.save(profile)
+        chatRepository.saveAiSettings(
+            AiProviderSettings(useBackendProxy = true, backendBaseUrl = "https://proxy.test/v1", model = "test-model")
+        )
     }
 
     @After
     fun tearDown() = db.close()
 
+    /** Genera la scheda attraverso l'UNICO motore (Coach AI + submit_full_program). */
+    private suspend fun generateWorkout() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val foods = FoodFilter.allowedFoods(foodRepository.getAll(), profile)
+        val exercises = exerciseRepository.getAll()
+        val proposal = SimulatedAiPrograms.proposal(
+            profile, foods, exercises,
+            WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek)
+        )
+        val api = ScriptedApi(
+            mutableListOf(
+                toolCallResponse("submit_full_program", SimulatedAiPrograms.json(json, proposal, "WORKOUT")),
+                textResponse("Scheda generata.")
+            )
+        )
+        val submitTool: CoachTool = SubmitFullProgramTool(
+            userRepository, foodRepository, exerciseRepository,
+            nutritionRepository, workoutRepository, planVersionRepository, db, json
+        )
+        val service = AiProgramGenerationService(
+            CoachOrchestrator(AiClient(api, json), CoachToolRegistry(setOf(submitTool)), json),
+            chatRepository, SecureKeyStore(context), json, foodRepository, exerciseRepository
+        )
+        val result = service.generate(profile, ProgramGenerationEngine.Scope.WORKOUT)
+        assertThat(result).isInstanceOf(AiProgramGenerationService.Result.Success::class.java)
+    }
+
     @Test
-    fun `la scheda generata espone esercizi con serie rep recupero RIR e carico target`() = runTest {
-        generatePrograms(profile, regenerateWorkout = true, requireAnamnesis = false)
+    fun `la scheda generata espone esercizi con serie rep recupero e RIR`() = runTest {
+        generateWorkout()
         val plan = workoutRepository.getActivePlan()
         assertThat(plan).isNotNull()
         val trainingDays = plan!!.days.filterNot { it.isRestDay }
@@ -101,7 +152,7 @@ class WorkoutSessionFlowIntegrationTest {
 
     @Test
     fun `registro serie completa la sessione e aggrega le prestazioni`() = runTest {
-        generatePrograms(profile, regenerateWorkout = true, requireAnamnesis = false)
+        generateWorkout()
         val day = workoutRepository.getActivePlan()!!.days.first { !it.isRestDay }
         val epochDay = 20_000L
 
@@ -109,7 +160,6 @@ class WorkoutSessionFlowIntegrationTest {
         assertThat(sessionId).isGreaterThan(0L)
         val exercise = day.exercises.first()
 
-        // Registra due serie reali con carico, ripetizioni e RIR.
         assertThat(workoutRepository.saveSet(sessionId, WorkoutSet(
             exerciseId = exercise.exerciseId, exerciseName = exercise.exerciseName,
             setIndex = 0, plannedReps = exercise.maxReps, actualReps = 8, weightKg = 60.0, rir = 2
@@ -127,7 +177,6 @@ class WorkoutSessionFlowIntegrationTest {
 
         assertThat(workoutRepository.completeSession(sessionId, 55, 8.0, 4, false, "")).isTrue()
 
-        // Ricarica da DB: stato, conteggi e aggregati di performance.
         val reloaded = workoutRepository.getSessionForDay(epochDay)
         assertThat(reloaded?.status?.name).isEqualTo("COMPLETED")
         assertThat(reloaded?.completedSets).isEqualTo(2)

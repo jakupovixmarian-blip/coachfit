@@ -104,11 +104,6 @@ fun WorkoutScreen(
                             Spacer(Modifier.width(8.dp))
                             Text(if (state.generating) "Generazione..." else "Genera scheda")
                         }
-                        Spacer(Modifier.height(8.dp))
-                        OutlinedButton(
-                            onClick = { viewModel.generateWorkout(offline = true) },
-                            enabled = !state.generating
-                        ) { Text("Genera offline (senza AI)") }
                     }
                 }
             )

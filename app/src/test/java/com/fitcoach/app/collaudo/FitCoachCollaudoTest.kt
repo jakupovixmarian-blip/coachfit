@@ -4,10 +4,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.fitcoach.app.data.local.FitCoachDatabase
 import com.fitcoach.app.data.local.Mappers.toEntity
-import com.fitcoach.app.data.remote.AiApi
 import com.fitcoach.app.data.remote.AiClient
-import com.fitcoach.app.data.remote.ChatCompletionRequest
-import com.fitcoach.app.data.remote.ChatCompletionResponse
 import com.fitcoach.app.data.remote.SecureKeyStore
 import com.fitcoach.app.data.repository.ChangeRepository
 import com.fitcoach.app.data.repository.ChatRepository
@@ -30,12 +27,16 @@ import com.fitcoach.app.domain.model.WeightRecord
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.FoodSeedData
-import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
 import com.fitcoach.app.domain.workout.ExerciseSeedData
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import com.fitcoach.app.domain.workout.WorkoutPlanValidator
+import com.fitcoach.app.support.ScriptedApi
+import com.fitcoach.app.support.TestProgramGenerator
+import com.fitcoach.app.support.textResponse
+import com.fitcoach.app.support.toolCallResponse
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import org.junit.After
 import org.junit.Before
@@ -81,6 +82,13 @@ class FitCoachCollaudoTest {
     private lateinit var chatRepository: ChatRepository
     private lateinit var changeRepository: ChangeRepository
 
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        encodeDefaults = true
+        explicitNulls = false
+    }
+
     private val profile = MarjanProfile.build()
 
     @Before
@@ -114,11 +122,19 @@ class FitCoachCollaudoTest {
     fun tearDown() = db.close()
 
     private suspend fun generate() {
-        val result = GenerateProgramsUseCase(
-            userRepository, foodRepository, exerciseRepository,
-            nutritionRepository, workoutRepository, planVersionRepository
-        )(profile, trainingDayIndices = WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek), requireAnamnesis = false)
-        assertThat(result).isInstanceOf(GenerateProgramsUseCase.Result.Success::class.java)
+        val result = TestProgramGenerator.generate(
+            json = json,
+            userRepository = userRepository,
+            foodRepository = foodRepository,
+            exerciseRepository = exerciseRepository,
+            nutritionRepository = nutritionRepository,
+            workoutRepository = workoutRepository,
+            planVersionRepository = planVersionRepository,
+            chatRepository = chatRepository,
+            db = db,
+            profile = profile
+        )
+        assertThat(result).isInstanceOf(com.fitcoach.app.domain.coach.AiProgramGenerationService.Result.Success::class.java)
     }
 
     // ============================================================ FASE 1
@@ -453,46 +469,7 @@ class FitCoachCollaudoTest {
 
     // ============================================================ helper provider
 
-    private fun textResponse(text: String) = Response.success(
-        ChatCompletionResponse(
-            choices = listOf(
-                ChatCompletionResponse.Choice(
-                    index = 0,
-                    message = ChatCompletionResponse.Message(content = JsonPrimitive(text)),
-                    finishReason = "stop"
-                )
-            )
-        )
-    )
+    private fun textResponse(text: String) = com.fitcoach.app.support.textResponse(text)
 
-    private fun toolCallResponse(name: String, args: String) = Response.success(
-        ChatCompletionResponse(
-            choices = listOf(
-                ChatCompletionResponse.Choice(
-                    index = 0,
-                    message = ChatCompletionResponse.Message(
-                        content = null,
-                        toolCalls = listOf(
-                            ChatCompletionResponse.ToolCall(
-                                id = "c1", type = "function",
-                                function = ChatCompletionResponse.FunctionCall(name = name, arguments = args)
-                            )
-                        )
-                    ),
-                    finishReason = "tool_calls"
-                )
-            )
-        )
-    )
-
-    private class ScriptedApi(
-        private val responses: MutableList<Response<ChatCompletionResponse>>
-    ) : AiApi {
-        override suspend fun chatCompletions(
-            url: String, authorization: String?, contentType: String,
-            referer: String?, title: String?, body: ChatCompletionRequest
-        ): Response<ChatCompletionResponse> = if (responses.isEmpty()) {
-            Response.error(503, "unavailable".toResponseBody("text/plain".toMediaType()))
-        } else responses.removeAt(0)
-    }
+    private fun toolCallResponse(name: String, args: String) = com.fitcoach.app.support.toolCallResponse(name, args)
 }

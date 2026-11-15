@@ -1,74 +1,25 @@
 package com.fitcoach.app.domain.nutrition
 
-import com.fitcoach.app.domain.model.BreakfastPreference
-import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.FoodItem
-import com.fitcoach.app.domain.model.Goal
-import com.fitcoach.app.domain.model.MealSlot
-import com.fitcoach.app.domain.model.Sex
-import com.fitcoach.app.domain.model.TrainingExperience
-import com.fitcoach.app.domain.model.UserProfile
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
-import kotlin.math.abs
 
+/**
+ * Verifica la matematica dei pasti rimasta in [MealPlanGenerator]. La generazione
+ * autonoma dei piani e stata rimossa: la struttura la decide il Coach AI, qui
+ * restano solo i calcoli riutilizzati dalla validazione e dalla sostituzione.
+ */
 class MealPlanGeneratorTest {
-
-    private val profile = UserProfile(
-        ageYears = 30, sex = Sex.MALE, heightCm = 180.0, weightKg = 80.0,
-        trainingDaysPerWeek = 4, experience = TrainingExperience.INTERMEDIATE, goal = Goal.RECOMP
-    )
-    private val energy = EnergyCalculator.compute(profile)!!
-    private val cycling = CarbCyclingEngine.build(profile, energy)
-    private val dayTypes = CarbCyclingEngine.assignDayTypes(2, 1, 4, listOf(0, 1, 3, 4))
-
-    @Test
-    fun `generates seven days`() {
-        val days = MealPlanGenerator.generate(profile, cycling, FoodSeedData.foods, dayTypes)
-        assertThat(days).hasSize(7)
-    }
-
-    @Test
-    fun `every day has at least four meals`() {
-        val days = MealPlanGenerator.generate(profile, cycling, FoodSeedData.foods, dayTypes)
-        days.forEach { assertThat(it.meals.size).isAtLeast(4) }
-    }
-
-    @Test
-    fun `meal calories are within tolerance of the day target`() {
-        val days = MealPlanGenerator.generate(profile, cycling, FoodSeedData.foods, dayTypes)
-        days.forEach { day ->
-            // Il generatore dichiara coerenza entro 120 kcal.
-            assertThat(abs(day.deviations.kcal)).isAtMost(160.0)
-        }
-    }
-
-    @Test
-    fun `gram quantities are positive`() {
-        val days = MealPlanGenerator.generate(profile, cycling, FoodSeedData.foods, dayTypes)
-        days.flatMap { it.meals }.flatMap { it.entries }.forEach {
-            assertThat(it.grams).isGreaterThan(0.0)
-        }
-    }
 
     @Test
     fun `gramsForMacro computes inverse of per100g`() {
         // 200 g di un alimento con 20 g proteine/100g = 40 g proteine.
-        val grams = MealPlanGenerator.gramsForMacro(40.0, 20.0)
-        assertThat(grams).isWithin(0.01).of(200.0)
+        assertThat(MealPlanGenerator.gramsForMacro(40.0, 20.0)).isWithin(0.01).of(200.0)
     }
 
     @Test
     fun `gramsForMacro guards against zero macro`() {
         assertThat(MealPlanGenerator.gramsForMacro(40.0, 0.0)).isEqualTo(0.0)
-    }
-
-    @Test
-    fun `excluded foods are never used`() {
-        val excluded = profile.copy(excludedFoods = listOf("Petto di pollo"))
-        val days = MealPlanGenerator.generate(excluded, cycling, FoodSeedData.foods, dayTypes)
-        val names = days.flatMap { it.meals }.flatMap { it.entries }.map { it.foodName }
-        assertThat(names).doesNotContain("Petto di pollo")
     }
 
     @Test
@@ -90,48 +41,32 @@ class MealPlanGeneratorTest {
     }
 
     @Test
-    fun `custom food database produces valid plan`() {
-        val custom = listOf(
-            FoodItem(id = 1, name = "Pollo test", category = "Carne", kcalPer100g = 110.0,
-                proteinPer100g = 23.0, carbsPer100g = 0.0, fatPer100g = 1.5, source = "test"),
-            FoodItem(id = 2, name = "Riso test", category = "Cereali", kcalPer100g = 350.0,
-                proteinPer100g = 7.0, carbsPer100g = 78.0, fatPer100g = 0.6, source = "test"),
-            FoodItem(id = 3, name = "Olio test", category = "Grassi", kcalPer100g = 900.0,
-                proteinPer100g = 0.0, carbsPer100g = 0.0, fatPer100g = 100.0, source = "test"),
-            FoodItem(id = 4, name = "Verdura test", category = "Verdura", kcalPer100g = 25.0,
-                proteinPer100g = 2.0, carbsPer100g = 4.0, fatPer100g = 0.2, source = "test")
+    fun `dominant macro identifies fat and carb foods`() {
+        val oil = FoodItem(
+            id = 1, name = "Olio test", category = "Grassi", kcalPer100g = 899.0,
+            proteinPer100g = 0.0, carbsPer100g = 0.0, fatPer100g = 99.9, source = "test"
         )
-        val days = MealPlanGenerator.generate(profile, cycling, custom, dayTypes)
-        assertThat(days).hasSize(7)
+        val rice = FoodItem(
+            id = 2, name = "Riso test", category = "Cereali", kcalPer100g = 332.0,
+            proteinPer100g = 6.7, carbsPer100g = 80.4, fatPer100g = 0.4, source = "test"
+        )
+        assertThat(MealPlanGenerator.dominantMacro(oil)).isEqualTo(MealPlanGenerator.DominantMacro.FAT)
+        assertThat(MealPlanGenerator.dominantMacro(rice)).isEqualTo(MealPlanGenerator.DominantMacro.CARBS)
     }
 
     @Test
-    fun `respects requested number of meals per day`() {
-        val four = profile.copy(mealsPerDay = 4)
-        val days = MealPlanGenerator.generate(four, cycling, FoodSeedData.foods, dayTypes)
-        days.forEach { assertThat(it.meals.size).isEqualTo(4) }
-
-        val six = profile.copy(mealsPerDay = 6)
-        val sixDays = MealPlanGenerator.generate(six, cycling, FoodSeedData.foods, dayTypes)
-        sixDays.forEach { assertThat(it.meals.size).isEqualTo(6) }
-    }
-
-    @Test
-    fun `no breakfast preference removes the breakfast meal`() {
-        val noBreakfast = profile.copy(breakfastPreference = BreakfastPreference.NONE)
-        val days = MealPlanGenerator.generate(noBreakfast, cycling, FoodSeedData.foods, dayTypes)
-        val slots = days.flatMap { it.meals }.map { it.slot }.toSet()
-        assertThat(slots).doesNotContain(MealSlot.BREAKFAST)
-    }
-
-    @Test
-    fun `plan stays coherent across meal counts`() {
-        listOf(3, 4, 5, 6).forEach { count ->
-            val p = profile.copy(mealsPerDay = count)
-            val days = MealPlanGenerator.generate(p, cycling, FoodSeedData.foods, dayTypes)
-            days.forEach {
-                assertThat(abs(it.deviations.kcal)).isAtMost(160.0)
-            }
-        }
+    fun `generated day and meal totals aggregate entries`() {
+        val entry = com.fitcoach.app.domain.model.MealEntry(
+            foodItemId = 1, foodName = "Petto di pollo", grams = 100.0,
+            unit = com.fitcoach.app.domain.model.FoodUnit.RAW,
+            kcal = 110.0, protein = 23.3, carbs = 0.0, fat = 1.5
+        )
+        val meal = MealPlanGenerator.GeneratedMeal(
+            slot = com.fitcoach.app.domain.model.MealSlot.LUNCH,
+            entries = listOf(entry, entry)
+        )
+        assertThat(meal.kcal).isWithin(0.01).of(220.0)
+        assertThat(meal.protein).isWithin(0.01).of(46.6)
+        assertThat(meal.totals.kcal).isWithin(0.01).of(220.0)
     }
 }

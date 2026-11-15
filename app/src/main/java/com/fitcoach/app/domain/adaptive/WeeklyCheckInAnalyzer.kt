@@ -20,6 +20,12 @@ import com.fitcoach.app.domain.workout.FatigueManager
  */
 object WeeklyCheckInAnalyzer {
 
+    /** Settimane minime di dati per considerare affidabile il quadro nutrizionale. */
+    private const val MIN_NUTRITION_WEEKS = 2
+
+    /** Settimane minime di peso per considerare affidabile la tendenza. */
+    private const val MIN_WEIGHT_WEEKS = 3
+
     data class Input(
         val profile: UserProfile,
         val weekStartEpochDay: Long,
@@ -61,8 +67,7 @@ object WeeklyCheckInAnalyzer {
         val painNotes: String,
         val performanceTrends: List<ExerciseTrend>,
         // Valutazione di supporto
-        val dataSufficient: Boolean,
-        val advisories: List<AdaptiveDecision>
+        val dataSufficient: Boolean
     ) {
         val progressionCount: Int get() = performanceTrends.count { it.classification == ExerciseTrendClass.PROGRESSION }
         val stagnationCount: Int get() = performanceTrends.count { it.classification == ExerciseTrendClass.STAGNATION }
@@ -107,7 +112,7 @@ object WeeklyCheckInAnalyzer {
         val avgKcal = current?.avgKcal?.takeIf { (current.daysTracked) > 0 }
 
         val performanceTrends = input.performancesByExercise.map { (name, values) ->
-            LongitudinalCoachEngine.classifyExercise(
+            ExerciseTrendCalculator.classify(
                 name,
                 values.sortedByDescending { it.dateEpochDay }
                     .map { it.estimated1Rm ?: it.topWeightKg * (1 + it.topReps / 30.0) }
@@ -118,26 +123,8 @@ object WeeklyCheckInAnalyzer {
         val latestBodyFat = input.weights.sortedByDescending { it.dateEpochDay }
             .firstNotNullOfOrNull { it.bodyFatPercent } ?: profile.bodyFatPercent
 
-        val advisories = LongitudinalCoachEngine.evaluate(
-            LongitudinalContext(
-                profile = profile,
-                planId = input.activeNutritionPlanId ?: 0L,
-                mesocycleId = input.activeMesocycleId,
-                currentWeeklyKcal = input.currentWeeklyKcal,
-                weightTrendKgPerWeek = trend?.trendKgPerWeek,
-                reliableWeightTrend = trend?.isReliable == true,
-                weightWeeks = trend?.weeksOfData ?: 0,
-                waistTrendCmPerWeek = waistTrend,
-                nutritionWeeks = input.nutritionWeeks,
-                performances = performanceTrends,
-                recoverySeverity = recovery.severity,
-                painSessions = input.recentSessions.take(7).count { it.painReported },
-                recentSessions = input.recentSessions
-            )
-        )
-
-        val dataSufficient = nutritionWithData.size >= LongitudinalCoachEngine.MIN_NUTRITION_WEEKS &&
-            trend?.isReliable == true && (trend?.weeksOfData ?: 0) >= LongitudinalCoachEngine.MIN_WEIGHT_WEEKS
+        val dataSufficient = nutritionWithData.size >= MIN_NUTRITION_WEEKS &&
+            trend?.isReliable == true && (trend?.weeksOfData ?: 0) >= MIN_WEIGHT_WEEKS
 
         return Report(
             weekStartEpochDay = weekStart,
@@ -162,8 +149,7 @@ object WeeklyCheckInAnalyzer {
             painSessions = input.recentSessions.take(7).count { it.painReported },
             painNotes = painNotes,
             performanceTrends = performanceTrends,
-            dataSufficient = dataSufficient,
-            advisories = advisories
+            dataSufficient = dataSufficient
         )
     }
 

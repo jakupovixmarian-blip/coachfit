@@ -11,6 +11,12 @@ import com.fitcoach.app.domain.model.UserProfile
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
+/**
+ * Verifica gli helper rimasti di [WorkoutPlanBuilder]: la costruzione delle
+ * schede non e piu responsabilita di questo oggetto (la decide il Coach AI), ma
+ * il calendario dei giorni e la sostituzione degli esercizi restano contratti
+ * dell'app usati dall'interfaccia.
+ */
 class WorkoutPlanBuilderTest {
 
     private val profile = UserProfile(
@@ -38,71 +44,11 @@ class WorkoutPlanBuilderTest {
     )
 
     @Test
-    fun `build produces seven days`() {
-        val built = WorkoutPlanBuilder.build(profile, exercises, listOf(0, 1, 3, 4))
-        assertThat(built.days).hasSize(7)
-        assertThat(built.days.count { !it.isRestDay }).isEqualTo(4)
-    }
-
-    @Test
-    fun `every planned exercise carries a selection reason`() {
-        val built = WorkoutPlanBuilder.build(profile, exercises, listOf(0, 1, 3, 4))
-        built.days.flatMap { it.exercises }.forEach {
-            assertThat(it.selectionReason).isNotEmpty()
-        }
-    }
-
-    @Test
-    fun `every planned exercise carries a rest reason`() {
-        val built = WorkoutPlanBuilder.build(profile, exercises, listOf(0, 1, 3, 4))
-        built.days.flatMap { it.exercises }.forEach {
-            assertThat(it.restReason).isNotEmpty()
-            assertThat(it.restSeconds).isAtLeast(45)
-        }
-    }
-
-    @Test
-    fun `weekly volume is aggregated per muscle group`() {
-        val built = WorkoutPlanBuilder.build(profile, exercises, listOf(0, 1, 3, 4))
-        assertThat(built.weeklyVolumePerGroup).isNotEmpty()
-        assertThat(built.weeklyVolumePerGroup.values.all { it > 0 }).isTrue()
-    }
-
-    @Test
     fun `default training days spread across the week`() {
         assertThat(WorkoutPlanBuilder.defaultTrainingDays(4)).hasSize(4)
         assertThat(WorkoutPlanBuilder.defaultTrainingDays(0)).isEmpty()
         assertThat(WorkoutPlanBuilder.defaultTrainingDays(3)).hasSize(3)
-    }
-
-    @Test
-    fun `disliked exercises are avoided when alternatives exist`() {
-        val p = profile.copy(dislikedExercises = listOf("Rematore"))
-        val built = WorkoutPlanBuilder.build(p, exercises, listOf(0, 1, 3, 4))
-        val names = built.days.flatMap { it.exercises }.map { it.exerciseName }
-        assertThat(names).doesNotContain("Rematore")
-    }
-
-    @Test
-    fun `priority muscle gets extra set`() {
-        val p = profile.copy(priorityMuscles = setOf(MuscleGroup.CHEST))
-        val built = WorkoutPlanBuilder.build(p, exercises, listOf(0, 1, 3, 4))
-        val chest = built.days.flatMap { it.exercises }.filter { it.primaryMuscle == MuscleGroup.CHEST }
-        val nonPriority = built.days.flatMap { it.exercises }.filter { it.primaryMuscle != MuscleGroup.CHEST }
-        if (chest.isNotEmpty() && nonPriority.isNotEmpty()) {
-            assertThat(chest.map { it.sets }.max()).isAtLeast(nonPriority.map { it.sets }.min())
-        }
-    }
-
-    @Test
-    fun `low recovery capacity reduces volume`() {
-        val low = profile.copy(recoveryCapacity = com.fitcoach.app.domain.model.Level3.LOW)
-        val normal = profile.copy(recoveryCapacity = com.fitcoach.app.domain.model.Level3.HIGH)
-        val lowBuilt = WorkoutPlanBuilder.build(low, exercises, listOf(0, 1, 3, 4))
-        val normalBuilt = WorkoutPlanBuilder.build(normal, exercises, listOf(0, 1, 3, 4))
-        val lowTotal = lowBuilt.days.flatMap { it.exercises }.sumOf { it.sets }
-        val normalTotal = normalBuilt.days.flatMap { it.exercises }.sumOf { it.sets }
-        assertThat(lowTotal).isAtMost(normalTotal)
+        assertThat(WorkoutPlanBuilder.defaultTrainingDays(4)).containsExactly(0, 1, 3, 4)
     }
 
     @Test
@@ -125,5 +71,12 @@ class WorkoutPlanBuilderTest {
             assertThat(it.equipment.isEmpty() || it.equipment.any { e -> e in limited.availableEquipment } ||
                 it.bodyweightOnly).isTrue()
         }
+    }
+
+    @Test
+    fun `categoryLabel describes each category`() {
+        assertThat(WorkoutPlanBuilder.categoryLabel(ExerciseCategory.COMPOUND)).isEqualTo("Multiarticolare")
+        assertThat(WorkoutPlanBuilder.categoryLabel(ExerciseCategory.ISOLATION)).isEqualTo("Isolamento")
+        assertThat(WorkoutPlanBuilder.categoryLabel(ExerciseCategory.BODYWEIGHT)).isEqualTo("Corpo libero")
     }
 }

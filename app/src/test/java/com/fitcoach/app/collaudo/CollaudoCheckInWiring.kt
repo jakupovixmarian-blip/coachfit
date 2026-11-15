@@ -28,7 +28,6 @@ import com.fitcoach.app.domain.coach.tools.CoachTool
 import com.fitcoach.app.domain.coach.tools.CoachToolRegistry
 import com.fitcoach.app.domain.coach.tools.ProposeDeloadTool
 import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
-import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
 import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
@@ -108,14 +107,6 @@ object CollaudoCheckInWiring {
                     json,
                     foodRepository ?: FoodRepository(db.foodDao()),
                     exerciseRepository ?: ExerciseRepository(db.exerciseDao())
-                ),
-                offlineEngine = GenerateProgramsUseCase(
-                    userRepository,
-                    foodRepository ?: FoodRepository(db.foodDao()),
-                    exerciseRepository ?: ExerciseRepository(db.exerciseDao()),
-                    nutritionRepository,
-                    workoutRepository,
-                    planVersionRepository ?: PlanVersionRepository(db.planVersionDao())
                 )
             )
         }

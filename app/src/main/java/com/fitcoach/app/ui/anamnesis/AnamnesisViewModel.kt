@@ -6,7 +6,6 @@ import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.coach.AiProgramGenerationService
-import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,8 +36,6 @@ data class AnamnesisUiState(
     val generationMessage: String? = null,
     val generationWarnings: List<String> = emptyList(),
     val aiEnabled: Boolean = false,
-    /** True quando la generazione AI fallisce: l'utente puo scegliere esplicitamente il motore offline. */
-    val offlineFallbackAvailable: Boolean = false,
     /** True quando si sta modificando un'anamnesi gia confermata (flusso completo, precompilato). */
     val editing: Boolean = false,
     /** Sezione corrente dell'editor a sezioni (modalita modifica). */
@@ -50,8 +47,7 @@ data class AnamnesisUiState(
 @HiltViewModel
 class AnamnesisViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val aiProgramGeneration: AiProgramGenerationService,
-    private val generatePrograms: GenerateProgramsUseCase
+    private val aiProgramGeneration: AiProgramGenerationService
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AnamnesisUiState())
@@ -144,8 +140,7 @@ class AnamnesisViewModel @Inject constructor(
                 selected = emptySet(),
                 error = null,
                 generationMessage = "Anamnesi azzerata. Ricompila da zero: account, chiavi API e storico allenamenti sono stati conservati.",
-                generationWarnings = emptyList(),
-                offlineFallbackAvailable = false
+                generationWarnings = emptyList()
             )
             refreshDerived()
         }
@@ -276,8 +271,7 @@ class AnamnesisViewModel @Inject constructor(
             error = null,
             generatingPrograms = true,
             generationMessage = "Anamnesi confermata. Il Coach AI sta generando il percorso...",
-            generationWarnings = emptyList(),
-            offlineFallbackAvailable = false
+            generationWarnings = emptyList()
         )
         when (val result = aiProgramGeneration.generate(profile)) {
             is AiProgramGenerationService.Result.Success -> _state.value = _state.value.copy(
@@ -285,70 +279,12 @@ class AnamnesisViewModel @Inject constructor(
                 generationMessage = "Percorso generato dal Coach AI e validato: piano alimentare di 7 giorni e scheda salvati.",
                 generationWarnings = result.warnings
             )
-            // L'AI e l'autorita decisionale: se non e disponibile NON si sostituisce
-            // con un motore deterministico. Si spiega l'errore e si offre il motore
-            // offline solo come SCELTA ESPLICITA dell'utente.
+            // L'AI e l'unica autorita decisionale: se non e disponibile NON si
+            // sostituisce con un motore deterministico. Si spiega l'errore.
             is AiProgramGenerationService.Result.Failure -> _state.value = _state.value.copy(
                 generatingPrograms = false,
                 generationMessage = "Il Coach AI non ha potuto generare il percorso.",
-                error = result.message,
-                offlineFallbackAvailable = result.canRetry
-            )
-        }
-    }
-
-    /**
-     * Genera il percorso con il motore matematico offline. Viene eseguito SOLO
-     * su scelta esplicita dell'utente, quando il Coach AI non e disponibile:
-     * non e una sostituzione automatica dell'autorita decisionale.
-     */
-    fun useOfflineEngine() {
-        val profile = _state.value.profile
-        if (!profile.isAnamnesisReady || _state.value.generatingPrograms) return
-        viewModelScope.launch { runOfflineGeneration(profile) }
-    }
-
-    private suspend fun runOfflineGeneration(profile: UserProfile) {
-        _state.value = _state.value.copy(
-            generatingPrograms = true,
-            error = null,
-            generationMessage = "Generazione con il motore offline in corso...",
-            generationWarnings = emptyList(),
-            offlineFallbackAvailable = false
-        )
-        val trainingDays = com.fitcoach.app.domain.workout.WorkoutPlanBuilder
-            .defaultTrainingDays(profile.trainingDaysPerWeek)
-        when (val fallback = generatePrograms(
-            profile = profile,
-            trainingDayIndices = trainingDays,
-            regenerateNutrition = true,
-            regenerateWorkout = true,
-            requireAnamnesis = true
-        )) {
-            is GenerateProgramsUseCase.Result.Success -> _state.value = _state.value.copy(
-                generatingPrograms = false,
-                generationMessage = "Percorso generato dal motore offline FitCoach e validato " +
-                    "(piano alimentare di 7 giorni e scheda salvati).",
-                generationWarnings = listOf(
-                    "Hai scelto il motore offline: i calcoli sono deterministici e basati sui tuoi dati reali. " +
-                        "Quando il provider AI sara disponibile potrai rigenerare il percorso con il Coach AI."
-                ) + fallback.warnings,
-                error = null
-            )
-            is GenerateProgramsUseCase.Result.MissingData -> _state.value = _state.value.copy(
-                generatingPrograms = false,
-                generationMessage = "Generazione non completata.",
-                error = "Dati insufficienti: ${fallback.missing.joinToString()}"
-            )
-            is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed -> _state.value = _state.value.copy(
-                generatingPrograms = false,
-                generationMessage = "Generazione non completata.",
-                error = "Anamnesi non confermata."
-            )
-            is GenerateProgramsUseCase.Result.Error -> _state.value = _state.value.copy(
-                generatingPrograms = false,
-                generationMessage = "Generazione non completata.",
-                error = fallback.message
+                error = result.message
             )
         }
     }

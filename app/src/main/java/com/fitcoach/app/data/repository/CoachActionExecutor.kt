@@ -6,7 +6,7 @@ import com.fitcoach.app.domain.coach.CoachAction
 import com.fitcoach.app.domain.model.ChangeDomain
 import com.fitcoach.app.domain.model.ChangeStatus
 import com.fitcoach.app.domain.model.ProgramChange
-import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
+import com.fitcoach.app.domain.usecase.ProgramGenerationResult
 import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
 import dagger.Lazy
 import kotlinx.serialization.Serializable
@@ -161,7 +161,7 @@ class CoachActionExecutor @Inject constructor(
         }
 
         return when (result) {
-            is GenerateProgramsUseCase.Result.Success -> {
+            is ProgramGenerationResult.Success -> {
                 val revert = mapOf(
                     "kind" to "PLAN_REGENERATED",
                     "snapshot" to json.encodeToString(PlanIdSnapshot.serializer(), before)
@@ -176,11 +176,11 @@ class CoachActionExecutor @Inject constructor(
                 val extra = result.warnings.firstOrNull()?.let { " $it" } ?: ""
                 ApplyResult.Applied("Programma rigenerato (${scope.name}).$extra")
             }
-            is GenerateProgramsUseCase.Result.MissingData ->
+            is ProgramGenerationResult.MissingData ->
                 ApplyResult.Failed("Dati mancanti per rigenerare: ${result.missing.joinToString()}.")
-            is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed ->
+            is ProgramGenerationResult.AnamnesisNotConfirmed ->
                 ApplyResult.Failed("Anamnesi non confermata: impossibile rigenerare il programma.")
-            is GenerateProgramsUseCase.Result.Error -> ApplyResult.Failed(result.message)
+            is ProgramGenerationResult.Error -> ApplyResult.Failed(result.message)
         }
     }
 

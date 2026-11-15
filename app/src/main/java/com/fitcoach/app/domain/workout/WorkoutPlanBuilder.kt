@@ -2,23 +2,19 @@ package com.fitcoach.app.domain.workout
 
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.ExerciseCategory
-import com.fitcoach.app.domain.model.IntensityTechnique
-import com.fitcoach.app.domain.model.Level3
 import com.fitcoach.app.domain.model.MuscleGroup
-import com.fitcoach.app.domain.model.PlannedExercise
 import com.fitcoach.app.domain.model.SplitType
-import com.fitcoach.app.domain.model.TrainingExperience
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WorkoutDay
 
 /**
- * Costruisce la scheda settimanale completa a partire dal profilo.
+ * Contratti e utilita della scheda di allenamento.
  *
- * Pipeline:
- *  1. SplitGenerator decide split e giorni.
- *  2. Per ogni giorno di allenamento seleziona gli esercizi compatibili.
- *  3. Assegna serie, ripetizioni, recuperi e RIR target.
- *  4. Calcola il volume settimanale per gruppo muscolare.
+ * Non esiste piu un costruttore autonomo di schede: split, esercizi, serie,
+ * recuperi e tecniche sono decisi dal Coach AI (vedi submit_full_program) e
+ * verificati dai vincoli matematici. Qui restano il contratto di persistenza
+ * ([BuiltPlan]), il calendario di default dei giorni e gli helper di
+ * sostituzione degli esercizi usati dall'interfaccia.
  */
 object WorkoutPlanBuilder {
 
@@ -28,212 +24,6 @@ object WorkoutPlanBuilder {
         val weeklyVolumePerGroup: Map<MuscleGroup, Int>,
         val notes: List<String>
     )
-
-    fun build(
-        profile: UserProfile,
-        exercises: List<Exercise>,
-        trainingDayIndices: List<Int> = defaultTrainingDays(profile.trainingDaysPerWeek),
-        splitTypeOverride: SplitType? = null,
-        fatigueSeverity: Int = 0
-    ): BuiltPlan {
-        val splitType = splitTypeOverride ?: SplitGenerator.recommendSplit(profile)
-        val notes = mutableListOf<String>()
-
-        val splitWeek = SplitGenerator.buildWeek(splitType, trainingDayIndices, profile.experience)
-        val volume = mutableMapOf<MuscleGroup, Int>()
-        // Distribuiamo prima il volume per giorno per sapere quanti set per gruppo.
-        val trainingDayCount = splitWeek.count { !it.isRest }
-
-        val days = splitWeek.map { day ->
-            if (day.isRest) {
-                WorkoutDay(
-                    dayIndex = day.dayIndex,
-                    title = "Riposo",
-                    isRestDay = true
-                )
-            } else {
-                val count = SplitGenerator.exercisesPerSession(
-                    profile.experience, day.muscleGroups.size, profile.maxSessionMinutes
-                )
-                val compatibleExercises = exercises.filter { exercise ->
-                    profile.availableEquipment.isEmpty() || exercise.bodyweightOnly ||
-                        exercise.equipment.isEmpty() ||
-                        exercise.equipment.any { it in profile.availableEquipment }
-                }
-                val selected = SplitGenerator.selectExercisesDetailed(
-                    day.muscleGroups, compatibleExercises, profile, count, rotationSeed = day.dayIndex
-                )
-                if (selected.isEmpty()) {
-                    notes += "Nessun esercizio compatibile per ${day.title}: verifica l'attrezzatura disponibile."
-                }
-                val planned = selected.mapIndexed { i, sel ->
-                    val ex = sel.exercise
-                    val sets = setsForExercise(profile, ex, trainingDayCount, day.muscleGroups.size)
-                    val isLast = i == selected.lastIndex
-                    val fatigue = fatigueSeverity
-                    val technique = IntensityTechniquesEngine.decide(
-                        exercise = ex,
-                        profile = profile,
-                        isLastExerciseOfSession = isLast,
-                        weeklySetsForGroup = (volume[ex.primaryMuscle] ?: 0) + sets,
-                        fatigueSeverity = fatigue
-                    )
-                    val rest = RestCalculator.decide(
-                        category = ex.category,
-                        goal = profile.goal,
-                        targetRir = ex.targetRir,
-                        loadRatio = loadRatioFor(profile, ex),
-                        experience = profile.experience,
-                        fatigueSeverity = fatigue,
-                        technique = technique.technique
-                    )
-                    PlannedExercise(
-                        exerciseId = ex.id,
-                        exerciseName = ex.name,
-                        primaryMuscle = ex.primaryMuscle,
-                        orderIndex = i,
-                        sets = sets,
-                        minReps = ex.minReps,
-                        maxReps = ex.maxReps,
-                        restSeconds = rest.seconds,
-                        targetRir = ex.targetRir,
-                        technique = ex.technique,
-                        category = ex.category,
-                        selectionReason = sel.reason,
-                        restReason = rest.reason,
-                        intensityTechnique = technique.technique,
-                        techniqueReason = if (technique.technique != IntensityTechnique.NONE)
-                            technique.reason else "",
-                        movementPattern = ex.movementPattern
-                    )
-                }
-                planned.forEach { pe ->
-                    volume[pe.primaryMuscle] = (volume[pe.primaryMuscle] ?: 0) + pe.sets
-                }
-                WorkoutDay(
-                    dayIndex = day.dayIndex,
-                    title = day.title,
-                    muscleGroups = day.muscleGroups,
-                    exercises = planned
-                )
-            }
-        }
-
-        if (profile.availableEquipment.isEmpty()) {
-            notes += "Nessuna attrezzatura selezionata: sono stati privilegiati esercizi a corpo libero."
-        }
-        // Nota sul volume per i gruppi prioritari.
-        if (profile.priorityMuscles.isNotEmpty()) {
-            val prio = profile.priorityMuscles.joinToString { it.label }
-            notes += "Volume aumentato per i gruppi prioritari: $prio."
-        }
-
-        val normalized = normalizeVolume(days, exercises.associateBy { it.id })
-        val effectiveVolume = EffectiveVolumeCalculator
-            .forExercises(normalized.asSequence().flatMap { it.exercises.asSequence() }.toList(), exercises.associateBy { it.id })
-            .effective
-            .mapValues { (_, value) -> kotlin.math.round(value).toInt() }
-        return BuiltPlan(splitType, normalized, effectiveVolume, notes)
-    }
-
-    /** Limiti allineati a [WorkoutPlanValidator]: oltre questi il piano non e valido. */
-    private const val MAX_SETS_PER_SESSION = 24
-    private const val MAX_WEEKLY_EFFECTIVE_SETS = 26
-    private const val MIN_WEEKLY_EFFECTIVE_SETS = 8
-    private const val MIN_SETS_PER_EXERCISE = 2
-    private const val MAX_SETS_PER_EXERCISE = 5
-
-    /**
-     * Normalizza il volume per rispettare i vincoli dell'app: serie per seduta
-     * entro il tetto, volume settimanale effettivo per gruppo entro i range
-     * raccomandati. Riduce prima gli esercizi con piu serie; se un gruppo e sotto
-     * il minimo, aumenta le sue serie (senza superare i limiti di seduta).
-     */
-    private fun normalizeVolume(days: List<WorkoutDay>, exercisesById: Map<Long, Exercise>): List<WorkoutDay> {
-        val work: List<MutableList<PlannedExercise>> = days.map { it.exercises.toMutableList() }
-
-        fun daySets(i: Int) = work[i].sumOf { it.sets }
-
-        // 1) Tetto per seduta.
-        days.indices.filter { !days[it].isRestDay }.forEach { i ->
-            while (daySets(i) > MAX_SETS_PER_SESSION) {
-                val target = work[i].filter { it.sets > MIN_SETS_PER_EXERCISE }.maxByOrNull { it.sets } ?: break
-                val idx = work[i].indexOf(target)
-                work[i][idx] = target.copy(sets = target.sets - 1)
-            }
-        }
-
-        fun weeklyEffective(): Map<MuscleGroup, Double> =
-            EffectiveVolumeCalculator
-                .forExercises(work.flatten(), exercisesById)
-                .effective
-
-        // 2a) Riduci i gruppi sopra il massimo settimanale.
-        var guard = 0
-        while (guard++ < 500) {
-            val over = weeklyEffective().filter { it.value > MAX_WEEKLY_EFFECTIVE_SETS }.keys.firstOrNull() ?: break
-            val found = work.withIndex().asSequence()
-                .flatMap { (i, list) -> list.withIndex().asSequence().map { (j, pe) -> Triple(i, j, pe) } }
-                .filter { it.third.primaryMuscle == over && it.third.sets > MIN_SETS_PER_EXERCISE }
-                .maxByOrNull { it.third.sets } ?: break
-            if (daySets(found.first) - 1 < 6) break
-            work[found.first][found.second] = found.third.copy(sets = found.third.sets - 1)
-        }
-
-        // 2b) Alza i gruppi sotto il minimo settimanale (senza sfondare il tetto di seduta).
-        guard = 0
-        while (guard++ < 500) {
-            val under = weeklyEffective().filter { it.value < MIN_WEEKLY_EFFECTIVE_SETS }.keys.firstOrNull() ?: break
-            val found = work.withIndex().asSequence()
-                .flatMap { (i, list) -> list.withIndex().asSequence().map { (j, pe) -> Triple(i, j, pe) } }
-                .filter { it.third.primaryMuscle == under && it.third.sets < MAX_SETS_PER_EXERCISE }
-                .minByOrNull { it.third.sets } ?: break
-            if (daySets(found.first) + 1 > MAX_SETS_PER_SESSION) break
-            work[found.first][found.second] = found.third.copy(sets = found.third.sets + 1)
-        }
-
-        return days.mapIndexed { i, day -> day.copy(exercises = work[i].toList()) }
-    }
-
-    /** Rapporto tra carico attuale dichiarato e carico tipico (per stimare l'intensita). */
-    private fun loadRatioFor(profile: UserProfile, ex: Exercise): Double {
-        val declared = profile.currentLoads.entries
-            .firstOrNull { ex.name.lowercase().contains(it.key.lowercase()) }?.value ?: return 1.0
-        // Nessun riferimento assoluto: usiamo il carico per ripetizione come proxy.
-        return when {
-            declared <= 0 -> 1.0
-            declared > 100 -> 1.1
-            declared < 20 -> 0.85
-            else -> 1.0
-        }
-    }
-
-    /**
-     * Serie per esercizio, individualizzate su esperienza, volume target del gruppo
-     * e numero di esercizi nella sessione. Il volume non e fisso per tutti.
-     */
-    private fun setsForExercise(
-        profile: UserProfile,
-        ex: Exercise,
-        trainingDayCount: Int,
-        groupsInDay: Int
-    ): Int {
-        val base = ex.defaultSets
-        val priority = ex.primaryMuscle in profile.priorityMuscles
-        // Esperienza e capacita di recupero modulano il volume.
-        val experienceAdj = when (profile.experience) {
-            TrainingExperience.BEGINNER -> -1
-            TrainingExperience.INTERMEDIATE -> 0
-            TrainingExperience.ADVANCED -> if (ex.category == ExerciseCategory.COMPOUND) 1 else 0
-        }
-        val recoveryAdj = when (profile.recoveryCapacity) {
-            Level3.LOW -> -1
-            Level3.MEDIUM -> 0
-            Level3.HIGH -> 0
-        }
-        val priorityAdj = if (priority) 1 else 0
-        return (base + experienceAdj + recoveryAdj + priorityAdj).coerceIn(2, 5)
-    }
 
     fun defaultTrainingDays(daysPerWeek: Int): List<Int> {
         return when (daysPerWeek.coerceIn(0, 7)) {

@@ -98,11 +98,6 @@ fun NutritionScreen(
                             Spacer(Modifier.width(8.dp))
                             Text(if (state.generating) "Generazione..." else "Genera piano")
                         }
-                        Spacer(Modifier.height(8.dp))
-                        OutlinedButton(
-                            onClick = { viewModel.generatePlan(offline = true) },
-                            enabled = !state.generating
-                        ) { Text("Genera offline (senza AI)") }
                     }
                 }
             )

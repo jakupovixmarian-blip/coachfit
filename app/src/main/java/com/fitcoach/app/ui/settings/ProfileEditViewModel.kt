@@ -10,7 +10,7 @@ import com.fitcoach.app.domain.model.Sex
 import com.fitcoach.app.domain.model.TrainingExperience
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WeightRecord
-import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
+import com.fitcoach.app.domain.usecase.ProgramGenerationResult
 import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -94,12 +94,12 @@ class ProfileEditViewModel @Inject constructor(
                     profile = updated,
                     scope = ProgramGenerationCoordinator.Scope.BOTH
                 )) {
-                    is GenerateProgramsUseCase.Result.Success -> "Profilo aggiornato e programmi rigenerati."
-                    is GenerateProgramsUseCase.Result.MissingData ->
+                    is ProgramGenerationResult.Success -> "Profilo aggiornato e programmi rigenerati."
+                    is ProgramGenerationResult.MissingData ->
                         "Profilo salvato, ma dati mancanti: ${result.missing.joinToString()}."
-                    is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed ->
+                    is ProgramGenerationResult.AnamnesisNotConfirmed ->
                         "Profilo salvato. Completa l'anamnesi per rigenerare i programmi."
-                    is GenerateProgramsUseCase.Result.Error -> "Profilo salvato. ${result.message}"
+                    is ProgramGenerationResult.Error -> "Profilo salvato. ${result.message}"
                 }
             } else {
                 "Profilo aggiornato."

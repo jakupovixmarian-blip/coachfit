@@ -5,7 +5,6 @@ import com.fitcoach.app.data.repository.NutritionRepository
 import com.fitcoach.app.data.repository.ProgressRepository
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
-import com.fitcoach.app.domain.adaptive.AdaptiveDecision
 import com.fitcoach.app.domain.adaptive.ExerciseTrend
 import com.fitcoach.app.domain.adaptive.NutritionWeek
 import com.fitcoach.app.domain.adaptive.WeeklyCheckInAnalyzer
@@ -110,9 +109,9 @@ class AnalyzeWeeklyCheckInTool @Inject constructor(
                     "noteDolore" to JsonOut.str(report.painNotes.ifBlank { null })
                 ),
                 "prestazioni" to JsonOut.arr(report.performanceTrends.map { it.toJson() }),
-                "advisory" to JsonOut.arr(report.advisories.map { it.toJson() }),
+                "datiSufficienti" to JsonOut.bool(report.dataSufficient),
                 "nota" to JsonOut.str(
-                    "Le classificazioni 'advisory' sono un supporto, non una decisione. Valuta i dati, " +
+                    "I numeri e le tendenze sono MISURE, non decisioni. Valuta i dati, " +
                         "confronta con le settimane precedenti e proponi solo se giustificato. Non " +
                         "ridurre le calorie per una singola settimana senza valutare trend e aderenza."
                 )
@@ -125,11 +124,5 @@ class AnalyzeWeeklyCheckInTool @Inject constructor(
         "classificazione" to JsonOut.str(classification.name),
         "variazionePerc" to JsonOut.num(changePercent),
         "campioni" to JsonOut.num(samples)
-    )
-
-    private fun AdaptiveDecision.toJson(): JsonObject = JsonOut.obj(
-        "classificazione" to JsonOut.str(classification),
-        "motivo" to JsonOut.str(reason),
-        "azioneSuggerita" to JsonOut.str(action?.action)
     )
 }

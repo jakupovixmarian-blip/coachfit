@@ -29,10 +29,23 @@ Nessun progetto preesistente: il repository era vuoto (solo `.git`).
 - **Grafici**: Vico (compose-m3).
 - **AI**: Retrofit/OkHttp verso endpoint compatibili OpenAI; il layer AI è isolato dietro un'interfaccia provider-agnostica.
 
-### Principio chiave: separazione dei motori
-1. **Motore matematico deterministico** – calcoli puri (BMR, TDEE, macro, carb cycling, progressione). Nessuna AI.
-2. **Motore di analisi** – regole deterministiche sui dati reali che producono *proposte di modifica* motivate.
-3. **AI conversazionale** – interpreta e spiega, propone; **non** modifica i dati direttamente. Le modifiche passano da funzioni controllate e approvazione utente.
+### Principio chiave: AI-native (aggiornato)
+
+> **Revisione architetturale.** Il progetto è stato portato a un'architettura **AI-native**:
+> sono stati **eliminati i motori decisionali offline** (`AdaptiveEngine`,
+> `LongitudinalCoachEngine`). L'unica autorità che genera e modifica i programmi è il
+> **Coach AI** (`CoachOrchestrator` + strumento `submit_full_program`). Le componenti
+> deterministiche rimaste sono solo *calcoli*, *cataloghi* e *validatori*.
+
+1. **Calcolo deterministico** – calcoli puri (BMR, TDEE, macro, carb cycling, volume,
+   progressione). Non decide: fornisce numeri e target.
+2. **Validazione deterministica** – `ProgramGenerationEngine` e `WorkoutPlanValidator`
+   *giudicano* la proposta dell'AI e la bloccano se non rispetta i vincoli, restituendo la
+   diagnosi. Non generano alternative.
+3. **AI conversazionale e decisionale** – è il cervello: interpreta, spiega e **decide**
+   piani, schede e modifiche. Le modifiche passano da funzioni controllate e approvazione
+   utente. Se il provider non è configurato, l'app mostra l'errore e **non** genera un
+   piano deterministico di fallback.
 
 ### Gestione segreti API
 Le chiavi API non vengono hardcoded nell'APK. L'app supporta:
@@ -63,8 +76,9 @@ Le chiavi API non vengono hardcoded nell'APK. L'app supporta:
 - Double progression automatica, separata per multiarticolari / isolamento / corpo libero.
 
 ### FASE 4 – Coach adattivo
-- Analisi peso (medie settimanali, trend), aderenza, performance, composizione.
-- Regole decisionali deterministiche → proposte strutturate (situazione, problema, dati, modifica, motivazione, risultato atteso, controindicazioni).
+- Analisi peso (medie settimanali, trend), aderenza, performance, composizione (solo misure).
+- **Decisione dell'AI**: il check-in misura i dati e l'AI propone modifiche strutturate
+  (situazione, problema, dati, modifica, motivazione, risultato atteso, controindicazioni).
 - Check-in settimanale, storico decisioni, rollback modifiche.
 
 ### FASE 5 – AI
@@ -103,7 +117,7 @@ Tutte le fasi 1–7 sono state implementate e verificate con build e test.
   `CoachService` — contesto strutturato e azioni controllate.
 - `data/repository/CoachActionExecutor.kt`: applica le 5 azioni proposte in modo
   transazionale, con payload di rollback per l'annullamento.
-- `domain/usecase/`: `GenerateProgramsUseCase`, `RunWeeklyCheckInUseCase`.
+- `domain/usecase/`: `ProgramGenerationCoordinator` (facade AI), `RunWeeklyCheckInUseCase`.
 - `data/remote/`: `AiApi`, `AiClient`, `AiProviderConfig`, `SecureKeyStore` (chiavi cifrate),
   `di/NetworkModule`.
 - `data/repository/ExportRepository.kt`: export CSV (peso, circonferenze, sedute, carichi,

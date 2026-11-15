@@ -12,10 +12,10 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 /**
- * Verifica il comportamento del motore di check-in settimanale sui casi richiesti:
- * dati insufficienti, aderenza bassa, peso stabile, perdita coerente, prestazioni
- * in miglioramento/peggioramento. Il motore NON decide: produce un report e delle
- * classificazioni di supporto che l'AI interpreta.
+ * Verifica che il check-in settimanale produca SOLO MISURE affidabili sui dati
+ * reali. Non esistono piu classificazioni decisionali: l'analizzatore calcola i
+ * numeri (peso, aderenza, prestazioni, recupero) e dichiara se i dati sono
+ * sufficienti. Se un dato manca, il campo resta null: nessun valore inventato.
  */
 class WeeklyCheckInAnalyzerTest {
 
@@ -26,41 +26,35 @@ class WeeklyCheckInAnalyzerTest {
         goal = Goal.RECOMP, trainingDaysPerWeek = 3
     )
 
-    // ---- Dati insufficienti: nessuna decisione, il report lo dichiara. ----
+    // ---- Dati insufficienti: il report lo dichiara e non inventa valori. ----
 
     @Test
-    fun `dati insufficienti producono un report senza decisioni operative`() {
+    fun `dati insufficienti producono un report senza valori inventati`() {
         val report = analyze(weights = emptyList(), nutritionWeeks = emptyList())
 
         assertThat(report.dataSufficient).isFalse()
         assertThat(report.weightTrendKgPerWeek).isNull()
         assertThat(report.adherencePercent).isNull()
         assertThat(report.avgWeightKg).isNull()
-        // Nessun valore inventato: i campi non disponibili restano null.
         assertThat(report.bodyFatPercent).isNull()
-        assertThat(report.advisories.any { it.classification == "INSUFFICIENT_DATA" }).isTrue()
     }
 
-    // ---- Aderenza bassa: blocca la modifica calorica. ----
+    // ---- Aderenza bassa: la misura resta, ma i dati non bastano per decidere. ----
 
     @Test
-    fun `aderenza bassa blocca la proposta di modifica calorica`() {
+    fun `aderenza bassa e riportata come misura`() {
         val report = analyze(
             weights = stableWeights(80.0, weeks = 4),
             nutritionWeeks = nutritionWeeks(adherence = 50.0, count = 3)
         )
 
         assertThat(report.adherencePercent).isWithin(0.5).of(50.0)
-        assertThat(report.advisories.any { it.classification == "ADHERENCE_INSUFFICIENT" }).isTrue()
-        assertThat(report.advisories.any {
-            it.action?.action == com.fitcoach.app.domain.coach.CoachAction.ACTION_ADJUST_CALORIES
-        }).isFalse()
     }
 
-    // ---- Peso stabile in ricomposizione: proposta di riduzione calorica. ----
+    // ---- Peso stabile: la tendenza misurata e ~0 e i dati sono sufficienti. ----
 
     @Test
-    fun `peso stabile con aderenza sufficiente propone riduzione calorica`() {
+    fun `peso stabile con dati sufficienti e misurato correttamente`() {
         val report = analyze(
             weights = stableWeights(80.0, weeks = 4),
             nutritionWeeks = nutritionWeeks(adherence = 90.0, count = 3)
@@ -68,48 +62,26 @@ class WeeklyCheckInAnalyzerTest {
 
         assertThat(report.dataSufficient).isTrue()
         assertThat(report.weightTrendKgPerWeek).isWithin(0.05).of(0.0)
-        val decision = report.advisories.singleOrNull { it.classification == "STAGNATION" }
-        assertThat(decision).isNotNull()
-        assertThat(decision!!.action?.action)
-            .isEqualTo(com.fitcoach.app.domain.coach.CoachAction.ACTION_ADJUST_CALORIES)
+        assertThat(report.weightReliable).isTrue()
     }
 
-    // ---- Perdita di peso coerente con l'obiettivo: nessuna modifica. ----
+    // ---- Perdita di peso coerente: la tendenza misurata riflette i dati. ----
 
     @Test
-    fun `perdita di peso coerente non genera proposte`() {
-        // RECOMP target -0.25 kg/sett: -0.3 e coerente.
+    fun `perdita di peso coerente e misurata`() {
         val report = analyze(
             weights = linearWeights(startKg = 82.0, perWeek = -0.3, weeks = 4),
             nutritionWeeks = nutritionWeeks(adherence = 92.0, count = 3)
         )
 
         assertThat(report.weightTrendKgPerWeek).isWithin(0.05).of(-0.3)
-        assertThat(report.advisories.any {
-            it.action?.action == com.fitcoach.app.domain.coach.CoachAction.ACTION_ADJUST_CALORIES
-        }).isFalse()
+        assertThat(report.dataSufficient).isTrue()
     }
 
-    // ---- Perdita troppo rapida: proposta di aumento calorico. ----
+    // ---- Prestazioni: progressione e regressione sono solo misurate. ----
 
     @Test
-    fun `perdita troppo rapida propone aumento calorico`() {
-        val report = analyze(
-            weights = linearWeights(startKg = 82.0, perWeek = -1.0, weeks = 4),
-            nutritionWeeks = nutritionWeeks(adherence = 90.0, count = 3)
-        )
-
-        assertThat(report.advisories.singleOrNull { it.classification == "REGRESSION_NUTRITION" })
-            .isNotNull()
-        assertThat(report.advisories.single { it.classification == "REGRESSION_NUTRITION" }
-            .action?.action)
-            .isEqualTo(com.fitcoach.app.domain.coach.CoachAction.ACTION_ADJUST_CALORIES)
-    }
-
-    // ---- Prestazioni in miglioramento: nessun intervento sul volume. ----
-
-    @Test
-    fun `prestazioni in miglioramento mantengono il piano`() {
+    fun `prestazioni in miglioramento sono classificate come progressione`() {
         val report = analyze(
             weights = linearWeights(startKg = 82.0, perWeek = -0.3, weeks = 4),
             nutritionWeeks = nutritionWeeks(adherence = 90.0, count = 3),
@@ -118,16 +90,10 @@ class WeeklyCheckInAnalyzerTest {
 
         assertThat(report.progressionCount).isEqualTo(1)
         assertThat(report.regressionCount).isEqualTo(0)
-        assertThat(report.advisories.any { it.classification == "PROGRESSION" }).isTrue()
-        assertThat(report.advisories.any {
-            it.action?.action == com.fitcoach.app.domain.coach.CoachAction.ACTION_ADJUST_VOLUME
-        }).isFalse()
     }
 
-    // ---- Prestazioni in peggioramento: NON aumenta il volume. ----
-
     @Test
-    fun `prestazioni in peggioramento non aumentano il volume`() {
+    fun `prestazioni in peggioramento sono classificate come regressione`() {
         val report = analyze(
             weights = linearWeights(startKg = 82.0, perWeek = -0.3, weeks = 4),
             nutritionWeeks = nutritionWeeks(adherence = 90.0, count = 3),
@@ -135,40 +101,28 @@ class WeeklyCheckInAnalyzerTest {
         )
 
         assertThat(report.regressionCount).isEqualTo(1)
-        val regressionAction = report.advisories.firstOrNull {
-            it.classification == "REGRESSION" || it.classification == "REGRESSION_RECOVERY"
-        }
-        assertThat(regressionAction).isNotNull()
-        // In regressione si RIDUCE il volume o si fa deload: mai aumento.
-        assertThat(regressionAction!!.action?.action).isAnyOf(
-            com.fitcoach.app.domain.coach.CoachAction.ACTION_ADJUST_VOLUME,
-            com.fitcoach.app.domain.coach.CoachAction.ACTION_DELOAD
-        )
-        assertThat(report.advisories.none {
-            it.classification == "STAGNATION" && it.action?.action == com.fitcoach.app.domain.coach.CoachAction.ACTION_ADJUST_VOLUME
-        }).isTrue()
+        assertThat(report.progressionCount).isEqualTo(0)
     }
 
-    // ---- Regressione con recupero scarso: deload, non piu volume. ----
+    // ---- Recupero scarso: misurato dalle sedute con dolore. ----
 
     @Test
-    fun `regressione con recupero scarso propone deload`() {
+    fun `il recupero riflette le sedute con dolore segnalato`() {
         val report = analyze(
             weights = linearWeights(startKg = 82.0, perWeek = -0.3, weeks = 4),
             nutritionWeeks = nutritionWeeks(adherence = 90.0, count = 3),
-            performances = mapOf("Stacco" to e1rmHistory(180.0, perSession = -3.0)),
             sessions = painfulSessions(count = 3)
         )
 
         assertThat(report.recoverySeverity).isAtLeast(3)
-        assertThat(report.advisories.singleOrNull { it.classification == "REGRESSION_RECOVERY" }
-            ?.action?.action).isEqualTo(com.fitcoach.app.domain.coach.CoachAction.ACTION_DELOAD)
+        assertThat(report.painSessions).isAtLeast(3)
+        assertThat(report.painNotes).contains("spalla")
     }
 
-    // ---- Peso stabile ma vita in riduzione: ricomposizione, nessuna modifica. ----
+    // ---- Circonferenze: la tendenza vita e misurata. ----
 
     @Test
-    fun `peso stabile con vita in riduzione mantiene il piano`() {
+    fun `la tendenza della vita e misurata dalle circonferenze`() {
         val report = analyze(
             weights = stableWeights(80.0, weeks = 4),
             nutritionWeeks = nutritionWeeks(adherence = 90.0, count = 3),
@@ -176,10 +130,7 @@ class WeeklyCheckInAnalyzerTest {
         )
 
         assertThat(report.waistTrendCmPerWeek).isNotNull()
-        assertThat(report.advisories.any { it.classification == "RECOMPOSITION_PROGRESS" }).isTrue()
-        assertThat(report.advisories.any {
-            it.action?.action == com.fitcoach.app.domain.coach.CoachAction.ACTION_ADJUST_CALORIES
-        }).isFalse()
+        assertThat(report.waistTrendCmPerWeek!!).isWithin(0.1).of(-0.4)
     }
 
     // ---- Il report non inventa il recupero se non ci sono sedute. ----

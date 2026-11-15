@@ -12,8 +12,8 @@ import com.fitcoach.app.domain.model.WorkoutDay
 import com.fitcoach.app.domain.model.WorkoutPlan
 import com.fitcoach.app.domain.model.WorkoutSession
 import com.fitcoach.app.domain.model.WorkoutSet
-import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
 import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
+import com.fitcoach.app.domain.usecase.ProgramGenerationResult
 import com.fitcoach.app.domain.workout.ProgressiveOverloadEngine
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -273,7 +273,7 @@ class WorkoutViewModel @Inject constructor(
     fun selectSection(section: WorkoutSection) { _state.value = _state.value.copy(section = section) }
     fun closeEdit() { _state.value = _state.value.copy(editingExercise = null) }
 
-    fun generateWorkout(offline: Boolean = false) {
+    fun generateWorkout() {
         viewModelScope.launch {
             val profile = userRepository.get()
             if (profile == null || !profile.isComplete) {
@@ -283,16 +283,14 @@ class WorkoutViewModel @Inject constructor(
             _state.value = _state.value.copy(generating = true, message = null)
             val result = generationCoordinator.generate(
                 profile = profile,
-                scope = ProgramGenerationCoordinator.Scope.WORKOUT,
-                useOfflineEngine = offline
+                scope = ProgramGenerationCoordinator.Scope.WORKOUT
             )
             val message = when (result) {
-                is GenerateProgramsUseCase.Result.Success ->
-                    if (offline) "Scheda generata dal motore offline." else "Scheda generata dal Coach AI."
-                is GenerateProgramsUseCase.Result.MissingData -> "Dati mancanti: ${result.missing.joinToString()}."
-                is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed ->
+                is ProgramGenerationResult.Success -> "Scheda generata dal Coach AI."
+                is ProgramGenerationResult.MissingData -> "Dati mancanti: ${result.missing.joinToString()}."
+                is ProgramGenerationResult.AnamnesisNotConfirmed ->
                     "Completa l'anamnesi guidata prima di generare."
-                is GenerateProgramsUseCase.Result.Error -> result.message
+                is ProgramGenerationResult.Error -> result.message
             }
             _state.value = _state.value.copy(generating = false, message = message)
             load()

@@ -132,12 +132,6 @@ object CoachPromptBuilder {
                 sb.appendLine("  - ${t.exerciseName}: ${t.classification.name} (${"%+.1f".format(t.changePercent)}%, ${t.samples} campioni)")
             }
         }
-        if (report.advisories.isNotEmpty()) {
-            sb.appendLine("Classificazioni di supporto (NON decisioni):")
-            report.advisories.forEach { a ->
-                sb.appendLine("  - ${a.classification}: ${a.reason}")
-            }
-        }
         return sb.toString()
     }
 

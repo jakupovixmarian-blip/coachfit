@@ -12,6 +12,7 @@ import com.fitcoach.app.data.repository.PlanVersionRepository
 import com.fitcoach.app.data.repository.ShoppingRepository
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
+import com.fitcoach.app.domain.coach.ProgramGenerationEngine
 import com.fitcoach.app.domain.model.Goal
 import com.fitcoach.app.domain.model.MealSlot
 import com.fitcoach.app.domain.model.Sex
@@ -19,18 +20,19 @@ import com.fitcoach.app.domain.model.TrainingExperience
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.nutrition.FoodSeedData
 import com.fitcoach.app.domain.nutrition.ShoppingListEngine
-import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
 import com.fitcoach.app.domain.workout.ExerciseSeedData
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
+import com.fitcoach.app.support.TestProgramGenerator
 import com.fitcoach.app.ui.shopping.ShoppingViewModel
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.async
 import kotlinx.coroutines.test.setMain
+import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -40,12 +42,20 @@ import org.robolectric.annotation.Config
 
 /**
  * Test d'integrazione REALE su database Room in-memory: esegue l'intera catena
- * generazione piano -> persistenza -> lista della spesa -> diario, senza mock.
- * Riproduce il bug segnalato ("Spesa: 0 di 0 alimenti" con un piano attivo).
+ * generazione piano (dal Coach AI) -> persistenza -> lista della spesa -> diario,
+ * senza mock dei motori. Riproduce il bug segnalato ("Spesa: 0 di 0 alimenti" con
+ * un piano attivo).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class NutritionChainIntegrationTest {
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        encodeDefaults = true
+        explicitNulls = false
+    }
 
     private lateinit var db: FitCoachDatabase
     private lateinit var userRepository: UserRepository
@@ -53,15 +63,17 @@ class NutritionChainIntegrationTest {
     private lateinit var exerciseRepository: ExerciseRepository
     private lateinit var nutritionRepository: NutritionRepository
     private lateinit var workoutRepository: WorkoutRepository
+    private lateinit var planVersionRepository: PlanVersionRepository
     private lateinit var shoppingRepository: ShoppingRepository
     private lateinit var diaryRepository: NutritionDiaryRepository
-    private lateinit var generatePrograms: GenerateProgramsUseCase
+    private lateinit var chatRepository: com.fitcoach.app.data.repository.ChatRepository
 
     private val profile = UserProfile(
         id = 1L, name = "Test", ageYears = 30, sex = Sex.MALE,
         heightCm = 175.0, weightKg = 80.0, bodyFatPercent = 18.0,
         experience = TrainingExperience.BEGINNER, goal = Goal.RECOMP,
-        trainingDaysPerWeek = 3
+        trainingDaysPerWeek = 3, mealsPerDay = 5,
+        anamnesisCompleted = true, anamnesisConfirmedAt = 1L, anamnesisSummary = "confermata"
     )
 
     @Before
@@ -75,15 +87,15 @@ class NutritionChainIntegrationTest {
         exerciseRepository = ExerciseRepository(db.exerciseDao())
         nutritionRepository = NutritionRepository(db)
         workoutRepository = WorkoutRepository(db)
+        planVersionRepository = PlanVersionRepository(db.planVersionDao())
         shoppingRepository = ShoppingRepository(db, nutritionRepository, foodRepository)
         diaryRepository = NutritionDiaryRepository(db)
-        generatePrograms = GenerateProgramsUseCase(
-            userRepository = userRepository,
-            foodRepository = foodRepository,
-            exerciseRepository = exerciseRepository,
-            nutritionRepository = nutritionRepository,
-            workoutRepository = workoutRepository,
-            planVersionRepository = PlanVersionRepository(db.planVersionDao())
+        chatRepository = com.fitcoach.app.data.repository.ChatRepository(db.chatDao(), db.aiSettingsDao())
+        // Backend proxy: nessuna chiave sul dispositivo (evita il Keystore nei test).
+        chatRepository.saveAiSettings(
+            com.fitcoach.app.domain.model.AiProviderSettings(
+                useBackendProxy = true, backendBaseUrl = "https://proxy.test/v1", model = "test-model"
+            )
         )
         // Seed reale degli alimenti ed esercizi.
         db.foodDao().insertAll(FoodSeedData.foods.map { it.toEntity() })
@@ -96,16 +108,28 @@ class NutritionChainIntegrationTest {
         db.close()
     }
 
+    private suspend fun generate(
+        scope: ProgramGenerationEngine.Scope = ProgramGenerationEngine.Scope.BOTH,
+        trainingDays: List<Int> = WorkoutPlanBuilder.defaultTrainingDays(3)
+    ) = TestProgramGenerator.generate(
+        json = json,
+        userRepository = userRepository,
+        foodRepository = foodRepository,
+        exerciseRepository = exerciseRepository,
+        nutritionRepository = nutritionRepository,
+        workoutRepository = workoutRepository,
+        planVersionRepository = planVersionRepository,
+        chatRepository = chatRepository,
+        db = db,
+        profile = profile,
+        scope = scope,
+        trainingDays = trainingDays
+    )
+
     @Test
     fun `genera piano, persiste 7 giorni e la spesa NON e vuota`() = runTest {
-        val result = generatePrograms(
-            profile = profile,
-            trainingDayIndices = WorkoutPlanBuilder.defaultTrainingDays(3),
-            regenerateNutrition = true,
-            regenerateWorkout = true,
-            requireAnamnesis = false
-        )
-        assertThat(result).isInstanceOf(GenerateProgramsUseCase.Result.Success::class.java)
+        val result = generate()
+        assertThat(result).isInstanceOf(com.fitcoach.app.domain.coach.AiProgramGenerationService.Result.Success::class.java)
 
         val plan = nutritionRepository.getActivePlan()
         assertThat(plan).isNotNull()
@@ -126,27 +150,15 @@ class NutritionChainIntegrationTest {
 
     @Test
     fun `profilo anamnesi confermata genera automaticamente entrambi i programmi`() = runTest {
-        val confirmed = profile.copy(
-            anamnesisCompleted = true,
-            anamnesisConfirmedAt = System.currentTimeMillis(),
-            anamnesisSummary = "Profilo confermato"
-        )
-        val result = generatePrograms(
-            profile = confirmed,
-            regenerateNutrition = true,
-            regenerateWorkout = true,
-            requireAnamnesis = true
-        )
-
-        assertThat(result).isInstanceOf(GenerateProgramsUseCase.Result.Success::class.java)
+        val result = generate()
+        assertThat(result).isInstanceOf(com.fitcoach.app.domain.coach.AiProgramGenerationService.Result.Success::class.java)
         assertThat(nutritionRepository.getActivePlan()).isNotNull()
         assertThat(workoutRepository.getActivePlan()).isNotNull()
     }
 
-
     @Test
     fun `la spesa conserva lo stato spuntato dopo la rigenerazione`() = runTest {
-        generatePrograms(profile, regenerateNutrition = true, regenerateWorkout = false, requireAnamnesis = false)
+        generate()
         val weekStart = NutritionDiaryRepository.weekStart(NutritionDiaryRepository.todayEpochDay())
         shoppingRepository.regenerate(weekStart)
         val items = shoppingRepository.itemsForWeek(weekStart)
@@ -161,7 +173,7 @@ class NutritionChainIntegrationTest {
 
     @Test
     fun `diario separa la stessa voce di piano tra date e impedisce duplicati`() = runTest {
-        generatePrograms(profile, regenerateNutrition = true, regenerateWorkout = false, requireAnamnesis = false)
+        generate()
         val plan = nutritionRepository.getActivePlan()!!
         val mealEntry = plan.days.first { it.meals.isNotEmpty() }.meals.first().entries.first()
         val firstDay = NutritionDiaryRepository.todayEpochDay()
@@ -181,7 +193,7 @@ class NutritionChainIntegrationTest {
 
     @Test
     fun `diario ricalcola quantita e bilancio solo sui consumi attivi`() = runTest {
-        generatePrograms(profile, regenerateNutrition = true, regenerateWorkout = false, requireAnamnesis = false)
+        generate()
         val plan = nutritionRepository.getActivePlan()!!
         val meal = plan.days.first { it.meals.isNotEmpty() }.meals.first()
         val mealEntry = meal.entries.first()
@@ -203,7 +215,7 @@ class NutritionChainIntegrationTest {
 
     @Test
     fun `checkbox piano persiste il consumo e aggiorna il bilancio macro`() = runTest {
-        generatePrograms(profile, regenerateNutrition = true, regenerateWorkout = false, requireAnamnesis = false)
+        generate()
         val plan = nutritionRepository.getActivePlan()!!
         val meal = plan.days.first { it.meals.isNotEmpty() }.meals.first()
         val entry = meal.entries.first()
@@ -224,13 +236,7 @@ class NutritionChainIntegrationTest {
 
     @Test
     fun `calendario scambia seduta e riposo senza rigenerare il piano`() = runTest {
-        generatePrograms(
-            profile,
-            trainingDayIndices = listOf(0, 2, 4),
-            regenerateNutrition = false,
-            regenerateWorkout = true,
-            requireAnamnesis = false
-        )
+        generate(scope = ProgramGenerationEngine.Scope.WORKOUT, trainingDays = listOf(0, 2, 4))
         val before = workoutRepository.getActiveDays()
         val monday = before.first { it.dayIndex == 0 }
         val wednesday = before.first { it.dayIndex == 2 }
@@ -243,44 +249,9 @@ class NutritionChainIntegrationTest {
         assertThat(workoutRepository.getActivePlan()!!.id).isEqualTo(planId)
     }
 
-
-
-    @Test
-    fun `tre profili producono percorsi diversi in base a esperienza obiettivo e disponibilita`() = runTest {
-        val beginner = profile.copy(
-            experience = TrainingExperience.BEGINNER,
-            goal = Goal.RECOMP,
-            trainingDaysPerWeek = 2,
-            availableEquipment = emptySet()
-        )
-        generatePrograms(beginner, regenerateNutrition = true, regenerateWorkout = true, requireAnamnesis = false)
-        val beginnerWorkout = workoutRepository.getActivePlan()!!
-        val beginnerNutrition = nutritionRepository.getActivePlan()!!
-
-        val advanced = profile.copy(
-            experience = TrainingExperience.ADVANCED,
-            goal = Goal.HYPERTROPHY,
-            trainingDaysPerWeek = 5,
-            availableEquipment = com.fitcoach.app.domain.model.Equipment.entries.toSet(),
-            priorityMuscles = setOf(com.fitcoach.app.domain.model.MuscleGroup.CHEST)
-        )
-        generatePrograms(advanced, regenerateNutrition = true, regenerateWorkout = true, requireAnamnesis = false)
-        val advancedWorkout = workoutRepository.getActivePlan()!!
-        val advancedNutrition = nutritionRepository.getActivePlan()!!
-
-        assertThat(beginnerWorkout.splitType).isNotEqualTo(advancedWorkout.splitType)
-        assertThat(beginnerWorkout.days.count { !it.isRestDay }).isEqualTo(2)
-        assertThat(advancedWorkout.days.count { !it.isRestDay }).isEqualTo(5)
-        assertThat(advancedNutrition.weeklyCalories).isGreaterThan(beginnerNutrition.weeklyCalories)
-        assertThat(advancedWorkout.days.filter { !it.isRestDay }.sumOf { it.totalSets })
-            .isGreaterThan(beginnerWorkout.days.filter { !it.isRestDay }.sumOf { it.totalSets })
-    }
-
-
-
     @Test
     fun `rigenerazioni concorrenti non lasciano la lista vuota`() = runTest {
-        generatePrograms(profile, regenerateNutrition = true, regenerateWorkout = false, requireAnamnesis = false)
+        generate(scope = ProgramGenerationEngine.Scope.NUTRITION)
         val weekStart = NutritionDiaryRepository.weekStart(NutritionDiaryRepository.todayEpochDay())
 
         // Il bug: due rigenerazioni sovrapposte (collect del piano + load del
@@ -306,7 +277,7 @@ class NutritionChainIntegrationTest {
             assertThat(vm.state.value.items).isEmpty()
 
             // Ora genera il piano: il ViewModel deve reagire e popolare la lista.
-            generatePrograms(profile, regenerateNutrition = true, regenerateWorkout = false, requireAnamnesis = false)
+            generate(scope = ProgramGenerationEngine.Scope.NUTRITION)
             shoppingRepository.regenerate(NutritionDiaryRepository.weekStart(NutritionDiaryRepository.todayEpochDay()))
             vm.load()
             advanceUntilIdle()
@@ -327,7 +298,7 @@ class NutritionChainIntegrationTest {
 
     @Test
     fun `libreria aggiunge modifica riordina e rimuove esercizi senza rigenerare la scheda`() = runTest {
-        generatePrograms(profile, regenerateNutrition = false, regenerateWorkout = true, requireAnamnesis = false)
+        generate(scope = ProgramGenerationEngine.Scope.WORKOUT)
         val day = workoutRepository.getActiveDays().first { !it.isRestDay }
         val before = day.exercises
         val exercise = exerciseRepository.getAll().first { candidate -> before.none { it.exerciseId == candidate.id } }
@@ -349,10 +320,9 @@ class NutritionChainIntegrationTest {
         assertThat(workoutRepository.getDay(day.id)!!.exercises.any { it.id == added.id }).isFalse()
     }
 
-
     @Test
     fun `override temporaneo scambia le sedute solo nella settimana corrente`() = runTest {
-        generatePrograms(profile, regenerateNutrition = false, regenerateWorkout = true, requireAnamnesis = false)
+        generate(scope = ProgramGenerationEngine.Scope.WORKOUT)
         val days = workoutRepository.getActiveDays().sortedBy { it.dayIndex }
         val source = days.first { !it.isRestDay }
         val targetIndex = (source.dayIndex + 1) % 7
@@ -378,6 +348,4 @@ class NutritionChainIntegrationTest {
         workoutRepository.removeExercise(added.id)
         assertThat(workoutRepository.getFreeExercises(sessionId)).isEmpty()
     }
-
-
 }

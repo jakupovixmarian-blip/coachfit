@@ -8,24 +8,22 @@ import javax.inject.Inject
 /**
  * Unico punto di ingresso per la creazione/rigenerazione dei programmi.
  *
- * Per impostazione predefinita la generazione passa dal motore AI (l'autorita
- * decisionale del coach): l'AI propone la struttura e i motori matematici la
- * verificano e la persistono. Il motore deterministico offline resta disponibile
- * solo come scelta esplicita dell'utente, quando non c'e connessione.
+ * Non esiste un motore decisionale deterministico: la generazione passa sempre
+ * dal Coach AI (l'unica autorita), che propone la struttura e la consegna con
+ * submit_full_program. I calcoli matematici e i vincoli di sicurezza verificano
+ * la proposta e possono bloccarla, ma non ne generano una alternativa.
  */
 class ProgramGenerationCoordinator @Inject constructor(
-    private val aiGeneration: AiProgramGenerationService,
-    private val offlineEngine: GenerateProgramsUseCase
+    private val aiGeneration: AiProgramGenerationService
 ) {
     enum class Scope { BOTH, NUTRITION, WORKOUT }
 
     suspend fun generate(
         profile: UserProfile,
-        scope: Scope = Scope.BOTH,
-        useOfflineEngine: Boolean = false
-    ): GenerateProgramsUseCase.Result {
+        scope: Scope = Scope.BOTH
+    ): ProgramGenerationResult {
         if (!profile.isAnamnesisReady) {
-            return GenerateProgramsUseCase.Result.AnamnesisNotConfirmed(
+            return ProgramGenerationResult.AnamnesisNotConfirmed(
                 missing = profile.missingAnamnesisData,
                 contradictions = profile.anamnesisContradictions
             )
@@ -36,25 +34,16 @@ class ProgramGenerationCoordinator @Inject constructor(
             if (profile.weightKg == null) add("peso")
             if (profile.trainingDaysPerWeek <= 0) add("giorni di allenamento")
         }
-        if (missing.isNotEmpty()) return GenerateProgramsUseCase.Result.MissingData(missing)
-
-        if (useOfflineEngine) {
-            return offlineEngine(
-                profile = profile,
-                regenerateNutrition = scope != Scope.WORKOUT,
-                regenerateWorkout = scope != Scope.NUTRITION,
-                requireAnamnesis = true
-            )
-        }
+        if (missing.isNotEmpty()) return ProgramGenerationResult.MissingData(missing)
 
         return when (val result = aiGeneration.generate(profile, scope.toEngineScope())) {
-            is AiProgramGenerationService.Result.Success -> GenerateProgramsUseCase.Result.Success(
+            is AiProgramGenerationService.Result.Success -> ProgramGenerationResult.Success(
                 nutritionPlanId = result.nutritionPlanId,
                 workoutPlanId = result.workoutPlanId,
                 warnings = result.warnings
             )
             is AiProgramGenerationService.Result.Failure ->
-                GenerateProgramsUseCase.Result.Error(result.message)
+                ProgramGenerationResult.Error(result.message)
         }
     }
 

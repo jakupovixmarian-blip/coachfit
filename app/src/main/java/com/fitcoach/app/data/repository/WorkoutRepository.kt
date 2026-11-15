@@ -14,17 +14,18 @@ import com.fitcoach.app.data.local.entity.WorkoutSessionEntity
 import com.fitcoach.app.data.local.entity.WorkoutSetEntity
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.ExercisePerformance
+import com.fitcoach.app.domain.model.Goal
 import com.fitcoach.app.domain.model.Mesocycle
 import com.fitcoach.app.domain.model.MuscleGroup
 import com.fitcoach.app.domain.model.PlannedExercise
 import com.fitcoach.app.domain.model.SessionStatus
 import com.fitcoach.app.domain.model.SplitType
+import com.fitcoach.app.domain.model.TrainingExperience
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WorkoutDay
 import com.fitcoach.app.domain.model.WorkoutPlan
 import com.fitcoach.app.domain.model.WorkoutSession
 import com.fitcoach.app.domain.model.WorkoutSet
-import com.fitcoach.app.domain.workout.PeriodizationEngine
 import com.fitcoach.app.domain.workout.ProgressiveOverloadEngine
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import kotlinx.coroutines.flow.Flow
@@ -72,7 +73,7 @@ class WorkoutRepository @Inject constructor(
                 version = previousVersion + 1
             )
         )
-        val meso = PeriodizationEngine.defaultMesocycle(planId, profile, mesocycleWeeks)
+        val meso = defaultMesocycle(planId, profile, mesocycleWeeks)
         val mesoId = mesoDao.insert(
             MesocycleEntity(
                 planId = planId,
@@ -640,4 +641,32 @@ class WorkoutRepository @Inject constructor(
         totalSets = totalSets, totalReps = totalReps, volumeKg = volumeKg,
         avgRir = avgRir, estimated1Rm = estimated1Rm
     )
+
+    /**
+     * Mesociclo di riferimento per la persistenza: registra durata, focus e
+     * settimana di deload. Non pianifica la progressione (che appartiene al
+     * Coach AI): descrive solo l'inquadramento del blocco corrente.
+     */
+    private fun defaultMesocycle(planId: Long, profile: UserProfile, weeks: Int = 6): Mesocycle {
+        val focus = when (profile.goal) {
+            Goal.HYPERTROPHY -> "Ipertrofia"
+            Goal.CUT -> "Definizione (mantenimento forza)"
+            Goal.RECOMP -> "Ricomposizione"
+            Goal.MAINTENANCE -> "Mantenimento"
+            Goal.STRENGTH -> "Forza"
+        }
+        return Mesocycle(
+            planId = planId,
+            name = "Mesociclo $focus",
+            focus = focus,
+            weekCount = weeks,
+            startWeekIndex = 0,
+            deloadWeekIndex = when (profile.experience) {
+                TrainingExperience.BEGINNER -> null
+                else -> weeks - 1
+            },
+            isDeload = false,
+            progressionModel = "Double Progression"
+        )
+    }
 }
