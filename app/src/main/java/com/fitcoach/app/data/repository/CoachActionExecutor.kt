@@ -154,7 +154,11 @@ class CoachActionExecutor @Inject constructor(
             workoutPlanId = workoutPlanDao.getActive()?.id
         )
 
-        val result = generationCoordinator.get().generate(profile, scope)
+        val result = try {
+            generationCoordinator.get().generate(profile, scope)
+        } catch (e: Exception) {
+            return ApplyResult.Failed("Rigenerazione non riuscita: ${e.message ?: e::class.simpleName}")
+        }
 
         return when (result) {
             is GenerateProgramsUseCase.Result.Success -> {
