@@ -55,6 +55,22 @@ class CoachOrchestratorTest {
             """{"ok":true,"changeId":7,"stato":"PROPOSTA_REGISTRATA"}"""
     }
 
+    /** Strumento obbligatorio che respinge la prima consegna e accetta la seconda. */
+    private class FlakySubmitTool : CoachTool {
+        var calls = 0
+        override val name = "submit_full_program"
+        override val description = "consegna"
+        override val parameters: JsonObject = Schema.obj()
+        override suspend fun execute(arguments: JsonObject): String {
+            calls++
+            return if (calls == 1) {
+                """{"ok":false,"violazioni":["giorno 0 kcal: attese 2000, ricevute 1500"]}"""
+            } else {
+                """{"ok":true,"nutritionPlanId":11,"workoutPlanId":12}"""
+            }
+        }
+    }
+
     private class ScriptedApi(
         private val responses: MutableList<Response<ChatCompletionResponse>>
     ) : AiApi {
@@ -225,6 +241,34 @@ class CoachOrchestratorTest {
         assertThat(result.providerError).isNotNull()
         assertThat(result.providerError).contains("non ha consegnato il programma")
         assertThat(result.toolTrace).doesNotContain("echo")
+    }
+
+    @Test
+    fun `a rejected delivery keeps the tool required and allows a corrected retry`() = runTest {
+        // Prima consegna respinta (ok=false), seconda accettata (ok=true).
+        val submit = FlakySubmitTool()
+        val api = ScriptedApi(
+            mutableListOf(
+                toolCallResponse("submit_full_program", "{}"),
+                toolCallResponse("submit_full_program", "{}"),
+                textResponse("Programma consegnato.")
+            )
+        )
+        val registry = CoachToolRegistry(setOf(submit))
+        val orchestrator = CoachOrchestrator(AiClient(api, json), registry, json)
+
+        val result = orchestrator.run(
+            config(), "sys", "ctx", emptyList(), "genera",
+            maxIterations = 4, requireTool = "submit_full_program"
+        )
+
+        assertThat(submit.calls).isEqualTo(2)
+        assertThat(result.providerError).isNull()
+        // Entrambi i tentativi sono stati forzati sullo strumento obbligatorio.
+        val first = json.encodeToString(ChatCompletionRequest.serializer(), api.sent[0])
+        val second = json.encodeToString(ChatCompletionRequest.serializer(), api.sent[1])
+        assertThat(first).contains("\"name\":\"submit_full_program\"")
+        assertThat(second).contains("\"name\":\"submit_full_program\"")
     }
 
     private fun String.toResponseBody() =

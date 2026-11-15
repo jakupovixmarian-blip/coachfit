@@ -1,5 +1,6 @@
 package com.fitcoach.app.ui.workout
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,7 +17,9 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.EventNote
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.PlayArrow
@@ -26,6 +29,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -43,6 +47,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -299,15 +304,10 @@ fun WorkoutScreen(
         item {
             SectionCard {
                 Column {
-                    SectionHeader("Prossime sedute", "Periodizzazione")
+                    SectionHeader("Settimana", "Tocca un giorno per vedere gli esercizi")
                     Spacer(Modifier.height(8.dp))
-                    plan.days.filter { !it.isRestDay }.forEach { day ->
-                        Text(
-                            "${weekdayNames.getOrElse(day.dayIndex) { "?" }}: ${day.title} · ${day.totalSets} serie",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary,
-                            modifier = Modifier.padding(vertical = 2.dp)
-                        )
+                    plan.days.forEach { day ->
+                        WeekDayCard(day = day)
                     }
                 }
             }
@@ -390,6 +390,85 @@ fun WorkoutScreen(
     }
 
     SnackbarHost(snackbar)
+}
+
+@Composable
+private fun WeekDayCard(day: WorkoutDay) {
+    var expanded by remember { mutableStateOf(false) }
+    val dayLabel = weekdayNames.getOrElse(day.dayIndex) { "Giorno ${day.dayIndex + 1}" }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { expanded = !expanded }
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "$dayLabel · ${if (day.isRestDay) "Riposo" else day.title}",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    if (day.isRestDay) "Nessuna seduta programmata"
+                    else buildString {
+                        append("${day.totalSets} serie · ${day.exercises.size} esercizi")
+                        if (day.muscleGroups.isNotEmpty()) {
+                            append(" · ")
+                            append(day.muscleGroups.joinToString { it.label })
+                        }
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary
+                )
+            }
+            if (!day.isRestDay) {
+                Icon(
+                    imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = if (expanded) "Comprimi" else "Espandi",
+                    tint = Emerald
+                )
+            }
+        }
+        if (expanded && !day.isRestDay) {
+            Spacer(Modifier.height(8.dp))
+            day.exercises.sortedBy { it.orderIndex }.forEachIndexed { index, exercise ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "${index + 1}. ${exercise.exerciseName}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "${exercise.primaryMuscle.label} · " +
+                                "rec ${exercise.restSeconds}s · RIR ${exercise.targetRir}" +
+                                if (exercise.technique.isNotBlank()) " · ${exercise.technique}" else "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                    Pill(
+                        "${exercise.sets}×${exercise.minReps}-${exercise.maxReps}",
+                        CarbsColor
+                    )
+                }
+            }
+        }
+        HorizontalDivider(
+            modifier = Modifier.padding(top = 6.dp),
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
+    }
 }
 
 @Composable
@@ -558,17 +637,56 @@ private fun WorkoutCalendarDialog(
                 LazyColumn {
                 items(days.size) { index ->
                     val day = days[index]
+                    var dayExpanded by remember { mutableStateOf(false) }
                     Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                        Text(
-                            "${weekdayNames[day.dayIndex]} · ${day.title}",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            if (day.isRestDay) "Giorno di riposo" else "${day.totalSets} serie programmate",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = !day.isRestDay) { dayExpanded = !dayExpanded },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    "${weekdayNames[day.dayIndex]} · ${day.title}",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    if (day.isRestDay) "Giorno di riposo"
+                                    else "${day.totalSets} serie · ${day.exercises.size} esercizi",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary
+                                )
+                            }
+                            if (!day.isRestDay) {
+                                Icon(
+                                    imageVector = if (dayExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                    contentDescription = if (dayExpanded) "Comprimi" else "Espandi",
+                                    tint = Emerald
+                                )
+                            }
+                        }
+                        if (dayExpanded && !day.isRestDay) {
+                            day.exercises.sortedBy { it.orderIndex }.forEachIndexed { i, ex ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(start = 8.dp, top = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        "${i + 1}. ${ex.exerciseName}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text(
+                                        "${ex.sets}×${ex.minReps}-${ex.maxReps}",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = CarbsColor
+                                    )
+                                }
+                            }
+                        }
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                             horizontalArrangement = Arrangement.spacedBy(4.dp)

@@ -194,10 +194,16 @@ class AiProgramGenerationService @Inject constructor(
               alimenti o esercizi.
             - Rispetta allergie, intolleranze, alimenti esclusi, limitazioni, attrezzatura, esperienza,
               recupero e budget.
-            - `dayType` deve essere HIGH, MEDIUM o LOW; `slot` un valore MealSlot; `unit` RAW, COOKED
+            - `dayType` deve essere HIGH, MEDIUM o LOW; `slot` un valore MealSlot (BREAKFAST,
+              MORNING_SNACK, LUNCH, AFTERNOON_SNACK, DINNER, EVENING_SNACK); `unit` RAW, COOKED
               o AS_SOLD; `split` FULL_BODY, UPPER_LOWER, PUSH_PULL_LEGS o CUSTOM.
-            - Ogni seduta: 6-24 serie allenanti, nessun esercizio vietato, giornate diverse quando lo
-              split lo consente. Non assegnare una serie completa ai muscoli secondari.
+            - Ogni giorno nutrizionale: da 3 a 6 pasti, ogni pasto con almeno un alimento, ogni
+              alimento da 1 a 2000 grammi. Esattamente 7 giorni con dayIndex 0..6.
+            - Ogni esercizio: `sets` da 1 a 8, `minReps`/`maxReps` da 1 a 30 (con minReps<=maxReps),
+              `restSeconds` da 15 a 600, `targetRir` da 0 a 5. Sono tutti obbligatori: non ometterli.
+            - Ogni seduta: 6-24 serie allenanti totali; lo stesso esercizio non oltre 24 serie
+              settimanali; nessun esercizio vietato. Giornate diverse quando lo split lo consente.
+              Non assegnare una serie completa ai muscoli secondari.
             - Non sei un medico: nessuna diagnosi, farmaco, ormone o sostanza dopante. Nessun deficit
               calorico estremo o volume irragionevole.
         """.trimIndent()

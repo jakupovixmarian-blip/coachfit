@@ -157,8 +157,9 @@ object ProgramGenerationEngine {
         profile: UserProfile,
         proposal: AiProgramProposal,
         foods: List<FoodItem>,
-        exercises: List<Exercise>
-    ): List<String> = AiProposalDiagnostics.analyze(profile, proposal, foods, exercises)
+        exercises: List<Exercise>,
+        scope: Scope = Scope.BOTH
+    ): List<String> = AiProposalDiagnostics.analyze(profile, proposal, foods, exercises, scope)
 
     private fun mapWorkout(
         profile: UserProfile,

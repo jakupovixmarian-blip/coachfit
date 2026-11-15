@@ -116,7 +116,12 @@ class CoachOrchestrator @Inject constructor(
                 val output = toolRegistry.execute(call.function.name, args)
                 trace += call.function.name
                 toolResults += CoachToolResult(call.function.name, output)
-                if (call.function.name == requireTool) requiredToolDelivered = true
+                // Conta come consegnato SOLO se lo strumento obbligatorio ha accettato
+                // (ok=true). Se la proposta viene respinta (ok=false) la scelta forzata
+                // resta attiva e il modello riceve la diagnosi per correggersi.
+                if (call.function.name == requireTool && outputReportsOk(output)) {
+                    requiredToolDelivered = true
+                }
                 if (call.function.name in toolRegistry.writeToolNames) {
                     extractChangeId(output)?.let { pendingChangeIds += it }
                 }
@@ -210,6 +215,16 @@ class CoachOrchestrator @Inject constructor(
 
     private fun parseArgs(raw: String?): JsonObject =
         raw?.let { runCatching { json.parseToJsonElement(it) as? JsonObject }.getOrNull() } ?: JsonObject(emptyMap())
+
+    /**
+     * True se l'output di uno strumento riporta `ok=true`. Uno strumento di
+     * consegna che risponde `ok=false` NON conta come consegna riuscita: la
+     * proposta e stata respinta e il modello deve correggersi.
+     */
+    private fun outputReportsOk(output: String): Boolean = runCatching {
+        val obj = json.parseToJsonElement(output) as? JsonObject ?: return false
+        (obj["ok"] as? kotlinx.serialization.json.JsonPrimitive)?.content == "true"
+    }.getOrDefault(false)
 
     private fun extractChangeId(output: String): Long? =
         runCatching {

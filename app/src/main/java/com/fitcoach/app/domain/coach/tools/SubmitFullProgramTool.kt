@@ -97,7 +97,7 @@ class SubmitFullProgramTool @Inject constructor(
                 JsonOut.obj(
                     "ok" to JsonOut.bool(false),
                     "violazioni" to JsonOut.strings(
-                        ProgramGenerationEngine.diagnose(profile, proposal, foods, exercises)
+                        ProgramGenerationEngine.diagnose(profile, proposal, foods, exercises, scope)
                     ),
                     "nota" to JsonOut.str(
                         "Correggi SOLO i valori indicati e richiama submit_full_program con l'oggetto completo."
