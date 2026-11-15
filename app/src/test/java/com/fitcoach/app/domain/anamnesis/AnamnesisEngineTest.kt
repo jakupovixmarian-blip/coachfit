@@ -132,4 +132,46 @@ class AnamnesisEngineTest {
         assertThat(text).contains("ESPERIENZA DI ALLENAMENTO")
         assertThat(text).contains("Ricomposizione corporea")
     }
+
+    @Test
+    fun `reset clears anamnesis but preserves account identity`() {
+        val original = filled().copy(
+            id = 7L, name = "Marco", createdAt = 123L,
+            anamnesisCompleted = true, anamnesisConfirmedAt = 999L,
+            dietaryPreferences = setOf(com.fitcoach.app.domain.model.DietaryPreference.VEGETARIAN)
+        )
+        val reset = AnamnesisEngine.resetAnamnesis(original)
+
+        // Dati dell'anamnesi azzerati.
+        assertThat(reset.ageYears).isNull()
+        assertThat(reset.heightCm).isNull()
+        assertThat(reset.weightKg).isNull()
+        assertThat(reset.goal).isEqualTo(Goal.RECOMP)
+        assertThat(reset.dietaryPreferences).isEmpty()
+        assertThat(reset.anamnesisCompleted).isFalse()
+        assertThat(reset.anamnesisConfirmedAt).isNull()
+        assertThat(reset.isAnamnesisReady).isFalse()
+
+        // Identita dell'account preservata.
+        assertThat(reset.id).isEqualTo(7L)
+        assertThat(reset.name).isEqualTo("Marco")
+        assertThat(reset.createdAt).isEqualTo(123L)
+    }
+
+    @Test
+    fun `edit helpers prefill answers from an existing profile`() {
+        val p = filled().copy(
+            weightKg = 82.5,
+            availableEquipment = setOf(Equipment.BARBELL, Equipment.DUMBBELL),
+            currentLoads = mapOf("panca" to 70.0),
+            trainingStatus = TrainingStatus.CURRENTLY_TRAINING
+        )
+        assertThat(AnamnesisEngine.answerText(p, "weightKg")).isEqualTo("82.5")
+        assertThat(AnamnesisEngine.answerText(p, "currentLoads")).isEqualTo("panca=70.0")
+        assertThat(AnamnesisEngine.answerSelection(p, "availableEquipment"))
+            .containsExactly("BARBELL", "DUMBBELL")
+        // In modifica si scorre il flusso completo, senza saltare le risposte.
+        assertThat(AnamnesisEngine.nextQuestionFull("age")?.id).isEqualTo("sex")
+        assertThat(AnamnesisEngine.previousQuestion("sex")?.id).isEqualTo("age")
+    }
 }
