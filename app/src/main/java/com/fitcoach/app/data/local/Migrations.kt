@@ -266,3 +266,10 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_v2_generation_payloads_jobId` ON `v2_generation_payloads` (`jobId`)")
     }
 }
+
+/** Migrazione schema v11 -> v12: stato "acquistato" per la lista della spesa. */
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE shopping_items ADD COLUMN purchased INTEGER NOT NULL DEFAULT 0")
+    }
+}

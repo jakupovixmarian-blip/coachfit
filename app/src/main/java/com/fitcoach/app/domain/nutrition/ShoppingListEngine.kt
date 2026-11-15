@@ -60,7 +60,8 @@ object ShoppingListEngine {
                 unit = acc.unit,
                 // Conserva spunta e "gia in casa" per lo stesso alimento, senza perdere stato.
                 checked = prev?.checked ?: false,
-                alreadyHave = prev?.alreadyHave ?: false
+                alreadyHave = prev?.alreadyHave ?: false,
+                purchased = prev?.purchased ?: false
             )
         }.sortedWith(compareBy({ it.category.ordinal }, { it.foodName }))
     }

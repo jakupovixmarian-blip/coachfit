@@ -35,6 +35,9 @@ data class NutritionUiState(
     // Sostituzione vincolata
     val substitutionEntry: MealEntry? = null,
     val substitutes: List<FoodItem> = emptyList(),
+    /** foodId -> compatibilita precalcolata, per mostrare quali varianti sono valide. */
+    val substituteStatuses: Map<Long, FoodSubstitutionEngine.Status> = emptyMap(),
+    val substituteEvaluating: Boolean = false,
     val preview: FoodSubstitutionEngine.Result? = null,
     val previewFood: FoodItem? = null,
     // Ricerca alimentare progressiva (§6)
@@ -131,8 +134,41 @@ class NutritionViewModel @Inject constructor(
             _state.value = _state.value.copy(
                 substitutionEntry = entry,
                 substitutes = subs,
+                substituteStatuses = emptyMap(),
+                substituteEvaluating = subs.isNotEmpty(),
                 preview = null,
                 previewFood = null
+            )
+            evaluateSubstitutes(entry, subs)
+        }
+    }
+
+    /**
+     * Precalcola la compatibilita di ogni variante, cosi il dialogo mostra subito
+     * quali funzionano (invece di far scoprire "non idonea" solo al tocco) e le
+     * ordina mettendo per prime quelle applicabili.
+     */
+    private suspend fun evaluateSubstitutes(entry: MealEntry, candidates: List<FoodItem>) {
+        val dayIndex = _state.value.selectedDayIndex
+        val statuses = linkedMapOf<Long, FoodSubstitutionEngine.Status>()
+        for (food in candidates) {
+            val result = runCatching {
+                substitutionRepository.preview(entry.id, dayIndex, food)
+            }.getOrNull()
+            if (result != null) statuses[food.id] = result.status
+        }
+        val ordered = candidates.sortedWith(
+            compareBy(
+                { statuses[it.id] == FoodSubstitutionEngine.Status.INCOMPATIBLE },
+                { statuses[it.id]?.ordinal ?: Int.MAX_VALUE }
+            )
+        )
+        // Aggiorna solo se il dialogo e ancora aperto sulla stessa voce.
+        if (_state.value.substitutionEntry?.id == entry.id) {
+            _state.value = _state.value.copy(
+                substitutes = ordered,
+                substituteStatuses = statuses,
+                substituteEvaluating = false
             )
         }
     }
@@ -140,6 +176,7 @@ class NutritionViewModel @Inject constructor(
     fun cancelSubstitution() {
         _state.value = _state.value.copy(
             substitutionEntry = null, substitutes = emptyList(), preview = null, previewFood = null,
+            substituteStatuses = emptyMap(), substituteEvaluating = false,
             foodSearchQuery = "", foodSearchResults = emptyList(), foodSearchNote = null
         )
     }

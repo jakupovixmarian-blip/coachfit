@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Refresh
@@ -31,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -125,6 +127,29 @@ fun ShoppingScreen(
                         color = Emerald,
                         trackColor = FitSurfaceVariant
                     )
+                    Spacer(Modifier.height(12.dp))
+                    Button(
+                        onClick = { viewModel.completeShopping() },
+                        enabled = state.checkedCount > 0,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Filled.Check, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            if (state.checkedCount > 0)
+                                "Spesa effettuata (${state.checkedCount} alimenti)"
+                            else "Spesa effettuata"
+                        )
+                    }
+                    if (state.completedCount > 0) {
+                        Spacer(Modifier.height(6.dp))
+                        OutlinedButton(
+                            onClick = { viewModel.reopenShopping() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Riapri spesa (${state.completedCount} acquistati)")
+                        }
+                    }
                 }
             }
         }

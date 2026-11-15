@@ -1,6 +1,8 @@
 package com.fitcoach.app.ui.workout
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -109,6 +111,12 @@ fun WorkoutScreen(
                             Spacer(Modifier.width(8.dp))
                             Text(if (state.generating) "Generazione..." else "Genera scheda")
                         }
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(onClick = { navController.navigate(com.fitcoach.app.ui.navigation.Routes.CUSTOM_WORKOUT) }) {
+                            Icon(Icons.Filled.Edit, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Crea scheda personalizzata")
+                        }
                     }
                 }
             )
@@ -133,6 +141,9 @@ fun WorkoutScreen(
             ) {
                 SectionHeader("Allenamento", plan.splitType.label)
                 Row {
+                    IconButton(onClick = { navController.navigate(com.fitcoach.app.ui.navigation.Routes.CUSTOM_WORKOUT) }) {
+                        Icon(Icons.Filled.Edit, contentDescription = "Crea scheda personalizzata", tint = TextSecondary)
+                    }
                     IconButton(onClick = { viewModel.showCalendar(true) }) {
                         Icon(Icons.Filled.EventNote, contentDescription = "Calendario allenamenti", tint = TextSecondary)
                     }
@@ -175,14 +186,47 @@ fun WorkoutScreen(
         item {
             SectionCard {
                 Column {
+                    SectionHeader("Giorno selezionato", "Scegli il giorno da allenare")
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        plan.days.sortedBy { it.dayIndex }.forEach { d ->
+                            val selected = d.dayIndex == state.selectedDayIndex
+                            FilterChip(
+                                selected = selected,
+                                onClick = { viewModel.selectDay(d.dayIndex) },
+                                enabled = !d.isRestDay,
+                                label = {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(weekdayNames.getOrElse(d.dayIndex) { "?" }.take(3))
+                                        Text(
+                                            if (d.isRestDay) "Riposo" else "${d.totalSets}s",
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            SectionCard {
+                Column {
                     SectionHeader(
-                        "Oggi · ${weekdayNames.getOrElse(java.time.LocalDate.now().dayOfWeek.value - 1) { "" }}",
+                        "${weekdayNames.getOrElse(state.selectedDayIndex) { "" }} · " +
+                            "${LocalDate.ofEpochDay(state.selectedEpochDay)}",
                         today?.title ?: "Giorno di riposo"
                     )
                     Spacer(Modifier.height(10.dp))
                     if (today == null) {
                         Text(
-                            "Nessuna seduta programmata per oggi. Puoi recuperare oppure iniziare una sessione libera.",
+                            "Nessuna seduta programmata per il giorno selezionato. Puoi recuperare " +
+                                "oppure iniziare una sessione libera.",
                             style = MaterialTheme.typography.bodyMedium, color = TextSecondary
                         )
                         Spacer(Modifier.height(8.dp))
@@ -215,10 +259,19 @@ fun WorkoutScreen(
                             }
                         }
                     } else if (session == null) {
-                        Button(onClick = { viewModel.startSession() }) {
+                        Text(
+                            "${today.totalSets} serie · ${today.exercises.size} esercizi. " +
+                                "Avvia la sessione per registrare serie, ripetizioni e carichi.",
+                            style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Button(
+                            onClick = { viewModel.startSession() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             Icon(Icons.Filled.PlayArrow, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Avvia sessione")
+                            Text("Avvia sessione di ${weekdayNames.getOrElse(state.selectedDayIndex) { "oggi" }}")
                         }
                     } else {
                         Row(verticalAlignment = Alignment.CenterVertically) {

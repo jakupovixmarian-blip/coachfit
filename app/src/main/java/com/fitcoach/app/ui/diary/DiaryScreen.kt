@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
@@ -27,6 +29,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -160,8 +164,16 @@ fun DiaryScreen(
             state = state,
             onQuery = viewModel::onQueryChange,
             onSelect = viewModel::selectFood,
+            onScan = viewModel::openScanner,
             onConfirm = { food, grams, slot -> viewModel.addExtraFood(food, grams, slot) },
             onDismiss = viewModel::closeAddDialog
+        )
+    }
+
+    if (state.scannerOpen) {
+        com.fitcoach.app.ui.components.BarcodeScannerDialog(
+            onBarcode = viewModel::onBarcodeScanned,
+            onDismiss = viewModel::closeScanner
         )
     }
 
@@ -320,6 +332,7 @@ private fun AddFoodDialog(
     state: DiaryUiState,
     onQuery: (String) -> Unit,
     onSelect: (FoodItem) -> Unit,
+    onScan: () -> Unit,
     onConfirm: (FoodItem, Double, MealSlot) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -340,7 +353,21 @@ private fun AddFoodDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(onClick = onScan, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Filled.PhotoCamera, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Scansiona codice a barre")
+                    }
                     Spacer(Modifier.height(10.dp))
+                    if (state.barcodeLoading) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Ricerca del prodotto in corso...", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        }
+                        Spacer(Modifier.height(6.dp))
+                    }
                     if (state.searchResults.isEmpty() && state.query.isNotBlank()) {
                         Text("Nessun alimento trovato.", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
                     }

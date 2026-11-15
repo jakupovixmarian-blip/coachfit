@@ -218,6 +218,8 @@ fun NutritionScreen(
         SubstitutionDialog(
             entryName = entry.foodName,
             substitutes = state.substitutes,
+            substituteStatuses = state.substituteStatuses,
+            substituteEvaluating = state.substituteEvaluating,
             preview = state.preview,
             previewFood = state.previewFood,
             searchQuery = state.foodSearchQuery,
@@ -298,6 +300,8 @@ private fun MealCard(
 private fun SubstitutionDialog(
     entryName: String,
     substitutes: List<FoodItem>,
+    substituteStatuses: Map<Long, FoodSubstitutionEngine.Status>,
+    substituteEvaluating: Boolean,
     preview: FoodSubstitutionEngine.Result?,
     previewFood: FoodItem?,
     searchQuery: String,
@@ -322,14 +326,30 @@ private fun SubstitutionDialog(
                         style = MaterialTheme.typography.bodySmall, color = TextSecondary
                     )
                     Spacer(Modifier.height(12.dp))
-                    if (substitutes.isEmpty()) {
+                    if (substituteEvaluating) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Valuto la compatibilita delle alternative…",
+                                style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        }
+                    } else if (substitutes.isEmpty()) {
                         Text(
                             "Nessun sostituto compatibile con le tue restrizioni.",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     } else {
+                        val valid = substitutes.count {
+                            substituteStatuses[it.id] != FoodSubstitutionEngine.Status.INCOMPATIBLE
+                        }
+                        Text(
+                            if (valid > 0) "$valid varianti applicabili · le altre richiedono un alimento di riequilibrio."
+                            else "Nessuna variante diretta: prova a cercare un alimento specifico qui sotto.",
+                            style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                        )
+                        Spacer(Modifier.height(8.dp))
                         substitutes.forEach { food ->
-                            SubstituteRow(food, onPreview)
+                            SubstituteRow(food, substituteStatuses[food.id], onPreview)
                         }
                     }
 
@@ -371,7 +391,7 @@ private fun SubstitutionDialog(
                                     "${food.source}${food.brand?.let { " · $it" } ?: ""}",
                                     style = MaterialTheme.typography.labelSmall, color = TextSecondary
                                 )
-                                SubstituteRow(food, onPreview)
+                                SubstituteRow(food, null, onPreview)
                             }
                         }
                     }
@@ -393,7 +413,11 @@ private fun SubstitutionDialog(
 }
 
 @Composable
-private fun SubstituteRow(food: FoodItem, onPreview: (FoodItem) -> Unit) {
+private fun SubstituteRow(
+    food: FoodItem,
+    status: FoodSubstitutionEngine.Status?,
+    onPreview: (FoodItem) -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -408,6 +432,15 @@ private fun SubstituteRow(food: FoodItem, onPreview: (FoodItem) -> Unit) {
                 "${food.kcalPer100g.toInt()} kcal/100g · P ${food.proteinPer100g.toInt()} · C ${food.carbsPer100g.toInt()} · G ${food.fatPer100g.toInt()}",
                 style = MaterialTheme.typography.bodySmall, color = TextSecondary
             )
+            status?.let {
+                val (label, color) = when (it) {
+                    FoodSubstitutionEngine.Status.COMPATIBLE -> "Compatibile" to Emerald
+                    FoodSubstitutionEngine.Status.COMPATIBLE_WITH_ADJUSTMENT ->
+                        "Compatibile con aggiunta" to CarbsColor
+                    FoodSubstitutionEngine.Status.INCOMPATIBLE -> "Non compatibile" to TextSecondary
+                }
+                Text(label, style = MaterialTheme.typography.labelSmall, color = color)
+            }
         }
         TextButton(onClick = { onPreview(food) }) { Text("Verifica") }
     }

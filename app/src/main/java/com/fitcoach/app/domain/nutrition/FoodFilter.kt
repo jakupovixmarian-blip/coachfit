@@ -65,7 +65,14 @@ object FoodFilter {
     fun allowedFoods(all: List<FoodItem>, profile: UserProfile): List<FoodItem> =
         all.filter { isAllowed(it, profile) }
 
-    /** Sostituti compatibili con le restrizioni dell'utente. */
+    /**
+     * Sostituti compatibili con le restrizioni dell'utente, ordinati per
+     * somiglianza nutrizionale al macro dominante dell'originale.
+     *
+     * Unisce i sostituti espliciti dichiarati nella banca dati con le varianti
+     * della stessa categoria, cosi l'utente ha SEMPRE piu alternative tra cui
+     * scegliere (non solo una) e non resta bloccato se la prima non e compatibile.
+     */
     fun findSubstitutes(
         food: FoodItem,
         all: List<FoodItem>,
@@ -74,11 +81,29 @@ object FoodFilter {
         val allowed = allowedFoods(all, profile)
         val byName = allowed.associateBy { it.name }
         val explicit = food.substituteNames.mapNotNull { byName[it] }
-        if (explicit.isNotEmpty()) return explicit
-        // Fallback: stessa categoria, valori simili.
-        return allowed.filter {
+
+        val sameCategory = allowed.filter {
             it.id != food.id && it.category == food.category &&
                 !it.name.equals(food.name, ignoreCase = true)
-        }.sortedBy { kotlin.math.abs(it.proteinPer100g - food.proteinPer100g) }.take(3)
+        }
+
+        return (explicit + sameCategory)
+            .distinctBy { it.id }
+            .sortedBy { nutritionalDistance(food, it) }
+            .take(MAX_SUBSTITUTES)
     }
+
+    /** Distanza nutrizionale: privilegia alimenti con ruolo macro simile. */
+    private fun nutritionalDistance(a: FoodItem, b: FoodItem): Double {
+        fun share(value: Double, total: Double) = if (total <= 0.0) 0.0 else value / total
+        val aKcal = a.kcalPer100g.coerceAtLeast(1.0)
+        val bKcal = b.kcalPer100g.coerceAtLeast(1.0)
+        val dProtein = kotlin.math.abs(share(a.proteinPer100g, aKcal) - share(b.proteinPer100g, bKcal))
+        val dCarbs = kotlin.math.abs(share(a.carbsPer100g, aKcal) - share(b.carbsPer100g, bKcal))
+        val dFat = kotlin.math.abs(share(a.fatPer100g, aKcal) - share(b.fatPer100g, bKcal))
+        val dEnergy = kotlin.math.abs(a.kcalPer100g - b.kcalPer100g) / 300.0
+        return dProtein + dCarbs + dFat + dEnergy
+    }
+
+    private const val MAX_SUBSTITUTES = 12
 }

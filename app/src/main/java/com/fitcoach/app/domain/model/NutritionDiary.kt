@@ -67,6 +67,8 @@ data class ShoppingItem(
     val checked: Boolean = false,
     /** Gia presente in casa: non va acquistato. */
     val alreadyHave: Boolean = false,
+    /** Acquisto completato: la voce resta nello storico ma non compare piu nella lista. */
+    val purchased: Boolean = false,
     val isCustom: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
 )

@@ -40,6 +40,10 @@ data class WorkoutUiState(
     val loading: Boolean = true,
     val plan: WorkoutPlan? = null,
     val today: WorkoutDay? = null,
+    /** Indice (0=Lun .. 6=Dom) del giorno selezionato; -1 = oggi. */
+    val selectedDayIndex: Int = -1,
+    /** Data della seduta del giorno selezionato. */
+    val selectedEpochDay: Long = LocalDate.now().toEpochDay(),
     val session: WorkoutSession? = null,
     val message: String? = null,
     val generating: Boolean = false,
@@ -86,7 +90,8 @@ class WorkoutViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
-    private val generationCoordinator: ProgramGenerationCoordinator
+    private val generationCoordinator: ProgramGenerationCoordinator,
+    private val notificationScheduler: com.fitcoach.app.notifications.NotificationScheduler
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(WorkoutUiState())
@@ -103,14 +108,16 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             val plan = workoutRepository.getActivePlan()
             val todayIndex = LocalDate.now().dayOfWeek.value - 1
-            val today = plan?.days?.firstOrNull { it.dayIndex == todayIndex && !it.isRestDay }
-            val session = workoutRepository.getSessionForDay(LocalDate.now().toEpochDay())
+            val selectedIndex = _state.value.selectedDayIndex.takeIf { it >= 0 } ?: todayIndex
+            val selectedEpochDay = epochDayFor(selectedIndex)
+            val selectedDay = plan?.days?.firstOrNull { it.dayIndex == selectedIndex && !it.isRestDay }
+            val session = workoutRepository.getSessionForDay(selectedEpochDay)
             val freeExercises = if (session?.workoutDayId == null && session != null) {
                 workoutRepository.getFreeExercises(session.id)
             } else emptyList()
             val effectiveToday = if (session?.workoutDayId == null && session != null) {
-                WorkoutDay(id = 0L, dayIndex = todayIndex, title = "Allenamento libero", exercises = freeExercises)
-            } else today
+                WorkoutDay(id = 0L, dayIndex = selectedIndex, title = "Allenamento libero", exercises = freeExercises)
+            } else selectedDay
             val lastPerformances = effectiveToday?.exercises
                 ?.mapNotNull { pe ->
                     workoutRepository.getLatestPerformance(pe.exerciseId)?.let { pe.exerciseId to it }
@@ -123,6 +130,8 @@ class WorkoutViewModel @Inject constructor(
                 loading = false,
                 plan = plan,
                 today = effectiveToday,
+                selectedDayIndex = selectedIndex,
+                selectedEpochDay = selectedEpochDay,
                 session = session,
                 lastPerformances = lastPerformances,
                 history = history,
@@ -130,6 +139,30 @@ class WorkoutViewModel @Inject constructor(
             )
             syncStopwatch(session)
         }
+    }
+
+    /**
+     * Data reale della seduta del giorno selezionato. Si ancora alla settimana
+     * corrente (lunedi-domenica): selezionando un giorno gia passato si riferisce
+     * alla seduta di questa settimana, cosi si puo registrare un allenamento
+     * arretrato senza inventare date.
+     */
+    private fun epochDayFor(dayIndex: Int): Long {
+        val today = LocalDate.now()
+        val monday = today.minusDays((today.dayOfWeek.value - 1).toLong())
+        return monday.plusDays(dayIndex.coerceIn(0, 6).toLong()).toEpochDay()
+    }
+
+    /** Seleziona il giorno della settimana di cui mostrare e avviare la seduta. */
+    fun selectDay(dayIndex: Int) {
+        _state.value = _state.value.copy(selectedDayIndex = dayIndex)
+        load()
+    }
+
+    /** Torna alla seduta di oggi. */
+    fun selectToday() {
+        _state.value = _state.value.copy(selectedDayIndex = -1)
+        load()
     }
 
     /** Avvia/ferma il cronometro della durata sessione in base allo stato. */
@@ -299,16 +332,23 @@ class WorkoutViewModel @Inject constructor(
 
     fun startSession() {
         viewModelScope.launch {
-            val day = _state.value.today ?: return@launch
-            if (day.id == 0L) workoutRepository.startFreeSession(LocalDate.now().toEpochDay())
-            else workoutRepository.startSession(day, LocalDate.now().toEpochDay())
+            val day = _state.value.today
+            if (day == null) {
+                _state.value = _state.value.copy(
+                    message = "Nessuna seduta programmata per il giorno selezionato."
+                )
+                return@launch
+            }
+            val epochDay = _state.value.selectedEpochDay
+            if (day.id == 0L) workoutRepository.startFreeSession(epochDay)
+            else workoutRepository.startSession(day, epochDay)
             load()
         }
     }
 
     fun startFreeSession() {
         viewModelScope.launch {
-            workoutRepository.startFreeSession(LocalDate.now().toEpochDay())
+            workoutRepository.startFreeSession(_state.value.selectedEpochDay)
             load()
         }
     }
@@ -325,8 +365,8 @@ class WorkoutViewModel @Inject constructor(
                     _state.value = _state.value.copy(message = "Nessuna seduta programmata per oggi.")
                     return@launch
                 }
-                if (day.id == 0L) workoutRepository.startFreeSession(LocalDate.now().toEpochDay())
-                else workoutRepository.startSession(day, LocalDate.now().toEpochDay())
+                if (day.id == 0L) workoutRepository.startFreeSession(_state.value.selectedEpochDay)
+                else workoutRepository.startSession(day, _state.value.selectedEpochDay)
                 load()
             }
             openSetForm(planned, sessionSetsFor(planned.exerciseId).size)
@@ -459,19 +499,12 @@ class WorkoutViewModel @Inject constructor(
             restReason = reason,
             resting = true
         )
-        restJob = viewModelScope.launch {
-            var remaining = seconds
-            while (remaining > 0) {
-                kotlinx.coroutines.delay(1000)
-                remaining -= 1
-                _state.value = _state.value.copy(restRemainingSeconds = remaining)
-            }
-            _state.value = _state.value.copy(resting = false, restRemainingSeconds = 0)
-        }
+        runRestTimer(seconds)
     }
 
     fun skipRest() {
         restJob?.cancel()
+        notificationScheduler.cancelRestAlarm()
         _state.value = _state.value.copy(resting = false, restRemainingSeconds = 0)
     }
 
@@ -483,12 +516,25 @@ class WorkoutViewModel @Inject constructor(
             restRemainingSeconds = newRemaining,
             restTotalSeconds = maxOf(_state.value.restTotalSeconds, newRemaining)
         )
+        runRestTimer(newRemaining)
+    }
+
+    /**
+     * Cronometro di recupero basato su tempo assoluto (nessuna deriva da delay
+     * cumulati) con allarme di sistema alla scadenza: suona anche se l'app e in
+     * background o lo schermo e spento.
+     */
+    private fun runRestTimer(seconds: Int) {
+        val endAt = System.currentTimeMillis() + seconds * 1000L
+        notificationScheduler.scheduleRestAlarm(endAt, seconds)
         restJob = viewModelScope.launch {
-            var remaining = newRemaining
-            while (remaining > 0) {
-                kotlinx.coroutines.delay(1000)
-                remaining -= 1
-                _state.value = _state.value.copy(restRemainingSeconds = remaining)
+            while (true) {
+                val remainingMs = endAt - System.currentTimeMillis()
+                if (remainingMs <= 0) break
+                _state.value = _state.value.copy(
+                    restRemainingSeconds = ((remainingMs + 999) / 1000).toInt()
+                )
+                kotlinx.coroutines.delay(minOf(remainingMs, 1000L))
             }
             _state.value = _state.value.copy(resting = false, restRemainingSeconds = 0)
         }

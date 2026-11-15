@@ -20,7 +20,9 @@ data class ShoppingUiState(
     val weekStart: Long = 0,
     val items: List<ShoppingItem> = emptyList(),
     val message: String? = null,
-    val addDialog: Boolean = false
+    val addDialog: Boolean = false,
+    /** Voci gia chiuse come acquistate nella settimana (fuori dalla lista attiva). */
+    val completedCount: Int = 0
 ) {
     val grouped: Map<ShoppingCategory, List<ShoppingItem>>
         get() = items.groupBy { it.category }.toSortedMap(compareBy { it.ordinal })
@@ -28,6 +30,7 @@ data class ShoppingUiState(
     val total: Int get() = ShoppingListEngine.totalItems(items)
     val purchased: Int get() = ShoppingListEngine.purchasedCount(items)
     val progress: Float get() = ShoppingListEngine.progress(items)
+    val checkedCount: Int get() = items.count { it.checked }
     val shareText: String get() = ShoppingListEngine.toShareText(items)
 }
 
@@ -71,6 +74,7 @@ class ShoppingViewModel @Inject constructor(
         _state.value = _state.value.copy(
             loading = false,
             items = result.items,
+            completedCount = shoppingRepository.purchasedCount(weekStart),
             message = if (result.invalidated.isNotEmpty()) {
                 "Sostituzione rilevata: ricontrolla ${result.invalidated.joinToString()}."
             } else _state.value.message
@@ -129,7 +133,44 @@ class ShoppingViewModel @Inject constructor(
         _state.value = _state.value.copy(message = null)
     }
 
+    /**
+     * Chiude la spesa: gli alimenti spuntati escono dalla lista e restano
+     * registrati come acquistati per la settimana.
+     */
+    fun completeShopping() {
+        viewModelScope.launch {
+            val checked = _state.value.checkedCount
+            if (checked == 0) {
+                _state.value = _state.value.copy(
+                    message = "Spunta prima gli alimenti che hai comprato."
+                )
+                return@launch
+            }
+            val closed = shoppingRepository.completeShopping(_state.value.weekStart)
+            _state.value = _state.value.copy(
+                message = "Spesa effettuata: $closed alimenti rimossi dalla lista."
+            )
+            refresh()
+        }
+    }
+
+    /** Riporta in lista tutte le voci chiuse come acquistate in questa settimana. */
+    fun reopenShopping() {
+        viewModelScope.launch {
+            val reopened = shoppingRepository.reopenShopping(_state.value.weekStart)
+            _state.value = _state.value.copy(
+                message = if (reopened > 0) "Spesa riaperta: $reopened alimenti rimessi in lista."
+                else "Nessun alimento acquistato da ripristinare."
+            )
+            refresh()
+        }
+    }
+
     private suspend fun refresh() {
-        _state.value = _state.value.copy(items = shoppingRepository.itemsForWeek(_state.value.weekStart))
+        val weekStart = _state.value.weekStart
+        _state.value = _state.value.copy(
+            items = shoppingRepository.itemsForWeek(weekStart),
+            completedCount = shoppingRepository.purchasedCount(weekStart)
+        )
     }
 }

@@ -36,13 +36,17 @@ class NotificationScheduler @Inject constructor(
             Triple(ReminderReceiver.CHANNEL_MEALS, R.string.channel_meals, R.string.channel_meals_desc),
             Triple(ReminderReceiver.CHANNEL_WORKOUT, R.string.channel_workout, R.string.channel_workout_desc),
             Triple(ReminderReceiver.CHANNEL_HYDRATION, R.string.channel_hydration, R.string.channel_hydration_desc),
-            Triple(ReminderReceiver.CHANNEL_CHECKIN, R.string.channel_checkin, R.string.channel_checkin_desc)
+            Triple(ReminderReceiver.CHANNEL_CHECKIN, R.string.channel_checkin, R.string.channel_checkin_desc),
+            Triple(ReminderReceiver.CHANNEL_TIMER, R.string.channel_timer, R.string.channel_timer_desc)
         )
         channels.forEach { (id, nameRes, descRes) ->
+            val importance = if (id == ReminderReceiver.CHANNEL_TIMER) {
+                NotificationManager.IMPORTANCE_HIGH
+            } else NotificationManager.IMPORTANCE_DEFAULT
             val channel = NotificationChannel(
                 id,
                 context.getString(nameRes),
-                NotificationManager.IMPORTANCE_DEFAULT
+                importance
             ).apply {
                 description = context.getString(descRes)
                 enableVibration(true)
@@ -203,6 +207,50 @@ class NotificationScheduler @Inject constructor(
                 pending.cancel()
             }
         }
+    }
+
+    /**
+     * Allarme una-tantum alla fine del recupero: sveglia lo schermo anche se l'app
+     * e in background, cosi l'utente sa quando riprendere la serie. Usa un codice
+     * dedicato fuori dall'intervallo dei promemoria per non interferire.
+     */
+    fun scheduleRestAlarm(triggerAtMillis: Long, seconds: Int) {
+        val intent = Intent(context, ReminderReceiver::class.java).apply {
+            putExtra(ReminderReceiver.EXTRA_KIND, "REST_TIMER")
+            putExtra(ReminderReceiver.EXTRA_TITLE, context.getString(R.string.notif_rest_title))
+            putExtra(ReminderReceiver.EXTRA_BODY, context.getString(R.string.notif_rest_body, seconds))
+            putExtra(ReminderReceiver.EXTRA_CHANNEL, ReminderReceiver.CHANNEL_TIMER)
+            putExtra(ReminderReceiver.EXTRA_REQUEST_CODE, REST_ALARM_CODE)
+        }
+        val pending = PendingIntent.getBroadcast(
+            context, REST_ALARM_CODE, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val canExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            alarmManager.canScheduleExactAlarms()
+        } else true
+        if (canExact) {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pending)
+        } else {
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pending)
+        }
+    }
+
+    fun cancelRestAlarm() {
+        val pending = PendingIntent.getBroadcast(
+            context, REST_ALARM_CODE,
+            Intent(context, ReminderReceiver::class.java),
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (pending != null) {
+            alarmManager.cancel(pending)
+            pending.cancel()
+        }
+    }
+
+    companion object {
+        /** Codice dedicato all'allarme di fine recupero (fuori da 100..150). */
+        const val REST_ALARM_CODE = 9001
     }
 
     private fun setAlarm(

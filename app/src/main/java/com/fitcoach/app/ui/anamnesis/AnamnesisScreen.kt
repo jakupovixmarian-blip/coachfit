@@ -59,9 +59,26 @@ fun AnamnesisScreen(
         }
     }
 
+    // Torna alla Dashboard rimuovendo le schermate intermedie: senza il popUpTo la
+    // navigazione accodava una seconda Dashboard e la Home restava irraggiungibile.
+    // Il popUpTo usa DASHBOARD (sempre presente come start destination) cosi
+    // funziona sia dal flusso anamnesi sia dalla sua variante di modifica.
+    val goDashboard = {
+        navController.navigate(Routes.DASHBOARD) {
+            popUpTo(Routes.DASHBOARD) { inclusive = false }
+            launchSingleTop = true
+        }
+    }
+
+    // A generazione conclusa il ritorno alla Home e automatico: l'utente non resta
+    // bloccato sulla schermata dell'anamnesi.
+    LaunchedEffect(state.generationFinished) {
+        if (state.generationFinished) goDashboard()
+    }
+
     AnamnesisContent(
         state = state,
-        onNavigateDashboard = { navController.navigate(Routes.DASHBOARD) },
+        onNavigateDashboard = goDashboard,
         onOpenSummary = viewModel::openSummary,
         onCloseSummary = viewModel::closeSummary,
         onConfirm = viewModel::confirm,
@@ -187,9 +204,8 @@ internal fun AnamnesisContent(
                     Spacer(Modifier.height(16.dp))
                     Button(
                         onClick = onNavigateDashboard,
-                        enabled = !state.generatingPrograms,
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("Vai alla Dashboard") }
+                    ) { Text(if (state.generatingPrograms) "Vai alla Dashboard (generazione in corso)" else "Vai alla Dashboard") }
                     Spacer(Modifier.height(8.dp))
                     OutlinedButton(onClick = onOpenSummary,
                         modifier = Modifier.fillMaxWidth()) { Text("Rivedi il riepilogo") }

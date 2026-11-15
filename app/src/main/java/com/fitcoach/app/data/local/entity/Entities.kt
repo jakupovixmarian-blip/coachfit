@@ -607,6 +607,7 @@ data class ShoppingItemEntity(
     val unit: FoodUnit = FoodUnit.RAW,
     val checked: Boolean = false,
     val alreadyHave: Boolean = false,
+    val purchased: Boolean = false,
     val isCustom: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
 )

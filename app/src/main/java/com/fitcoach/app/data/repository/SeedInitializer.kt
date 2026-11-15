@@ -25,9 +25,7 @@ class SeedInitializer @Inject constructor(
     private val scientificSourceDao: ScientificSourceDao
 ) {
     suspend fun seedIfNeeded() {
-        if (foodDao.count() == 0) {
-            foodDao.insertAll(FoodSeedData.foods.map { it.toEntity() })
-        }
+        seedFoodsIncrementally()
         if (exerciseDao.count() == 0) {
             exerciseDao.insertAll(ExerciseSeedData.exercises.map { it.toEntity() })
         }
@@ -36,6 +34,24 @@ class SeedInitializer @Inject constructor(
         }
         if (scientificSourceDao.count() == 0) {
             scientificSourceDao.insertAll(ScientificSourceSeedData.sources)
+        }
+    }
+
+    /**
+     * Inserisce solo gli alimenti seed non ancora presenti (dedup per nome
+     * normalizzato). Cosi gli utenti con un database gia popolato ricevono i
+     * nuovi alimenti aggiunti nelle versioni successive senza duplicati.
+     */
+    private suspend fun seedFoodsIncrementally() {
+        if (foodDao.count() == 0) {
+            foodDao.insertAll(FoodSeedData.foods.map { it.toEntity() })
+            return
+        }
+        val missing = FoodSeedData.foods.filter { food ->
+            foodDao.getByNormalizedName(com.fitcoach.app.domain.model.FoodItem.normalizeName(food.name)) == null
+        }
+        if (missing.isNotEmpty()) {
+            foodDao.insertAll(missing.map { it.toEntity() })
         }
     }
 

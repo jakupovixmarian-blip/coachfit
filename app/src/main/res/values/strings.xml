@@ -18,6 +18,10 @@
     <string name="channel_hydration_desc">Promemoria per bere acqua</string>
     <string name="channel_checkin">Check-in settimanale</string>
     <string name="channel_checkin_desc">Promemoria per la valutazione settimanale</string>
+    <string name="channel_timer">Recupero allenamento</string>
+    <string name="channel_timer_desc">Allarme al termine del tempo di recupero tra le serie</string>
+    <string name="notif_rest_title">Recupero terminato</string>
+    <string name="notif_rest_body">Sono passati %1$d secondi: puoi iniziare la prossima serie.</string>
 
     <string name="notif_action_defer">Posticipa</string>
     <string name="notif_action_confirm">Conferma</string>

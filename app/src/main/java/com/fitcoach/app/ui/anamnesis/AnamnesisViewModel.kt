@@ -33,6 +33,8 @@ data class AnamnesisUiState(
     val confirmed: Boolean = false,
     val error: String? = null,
     val generatingPrograms: Boolean = false,
+    /** True quando la generazione (riuscita o fallita) e terminata: si puo tornare alla Home. */
+    val generationFinished: Boolean = false,
     val generationMessage: String? = null,
     val generationWarnings: List<String> = emptyList(),
     val aiEnabled: Boolean = false,
@@ -276,6 +278,7 @@ class AnamnesisViewModel @Inject constructor(
         when (val result = aiProgramGeneration.generate(profile)) {
             is AiProgramGenerationService.Result.Success -> _state.value = _state.value.copy(
                 generatingPrograms = false,
+                generationFinished = true,
                 generationMessage = "Percorso generato dal Coach AI e validato: piano alimentare di 7 giorni e scheda salvati.",
                 generationWarnings = result.warnings
             )

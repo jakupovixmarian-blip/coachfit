@@ -674,11 +674,14 @@ interface DiaryEntryDao {
 
 @Dao
 interface ShoppingItemDao {
-    @Query("SELECT * FROM shopping_items WHERE weekStartEpochDay = :weekStart ORDER BY category, foodName")
+    @Query("SELECT * FROM shopping_items WHERE weekStartEpochDay = :weekStart AND purchased = 0 ORDER BY category, foodName")
     fun observeForWeek(weekStart: Long): Flow<List<ShoppingItemEntity>>
 
-    @Query("SELECT * FROM shopping_items WHERE weekStartEpochDay = :weekStart ORDER BY category, foodName")
+    @Query("SELECT * FROM shopping_items WHERE weekStartEpochDay = :weekStart AND purchased = 0 ORDER BY category, foodName")
     suspend fun getForWeek(weekStart: Long): List<ShoppingItemEntity>
+
+    @Query("SELECT * FROM shopping_items WHERE weekStartEpochDay = :weekStart ORDER BY category, foodName")
+    suspend fun getAllForWeek(weekStart: Long): List<ShoppingItemEntity>
 
     @Query("SELECT * FROM shopping_items ORDER BY weekStartEpochDay DESC, category, foodName")
     suspend fun getAll(): List<ShoppingItemEntity>
@@ -715,6 +718,15 @@ interface ShoppingItemDao {
 
     @Query("DELETE FROM shopping_items WHERE weekStartEpochDay = :weekStart AND isCustom = 0")
     suspend fun deleteGeneratedForWeek(weekStart: Long)
+
+    @Query("UPDATE shopping_items SET purchased = 1, checked = 1 WHERE weekStartEpochDay = :weekStart AND checked = 1")
+    suspend fun markCheckedPurchasedForWeek(weekStart: Long): Int
+
+    @Query("SELECT COUNT(*) FROM shopping_items WHERE weekStartEpochDay = :weekStart AND purchased = 1")
+    suspend fun countPurchasedForWeek(weekStart: Long): Int
+
+    @Query("UPDATE shopping_items SET purchased = 0, checked = 0 WHERE weekStartEpochDay = :weekStart")
+    suspend fun restorePurchasedForWeek(weekStart: Long): Int
 }
 
 @Dao

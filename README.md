@@ -24,10 +24,11 @@ Sviluppato per fasi verificabili. Ogni fase è stata compilata e testata.
 
 - **Kotlin**, **Jetpack Compose**, **Material 3**
 - **MVVM + Clean Architecture** (domain / data / ui)
-- **Room** (24 entità, DAO, migrazioni, schema esportato; DB v10)
+- **Room** (24 entità, DAO, migrazioni, schema esportato; DB v12)
 - **Coroutines / Flow**, **WorkManager**, **AlarmManager** (notifiche esatte)
 - **DataStore** per le impostazioni, **Hilt** per la dependency injection
 - **Retrofit / OkHttp + kotlinx.serialization** per le API AI
+- **CameraX + ML Kit Barcode Scanning** per la lettura del codice a barre alimentare
 - Grafici con **Compose Canvas** (nessuna dipendenza esterna, offline)
 - `minSdk 26`, `targetSdk 35`
 
@@ -40,6 +41,10 @@ Solo la chat AI richiede Internet.
 - Bottom bar: **Dashboard · Piano · Spesa · Diario · Workout · Progressi · Coach**.
 - La dashboard mostra giorno, tipo di giornata (HIGH/MEDIUM/LOW), calorie, macro,
   pasti previsti, allenamento del giorno, prossima notifica e stato progressi.
+- **Allenamento**: selettore del giorno della settimana, avvio della sessione per il giorno
+  scelto con registrazione di serie/ripetizioni/carichi, cronometro di sessione e **allarme
+  di fine recupero** (suona anche a schermo spento). In alto, accesso alla schermata
+  **Crea scheda personalizzata** per costruire una split manualmente.
 
 ## Sistema nutrizionale integrato
 
@@ -99,6 +104,18 @@ inutilmente. La deduplicazione avviene su nome normalizzato e su `sourceId`. Nes
 nutrizionale è inventato: i risultati privi di macronutrienti vengono scartati. La ricerca è
 integrata nel flusso di **sostituzione alimentare** (Impostazioni del piano → sostituisci →
 cerca), dove ogni candidato passa comunque dal controllo preventivo vincolato.
+
+Il **database locale seed** contiene oltre 150 alimenti con valori nutrizionali tratti da
+fonti verificabili (**CREA** e **USDA FoodData Central**), organizzati per categoria (carni,
+pesce, latticini, uova, cereali, legumi, frutta, verdura, grassi, condimenti, bevande). Il
+seed è **incrementale**: gli alimenti nuovi vengono aggiunti agli aggiornamenti senza
+duplicare quelli già presenti. Un test di integrità (`FoodSeedDataTest`) verifica assenza di
+duplicati, fonti dichiarate, coerenza calorie/macronutrienti e validità delle sostituzioni.
+
+**Ricerca con fotocamera (stile Yazio).** Dal Diario → *Aggiungi alimento* → *Scansiona
+codice a barre* si apre la fotocamera (CameraX + ML Kit). Inquadrando il codice EAN/UPC il
+prodotto viene cercato su Open Food Facts e registrato con i suoi valori reali. Richiede il
+permesso `CAMERA`, chiesto al primo utilizzo.
 
 ## Componenti matematiche (deterministiche, testate)
 
@@ -328,7 +345,7 @@ app/src/main/java/com/fitcoach/app/
 
 ## Test
 
-Test automatici (**263 test**, 40 classi). Coprono i calcoli matematici e i validatori, la
+Test automatici (**284 test**, 41 classi). Coprono i calcoli matematici e i validatori, la
 catena di generazione dal Coach AI (proposta → validazione → persistenza), il check-in
 settimanale end-to-end, la chat con rigenerazione per ambito e la persistenza su Room reale:
 

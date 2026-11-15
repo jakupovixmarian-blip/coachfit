@@ -29,7 +29,10 @@ data class DiaryUiState(
     val addDialog: Boolean = false,
     val query: String = "",
     val searchResults: List<FoodItem> = emptyList(),
-    val pendingFood: FoodItem? = null
+    val pendingFood: FoodItem? = null,
+    // Scansione codice a barre
+    val scannerOpen: Boolean = false,
+    val barcodeLoading: Boolean = false
 ) {
     val byMeal: Map<MealSlot, List<DiaryEntry>>
         get() = MealSlot.entries.associateWith { slot ->
@@ -40,7 +43,8 @@ data class DiaryUiState(
 @HiltViewModel
 class DiaryViewModel @Inject constructor(
     private val diaryRepository: NutritionDiaryRepository,
-    private val foodRepository: FoodRepository
+    private val foodRepository: FoodRepository,
+    private val foodSearchRepository: com.fitcoach.app.data.repository.FoodSearchRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DiaryUiState())
@@ -132,6 +136,37 @@ class DiaryViewModel @Inject constructor(
 
     fun selectFood(food: FoodItem) {
         _state.value = _state.value.copy(pendingFood = food)
+    }
+
+    fun openScanner() {
+        _state.value = _state.value.copy(scannerOpen = true)
+    }
+
+    fun closeScanner() {
+        _state.value = _state.value.copy(scannerOpen = false)
+    }
+
+    /**
+     * Riceve il codice a barre letto dalla fotocamera, cerca il prodotto e lo
+     * imposta come alimento da registrare. Se non viene trovato lo comunica.
+     */
+    fun onBarcodeScanned(barcode: String) {
+        val code = barcode.trim()
+        if (code.isEmpty()) return
+        _state.value = _state.value.copy(scannerOpen = false, barcodeLoading = true, message = null)
+        viewModelScope.launch {
+            val outcome = runCatching { foodSearchRepository.searchByBarcode(code) }.getOrNull()
+            val food = outcome?.results?.firstOrNull()
+            _state.value = _state.value.copy(
+                barcodeLoading = false,
+                pendingFood = food ?: _state.value.pendingFood,
+                searchResults = if (food != null) listOf(food) else _state.value.searchResults,
+                message = when {
+                    food != null -> "Prodotto riconosciuto: ${food.name}."
+                    else -> outcome?.note ?: "Prodotto non trovato per il codice $code."
+                }
+            )
+        }
     }
 
     fun addExtraFood(food: FoodItem, grams: Double, slot: MealSlot) {

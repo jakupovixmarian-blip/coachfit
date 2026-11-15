@@ -34,6 +34,7 @@ object Routes {
     const val SHOPPING = "shopping"
     const val DIARY = "diary"
     const val WORKOUT = "workout"
+    const val CUSTOM_WORKOUT = "custom_workout"
     const val PROGRESS = "progress"
     const val COACH = "coach"
     const val SETTINGS = "settings"

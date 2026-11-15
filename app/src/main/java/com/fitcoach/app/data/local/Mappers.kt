@@ -262,13 +262,15 @@ object Mappers {
     fun ShoppingItemEntity.toDomain() = ShoppingItem(
         id = id, weekStartEpochDay = weekStartEpochDay, foodItemId = foodItemId,
         foodName = foodName, category = category, totalGrams = totalGrams, unit = unit,
-        checked = checked, alreadyHave = alreadyHave, isCustom = isCustom, createdAt = createdAt
+        checked = checked, alreadyHave = alreadyHave, purchased = purchased,
+        isCustom = isCustom, createdAt = createdAt
     )
 
     fun ShoppingItem.toEntity() = ShoppingItemEntity(
         id = id, weekStartEpochDay = weekStartEpochDay, foodItemId = foodItemId,
         foodName = foodName, category = category, totalGrams = totalGrams, unit = unit,
-        checked = checked, alreadyHave = alreadyHave, isCustom = isCustom, createdAt = createdAt
+        checked = checked, alreadyHave = alreadyHave, purchased = purchased,
+        isCustom = isCustom, createdAt = createdAt
     )
 
     fun SubstitutionLogEntity.toDomain() = SubstitutionLog(

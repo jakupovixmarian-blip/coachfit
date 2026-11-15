@@ -13,6 +13,7 @@ import com.fitcoach.app.data.local.MIGRATION_7_8
 import com.fitcoach.app.data.local.MIGRATION_8_9
 import com.fitcoach.app.data.local.MIGRATION_9_10
 import com.fitcoach.app.data.local.MIGRATION_10_11
+import com.fitcoach.app.data.local.MIGRATION_11_12
 import com.fitcoach.app.data.local.dao.AiSettingsDao
 import com.fitcoach.app.data.local.dao.CheckInDao
 import com.fitcoach.app.data.local.dao.ChatDao

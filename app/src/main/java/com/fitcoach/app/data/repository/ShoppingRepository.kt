@@ -74,7 +74,7 @@ class ShoppingRepository @Inject constructor(
         val plan = nutritionRepository.getActivePlan()
             ?: return@withTransaction emptyList()
         val foodsById: Map<Long, FoodItem> = foodRepository.getAll().associateBy { it.id }
-        val previous = shoppingDao.getForWeek(weekStart).map { it.toDomain() }
+        val previous = shoppingDao.getAllForWeek(weekStart).map { it.toDomain() }
 
         val updated = ShoppingListEngine.aggregate(plan, weekStart, foodsById, previous)
         val invalidated = ShoppingListEngine.invalidatedStates(previous, updated)
@@ -108,6 +108,27 @@ class ShoppingRepository @Inject constructor(
     suspend fun setAlreadyHave(id: Long, alreadyHave: Boolean) = shoppingDao.setAlreadyHave(id, alreadyHave)
 
     suspend fun setGrams(id: Long, grams: Double) = shoppingDao.setGrams(id, grams)
+
+    /**
+     * Chiude la spesa: marca come "acquistati" tutti gli alimenti spuntati, cosi
+     * spariscono dalla lista senza perdere lo storico. Le voci non spuntate
+     * restano visibili (non ancora comprate). Ritorna quante voci sono state chiuse.
+     */
+    suspend fun completeShopping(weekStart: Long): Int {
+        val count = shoppingDao.markCheckedPurchasedForWeek(weekStart)
+        // Rigenera subito per riflettere lo stato (le voci acquistate escono dalla lista).
+        regenerate(weekStart)
+        return count
+    }
+
+    /** Annulla la chiusura della spesa: riporta in lista tutte le voci acquistate. */
+    suspend fun reopenShopping(weekStart: Long): Int {
+        val count = shoppingDao.restorePurchasedForWeek(weekStart)
+        regenerate(weekStart)
+        return count
+    }
+
+    suspend fun purchasedCount(weekStart: Long): Int = shoppingDao.countPurchasedForWeek(weekStart)
 
     suspend fun delete(id: Long) {
         shoppingDao.getById(id)?.let { shoppingDao.delete(it) }

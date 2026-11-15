@@ -143,6 +143,7 @@ class ReminderReceiver : BroadcastReceiver() {
         const val CHANNEL_WORKOUT = "fitcoach_workout"
         const val CHANNEL_HYDRATION = "fitcoach_hydration"
         const val CHANNEL_CHECKIN = "fitcoach_checkin"
+        const val CHANNEL_TIMER = "fitcoach_timer"
 
         const val EXTRA_KIND = "extra_kind"
         const val EXTRA_TITLE = "extra_title"
