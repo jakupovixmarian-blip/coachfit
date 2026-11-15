@@ -168,6 +168,65 @@ class CoachOrchestratorTest {
         assertThat(result.providerError).isNull()
     }
 
+    @Test
+    fun `requireTool forces the tool choice in the request`() = runTest {
+        val echo = EchoTool()
+        val api = ScriptedApi(mutableListOf(toolCallResponse("echo", "{}"), textResponse("Fatto.")))
+        val registry = CoachToolRegistry(setOf(echo))
+        val orchestrator = CoachOrchestrator(AiClient(api, json), registry, json)
+
+        orchestrator.run(config(), "sys", "ctx", emptyList(), "genera", requireTool = "echo")
+
+        val first = json.encodeToString(ChatCompletionRequest.serializer(), api.sent[0])
+        assertThat(first).contains("\"tool_choice\"")
+        assertThat(first).contains("\"name\":\"echo\"")
+        assertThat(echo.called).isTrue()
+    }
+
+    @Test
+    fun `requireTool retries when the model answers in prose instead of calling it`() = runTest {
+        // Primo giro: il modello risponde a parole senza chiamare lo strumento
+        // (il caso reale con i modelli di ragionamento). Secondo giro: consegna.
+        val echo = EchoTool()
+        val api = ScriptedApi(
+            mutableListOf(
+                textResponse("Sto preparando il programma..."),
+                toolCallResponse("echo", "{}"),
+                textResponse("Programma consegnato.")
+            )
+        )
+        val registry = CoachToolRegistry(setOf(echo))
+        val orchestrator = CoachOrchestrator(AiClient(api, json), registry, json)
+
+        val result = orchestrator.run(config(), "sys", "ctx", emptyList(), "genera", requireTool = "echo")
+
+        assertThat(echo.called).isTrue()
+        assertThat(result.providerError).isNull()
+        assertThat(result.toolTrace).contains("echo")
+        // La richiesta di sollecito deve essere stata inviata al modello.
+        val second = json.encodeToString(ChatCompletionRequest.serializer(), api.sent[1])
+        assertThat(second).contains("emetti la chiamata allo strumento")
+    }
+
+    @Test
+    fun `requireTool reports an error if the model never delivers`() = runTest {
+        // Il modello risponde sempre a parole: nessuna consegna entro le iterazioni.
+        val api = ScriptedApi(
+            MutableList(10) { textResponse("Non posso.") }
+        )
+        val registry = CoachToolRegistry(setOf(EchoTool()))
+        val orchestrator = CoachOrchestrator(AiClient(api, json), registry, json)
+
+        val result = orchestrator.run(
+            config(), "sys", "ctx", emptyList(), "genera",
+            maxIterations = 3, requireTool = "echo"
+        )
+
+        assertThat(result.providerError).isNotNull()
+        assertThat(result.providerError).contains("non ha consegnato il programma")
+        assertThat(result.toolTrace).doesNotContain("echo")
+    }
+
     private fun String.toResponseBody() =
         okhttp3.ResponseBody.create("application/json".toMediaType(), this)
 }

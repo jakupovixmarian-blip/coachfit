@@ -14,6 +14,13 @@ val keystoreProps = Properties().apply {
     if (keystorePropsFile.exists()) load(keystorePropsFile.inputStream())
 }
 
+// Keystore di debug FISSO, versionato nel repository: senza di esso ogni macchina
+// genera un debug.keystore diverso e Android rifiuta l'aggiornamento dell'app
+// (INSTALL_FAILED_UPDATE_INCOMPATIBLE) perche la firma cambia. Con una firma
+// stabile le build si aggiornano normalmente sul dispositivo.
+val debugKeystoreFile = rootProject.file("fitcoach-debug.keystore")
+val hasStableDebugKeystore = debugKeystoreFile.exists()
+
 android {
     namespace = "com.fitcoach.app"
     compileSdk = 35
@@ -22,8 +29,8 @@ android {
         applicationId = "com.fitcoach.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
     }
@@ -37,11 +44,22 @@ android {
                 keyPassword = keystoreProps.getProperty("keyPassword")
             }
         }
+        if (hasStableDebugKeystore) {
+            create("debugStable") {
+                storeFile = debugKeystoreFile
+                storePassword = "fitcoach"
+                keyAlias = "fitcoach-debug"
+                keyPassword = "fitcoach"
+            }
+        }
     }
 
     buildTypes {
         debug {
             isMinifyEnabled = false
+            if (hasStableDebugKeystore) {
+                signingConfig = signingConfigs.getByName("debugStable")
+            }
         }
         release {
             isMinifyEnabled = true

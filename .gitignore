@@ -23,6 +23,7 @@ captures/
 # Keystore (mai versionare chiavi di firma reali)
 *.jks
 *.keystore
+!fitcoach-debug.keystore
 keystore.properties
 
 # Kotlin

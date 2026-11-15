@@ -73,7 +73,8 @@ class AiProgramGenerationService @Inject constructor(
             history = emptyList(),
             userMessage = "Genera ora la parte richiesta del mio programma e consegnala con " +
                 "submit_full_program (scope=${scope.name}). Non fermarti prima: devi arrivare a ok=true.",
-            maxIterations = GENERATION_MAX_ITERATIONS
+            maxIterations = GENERATION_MAX_ITERATIONS,
+            requireTool = SUBMIT_TOOL
         )
 
         val submission = turn.toolResults.lastOrNull { it.name == SUBMIT_TOOL }
@@ -123,7 +124,11 @@ class AiProgramGenerationService @Inject constructor(
             model = settings.model.ifBlank { settings.provider.defaultModel },
             apiKey = key,
             temperature = settings.temperature,
-            maxTokens = maxOf(settings.maxTokens, 8_000),
+            // Il payload di submit_full_program (7 giorni + scheda) e molto grande.
+            // Sui modelli di ragionamento (gpt-5.x, o-series) il budget include i
+            // token di ragionamento: con un tetto basso la chiamata viene troncata
+            // e il programma non arriva. Serve un budget ampio.
+            maxTokens = maxOf(settings.maxTokens, GENERATION_MAX_TOKENS),
             usesBackendProxy = settings.useBackendProxy
         )
         return config.takeIf { it.isConfigured }
@@ -161,6 +166,13 @@ class AiProgramGenerationService @Inject constructor(
     companion object {
         private const val SUBMIT_TOOL = "submit_full_program"
         private const val GENERATION_MAX_ITERATIONS = 8
+
+        /**
+         * Budget token per la consegna del programma. Deve coprire sia i token di
+         * ragionamento (modelli gpt-5.x/o-series) sia l'oggetto JSON completo di
+         * 7 giorni + scheda, altrimenti la chiamata viene troncata.
+         */
+        private const val GENERATION_MAX_TOKENS = 32_000
 
         val generationSystemPrompt = """
             Sei il Coach AI di FitCoach. Sei l'unica autorita decisionale: costruisci un percorso

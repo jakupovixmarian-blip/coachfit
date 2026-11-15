@@ -14,8 +14,17 @@ sealed interface AiResult {
         val content: String,
         val model: String?,
         /** Tool calls richiesti dal modello (function calling), se presenti. */
-        val toolCalls: List<ToolCallDto> = emptyList()
-    ) : AiResult
+        val toolCalls: List<ToolCallDto> = emptyList(),
+        /**
+         * Motivo di fine generazione (`stop`, `length`, `tool_calls`, ...).
+         * `length` significa che il modello ha esaurito il budget di token: la
+         * risposta (o gli argomenti di un tool call) possono essere troncati.
+         */
+        val finishReason: String? = null
+    ) : AiResult {
+        /** True se la generazione e stata troncata per esaurimento dei token. */
+        val truncated: Boolean get() = finishReason == "length"
+    }
     data class Failure(val message: String, val httpCode: Int? = null) : AiResult
 }
 
@@ -167,7 +176,7 @@ class AiClient @Inject constructor(
             }
             return AiResult.Failure(reason, response.code())
         }
-        return AiResult.Success((content ?: "").trim(), body.model, toolCalls)
+        return AiResult.Success((content ?: "").trim(), body.model, toolCalls, body.finishReason)
     }
 
     /** Verifica rapida della connessione con un messaggio minimale. */

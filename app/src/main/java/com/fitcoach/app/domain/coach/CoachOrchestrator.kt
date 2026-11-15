@@ -46,13 +46,28 @@ class CoachOrchestrator @Inject constructor(
     private val json: Json
 ) {
 
+    private sealed interface Step {
+        /** Continua il ciclo (richiesta inviata, nessuna risposta finale). */
+        data object Continue : Step
+        /** Risposta finale pronta per l'utente. */
+        data class Done(val result: CoachTurnResult) : Step
+    }
+
     suspend fun run(
         config: AiProviderConfig,
         systemPrompt: String,
         contextPrompt: String,
         history: List<ChatMessageDto>,
         userMessage: String,
-        maxIterations: Int = MAX_ITERATIONS
+        maxIterations: Int = MAX_ITERATIONS,
+        /**
+         * Se impostato, il turno DEVE concludersi con una chiamata a questo
+         * strumento: viene forzato con `tool_choice` e, se il modello risponde
+         * in prosa senza chiamarlo, viene sollecitato a chiamarlo. Usato dalla
+         * generazione del programma (submit_full_program), dove una risposta
+         * senza consegna non ha valore.
+         */
+        requireTool: String? = null
     ): CoachTurnResult {
         val messages = mutableListOf<ChatMessageDto>()
         messages += ChatMessageDto(role = "system", content = systemPrompt)
@@ -64,20 +79,87 @@ class CoachOrchestrator @Inject constructor(
         val trace = mutableListOf<String>()
         val toolResults = mutableListOf<CoachToolResult>()
         var lastText = ""
+        var requiredToolDelivered = false
+
+        /** Applica una risposta di successo del modello ai buffer del turno. */
+        suspend fun consumeSuccess(result: AiResult.Success): Step {
+            if (result.content.isNotBlank()) lastText = result.content
+            if (result.toolCalls.isEmpty()) {
+                // Se uno strumento era obbligatorio e il modello ha risposto in
+                // prosa (o e stato troncato), sollecitalo: una risposta senza
+                // consegna non e accettabile.
+                if (requireTool != null && !requiredToolDelivered) {
+                    val reason = if (result.truncated) {
+                        "La risposta precedente e stata troncata per limite di token. "
+                    } else ""
+                    messages += ChatMessageDto(
+                        role = "user",
+                        content = reason + "Non hai ancora consegnato il programma. Devi chiamare " +
+                            "ORA lo strumento $requireTool con l'oggetto completo (un'unica chiamata). " +
+                            "Non rispondere a parole: emetti la chiamata allo strumento."
+                    )
+                    return Step.Continue
+                }
+                return Step.Done(
+                    CoachTurnResult(
+                        text = result.content,
+                        pendingChangeIds = pendingChangeIds,
+                        toolTrace = trace,
+                        toolResults = toolResults
+                    )
+                )
+            }
+            // Registra la richiesta di tool dell'assistant, poi esegue.
+            messages += assistantToolCallMessage(result.toolCalls)
+            result.toolCalls.forEach { call ->
+                val args = parseArgs(call.function.arguments)
+                val output = toolRegistry.execute(call.function.name, args)
+                trace += call.function.name
+                toolResults += CoachToolResult(call.function.name, output)
+                if (call.function.name == requireTool) requiredToolDelivered = true
+                if (call.function.name in toolRegistry.writeToolNames) {
+                    extractChangeId(output)?.let { pendingChangeIds += it }
+                }
+                messages += toolResultMessage(call.id, call.function.name, output)
+            }
+            return Step.Continue
+        }
 
         repeat(maxIterations) { iteration ->
+            // Forza la consegna finche lo strumento richiesto non e stato chiamato.
+            val forcedChoice = if (requireTool != null && !requiredToolDelivered) {
+                ToolChoice.force(requireTool)
+            } else {
+                ToolChoice.auto
+            }
             val result = aiClient.complete(
                 config = config,
                 messages = messages,
                 tools = toolRegistry.definitions,
-                toolChoice = ToolChoice.auto
+                toolChoice = forcedChoice
             )
             when (result) {
                 is AiResult.Failure -> {
+                    // Se il provider rifiuta la scelta forzata dello strumento, non
+                    // perdere il tool calling: riprova lo stesso giro con "auto".
+                    if (forcedChoice != ToolChoice.auto && isToolChoiceUnsupported(result.message)) {
+                        val auto = aiClient.complete(
+                            config = config,
+                            messages = messages,
+                            tools = toolRegistry.definitions,
+                            toolChoice = ToolChoice.auto
+                        )
+                        if (auto is AiResult.Success) {
+                            when (val step = consumeSuccess(auto)) {
+                                is Step.Continue -> return@repeat
+                                is Step.Done -> return step.result
+                            }
+                        }
+                    }
                     // Fallback: alcuni provider/modelli non supportano i tool. Se e il
-                    // primo giro, riprova senza strumenti (il modello puo comunque
-                    // rispondere in testo, incluso il blocco azione JSON legacy).
-                    if (iteration == 0 && isToolUnsupported(result.message)) {
+                    // primo giro e NESSUNO strumento e obbligatorio, riprova senza
+                    // strumenti (il modello puo comunque rispondere in testo).
+                    if (iteration == 0 && requireTool == null && isToolUnsupported(result.message)) {
                         val plain = aiClient.complete(config, messages)
                         return when (plain) {
                             is AiResult.Success -> CoachTurnResult(text = plain.content, toolTrace = trace)
@@ -88,24 +170,25 @@ class CoachOrchestrator @Inject constructor(
                 }
 
                 is AiResult.Success -> {
-                    if (result.content.isNotBlank()) lastText = result.content
-                    if (result.toolCalls.isEmpty()) {
-                        return CoachTurnResult(text = result.content, pendingChangeIds = pendingChangeIds, toolTrace = trace, toolResults = toolResults)
-                    }
-                    // Registra la richiesta di tool dell'assistant, poi esegue.
-                    messages += assistantToolCallMessage(result.toolCalls)
-                    result.toolCalls.forEach { call ->
-                        val args = parseArgs(call.function.arguments)
-                        val output = toolRegistry.execute(call.function.name, args)
-                        trace += call.function.name
-                        toolResults += CoachToolResult(call.function.name, output)
-                        if (call.function.name in toolRegistry.writeToolNames) {
-                            extractChangeId(output)?.let { pendingChangeIds += it }
-                        }
-                        messages += toolResultMessage(call.id, call.function.name, output)
+                    when (val step = consumeSuccess(result)) {
+                        is Step.Continue -> Unit
+                        is Step.Done -> return step.result
                     }
                 }
             }
+        }
+        // Lo strumento obbligatorio non e stato consegnato entro le iterazioni:
+        // non mascherare il fallimento con una sintesi testuale.
+        if (requireTool != null && !requiredToolDelivered) {
+            return CoachTurnResult(
+                text = lastText,
+                pendingChangeIds = pendingChangeIds,
+                providerError = "Il modello non ha consegnato il programma con lo strumento " +
+                    "$requireTool entro $maxIterations tentativi (risposta troncata o senza chiamata " +
+                    "allo strumento).",
+                toolTrace = trace,
+                toolResults = toolResults
+            )
         }
         // Limite iterazioni: chiedi una sintesi finale senza strumenti.
         val finalMessages = messages + ChatMessageDto(
@@ -142,6 +225,16 @@ class CoachOrchestrator @Inject constructor(
                 m.contains("does not support") || m.contains("unknown parameter") ||
                 m.contains("invalid") || m.contains("400")
             )
+    }
+
+    /**
+     * True se l'errore riguarda specificamente `tool_choice` forzato (alcuni
+     * modelli/provider accettano solo "auto"): in quel caso si ritenta con "auto"
+     * invece di perdere del tutto il tool calling.
+     */
+    private fun isToolChoiceUnsupported(message: String): Boolean {
+        val m = message.lowercase()
+        return m.contains("tool_choice") || (m.contains("tool") && m.contains("required"))
     }
 
     companion object {
