@@ -2,6 +2,7 @@ package com.fitcoach.app.di
 
 import com.fitcoach.app.domain.coach.tools.AdjustCaloriesTool
 import com.fitcoach.app.domain.coach.tools.AdjustVolumeTool
+import com.fitcoach.app.domain.coach.tools.AnalyzeWeeklyCheckInTool
 import com.fitcoach.app.domain.coach.tools.CoachTool
 import com.fitcoach.app.domain.coach.tools.ComputeCarbCyclingTool
 import com.fitcoach.app.domain.coach.tools.ComputeEnergyTargetsTool
@@ -61,6 +62,7 @@ object CoachToolsModule {
     @Provides @IntoSet fun substitution(t: com.fitcoach.app.domain.coach.tools.ComputeSubstitutionTool): CoachTool = t
     @Provides @IntoSet fun validateDay(t: com.fitcoach.app.domain.coach.tools.ValidateNutritionDayTool): CoachTool = t
     @Provides @IntoSet fun submitProgram(t: com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool): CoachTool = t
+    @Provides @IntoSet fun weeklyCheckIn(t: AnalyzeWeeklyCheckInTool): CoachTool = t
 
     // ---- Scrittura controllata (propongono, non applicano) ----
     @Provides @IntoSet fun substituteFood(t: SubstituteFoodTool): CoachTool = t

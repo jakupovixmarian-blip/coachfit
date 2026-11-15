@@ -2,13 +2,19 @@ package com.fitcoach.app.ui.progress
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fitcoach.app.data.repository.ApplyResult
+import com.fitcoach.app.data.repository.ChangeRepository
+import com.fitcoach.app.data.repository.CoachActionExecutor
 import com.fitcoach.app.data.repository.ProgressPhotoRepository
 import com.fitcoach.app.data.repository.ProgressRepository
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
+import com.fitcoach.app.domain.adaptive.WeeklyCheckInAnalyzer
 import com.fitcoach.app.domain.adaptive.WeightAnalyzer
 import com.fitcoach.app.domain.model.CheckIn
+import com.fitcoach.app.domain.model.ChangeStatus
 import com.fitcoach.app.domain.model.CircumferenceRecord
+import com.fitcoach.app.domain.model.ProgramChange
 import com.fitcoach.app.domain.model.ProgressPhoto
 import com.fitcoach.app.domain.model.WeightRecord
 import com.fitcoach.app.domain.model.WeightTrend
@@ -31,6 +37,10 @@ data class ProgressUiState(
     val circumferences: List<CircumferenceRecord> = emptyList(),
     val trend: WeightTrend? = null,
     val latestCheckIn: CheckIn? = null,
+    val checkInRunning: Boolean = false,
+    val checkInEvaluation: String = "",
+    val checkInReport: WeeklyCheckInAnalyzer.Report? = null,
+    val checkInProposals: List<ProgramChange> = emptyList(),
     val volumeBySession: List<VolumePoint> = emptyList(),
     val photos: List<ProgressPhoto> = emptyList(),
     val message: String? = null,
@@ -46,6 +56,8 @@ class ProgressViewModel @Inject constructor(
     private val photoRepository: ProgressPhotoRepository,
     private val workoutRepository: WorkoutRepository,
     private val userRepository: UserRepository,
+    private val changeRepository: ChangeRepository,
+    private val actionExecutor: CoachActionExecutor,
     private val runWeeklyCheckIn: RunWeeklyCheckInUseCase
 ) : ViewModel() {
 
@@ -111,17 +123,49 @@ class ProgressViewModel @Inject constructor(
 
     fun runCheckIn() {
         viewModelScope.launch {
+            _state.value = _state.value.copy(checkInRunning = true, message = null)
             val outcome = runWeeklyCheckIn()
             _state.value = _state.value.copy(
+                checkInRunning = false,
+                checkInEvaluation = outcome?.evaluation ?: "",
+                checkInReport = outcome?.report,
+                checkInProposals = outcome?.proposals ?: emptyList(),
                 message = when {
                     outcome == null -> "Completa prima il profilo."
-                    outcome.proposals > 0 ->
-                        "Check-in salvato. ${outcome.proposals} proposta/e di modifica da valutare nel Coach."
-                    else -> "Check-in salvato: nessuna modifica necessaria."
+                    else -> outcome.notes.firstOrNull()
                 }
             )
             load()
         }
+    }
+
+    fun approveCheckInProposal(changeId: Long) {
+        viewModelScope.launch {
+            when (val result = actionExecutor.apply(changeId)) {
+                is ApplyResult.Applied -> {
+                    _state.value = _state.value.copy(message = "Modifica applicata: ${result.message}")
+                    refreshProposals()
+                }
+                is ApplyResult.Failed -> _state.value = _state.value.copy(message = result.message)
+                else -> Unit
+            }
+        }
+    }
+
+    fun rejectCheckInProposal(changeId: Long) {
+        viewModelScope.launch {
+            changeRepository.updateStatus(changeId, ChangeStatus.REJECTED)
+            _state.value = _state.value.copy(message = "Proposta rifiutata.")
+            refreshProposals()
+        }
+    }
+
+    private suspend fun refreshProposals() {
+        val proposals = _state.value.checkInProposals.filter { change ->
+            changeRepository.getById(change.id)?.status == ChangeStatus.PROPOSED
+        }
+        _state.value = _state.value.copy(checkInProposals = proposals)
+        load()
     }
 
     fun addCircumference() {

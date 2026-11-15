@@ -137,16 +137,17 @@ cerca), dove ogni candidato passa comunque dal controllo preventivo vincolato.
   **storico delle sessioni** (volume, durata, RPE, dolore).
 - `AdaptiveEngine` + `WeightAnalyzer` – media settimanale del peso, trend, aderenza,
   performance; genera proposte strutturate (situazione, problema, dati, modifica,
-  motivazione, risultato atteso, controindicazioni). `LongitudinalCoachEngine` combina
-  almeno due settimane nutrizionali con trend del peso/vita, aderenza, prestazioni,
-  recupero e dolore: distingue progressione, stagnazione e regressione, blocca le
-  modifiche con aderenza insufficiente e propone azioni concrete su calorie, volume o
-  deload. Le variazioni caloriche scalano target e grammature in una transazione Room,
-  rispettano limiti di sicurezza e sono annullabili. Gli esiti reali delle modifiche
-  applicate vengono rivalutati nel check-in successivo e memorizzati nello storico.
+  motivazione, risultato atteso, controindicazioni). `LongitudinalCoachEngine` è il
+  **motore di analisi di supporto** del check-in: combina almeno due settimane
+  nutrizionali con trend del peso/vita, aderenza, prestazioni, recupero e dolore e
+  produce **classificazioni** (progressione, stagnazione, regressione) e advisory, ma
+  **non decide più**: la decisione spetta all'AI (vedi sotto). Blocca le modifiche con
+  aderenza insufficiente e non interpreta ogni stagnazione come richiesta di più volume.
+  Le variazioni caloriche scalano target e grammature in una transazione Room, rispettano
+  limiti di sicurezza e sono annullabili. Gli esiti reali delle modifiche applicate
+  vengono rivalutati nel check-in successivo e memorizzati nello storico.
   Include l'**analisi dell'andamento per singolo esercizio** (regressione → riduzione
-  volume, progressione solida → nessun cambio): non interpreta ogni stagnazione come
-  richiesta di più volume.
+  volume, progressione solida → nessun cambio).
 - `BudgetEngine` – costo reale del piano da grammature × prezzo, quota pro capite per budget
   condivisi, stima parziale dichiarata quando mancano prezzi, convenienza per grammo di
   proteine.
@@ -174,6 +175,13 @@ Strumenti (in `domain/coach/tools`, iniettati come `Set<CoachTool>` via Hilt):
   con cui l'AI **costruisce i pasti da sola**, senza un piano preimpostato.
 - **Validazione** – `validate_workout_plan` (delegato a `WorkoutPlanValidator` puro):
   copertura muscolare, volume, attrezzatura, sicurezza.
+- **Check-in settimanale** – `analyze_weekly_checkin`: aggrega i dati **reali** degli
+  ultimi 7 giorni e il confronto con le settimane precedenti (tendenza del peso con
+  affidabilità, composizione, aderenza, calorie/macro consumati, allenamenti
+  completati/pianificati, andamento delle prestazioni, recupero, sonno, dolore). Include
+  classificazioni di **supporto** (advisory) ma **non decide**: l'AI le interpreta e
+  propone solo se giustificato. Se un campo è null il dato non è disponibile e non va
+  inventato.
 - **Scrittura controllata** – `propose_*` (sostituzione alimento/esercizio, spostamento
   allenamento, aggiustamento calorie/volume, deload): registrano una **proposta** che
   l'utente conferma o annulla tramite il flusso esistente. L'AI non applica mai una
@@ -199,6 +207,31 @@ Il collegamento **chat → rigenerazione per ambito** è verificato end-to-end
 unico rigenera solo la parte richiesta; in caso di provider non raggiungibile o proposta
 non valida **nessun piano viene alterato** e la rigenerazione è **annullabile** (i piani
 precedenti vengono riattivati).
+
+## Check-in settimanale adattivo (l'AI come decisore)
+
+Il **check-in settimanale** è condotto dall'**AI centrale** (`WeeklyCheckInService` →
+`CoachOrchestrator`), non da un motore deterministico separato:
+
+1. **Aggregazione dei dati reali** (`WeeklyCheckInAnalyzer`) – peso (medie settimanali e
+   trend con affidabilità), composizione, aderenza, calorie/macro effettivamente
+   registrati, allenamenti completati/pianificati, andamento dei carichi per esercizio,
+   recupero, sonno e dolore. La fotografia viene salvata come `CheckIn` (storico).
+2. **Analisi di supporto** (`LongitudinalCoachEngine`) – produce **classificazioni** e
+   advisory (stagnazione, regressione, aderenza insufficiente, ricomposizione, deload).
+3. **Decisione dell'AI** – il modello riceve il report e propone modifiche con gli
+   strumenti `propose_*`. Le proposte restano **`PROPOSED`**: non vengono mai applicate
+   automaticamente.
+4. **Conferma dell'utente** – dalla sezione Progressi → *Check-in settimanale* l'utente
+   vede valutazione, metriche e proposte, e può **approvare**, **rifiutare** o
+   **annullare** (rollback) ogni modifica. In assenza di provider configurato il check-in
+   salva comunque i dati e lo segnala.
+
+Regole di sicurezza applicate al prompt e al motore: nessuna riduzione calorica basata su
+una singola settimana senza aderenza e trend affidabili; mai aumentare il volume quando le
+prestazioni peggiorano; nessun dato inventato quando manca (i campi restano null e l'AI
+deve chiederli). Il flusso è verificato end-to-end (`WeeklyCheckInFlowIntegrationTest`):
+proposta nutrizionale, proposta allenamento, rifiuto, conferma, rollback e persistenza.
 
 ## Base di conoscenza
 

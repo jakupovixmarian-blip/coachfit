@@ -51,12 +51,16 @@ import androidx.navigation.NavHostController
 import com.fitcoach.app.ui.components.ChartPoint
 import com.fitcoach.app.ui.components.LineChart
 import com.fitcoach.app.ui.components.LoadingBox
+import com.fitcoach.app.ui.components.Pill
 import com.fitcoach.app.ui.components.SectionCard
 import com.fitcoach.app.ui.components.SectionHeader
 import com.fitcoach.app.ui.theme.CarbsColor
 import com.fitcoach.app.ui.theme.Emerald
+import com.fitcoach.app.ui.theme.ErrorRed
 import com.fitcoach.app.ui.theme.ProteinColor
 import com.fitcoach.app.ui.theme.TextSecondary
+import com.fitcoach.app.domain.adaptive.WeeklyCheckInAnalyzer
+import com.fitcoach.app.domain.model.ProgramChange
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -296,25 +300,12 @@ fun ProgressScreen(
         }
 
         item {
-            SectionCard {
-                Column {
-                    SectionHeader("Check-in settimanale", "Valutazione periodica")
-                    Spacer(Modifier.height(10.dp))
-                    state.latestCheckIn?.let { c ->
-                        Text(c.summary, style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface)
-                        Spacer(Modifier.height(10.dp))
-                    } ?: Text(
-                        "Nessun check-in registrato. Esegui il primo check-in per far analizzare i dati al coach.",
-                        style = MaterialTheme.typography.bodySmall, color = TextSecondary
-                    )
-                    OutlinedButton(onClick = { viewModel.runCheckIn() }) {
-                        Icon(Icons.Filled.Assessment, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Esegui check-in ora")
-                    }
-                }
-            }
+            WeeklyCheckInSection(
+                state = state,
+                onRunCheckIn = { viewModel.runCheckIn() },
+                onApprove = { viewModel.approveCheckInProposal(it) },
+                onReject = { viewModel.rejectCheckInProposal(it) }
+            )
         }
     }
 
@@ -355,5 +346,145 @@ private fun PhotoThumbnail(uri: String, modifier: Modifier = Modifier) {
         )
     } else {
         Text("Foto non disponibile", modifier = modifier.padding(8.dp), color = TextSecondary)
+    }
+}
+
+@Composable
+private fun WeeklyCheckInSection(
+    state: ProgressUiState,
+    onRunCheckIn: () -> Unit,
+    onApprove: (Long) -> Unit,
+    onReject: (Long) -> Unit
+) {
+    SectionCard {
+        Column {
+            SectionHeader("Check-in settimanale", "Valutazione periodica del coach")
+            Spacer(Modifier.height(10.dp))
+
+            val report = state.checkInReport
+            if (report != null) {
+                CheckInMetrics(report)
+                Spacer(Modifier.height(10.dp))
+            } else {
+                state.latestCheckIn?.let { c ->
+                    Text(c.summary, style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(Modifier.height(10.dp))
+                } ?: Text(
+                    "Nessun check-in registrato. Esegui il primo check-in per far analizzare i dati al coach.",
+                    style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                )
+                Spacer(Modifier.height(10.dp))
+            }
+
+            if (state.checkInEvaluation.isNotBlank()) {
+                Text("Valutazione del Coach", style = MaterialTheme.typography.labelLarge, color = Emerald)
+                Spacer(Modifier.height(4.dp))
+                Text(state.checkInEvaluation, style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(10.dp))
+            }
+
+            if (state.checkInProposals.isNotEmpty()) {
+                Text("Modifiche proposte", style = MaterialTheme.typography.labelLarge, color = Emerald)
+                Spacer(Modifier.height(4.dp))
+                state.checkInProposals.forEach { change ->
+                    CheckInProposal(change, onApprove = { onApprove(change.id) }, onReject = { onReject(change.id) })
+                    Spacer(Modifier.height(8.dp))
+                }
+            }
+
+            OutlinedButton(onClick = onRunCheckIn, enabled = !state.checkInRunning) {
+                Icon(Icons.Filled.Assessment, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(if (state.checkInRunning) "Analisi in corso..." else "Esegui check-in ora")
+            }
+        }
+    }
+}
+
+@Composable
+private fun CheckInMetrics(report: WeeklyCheckInAnalyzer.Report) {
+    Column {
+        if (!report.dataSufficient) {
+            Pill("Dati insufficienti", ErrorRed)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Servono almeno 2 settimane di consumi reali e 3 settimane di peso medio per decisioni affidabili.",
+                style = MaterialTheme.typography.bodySmall, color = TextSecondary
+            )
+            Spacer(Modifier.height(8.dp))
+        }
+        MetricRow("Peso medio", report.avgWeightKg?.let { "%.1f kg".format(it) } ?: "n/d")
+        MetricRow(
+            "Andamento peso",
+            (report.weightTrendKgPerWeek?.let { "%+.2f kg/sett".format(it) } ?: "n/d") +
+                if (report.weightReliable) "" else " (dati parziali)"
+        )
+        MetricRow("Massa grassa", report.bodyFatPercent?.let { "%.1f%%".format(it) } ?: "non disponibile")
+        MetricRow("Aderenza nutrizionale", report.adherencePercent?.let { "%.0f%%".format(it) } ?: "n/d")
+        MetricRow(
+            "Calorie medie",
+            report.avgKcalConsumed?.let { "%.0f kcal".format(it) } ?: "n/d"
+        )
+        MetricRow("Allenamenti", "${report.sessionsCompleted}/${report.sessionsPlanned}")
+        MetricRow(
+            "Prestazioni",
+            "${report.progressionCount} in crescita, ${report.stagnationCount} stabili, ${report.regressionCount} in calo"
+        )
+        MetricRow("Recupero", "${report.recoverySeverity}/3")
+    }
+}
+
+@Composable
+private fun MetricRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+        Text(value, style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+@Composable
+private fun CheckInProposal(
+    change: ProgramChange,
+    onApprove: () -> Unit,
+    onReject: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(change.title, style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface)
+            Pill(change.domain.name, Emerald)
+        }
+        Spacer(Modifier.height(4.dp))
+        if (change.proposedChange.isNotBlank()) {
+            Text(change.proposedChange, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface)
+        }
+        if (change.rationale.isNotBlank()) {
+            Text("Motivazione: ${change.rationale}", style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary)
+        }
+        if (change.expectedOutcome.isNotBlank()) {
+            Text("Risultato atteso: ${change.expectedOutcome}", style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary)
+        }
+        Spacer(Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = onApprove) { Text("Approva") }
+            TextButton(onClick = onReject) { Text("Rifiuta") }
+        }
     }
 }

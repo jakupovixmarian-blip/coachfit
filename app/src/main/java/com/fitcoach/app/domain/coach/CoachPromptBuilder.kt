@@ -61,6 +61,86 @@ object CoachPromptBuilder {
           e correggi le violazioni segnalate.
     """.trimIndent()
 
+    /**
+     * Prompt di sistema del CHECK-IN SETTIMANALE. L'AI resta l'autorita decisionale:
+     * analizza i dati reali (lo strumento analyze_weekly_checkin li aggrega) e propone
+     * solo se giustificato, con gli stessi strumenti "propose_*" della chat.
+     */
+    val weeklyCheckInSystemPrompt: String = """
+        Sei FitCoach, il coach digitale dell'utente. Stai conducendo il CHECK-IN SETTIMANALE.
+
+        METODO
+        1. Chiama "analyze_weekly_checkin" per ottenere i dati REALI degli ultimi 7 giorni e il
+           confronto con le settimane precedenti (peso, aderenza, calorie/macro, allenamenti,
+           prestazioni, recupero, sonno, dolore). Puoi approfondire con "get_progress",
+           "get_workout_history" e "get_nutrition_diary" se serve.
+        2. Valuta l'AFFIDABILITA e la COMPLETEZZA dei dati. Se sono insufficienti, dillo e NON
+           proporre modifiche: chiedi di continuare a registrare.
+        3. Analizza l'andamento rispetto all'obiettivo e identifica eventuali problemi.
+        4. Formula una valutazione MOTIVATA in italiano, breve e concreta.
+        5. Se serve una modifica, usa gli strumenti "propose_*" (calorie, volume, deload,
+           sostituzioni, rigenerazione). Ognuna registra una PROPOSTA che l'utente conferma:
+           NON applicare mai nulla direttamente.
+        6. Concludi con: cosa hai osservato, cosa hai proposto (se qualcosa) e cosa serve
+           all'utente (confermare/rifiutare, registrare piu dati, ecc.).
+
+        REGOLE FERME
+        - Non inventare dati mancanti: se un valore e null o assente, dichiaralo e chiedilo.
+        - NON ridurre le calorie per una SINGOLA settimana senza valutare trend e aderenza:
+          servono almeno 2 settimane di consumi reali e 3 settimane di peso medio affidabile.
+        - NON aumentare il volume quando le prestazioni PEGGIORANO: prima valuta il recupero.
+          Non interpretare ogni stagnazione come necessita di aumentare il volume.
+        - Rispetta allergie, intolleranze, limitazioni e obiettivi del profilo.
+        - Non sei un professionista sanitario: nessuna diagnosi, farmaco, ormone o sostanza
+          dopante. In presenza di dolore, invita a interrompere l'esercizio e a valutare un
+          professionista se persiste.
+        - Ogni proposta deve contenere: situazione, problema, dati usati, modifica, motivazione,
+          risultato atteso e controindicazioni.
+    """.trimIndent()
+
+    /**
+     * Blocco di contesto dedicato al check-in: i numeri aggregati del report di supporto,
+     * cosi il modello ha subito i dati essenziali anche prima di chiamare lo strumento.
+     */
+    fun buildCheckInContext(report: com.fitcoach.app.domain.adaptive.WeeklyCheckInAnalyzer.Report): String {
+        val sb = StringBuilder()
+        sb.appendLine("=== CHECK-IN SETTIMANALE (dati aggregati reali) ===")
+        sb.appendLine("Dati sufficienti per una modifica: ${if (report.dataSufficient) "SI" else "NO"}")
+        sb.appendLine(
+            "Peso: media ${report.avgWeightKg?.let { "%.1f kg".format(it) } ?: "n/d"}, " +
+                "trend ${report.weightTrendKgPerWeek?.let { "%+.2f kg/sett".format(it) } ?: "n/d"} " +
+                "(affidabile: ${report.weightReliable}, settimane: ${report.weeksOfWeightData})"
+        )
+        sb.appendLine("Massa grassa: ${report.bodyFatPercent?.let { "%.1f%%".format(it) } ?: "non disponibile"}")
+        sb.appendLine("Vita: ${report.waistTrendCmPerWeek?.let { "%+.2f cm/sett".format(it) } ?: "non disponibile"}")
+        sb.appendLine(
+            "Nutrizione: aderenza ${report.adherencePercent?.let { "%.0f%%".format(it) } ?: "n/d"}, " +
+                "kcal medie consumate ${report.avgKcalConsumed?.let { "%.0f".format(it) } ?: "n/d"} " +
+                "(previste ${report.avgPlannedKcal?.let { "%.0f".format(it) } ?: "n/d"}), " +
+                "settimane con dati ${report.nutritionWeeksTracked}"
+        )
+        sb.appendLine(
+            "Allenamento: ${report.sessionsCompleted}/${report.sessionsPlanned} sedute; " +
+                "recupero severita ${report.recoverySeverity}/3 (${report.recoveryExplanation}); " +
+                "sonno medio ${report.sleepAvg?.let { "%.1f".format(it) } ?: "n/d"}; " +
+                "dolore in ${report.painSessions} sedute"
+        )
+        if (report.painNotes.isNotBlank()) sb.appendLine("Note dolore: ${report.painNotes}")
+        if (report.performanceTrends.isNotEmpty()) {
+            sb.appendLine("Prestazioni per esercizio:")
+            report.performanceTrends.take(15).forEach { t ->
+                sb.appendLine("  - ${t.exerciseName}: ${t.classification.name} (${"%+.1f".format(t.changePercent)}%, ${t.samples} campioni)")
+            }
+        }
+        if (report.advisories.isNotEmpty()) {
+            sb.appendLine("Classificazioni di supporto (NON decisioni):")
+            report.advisories.forEach { a ->
+                sb.appendLine("  - ${a.classification}: ${a.reason}")
+            }
+        }
+        return sb.toString()
+    }
+
     fun buildContext(context: CoachContext): String {
         val sb = StringBuilder()
         sb.appendLine("=== CONTESTO ATTUALE (${LocalDate.now().format(dateFmt)}) ===")
