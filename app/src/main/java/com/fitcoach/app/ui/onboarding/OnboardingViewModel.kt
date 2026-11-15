@@ -22,8 +22,6 @@ import com.fitcoach.app.domain.model.WeightRecord
 import com.fitcoach.app.domain.model.WorkShift
 import com.fitcoach.app.domain.model.WorkType
 import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
-import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
-import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -95,8 +93,7 @@ data class OnboardingUiState(
 class OnboardingViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val preferencesRepository: PreferencesRepository,
-    private val progressRepository: ProgressRepository,
-    private val generatePrograms: GenerateProgramsUseCase
+    private val progressRepository: ProgressRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(OnboardingUiState())

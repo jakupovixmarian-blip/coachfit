@@ -63,6 +63,7 @@ fun FitCoachNavHost(navController: NavHostController) {
             composable(Routes.COACH) { CoachScreen(navController) }
             composable(Routes.ONBOARDING) { OnboardingScreen(navController) }
             composable(Routes.ANAMNESIS) { AnamnesisScreen(navController) }
+            composable(Routes.ANAMNESIS_EDIT) { AnamnesisScreen(navController, startInEdit = true) }
             composable(Routes.SETTINGS) { SettingsScreen(navController) }
             composable(Routes.AI_PROVIDERS) { AiProvidersScreen(navController) }
             composable(Routes.NOTIFICATION_SETTINGS) { NotificationSettingsScreen(navController) }

@@ -98,10 +98,17 @@ fun WorkoutScreen(
                 message = "Genera una programmazione periodizzata con split, volume e " +
                     "progressione dei carichi in base al tuo profilo.",
                 action = {
-                    Button(onClick = { viewModel.generateWorkout() }, enabled = !state.generating) {
-                        Icon(Icons.Filled.Refresh, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text(if (state.generating) "Generazione..." else "Genera scheda")
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Button(onClick = { viewModel.generateWorkout() }, enabled = !state.generating) {
+                            Icon(Icons.Filled.Refresh, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(if (state.generating) "Generazione..." else "Genera scheda")
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { viewModel.generateWorkout(offline = true) },
+                            enabled = !state.generating
+                        ) { Text("Genera offline (senza AI)") }
                     }
                 }
             )

@@ -26,6 +26,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -91,10 +92,17 @@ fun NutritionScreen(
                 message = "Genera un piano completo a 7 giorni con ciclicita dei carboidrati, " +
                     "in base al tuo profilo e ai tuoi obiettivi.",
                 action = {
-                    Button(onClick = { viewModel.generatePlan() }, enabled = !state.generating) {
-                        Icon(Icons.Filled.Refresh, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text(if (state.generating) "Generazione..." else "Genera piano")
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Button(onClick = { viewModel.generatePlan() }, enabled = !state.generating) {
+                            Icon(Icons.Filled.Refresh, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(if (state.generating) "Generazione..." else "Genera piano")
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { viewModel.generatePlan(offline = true) },
+                            enabled = !state.generating
+                        ) { Text("Genera offline (senza AI)") }
                     }
                 }
             )

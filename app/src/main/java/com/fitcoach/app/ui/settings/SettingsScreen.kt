@@ -135,7 +135,7 @@ fun SettingsScreen(
                     icon = Icons.Filled.Person,
                     title = "Anamnesi completa",
                     subtitle = "Modifica stile di vita, recupero, alimentazione, allenamento",
-                    onClick = { navController.navigate(Routes.ONBOARDING) }
+                    onClick = { navController.navigate(Routes.ANAMNESIS_EDIT) }
                 )
             }
 

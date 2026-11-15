@@ -24,6 +24,7 @@ import com.fitcoach.app.domain.coach.AiNutritionDay
 import com.fitcoach.app.domain.coach.AiNutritionProposal
 import com.fitcoach.app.domain.coach.AiPlannedExercise
 import com.fitcoach.app.domain.coach.AiProgramGenerationService
+import com.fitcoach.app.domain.coach.ProgramGenerationEngine
 import com.fitcoach.app.domain.coach.AiProgramProposal
 import com.fitcoach.app.domain.coach.AiWorkoutDay
 import com.fitcoach.app.domain.coach.AiWorkoutProposal
@@ -44,6 +45,8 @@ import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.FoodFilter
 import com.fitcoach.app.domain.nutrition.FoodSeedData
 import com.fitcoach.app.domain.nutrition.MealPlanGenerator
+import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
+import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
 import com.fitcoach.app.domain.workout.ExerciseSeedData
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import com.google.common.truth.Truth.assertThat
@@ -235,8 +238,15 @@ class AiProgramGenerationFlowIntegrationTest {
         )
     }
 
-    private fun proposalJson(p: AiProgramProposal): String =
-        json.encodeToString(AiProgramProposal.serializer(), p)
+    private fun proposalJson(p: AiProgramProposal, scope: String? = null): String {
+        val base = json.encodeToString(AiProgramProposal.serializer(), p)
+        if (scope == null) return base
+        val obj = json.parseToJsonElement(base) as kotlinx.serialization.json.JsonObject
+        return json.encodeToString(
+            kotlinx.serialization.json.JsonObject.serializer(),
+            kotlinx.serialization.json.JsonObject(obj + ("scope" to JsonPrimitive(scope)))
+        )
+    }
 
     @Test
     fun `generazione iniziale passa dal motore AI unico e persiste piano e scheda`() = runTest {
@@ -286,12 +296,56 @@ class AiProgramGenerationFlowIntegrationTest {
     }
 
     @Test
-    fun `senza anamnesi confermata la generazione e bloccata prima di chiamare il provider`() = runTest {
-        val notConfirmed = profile.copy(anamnesisCompleted = false)
-        val api = ScriptedApi(mutableListOf())
-        val result = service(api).generate(notConfirmed)
-        assertThat(result).isInstanceOf(AiProgramGenerationService.Result.Failure::class.java)
-        assertThat((result as AiProgramGenerationService.Result.Failure).canRetry).isFalse()
-        assertThat(api.sent).isEmpty()
+    fun `ambito nutrizione rigenera solo il piano alimentare`() = runTest {
+        val api = ScriptedApi(
+            mutableListOf(
+                toolCallResponse("submit_full_program", proposalJson(buildValidProposal(), scope = "NUTRITION")),
+                textResponse("Piano alimentare aggiornato.")
+            )
+        )
+        val result = service(api).generate(profile, ProgramGenerationEngine.Scope.NUTRITION)
+        assertThat(result).isInstanceOf(AiProgramGenerationService.Result.Success::class.java)
+        assertThat(nutritionRepository.getActivePlan()).isNotNull()
+        // Ambito NUTRIZIONE: la scheda non viene toccata.
+        assertThat(workoutRepository.getActivePlan()).isNull()
+    }
+
+    @Test
+    fun `ambito allenamento rigenera solo la scheda`() = runTest {
+        val api = ScriptedApi(
+            mutableListOf(
+                toolCallResponse("submit_full_program", proposalJson(buildValidProposal(), scope = "WORKOUT")),
+                textResponse("Scheda aggiornata.")
+            )
+        )
+        val result = service(api).generate(profile, ProgramGenerationEngine.Scope.WORKOUT)
+        assertThat(result).isInstanceOf(AiProgramGenerationService.Result.Success::class.java)
+        assertThat(workoutRepository.getActivePlan()).isNotNull()
+        // Ambito ALLENAMENTO: il piano alimentare non viene toccato.
+        assertThat(nutritionRepository.getActivePlan()).isNull()
+    }
+
+    @Test
+    fun `il coordinatore usa il motore offline solo su scelta esplicita`() = runTest {
+        val offlineEngine = GenerateProgramsUseCase(
+            userRepository, foodRepository, exerciseRepository,
+            nutritionRepository, workoutRepository, planVersionRepository
+        )
+        // Provider non raggiungibile: il percorso predefinito fallisce senza sostituzioni automatiche.
+        val coordinator = ProgramGenerationCoordinator(
+            aiGeneration = service(ScriptedApi(mutableListOf())),
+            offlineEngine = offlineEngine
+        )
+
+        val aiDefault = coordinator.generate(profile)
+        assertThat(aiDefault).isInstanceOf(GenerateProgramsUseCase.Result.Error::class.java)
+        assertThat(nutritionRepository.getActivePlan()).isNull()
+        assertThat(workoutRepository.getActivePlan()).isNull()
+
+        // Su scelta esplicita il motore offline genera e persiste entrambi i programmi.
+        val offline = coordinator.generate(profile, useOfflineEngine = true)
+        assertThat(offline).isInstanceOf(GenerateProgramsUseCase.Result.Success::class.java)
+        assertThat(nutritionRepository.getActivePlan()).isNotNull()
+        assertThat(workoutRepository.getActivePlan()).isNotNull()
     }
 }

@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,9 +46,18 @@ import com.fitcoach.app.ui.theme.TextSecondary
 @Composable
 fun AnamnesisScreen(
     navController: NavHostController,
+    startInEdit: Boolean = false,
     viewModel: AnamnesisViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // Apertura diretta in modifica (dalle Impostazioni): l'anamnesi resta la fonte
+    // unica del profilo, quindi si riusa lo stesso flusso precompilato.
+    LaunchedEffect(startInEdit, state.loading) {
+        if (startInEdit && !state.loading && !state.editing && state.profile.id != 0L) {
+            viewModel.startEdit()
+        }
+    }
 
     AnamnesisContent(
         state = state,

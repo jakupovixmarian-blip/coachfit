@@ -14,6 +14,7 @@ import com.fitcoach.app.domain.model.NutritionDay
 import com.fitcoach.app.domain.model.NutritionPlan
 import com.fitcoach.app.domain.nutrition.FoodSubstitutionEngine
 import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
+import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,7 +55,7 @@ class NutritionViewModel @Inject constructor(
     private val diaryRepository: NutritionDiaryRepository,
     private val substitutionRepository: SubstitutionRepository,
     private val foodSearchRepository: FoodSearchRepository,
-    private val generatePrograms: GenerateProgramsUseCase
+    private val generationCoordinator: ProgramGenerationCoordinator
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(NutritionUiState())
@@ -91,7 +92,7 @@ class NutritionViewModel @Inject constructor(
         }
     }
 
-    fun generatePlan() {
+    fun generatePlan(offline: Boolean = false) {
         viewModelScope.launch {
             val profile = userRepository.get()
             if (profile == null || !profile.isComplete) {
@@ -99,15 +100,15 @@ class NutritionViewModel @Inject constructor(
                 return@launch
             }
             _state.value = _state.value.copy(generating = true, message = null)
-            val result = generatePrograms(
+            val result = generationCoordinator.generate(
                 profile = profile,
-                trainingDayIndices = WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek),
-                regenerateNutrition = true,
-                regenerateWorkout = false,
-                requireAnamnesis = false
+                scope = ProgramGenerationCoordinator.Scope.NUTRITION,
+                useOfflineEngine = offline
             )
             val message = when (result) {
-                is GenerateProgramsUseCase.Result.Success -> "Piano alimentare generato."
+                is GenerateProgramsUseCase.Result.Success ->
+                    if (offline) "Piano alimentare generato dal motore offline."
+                    else "Piano alimentare generato dal Coach AI."
                 is GenerateProgramsUseCase.Result.MissingData ->
                     "Dati mancanti: ${result.missing.joinToString()}."
                 is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed ->

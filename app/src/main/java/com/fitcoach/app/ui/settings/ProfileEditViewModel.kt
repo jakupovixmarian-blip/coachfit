@@ -11,6 +11,7 @@ import com.fitcoach.app.domain.model.TrainingExperience
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WeightRecord
 import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
+import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +35,7 @@ data class ProfileEditUiState(
 class ProfileEditViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val progressRepository: ProgressRepository,
-    private val generatePrograms: GenerateProgramsUseCase
+    private val generationCoordinator: ProgramGenerationCoordinator
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileEditUiState())
@@ -89,10 +90,9 @@ class ProfileEditViewModel @Inject constructor(
             }
 
             val message = if (_state.value.regenerate) {
-                when (val result = generatePrograms(
+                when (val result = generationCoordinator.generate(
                     profile = updated,
-                    trainingDayIndices = WorkoutPlanBuilder.defaultTrainingDays(updated.trainingDaysPerWeek),
-                    requireAnamnesis = false
+                    scope = ProgramGenerationCoordinator.Scope.BOTH
                 )) {
                     is GenerateProgramsUseCase.Result.Success -> "Profilo aggiornato e programmi rigenerati."
                     is GenerateProgramsUseCase.Result.MissingData ->

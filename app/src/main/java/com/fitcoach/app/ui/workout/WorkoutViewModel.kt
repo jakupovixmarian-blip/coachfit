@@ -13,6 +13,7 @@ import com.fitcoach.app.domain.model.WorkoutPlan
 import com.fitcoach.app.domain.model.WorkoutSession
 import com.fitcoach.app.domain.model.WorkoutSet
 import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
+import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
 import com.fitcoach.app.domain.workout.ProgressiveOverloadEngine
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -85,7 +86,7 @@ class WorkoutViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
-    private val generatePrograms: GenerateProgramsUseCase
+    private val generationCoordinator: ProgramGenerationCoordinator
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(WorkoutUiState())
@@ -272,7 +273,7 @@ class WorkoutViewModel @Inject constructor(
     fun selectSection(section: WorkoutSection) { _state.value = _state.value.copy(section = section) }
     fun closeEdit() { _state.value = _state.value.copy(editingExercise = null) }
 
-    fun generateWorkout() {
+    fun generateWorkout(offline: Boolean = false) {
         viewModelScope.launch {
             val profile = userRepository.get()
             if (profile == null || !profile.isComplete) {
@@ -280,15 +281,14 @@ class WorkoutViewModel @Inject constructor(
                 return@launch
             }
             _state.value = _state.value.copy(generating = true, message = null)
-            val result = generatePrograms(
+            val result = generationCoordinator.generate(
                 profile = profile,
-                trainingDayIndices = WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek),
-                regenerateNutrition = false,
-                regenerateWorkout = true,
-                requireAnamnesis = false
+                scope = ProgramGenerationCoordinator.Scope.WORKOUT,
+                useOfflineEngine = offline
             )
             val message = when (result) {
-                is GenerateProgramsUseCase.Result.Success -> "Scheda generata."
+                is GenerateProgramsUseCase.Result.Success ->
+                    if (offline) "Scheda generata dal motore offline." else "Scheda generata dal Coach AI."
                 is GenerateProgramsUseCase.Result.MissingData -> "Dati mancanti: ${result.missing.joinToString()}."
                 is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed ->
                     "Completa l'anamnesi guidata prima di generare."

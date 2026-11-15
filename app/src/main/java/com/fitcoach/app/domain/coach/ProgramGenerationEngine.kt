@@ -37,30 +37,67 @@ import kotlin.math.abs
  */
 object ProgramGenerationEngine {
 
+    /** Ambito di rigenerazione richiesto dall'utente. L'AI resta l'autorita. */
+    enum class Scope { BOTH, NUTRITION, WORKOUT }
+
     /** Proposta mappata e verificata, pronta per la persistenza. */
     data class Validated(
+        val nutrition: ValidatedNutrition?,
+        val workout: WorkoutPlanBuilder.BuiltPlan?,
+        val warnings: List<String>
+    )
+
+    data class ValidatedNutrition(
         val energy: com.fitcoach.app.domain.model.EnergyResult,
         val cycling: com.fitcoach.app.domain.model.CarbCyclingPlan,
         val days: List<MealPlanGenerator.GeneratedDay>,
         val dayTypes: List<CarbDayType>,
         val trainingDays: List<Int>,
-        val carbCyclingApplied: Boolean,
-        val workout: WorkoutPlanBuilder.BuiltPlan,
-        val warnings: List<String>
+        val carbCyclingApplied: Boolean
     )
 
     /**
-     * Verifica la proposta dell'AI contro i vincoli reali. Ritorna la proposta
-     * mappata se e valida, altrimenti null (usa [diagnose] per i dettagli).
+     * Verifica la proposta dell'AI contro i vincoli reali per l'ambito richiesto.
+     * Ritorna la proposta mappata se le parti INCLUSE sono valide, altrimenti null
+     * (usa [diagnose] per i dettagli).
      */
     fun validate(
         profile: UserProfile,
         proposal: AiProgramProposal,
         foods: List<FoodItem>,
-        exercises: List<Exercise>
+        exercises: List<Exercise>,
+        scope: Scope = Scope.BOTH
     ): Validated? {
         val energy = EnergyCalculator.compute(profile) ?: return null
+        val includeNutrition = scope != Scope.WORKOUT
+        val includeWorkout = scope != Scope.NUTRITION
         val trainingDays = proposal.workout.days.map { it.dayIndex }.distinct().sorted()
+
+        val nutrition = if (includeNutrition) {
+            validateNutrition(profile, proposal, foods, energy, trainingDays) ?: return null
+        } else null
+        val workout = if (includeWorkout) {
+            mapWorkout(profile, proposal, exercises) ?: return null
+        } else null
+        if (workout != null) {
+            val plannedDays = workout.days.filterNot { it.isRestDay }
+            if (plannedDays.size != profile.trainingDaysPerWeek || plannedDays.any { it.exercises.isEmpty() }) return null
+            if (plannedDays.any { it.totalSets !in 6..24 }) return null
+            if (plannedDays.flatMap { it.exercises }.groupBy { it.exerciseId }
+                    .any { (_, items) -> items.sumOf { it.sets } > 24 }
+            ) return null
+        }
+        val warnings = listOf("Strategia generata dal Coach AI; numeri e vincoli verificati offline.")
+        return Validated(nutrition, workout, warnings)
+    }
+
+    private fun validateNutrition(
+        profile: UserProfile,
+        proposal: AiProgramProposal,
+        foods: List<FoodItem>,
+        energy: com.fitcoach.app.domain.model.EnergyResult,
+        trainingDays: List<Int>
+    ): ValidatedNutrition? {
         if (trainingDays.size != profile.trainingDaysPerWeek || trainingDays.any { it !in 0..6 }) return null
         if (proposal.calendar.workoutDayIndices.distinct().sorted() != trainingDays) return null
         if (proposal.calendar.restDayIndices.distinct().sorted() != (0..6).filterNot { it in trainingDays }) return null
@@ -110,19 +147,9 @@ object ProgramGenerationEngine {
             MealPlanGenerator.GeneratedDay(aiDay.dayIndex, type, target, meals, actual, deviations, true)
         }.sortedBy { it.dayIndex }
 
-        val workout = mapWorkout(profile, proposal, exercises) ?: return null
-        val plannedDays = workout.days.filterNot { it.isRestDay }
-        if (plannedDays.size != profile.trainingDaysPerWeek || plannedDays.any { it.exercises.isEmpty() }) return null
-        if (plannedDays.any { it.totalSets !in 6..24 }) return null
-        if (plannedDays.flatMap { it.exercises }.groupBy { it.exerciseId }.any { (_, items) ->
-                items.sumOf { it.sets } > 24
-            }) return null
         val weeklyKcal = generatedDays.sumOf { it.actual.kcal }
         if (!close(weeklyKcal, cycling.weeklyKcal, 0.20)) return null
-        return Validated(
-            energy, cycling, generatedDays, dayTypes, trainingDays, cyclingApplied, workout,
-            listOf("Strategia generata dal Coach AI; numeri e vincoli verificati offline.")
-        )
+        return ValidatedNutrition(energy, cycling, generatedDays, dayTypes, trainingDays, cyclingApplied)
     }
 
     /** Diagnosi leggibile dei vincoli violati (valore atteso vs ricevuto). */

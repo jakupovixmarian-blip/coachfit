@@ -48,7 +48,10 @@ class AiProgramGenerationService @Inject constructor(
         data class Failure(val message: String, val canRetry: Boolean = true) : Result
     }
 
-    suspend fun generate(profile: UserProfile): Result {
+    suspend fun generate(
+        profile: UserProfile,
+        scope: ProgramGenerationEngine.Scope = ProgramGenerationEngine.Scope.BOTH
+    ): Result {
         if (!profile.isAnamnesisReady) {
             return Result.Failure("Completa e conferma l'anamnesi prima di generare il programma.", false)
         }
@@ -62,14 +65,14 @@ class AiProgramGenerationService @Inject constructor(
                 "Provider AI non configurato. Inserisci una chiave o configura il backend proxy nelle Impostazioni."
             )
 
-        val contextPrompt = buildGenerationContext(profile, foods, exercises)
+        val contextPrompt = buildGenerationContext(profile, foods, exercises, scope)
         val turn = orchestrator.run(
             config = config,
             systemPrompt = generationSystemPrompt,
             contextPrompt = contextPrompt,
             history = emptyList(),
-            userMessage = "Genera ora il mio programma completo e consegnalo con submit_full_program. " +
-                "Non fermarti prima: devi arrivare a ok=true.",
+            userMessage = "Genera ora la parte richiesta del mio programma e consegnala con " +
+                "submit_full_program (scope=${scope.name}). Non fermarti prima: devi arrivare a ok=true.",
             maxIterations = GENERATION_MAX_ITERATIONS
         )
 
@@ -129,9 +132,15 @@ class AiProgramGenerationService @Inject constructor(
     private fun buildGenerationContext(
         profile: UserProfile,
         foods: List<FoodItem>,
-        exercises: List<Exercise>
+        exercises: List<Exercise>,
+        scope: ProgramGenerationEngine.Scope
     ): String = buildString {
-        appendLine("Genera il programma COMPLETO per FitCoach usando SOLO gli identificativi testuali elencati.")
+        appendLine("Genera la parte richiesta del programma COMPLETO per FitCoach usando SOLO gli identificativi testuali elencati.")
+        appendLine("AMBITO RICHIESTO: ${scope.name} " + when (scope) {
+            ProgramGenerationEngine.Scope.BOTH -> "(nutrizione + allenamento)"
+            ProgramGenerationEngine.Scope.NUTRITION -> "(SOLO nutrizione: compila comunque i giorni di allenamento e il calendario, ma verranno usati solo per i controlli)"
+            ProgramGenerationEngine.Scope.WORKOUT -> "(SOLO allenamento: compila comunque la nutrizione, ma verrà usata solo per i controlli)"
+        })
         appendLine("DATI ANAMNESI CONFERMATI:")
         appendLine(AnamnesisSummary.forProfile(profile))
         appendLine("OBIETTIVO: ${profile.goal.name}; giorni disponibili: ${profile.trainingDaysPerWeek}; pasti: ${profile.mealsPerDay}")

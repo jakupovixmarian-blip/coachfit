@@ -48,6 +48,11 @@ class SubmitFullProgramTool @Inject constructor(
             "richiamalo. Non inventare alimenti o esercizi: usa solo quelli dei cataloghi."
 
     override val parameters: JsonObject = Schema.obj(
+        "scope" to Schema.enumOf(
+            "Cosa generare: BOTH (nutrizione e allenamento), NUTRITION (solo piano alimentare) " +
+                "o WORKOUT (solo scheda). Usa il valore richiesto nel contesto.",
+            "BOTH", "NUTRITION", "WORKOUT"
+        ),
         "schemaVersion" to Schema.integer("Versione dello schema (1)."),
         "strategy" to Schema.string("Strategia complessiva in una frase."),
         "objectives" to Schema.arrayOfStrings("Obiettivi operativi."),
@@ -74,6 +79,11 @@ class SubmitFullProgramTool @Inject constructor(
         if (!profile.isAnamnesisReady) {
             return fail("Anamnesi non confermata: impossibile salvare il programma.")
         }
+        val scope = runCatching {
+            ProgramGenerationEngine.Scope.valueOf(
+                (JsonArgs(arguments).string("scope") ?: "BOTH").trim().uppercase()
+            )
+        }.getOrDefault(ProgramGenerationEngine.Scope.BOTH)
         val proposal = AiProgramProposalJson.decode(json, json.encodeToString(JsonObject.serializer(), arguments))
             ?: return fail("Struttura non valida: invia un singolo oggetto conforme allo schema.")
 
@@ -82,7 +92,7 @@ class SubmitFullProgramTool @Inject constructor(
         if (foods.isEmpty()) return fail("Nessun alimento compatibile disponibile nel database.")
         if (exercises.isEmpty()) return fail("Database esercizi vuoto: impossibile validare la scheda.")
 
-        val validated = ProgramGenerationEngine.validate(profile, proposal, foods, exercises)
+        val validated = ProgramGenerationEngine.validate(profile, proposal, foods, exercises, scope)
             ?: return JsonOut.encode(
                 JsonOut.obj(
                     "ok" to JsonOut.bool(false),
@@ -97,21 +107,27 @@ class SubmitFullProgramTool @Inject constructor(
 
         val saved = runCatching {
             db.withTransaction {
-                val nutritionId = nutritionRepository.savePlan(
-                    profile = profile,
-                    energy = validated.energy,
-                    cycling = validated.cycling,
-                    generatedDays = validated.days,
-                    dayTypes = validated.dayTypes,
-                    trainingDayIndices = validated.trainingDays,
-                    carbCyclingApplied = validated.carbCyclingApplied
-                )
-                val workoutId = workoutRepository.savePlan(profile, validated.workout)
-                nutritionRepository.getActivePlan()?.let {
-                    planVersionRepository.snapshotNutrition(it, "Programma generato dal Coach AI e validato dai motori matematici.")
+                var nutritionId = 0L
+                var workoutId = 0L
+                validated.nutrition?.let { n ->
+                    nutritionId = nutritionRepository.savePlan(
+                        profile = profile,
+                        energy = n.energy,
+                        cycling = n.cycling,
+                        generatedDays = n.days,
+                        dayTypes = n.dayTypes,
+                        trainingDayIndices = n.trainingDays,
+                        carbCyclingApplied = n.carbCyclingApplied
+                    )
+                    nutritionRepository.getActivePlan()?.let {
+                        planVersionRepository.snapshotNutrition(it, "Piano generato dal Coach AI e validato dai motori matematici.")
+                    }
                 }
-                workoutRepository.getActivePlan()?.let {
-                    planVersionRepository.snapshotWorkout(it, "Scheda generata dal Coach AI e validata dai vincoli di sicurezza.")
+                validated.workout?.let { w ->
+                    workoutId = workoutRepository.savePlan(profile, w)
+                    workoutRepository.getActivePlan()?.let {
+                        planVersionRepository.snapshotWorkout(it, "Scheda generata dal Coach AI e validata dai vincoli di sicurezza.")
+                    }
                 }
                 nutritionId to workoutId
             }
@@ -123,6 +139,7 @@ class SubmitFullProgramTool @Inject constructor(
             JsonOut.obj(
                 "ok" to JsonOut.bool(true),
                 "stato" to JsonOut.str("PROGRAMMA_SALVATO"),
+                "ambito" to JsonOut.str(scope.name),
                 "nutritionPlanId" to JsonOut.num(saved.first),
                 "workoutPlanId" to JsonOut.num(saved.second),
                 "avvisi" to JsonOut.strings(validated.warnings)
