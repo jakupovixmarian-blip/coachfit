@@ -310,6 +310,13 @@ class NutritionChainIntegrationTest {
             shoppingRepository.regenerate(NutritionDiaryRepository.weekStart(NutritionDiaryRepository.todayEpochDay()))
             vm.load()
             advanceUntilIdle()
+            // Le query Room girano su thread reali: attende che il lavoro in
+            // background sia effettivamente concluso prima di verificare.
+            var waited = 0
+            while (vm.state.value.items.isEmpty() && waited < 100) {
+                Thread.sleep(20)
+                waited++
+            }
 
             assertThat(vm.state.value.items).isNotEmpty()
             assertThat(vm.state.value.total).isGreaterThan(0)
