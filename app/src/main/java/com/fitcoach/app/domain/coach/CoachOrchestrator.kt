@@ -18,8 +18,13 @@ data class CoachTurnResult(
     val text: String,
     val pendingChangeIds: List<Long> = emptyList(),
     val providerError: String? = null,
-    val toolTrace: List<String> = emptyList()
+    val toolTrace: List<String> = emptyList(),
+    /** Output strutturato di ogni strumento eseguito (nome -> JSON), nell'ordine di chiamata. */
+    val toolResults: List<CoachToolResult> = emptyList()
 )
+
+/** Risultato grezzo dell'esecuzione di uno strumento durante il turno agentico. */
+data class CoachToolResult(val name: String, val output: String)
 
 /**
  * Orchestratore agentico del coach: l'AI e l'unica autorita decisionale.
@@ -57,6 +62,7 @@ class CoachOrchestrator @Inject constructor(
 
         val pendingChangeIds = mutableListOf<Long>()
         val trace = mutableListOf<String>()
+        val toolResults = mutableListOf<CoachToolResult>()
         var lastText = ""
 
         repeat(maxIterations) { iteration ->
@@ -78,13 +84,13 @@ class CoachOrchestrator @Inject constructor(
                             is AiResult.Failure -> CoachTurnResult(text = "", providerError = plain.message, toolTrace = trace)
                         }
                     }
-                    return CoachTurnResult(text = lastText, providerError = result.message, toolTrace = trace)
+                    return CoachTurnResult(text = lastText, providerError = result.message, toolTrace = trace, toolResults = toolResults)
                 }
 
                 is AiResult.Success -> {
                     if (result.content.isNotBlank()) lastText = result.content
                     if (result.toolCalls.isEmpty()) {
-                        return CoachTurnResult(text = result.content, pendingChangeIds = pendingChangeIds, toolTrace = trace)
+                        return CoachTurnResult(text = result.content, pendingChangeIds = pendingChangeIds, toolTrace = trace, toolResults = toolResults)
                     }
                     // Registra la richiesta di tool dell'assistant, poi esegue.
                     messages += assistantToolCallMessage(result.toolCalls)
@@ -92,6 +98,7 @@ class CoachOrchestrator @Inject constructor(
                         val args = parseArgs(call.function.arguments)
                         val output = toolRegistry.execute(call.function.name, args)
                         trace += call.function.name
+                        toolResults += CoachToolResult(call.function.name, output)
                         if (call.function.name in toolRegistry.writeToolNames) {
                             extractChangeId(output)?.let { pendingChangeIds += it }
                         }
@@ -107,12 +114,13 @@ class CoachOrchestrator @Inject constructor(
                 "senza richiedere altri strumenti."
         )
         return when (val final = aiClient.complete(config, finalMessages)) {
-            is AiResult.Success -> CoachTurnResult(text = final.content, pendingChangeIds = pendingChangeIds, toolTrace = trace)
+            is AiResult.Success -> CoachTurnResult(text = final.content, pendingChangeIds = pendingChangeIds, toolTrace = trace, toolResults = toolResults)
             is AiResult.Failure -> CoachTurnResult(
                 text = lastText.ifBlank { "Ho raccolto i dati necessari." },
                 pendingChangeIds = pendingChangeIds,
                 providerError = if (lastText.isBlank()) final.message else null,
-                toolTrace = trace
+                toolTrace = trace,
+                toolResults = toolResults
             )
         }
     }

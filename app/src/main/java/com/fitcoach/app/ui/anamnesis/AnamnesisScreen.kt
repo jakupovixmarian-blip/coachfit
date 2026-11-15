@@ -19,6 +19,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -54,6 +57,10 @@ fun AnamnesisScreen(
         onConfirm = viewModel::confirm,
         onRetryGeneration = viewModel::retryGeneration,
         onUseOfflineEngine = viewModel::useOfflineEngine,
+        onStartEdit = viewModel::startEdit,
+        onEditSection = viewModel::editSection,
+        onStopEdit = viewModel::stopEdit,
+        onResetAnamnesis = viewModel::resetAnamnesis,
         onSubmit = viewModel::submit,
         onBack = viewModel::goBack,
         onSkip = viewModel::skip,
@@ -75,6 +82,10 @@ internal fun AnamnesisContent(
     onConfirm: () -> Unit,
     onRetryGeneration: () -> Unit = {},
     onUseOfflineEngine: () -> Unit = {},
+    onStartEdit: () -> Unit = {},
+    onEditSection: (String) -> Unit = {},
+    onStopEdit: () -> Unit = {},
+    onResetAnamnesis: () -> Unit = {},
     onSubmit: () -> Unit,
     onBack: () -> Unit,
     onSkip: () -> Unit,
@@ -86,15 +97,25 @@ internal fun AnamnesisContent(
         return
     }
 
+    var confirmReset by remember { mutableStateOf(false) }
+
     Column(
         Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Anamnesi iniziale – Il tuo profilo", style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
         Text(
-            "Il coach costruisce i tuoi programmi solo dopo questa intervista. " +
-                "Puoi modificare tutto in seguito.",
+            if (state.editing) "Modifica anamnesi" else "Anamnesi iniziale – Il tuo profilo",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            if (state.editing) {
+                "Stai modificando i dati esistenti. Le sezioni sono precompilate: cambia ciò che serve " +
+                    "e conferma per aggiornare il programma con il Coach AI."
+            } else {
+                "Il coach costruisce i tuoi programmi solo dopo questa intervista. " +
+                    "Puoi modificare tutto in seguito."
+            },
             style = MaterialTheme.typography.bodySmall, color = TextSecondary
         )
 
@@ -123,7 +144,7 @@ internal fun AnamnesisContent(
             }
         }
 
-        if (state.confirmed && state.current == null) {
+        if (state.confirmed && state.current == null && !state.editing) {
             SectionCard {
                 Column {
                     Text("Anamnesi confermata", fontWeight = FontWeight.Bold,
@@ -178,6 +199,61 @@ internal fun AnamnesisContent(
                     Spacer(Modifier.height(8.dp))
                     OutlinedButton(onClick = onOpenSummary,
                         modifier = Modifier.fillMaxWidth()) { Text("Rivedi il riepilogo") }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = onStartEdit,
+                        enabled = !state.generatingPrograms,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Modifica anamnesi") }
+                    Spacer(Modifier.height(8.dp))
+                    if (!confirmReset) {
+                        OutlinedButton(
+                            onClick = { confirmReset = true },
+                            enabled = !state.generatingPrograms,
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text("Azzera e ricompila da zero") }
+                    } else {
+                        Text(
+                            "Azzera tutti i dati dell'anamnesi e ricompila da zero. Account, chiavi API " +
+                                "e storico allenamenti completati NON vengono toccati.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = { confirmReset = false },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("Annulla") }
+                            Button(
+                                onClick = { confirmReset = false; onResetAnamnesis() },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("Conferma reset") }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Modifica a sezioni: salto rapido a una sezione specifica.
+        if (state.editing) {
+            SectionCard {
+                Column {
+                    Text("Sezioni", style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.height(6.dp))
+                    AnamnesisEngine.sections.forEach { section ->
+                        FilterChip(
+                            selected = state.current?.section == section,
+                            onClick = { onEditSection(section) },
+                            label = { Text(section) },
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                        )
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    OutlinedButton(onClick = onStopEdit, modifier = Modifier.fillMaxWidth()) {
+                        Text("Fine modifica (senza rigenerare)")
+                    }
                 }
             }
         }

@@ -38,7 +38,13 @@ data class AnamnesisUiState(
     val generationWarnings: List<String> = emptyList(),
     val aiEnabled: Boolean = false,
     /** True quando la generazione AI fallisce: l'utente puo scegliere esplicitamente il motore offline. */
-    val offlineFallbackAvailable: Boolean = false
+    val offlineFallbackAvailable: Boolean = false,
+    /** True quando si sta modificando un'anamnesi gia confermata (flusso completo, precompilato). */
+    val editing: Boolean = false,
+    /** Sezione corrente dell'editor a sezioni (modalita modifica). */
+    val editSection: String? = null,
+    /** True dopo un reset riuscito: l'utente sta ricompilando da zero. */
+    val resetDone: Boolean = false
 )
 
 @HiltViewModel
@@ -70,6 +76,81 @@ class AnamnesisViewModel @Inject constructor(
         _state.value = _state.value.copy(input = v, error = null)
     }
 
+    /** Avvia la modifica dell'anamnesi confermata: flusso completo e precompilato dalla prima sezione. */
+    fun startEdit() {
+        val profile = _state.value.profile
+        val first = AnamnesisEngine.questions.firstOrNull() ?: return
+        _state.value = _state.value.copy(
+            editing = true,
+            resetDone = false,
+            editSection = first.section,
+            showSummary = false,
+            error = null,
+            current = first,
+            input = AnamnesisEngine.answerText(profile, first.id),
+            selected = AnamnesisEngine.answerSelection(profile, first.id)
+        )
+        refreshDerived()
+    }
+
+    /** Apre direttamente una sezione specifica per la modifica. */
+    fun editSection(section: String) {
+        val profile = _state.value.profile
+        val first = AnamnesisEngine.questionsOf(section).firstOrNull() ?: return
+        _state.value = _state.value.copy(
+            editing = true,
+            resetDone = false,
+            editSection = section,
+            showSummary = false,
+            error = null,
+            current = first,
+            input = AnamnesisEngine.answerText(profile, first.id),
+            selected = AnamnesisEngine.answerSelection(profile, first.id)
+        )
+        refreshDerived()
+    }
+
+    /** Esce dalla modalita modifica senza rigenerare (le modifiche gia salvate restano). */
+    fun stopEdit() {
+        _state.value = _state.value.copy(
+            editing = false,
+            editSection = null,
+            showSummary = false,
+            error = null
+        )
+        refreshDerived()
+    }
+
+    /**
+     * Azzera completamente l'anamnesi per ricompilarla da zero. Non tocca account,
+     * chiavi API ne storico allenamenti: azzera solo i dati dell'anamnesi.
+     */
+    fun resetAnamnesis() {
+        val profile = _state.value.profile
+        val reset = AnamnesisEngine.resetAnamnesis(profile)
+        viewModelScope.launch {
+            userRepository.save(reset)
+            val first = AnamnesisEngine.questions.firstOrNull()
+            _state.value = _state.value.copy(
+                profile = reset,
+                confirmed = false,
+                editing = false,
+                resetDone = true,
+                editSection = null,
+                showSummary = false,
+                summary = "",
+                current = first,
+                input = "",
+                selected = emptySet(),
+                error = null,
+                generationMessage = "Anamnesi azzerata. Ricompila da zero: account, chiavi API e storico allenamenti sono stati conservati.",
+                generationWarnings = emptyList(),
+                offlineFallbackAvailable = false
+            )
+            refreshDerived()
+        }
+    }
+
     fun toggleOption(option: String, multi: Boolean) {
         val current = _state.value.selected
         val next = if (multi) {
@@ -84,15 +165,22 @@ class AnamnesisViewModel @Inject constructor(
     fun submit() {
         val q = _state.value.current ?: return
         val raw = _state.value.input.trim()
-        if (q.required && raw.isBlank()) {
+        if (q.required && raw.isBlank() && !_state.value.editing) {
             _state.value = _state.value.copy(error = "Rispondi alla domanda per proseguire.")
             return
         }
         var profile = AnamnesisEngine.applyAnswer(_state.value.profile, q.id, raw)
         profile = profile.copy(updatedAt = System.currentTimeMillis())
+        val next = if (_state.value.editing) {
+            AnamnesisEngine.nextQuestionFull(q.id)
+        } else {
+            AnamnesisEngine.nextQuestionAfter(profile, q.id)
+        }
         _state.value = _state.value.copy(
-            profile = profile, input = "", selected = emptySet(), error = null,
-            current = AnamnesisEngine.nextQuestionAfter(profile, q.id),
+            profile = profile, error = null,
+            current = next,
+            input = next?.let { AnamnesisEngine.answerText(profile, it.id) }.orEmpty(),
+            selected = next?.let { AnamnesisEngine.answerSelection(profile, it.id) } ?: emptySet(),
             answeredCount = AnamnesisEngine.questions.count { AnamnesisEngine.isAnswered(profile, it.id) }
         )
         refreshDerived()
@@ -102,26 +190,33 @@ class AnamnesisViewModel @Inject constructor(
     /** Salta una domanda facoltativa. */
     fun skip() {
         val q = _state.value.current ?: return
-        if (q.required) {
+        if (q.required && !_state.value.editing) {
             _state.value = _state.value.copy(error = "Questa domanda è obbligatoria.")
             return
         }
         val profile = _state.value.profile
+        val next = if (_state.value.editing) AnamnesisEngine.nextQuestionFull(q.id)
+        else AnamnesisEngine.nextQuestionAfter(profile, q.id)
         _state.value = _state.value.copy(
-            current = AnamnesisEngine.nextQuestionAfter(profile, q.id),
-            input = "", selected = emptySet(), error = null
+            current = next,
+            input = next?.let { AnamnesisEngine.answerText(profile, it.id) }.orEmpty(),
+            selected = next?.let { AnamnesisEngine.answerSelection(profile, it.id) } ?: emptySet(),
+            error = null
         )
         refreshDerived()
     }
 
     fun goBack() {
         val q = _state.value.current ?: return
-        val idx = AnamnesisEngine.questions.indexOfFirst { it.id == q.id }
-        val prev = AnamnesisEngine.questions.take(idx).lastOrNull() ?: return
+        val prev = if (_state.value.editing) AnamnesisEngine.previousQuestion(q.id)
+        else AnamnesisEngine.questions.take(
+            AnamnesisEngine.questions.indexOfFirst { it.id == q.id }
+        ).lastOrNull() ?: return
+        prev ?: return
         _state.value = _state.value.copy(
             current = prev,
-            input = currentAnswerFor(prev.id),
-            selected = selectedFor(prev.id),
+            input = AnamnesisEngine.answerText(_state.value.profile, prev.id),
+            selected = AnamnesisEngine.answerSelection(_state.value.profile, prev.id),
             error = null
         )
     }
@@ -161,6 +256,7 @@ class AnamnesisViewModel @Inject constructor(
         )
         viewModelScope.launch {
             userRepository.save(confirmed)
+            _state.value = _state.value.copy(editing = false, editSection = null, resetDone = false)
             runAiGeneration(confirmed)
         }
     }
@@ -267,23 +363,5 @@ class AnamnesisViewModel @Inject constructor(
             missingRequired = AnamnesisEngine.missingRequired(profile).map { it.prompt },
             contradictions = profile.anamnesisContradictions
         )
-    }
-
-    private fun currentAnswerFor(id: String): String = when (id) {
-        "age" -> _state.value.profile.ageYears?.toString().orEmpty()
-        "heightCm" -> _state.value.profile.heightCm?.toString().orEmpty()
-        "weightKg" -> _state.value.profile.weightKg?.toString().orEmpty()
-        "sleepHours" -> _state.value.profile.sleepHours?.toString().orEmpty()
-        "trainingStatus" -> _state.value.profile.trainingStatus?.name.orEmpty()
-        "currentLoads" -> _state.value.profile.currentLoads.entries
-            .joinToString(", ") { "${it.key}=${it.value}" }
-        else -> ""
-    }
-
-    private fun selectedFor(id: String): Set<String> = when (id) {
-        "availableEquipment" -> _state.value.profile.availableEquipment.map { it.name }.toSet()
-        "priorityMuscles" -> _state.value.profile.priorityMuscles.map { it.name }.toSet()
-        "dietaryPreferences" -> _state.value.profile.dietaryPreferences.map { it.name }.toSet()
-        else -> emptySet()
     }
 }

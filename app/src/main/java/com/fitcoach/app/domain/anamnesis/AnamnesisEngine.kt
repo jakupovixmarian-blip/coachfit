@@ -241,6 +241,91 @@ object AnamnesisEngine {
             isRelevant(profile, q) && !isAnswered(profile, q.id) && (q.required || !skipOptional)
         }
 
+    /** Domande di una sezione, per l'editor a sezioni. */
+    fun questionsOf(section: String): List<Question> = questions.filter { it.section == section }
+
+    /** La domanda successiva nel flusso COMPLETO (per la modalita modifica), senza saltare le risposte. */
+    fun nextQuestionFull(afterId: String): Question? {
+        val idx = questions.indexOfFirst { it.id == afterId }
+        if (idx < 0) return questions.firstOrNull()
+        return questions.getOrNull(idx + 1)
+    }
+
+    fun previousQuestion(beforeId: String): Question? {
+        val idx = questions.indexOfFirst { it.id == beforeId }
+        return if (idx <= 0) null else questions[idx - 1]
+    }
+
+    /**
+     * Azzera l'anamnesi per ricompilarla da zero, PRESERVANDO i dati che non le
+     * appartengono: nome, identificativo e data di creazione del profilo. Le
+     * chiavi API (SecureKeyStore) e lo storico allenamenti (tabelle Room) non
+     * sono toccati: non sono parte del profilo.
+     */
+    fun resetAnamnesis(profile: UserProfile): UserProfile = UserProfile(
+        id = profile.id,
+        name = profile.name,
+        createdAt = profile.createdAt,
+        updatedAt = System.currentTimeMillis()
+    )
+
+    /** Testo con cui precompilare una domanda a partire dal profilo (modalita modifica). */
+    fun answerText(profile: UserProfile, id: String): String = when (id) {
+        "age" -> profile.ageYears?.toString().orEmpty()
+        "sex" -> profile.sex.takeIf { it != Sex.UNSPECIFIED }?.name.orEmpty()
+        "heightCm" -> profile.heightCm?.toString().orEmpty()
+        "weightKg" -> profile.weightKg?.toString().orEmpty()
+        "bodyFatPercent" -> profile.bodyFatPercent?.toString().orEmpty()
+        "goal" -> profile.goal.name
+        "secondaryGoals" -> profile.secondaryGoals.joinToString(",") { it.name }
+        "targetTimelineWeeks" -> profile.targetTimelineWeeks?.toString().orEmpty()
+        "workType" -> profile.workType.name
+        "workHoursPerDay" -> profile.workHoursPerDay?.toString().orEmpty()
+        "dailySteps" -> profile.dailySteps?.toString().orEmpty()
+        "transportMode" -> profile.transportMode.name
+        "workShift" -> profile.workShift.name
+        "extraSportSessionsPerWeek" -> profile.extraSportSessionsPerWeek.toString()
+        "maxSessionMinutes" -> profile.maxSessionMinutes?.toString().orEmpty()
+        "sleepHours" -> profile.sleepHours?.toString().orEmpty()
+        "sleepQuality" -> profile.sleepQuality.name
+        "stressLevel" -> profile.stressLevel.name
+        "dailyEnergy" -> profile.dailyEnergy.name
+        "recoveryCapacity" -> profile.recoveryCapacity.name
+        "mealsPerDay" -> profile.mealsPerDay.toString()
+        "breakfastPreference" -> profile.breakfastPreference.name
+        "dietaryPreferences" -> profile.dietaryPreferences.joinToString(",") { it.name }
+        "likedFoods" -> profile.likedFoods.joinToString(", ")
+        "dislikedFoods" -> profile.dislikedFoods.joinToString(", ")
+        "allergies" -> profile.allergies.joinToString(", ")
+        "cookingTimeAvailable" -> profile.cookingTimeAvailable.name
+        "mealPrepPossible" -> if (profile.mealPrepPossible) "Si" else "No"
+        "monthlyFoodBudgetEur" -> profile.monthlyFoodBudgetEur?.toString().orEmpty()
+        "budgetScope" -> profile.budgetScope.name
+        "budgetPersons" -> profile.budgetPersons.toString()
+        "trainingStatus" -> profile.trainingStatus?.name.orEmpty()
+        "experience" -> profile.experience.name
+        "trainingYears" -> profile.trainingYears?.toString().orEmpty()
+        "currentLoads" -> profile.currentLoads.entries.joinToString(", ") { "${it.key}=${it.value}" }
+        "trainingDaysPerWeek" -> profile.trainingDaysPerWeek.toString()
+        "technicalLevel" -> profile.technicalLevel.name
+        "availableEquipment" -> profile.availableEquipment.joinToString(",") { it.name }
+        "preferredExercises" -> profile.preferredExercises.joinToString(", ")
+        "dislikedExercises" -> profile.dislikedExercises.joinToString(", ")
+        "priorityMuscles" -> profile.priorityMuscles.joinToString(",") { it.name }
+        "physicalLimitations" -> profile.physicalLimitations.joinToString(", ")
+        "movementsToAvoid" -> profile.movementsToAvoid.joinToString(", ")
+        else -> ""
+    }
+
+    /** Selezione (chip) con cui precompilare una domanda a partire dal profilo. */
+    fun answerSelection(profile: UserProfile, id: String): Set<String> = when (id) {
+        "availableEquipment" -> profile.availableEquipment.map { it.name }.toSet()
+        "priorityMuscles" -> profile.priorityMuscles.map { it.name }.toSet()
+        "dietaryPreferences" -> profile.dietaryPreferences.map { it.name }.toSet()
+        "secondaryGoals" -> profile.secondaryGoals.map { it.name }.toSet()
+        else -> emptySet()
+    }
+
     /**
      * Prossima domanda non ancora risposta DOPO quella indicata. L'avanzamento e
      * monotono: saltare una domanda facoltativa non deve riportare l'utente
