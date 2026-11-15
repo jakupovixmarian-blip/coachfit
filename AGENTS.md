@@ -103,3 +103,26 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
   gate di generazione.
 - Repository: `NutritionDiaryRepository`, `ShoppingRepository`, `SubstitutionRepository`,
   `FoodSearchRepository`.
+
+## Database alimentare globale (offline)
+
+- **Database interno confezionato nell'APK**: asset `app/src/main/assets/food_usda_sr_legacy.tsv`
+  (~720 KB, TSV `name, category, kcal, protein, carbs, fat, fiber, sourceId`) con **7.793
+  alimenti USDA FoodData Central – SR Legacy** (pubblico dominio). Rigenerabile con
+  `python3 tools/build_food_asset.py` (scarica il dump USDA, ~6 MB, e riscrive l'asset).
+- **Import**: `SeedInitializer.seedUsdaAssetIfNeeded()` legge l'asset via
+  `FoodAssetImporter.parseTsv` (parser puro, testabile) e inserisce in Room al primo avvio.
+  Idempotente (guardia `FoodDao.countBySource(USDA_SOURCE)`). L'indice su `name` e UNICO:
+  l'import **salta i nomi gia presenti** per non sovrascrivere alimenti curati (es. "Tempeh")
+  gia referenziati dai pasti. L'asset non ha duplicati interni (verificato).
+- **Ricerca**: `FoodSearchRepository` risolve locale (Room, ~7.800 voci) → Open Food Facts →
+  USDA API (fallback). `FoodDao.searchNormalized` ha `LIMIT 120`. Nel tool AI `list_foods`
+  (`ReadCatalogTools.kt`) senza query si **privilegia il catalogo curato italiano** (voci con
+  `substituteNames`, fonte CREA), cosi i piani usano alimenti adatti all'utente italiano.
+- **Test**: `FoodAssetImporterTest` (valida l'asset reale: numerosita, dedup, `sourceId`
+  univoci, coerenza kcal/macro — l'alcol e escluso perche l'etanolo apporta 7 kcal/g non
+  modellato da Atwater; soglia >=95% entro il 25%) e `FoodDatabaseSeedIntegrationTest`
+  (import su Room reale, idempotenza, collisione seed/USDA, ricerca).
+- **Fonti esterne valutate** (dump vs API): USDA SR Legacy (integrata), Open Food Facts
+  (API, dump globale 1,5 GB troppo grande per l'APK), CIQUAL/Swiss/CoFID/Fineli/Frida/NEVO/
+  Matvaretabellen (dump disponibili), BLS (a pagamento). Tabella completa nel README.
