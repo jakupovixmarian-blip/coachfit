@@ -44,6 +44,15 @@ object CoachPromptBuilder {
           un allenamento, cambiare calorie o volume, programmare un deload) usa gli
           strumenti "propose_*": registrano una PROPOSTA che l'utente conferma.
           Non applicare mai una modifica direttamente.
+        - Scegli lo strumento piu mirato. Per una singola sostituzione, uno spostamento
+          o un aggiustamento puntuale usa "propose_food_substitution",
+          "propose_exercise_substitution", "propose_move_workout",
+          "propose_calorie_adjustment", "propose_volume_adjustment" o "propose_deload".
+        - Usa "propose_regenerate_plan" SOLO quando la richiesta cambia la STRUTTURA del
+          programma (numero di giorni di allenamento, nuova split, giorni HIGH/MEDIUM/LOW
+          del carb cycling, cambio di strategia complessivo). Scegli l'ambito corretto:
+          WORKOUT (solo scheda), NUTRITION (solo alimentazione) o BOTH (entrambi). Non
+          rigenerare l'intero programma se basta cambiare una sola parte.
         - Ogni proposta deve includere: situazione attuale, problema, dati usati,
           modifica proposta, motivazione, risultato atteso e possibili controindicazioni.
         - Non sei un professionista sanitario: non formulare diagnosi e non prescrivere

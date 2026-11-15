@@ -3,8 +3,12 @@ package com.fitcoach.app.data.repository
 import androidx.room.withTransaction
 import com.fitcoach.app.data.local.FitCoachDatabase
 import com.fitcoach.app.domain.coach.CoachAction
+import com.fitcoach.app.domain.model.ChangeDomain
 import com.fitcoach.app.domain.model.ChangeStatus
 import com.fitcoach.app.domain.model.ProgramChange
+import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
+import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
+import dagger.Lazy
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
@@ -41,6 +45,18 @@ private data class NutritionEntrySnapshot(
     val fat: Double
 )
 
+/**
+ * Snapshot dei soli riferimenti ai piani attivi prima di una rigenerazione
+ * strutturale. La rigenerazione crea NUOVI piani (nuove versioni) e disattiva i
+ * precedenti, quindi il rollback deve riattivare l'id esatto di prima.
+ */
+@Serializable
+private data class PlanIdSnapshot(
+    val scope: String,
+    val nutritionPlanId: Long?,
+    val workoutPlanId: Long?
+)
+
 
 /** Esito dell'applicazione (o dell'annullamento) di una proposta di modifica. */
 sealed interface ApplyResult {
@@ -58,6 +74,8 @@ sealed interface ApplyResult {
 class CoachActionExecutor @Inject constructor(
     private val db: FitCoachDatabase,
     private val changeRepository: ChangeRepository,
+    private val userRepository: UserRepository,
+    private val generationCoordinator: Lazy<ProgramGenerationCoordinator>,
     private val json: Json
 ) {
     private val entryDao = db.mealEntryDao()
@@ -67,6 +85,7 @@ class CoachActionExecutor @Inject constructor(
     private val planDao = db.nutritionPlanDao()
     private val mesoDao = db.mesocycleDao()
     private val workoutDayDao = db.workoutDayDao()
+    private val workoutPlanDao = db.workoutPlanDao()
 
     private val stringMapSerializer = MapSerializer(String.serializer(), String.serializer())
 
@@ -82,6 +101,14 @@ class CoachActionExecutor @Inject constructor(
         }
         val action = decodeAction(change)
             ?: return ApplyResult.Failed("La proposta non contiene un'azione applicabile.")
+
+        // La rigenerazione strutturale non e una modifica puntuale: non puo stare in
+        // una transazione Room perche il motore unico apre la propria e puo richiedere
+        // una chiamata al provider AI. La gestiamo a parte, mantenendo la stessa
+        // registrazione di esito e lo stesso payload di ripristino delle altre azioni.
+        if (action.action == CoachAction.ACTION_REGENERATE_PLAN) {
+            return applyRegeneration(change, action)
+        }
 
         return try {
             val revert = db.withTransaction {
@@ -107,6 +134,55 @@ class CoachActionExecutor @Inject constructor(
             ApplyResult.Failed("Impossibile applicare la modifica: ${e.message ?: e::class.simpleName}")
         }
     }
+
+    /**
+     * Applica una rigenerazione strutturale: delega al motore unico
+     * ([ProgramGenerationCoordinator]) con l'ambito richiesto (WORKOUT/NUTRITION/BOTH).
+     * Non esiste un secondo motore: la proposta dell'AI viene verificata e persistita
+     * esattamente come nella generazione iniziale.
+     */
+    private suspend fun applyRegeneration(change: ProgramChange, action: CoachAction): ApplyResult {
+        val scope = parseScope(action.payload["scope"])
+            ?: return ApplyResult.Failed("Ambito di rigenerazione non valido.")
+        val profile = userRepository.get()
+            ?: return ApplyResult.Failed("Nessun profilo: completa prima l'anamnesi.")
+
+        // Riferimenti ai piani attivi PRIMA della rigenerazione, per il rollback.
+        val before = PlanIdSnapshot(
+            scope = scope.name,
+            nutritionPlanId = planDao.getActive()?.id,
+            workoutPlanId = workoutPlanDao.getActive()?.id
+        )
+
+        val result = generationCoordinator.get().generate(profile, scope)
+
+        return when (result) {
+            is GenerateProgramsUseCase.Result.Success -> {
+                val revert = mapOf(
+                    "kind" to "PLAN_REGENERATED",
+                    "snapshot" to json.encodeToString(PlanIdSnapshot.serializer(), before)
+                )
+                changeRepository.update(
+                    change.copy(
+                        status = ChangeStatus.APPLIED,
+                        appliedAt = System.currentTimeMillis(),
+                        revertPayloadJson = json.encodeToString(stringMapSerializer, revert)
+                    )
+                )
+                val extra = result.warnings.firstOrNull()?.let { " $it" } ?: ""
+                ApplyResult.Applied("Programma rigenerato (${scope.name}).$extra")
+            }
+            is GenerateProgramsUseCase.Result.MissingData ->
+                ApplyResult.Failed("Dati mancanti per rigenerare: ${result.missing.joinToString()}.")
+            is GenerateProgramsUseCase.Result.AnamnesisNotConfirmed ->
+                ApplyResult.Failed("Anamnesi non confermata: impossibile rigenerare il programma.")
+            is GenerateProgramsUseCase.Result.Error -> ApplyResult.Failed(result.message)
+        }
+    }
+
+    private fun parseScope(raw: String?): ProgramGenerationCoordinator.Scope? =
+        runCatching { ProgramGenerationCoordinator.Scope.valueOf(raw?.trim()?.uppercase() ?: "BOTH") }
+            .getOrNull()
 
     suspend fun revert(changeId: Long): ApplyResult {
         val change = changeRepository.getById(changeId)
@@ -172,7 +248,29 @@ class CoachActionExecutor @Inject constructor(
                 id = revert.require("dayId").toLong(),
                 workoutDayIndex = revert["workoutDayIndex"]?.toIntOrNull()
             )
+            "PLAN_REGENERATED" -> restoreRegeneratedPlans(revert.require("snapshot"))
             else -> throw IllegalArgumentException("Ripristino non supportato.")
+        }
+    }
+
+    /**
+     * Ripristina i piani attivi precedenti a una rigenerazione strutturale,
+     * riattivando l'id esatto di prima (le nuove versioni restano nello storico,
+     * consultabili, ma non piu attive).
+     */
+    private suspend fun restoreRegeneratedPlans(snapshotJson: String) {
+        val snapshot = json.decodeFromString<PlanIdSnapshot>(snapshotJson)
+        snapshot.nutritionPlanId?.let { id ->
+            planDao.getById(id)?.let { previous ->
+                planDao.deactivateAll()
+                planDao.update(previous.copy(isActive = true))
+            }
+        }
+        snapshot.workoutPlanId?.let { id ->
+            workoutPlanDao.getById(id)?.let { previous ->
+                workoutPlanDao.deactivateAll()
+                workoutPlanDao.insert(previous.copy(isActive = true))
+            }
         }
     }
 

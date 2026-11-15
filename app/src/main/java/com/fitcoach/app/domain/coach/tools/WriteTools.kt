@@ -298,3 +298,72 @@ class ProposeDeloadTool @Inject constructor(
 
     private fun err(m: String) = """{"ok":false,"error":"$m"}"""
 }
+
+/**
+ * Propone la RIGENERAZIONE STRUTTURALE di una parte del programma (o di entrambe)
+ * attraverso il motore unico (ProgramGenerationCoordinator + submit_full_program).
+ *
+ * Va usato SOLO quando la richiesta cambia la struttura del programma (nuova split,
+ * numero di giorni di allenamento, giorni HIGH/MEDIUM/LOW, nuova strategia) e non
+ * basta una modifica puntuale. Per una singola sostituzione, uno spostamento o un
+ * aggiustamento usare gli strumenti "propose_*" specifici: sono piu mirati.
+ *
+ * Come tutti gli strumenti di scrittura, NON applica nulla: registra una proposta
+ * che l'utente conferma. Alla conferma la rigenerazione passa dallo stesso motore
+ * AI usato per la generazione iniziale (nessun secondo motore).
+ */
+@Singleton
+class ProposeRegeneratePlanTool @Inject constructor(
+    private val executor: CoachActionExecutor
+) : WriteTool() {
+    override val name = "propose_regenerate_plan"
+    override val description =
+        "Propone di rigenerare la struttura del programma tramite il motore unico: scegli l'ambito " +
+            "WORKOUT (solo scheda), NUTRITION (solo piano alimentare) o BOTH (entrambi). Usalo quando " +
+            "la richiesta cambia la struttura (split, giorni di allenamento, carb cycling, strategia), " +
+            "non per una singola sostituzione o spostamento. Registra una proposta che l'utente conferma: " +
+            "la rigenerazione avviene solo dopo la conferma, con possibilita di annullamento."
+
+    override val parameters: JsonObject = Schema.obj(
+        "scope" to Schema.enumOf(
+            "Cosa rigenerare: WORKOUT (solo allenamento), NUTRITION (solo nutrizione) o BOTH (entrambi).",
+            "WORKOUT", "NUTRITION", "BOTH"
+        ),
+        "title" to Schema.string("Titolo breve della proposta."),
+        "situation" to Schema.string("Situazione attuale."),
+        "problem" to Schema.string("Problema identificato."),
+        "dataUsed" to Schema.string("Dati reali utilizzati (anamnesi, piani, storico)."),
+        "proposedChange" to Schema.string("Cosa cambiera nella struttura."),
+        "rationale" to Schema.string("Motivazione."),
+        "expectedOutcome" to Schema.string("Risultato atteso."),
+        "contraindications" to Schema.string("Possibili controindicazioni."),
+        required = listOf("scope")
+    )
+
+    override suspend fun execute(arguments: JsonObject): String {
+        val a = JsonArgs(arguments)
+        val scope = (a.string("scope") ?: "BOTH").trim().uppercase()
+        if (scope !in REGENERATE_SCOPES) return err("scope non valido: usa WORKOUT, NUTRITION o BOTH.")
+        val payload = mapOf("scope" to scope)
+        val action = CoachAction(
+            action = CoachAction.ACTION_REGENERATE_PLAN,
+            domain = scope,
+            title = a.string("title") ?: "Rigenerazione programma ($scope)",
+            situation = a.string("situation") ?: "",
+            problem = a.string("problem") ?: "",
+            dataUsed = a.string("dataUsed") ?: "",
+            proposedChange = a.string("proposedChange") ?: "Rigenerare la parte richiesta del programma.",
+            rationale = a.string("rationale") ?: "",
+            expectedOutcome = a.string("expectedOutcome") ?: "",
+            contraindications = a.string("contraindications") ?: "",
+            payload = payload
+        )
+        return proposalJson(executor.registerProposal(action), "Rigenerazione proposta.")
+    }
+
+    private fun err(m: String) = """{"ok":false,"error":"$m"}"""
+
+    private companion object {
+        val REGENERATE_SCOPES = setOf("WORKOUT", "NUTRITION", "BOTH")
+    }
+}

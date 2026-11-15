@@ -1,0 +1,515 @@
+package com.fitcoach.app.integration
+
+import android.content.Context
+import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
+import com.fitcoach.app.data.local.FitCoachDatabase
+import com.fitcoach.app.data.local.Mappers.toEntity
+import com.fitcoach.app.data.remote.AiApi
+import com.fitcoach.app.data.remote.AiClient
+import com.fitcoach.app.data.remote.ChatCompletionRequest
+import com.fitcoach.app.data.remote.ChatCompletionResponse
+import com.fitcoach.app.data.remote.SecureKeyStore
+import com.fitcoach.app.data.repository.ChangeRepository
+import com.fitcoach.app.data.repository.ChatRepository
+import com.fitcoach.app.data.repository.CoachActionExecutor
+import com.fitcoach.app.data.repository.ExerciseRepository
+import com.fitcoach.app.data.repository.FoodRepository
+import com.fitcoach.app.data.repository.NutritionRepository
+import com.fitcoach.app.data.repository.PlanVersionRepository
+import com.fitcoach.app.data.repository.UserRepository
+import com.fitcoach.app.data.repository.WorkoutRepository
+import com.fitcoach.app.domain.coach.AiCalendarProposal
+import com.fitcoach.app.domain.coach.AiFoodEntry
+import com.fitcoach.app.domain.coach.AiMeal
+import com.fitcoach.app.domain.coach.AiNutritionDay
+import com.fitcoach.app.domain.coach.AiNutritionProposal
+import com.fitcoach.app.domain.coach.AiPlannedExercise
+import com.fitcoach.app.domain.coach.AiProgramGenerationService
+import com.fitcoach.app.domain.coach.AiProgramProposal
+import com.fitcoach.app.domain.coach.AiWorkoutDay
+import com.fitcoach.app.domain.coach.AiWorkoutProposal
+import com.fitcoach.app.domain.coach.CoachOrchestrator
+import com.fitcoach.app.domain.coach.CoachService
+import com.fitcoach.app.domain.coach.tools.CoachTool
+import com.fitcoach.app.domain.coach.tools.CoachToolRegistry
+import com.fitcoach.app.domain.coach.tools.ProposeRegeneratePlanTool
+import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
+import com.fitcoach.app.domain.model.AiProviderSettings
+import com.fitcoach.app.domain.model.CarbDayType
+import com.fitcoach.app.domain.model.ChangeStatus
+import com.fitcoach.app.domain.model.Goal
+import com.fitcoach.app.domain.model.Sex
+import com.fitcoach.app.domain.model.TrainingExperience
+import com.fitcoach.app.domain.model.UserProfile
+import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
+import com.fitcoach.app.domain.nutrition.EnergyCalculator
+import com.fitcoach.app.domain.nutrition.FoodFilter
+import com.fitcoach.app.domain.nutrition.FoodSeedData
+import com.fitcoach.app.domain.nutrition.MealPlanGenerator
+import com.fitcoach.app.domain.usecase.GenerateProgramsUseCase
+import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
+import com.fitcoach.app.domain.workout.ExerciseSeedData
+import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
+import com.google.common.truth.Truth.assertThat
+import dagger.Lazy
+import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import okhttp3.ResponseBody.Companion.toResponseBody
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import retrofit2.Response
+
+/**
+ * Verifica end-to-end del collegamento CHAT -> RIGENERAZIONE PER AMBITO.
+ *
+ * L'utente chiede al Coach AI di cambiare il programma; l'AI sceglie lo strumento
+ * adatto (propose_regenerate_plan con ambito WORKOUT/NUTRITION/BOTH) e registra una
+ * proposta. Solo dopo la conferma dell'utente il [CoachActionExecutor] delega la
+ * rigenerazione al motore UNICO ([ProgramGenerationCoordinator] -> submit_full_program),
+ * esattamente lo stesso usato per la generazione iniziale. Nessun secondo motore.
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
+class CoachChatRegenerationIntegrationTest {
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        encodeDefaults = true
+        explicitNulls = false
+    }
+
+    private lateinit var db: FitCoachDatabase
+    private lateinit var userRepository: UserRepository
+    private lateinit var foodRepository: FoodRepository
+    private lateinit var exerciseRepository: ExerciseRepository
+    private lateinit var nutritionRepository: NutritionRepository
+    private lateinit var workoutRepository: WorkoutRepository
+    private lateinit var planVersionRepository: PlanVersionRepository
+    private lateinit var chatRepository: ChatRepository
+    private lateinit var changeRepository: ChangeRepository
+    private lateinit var actionExecutor: CoachActionExecutor
+
+    private val profile = UserProfile(
+        id = 1L, name = "Test", ageYears = 30, sex = Sex.MALE,
+        heightCm = 175.0, weightKg = 80.0, bodyFatPercent = 18.0,
+        experience = TrainingExperience.BEGINNER, goal = Goal.RECOMP,
+        trainingDaysPerWeek = 3, mealsPerDay = 5,
+        anamnesisCompleted = true, anamnesisConfirmedAt = 1L, anamnesisSummary = "confermata"
+    )
+
+    @Before
+    fun setUp() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        db = Room.inMemoryDatabaseBuilder(context, FitCoachDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
+        userRepository = UserRepository(db.userProfileDao())
+        foodRepository = FoodRepository(db.foodDao())
+        exerciseRepository = ExerciseRepository(db.exerciseDao())
+        nutritionRepository = NutritionRepository(db)
+        workoutRepository = WorkoutRepository(db)
+        planVersionRepository = PlanVersionRepository(db.planVersionDao())
+        chatRepository = ChatRepository(db.chatDao(), db.aiSettingsDao())
+        changeRepository = ChangeRepository(db.programChangeDao())
+
+        db.foodDao().insertAll(FoodSeedData.foods.map { it.toEntity() })
+        db.exerciseDao().insertAll(ExerciseSeedData.exercises.map { it.toEntity() })
+        userRepository.save(profile)
+        chatRepository.saveAiSettings(
+            AiProviderSettings(useBackendProxy = true, backendBaseUrl = "https://proxy.test/v1", model = "test-model")
+        )
+        actionExecutor = buildExecutor()
+    }
+
+    @After
+    fun tearDown() = db.close()
+
+    // ---- Provider AI "scriptato": risponde con tool call e/o testo finale. ----
+
+    private class ScriptedApi(
+        private val responses: MutableList<Response<ChatCompletionResponse>>
+    ) : AiApi {
+        val sent = mutableListOf<ChatCompletionRequest>()
+        override suspend fun chatCompletions(
+            url: String, authorization: String?, contentType: String,
+            referer: String?, title: String?, body: ChatCompletionRequest
+        ): Response<ChatCompletionResponse> {
+            sent += body
+            return responses.removeAt(0)
+        }
+    }
+
+    private fun toolCallResponse(name: String, args: String) = Response.success(
+        ChatCompletionResponse(
+            choices = listOf(
+                ChatCompletionResponse.Choice(
+                    index = 0,
+                    message = ChatCompletionResponse.Message(
+                        content = null,
+                        toolCalls = listOf(
+                            ChatCompletionResponse.ToolCall(
+                                id = "c1", type = "function",
+                                function = ChatCompletionResponse.FunctionCall(name = name, arguments = args)
+                            )
+                        )
+                    ),
+                    finishReason = "tool_calls"
+                )
+            )
+        )
+    )
+
+    private fun textResponse(text: String) = Response.success(
+        ChatCompletionResponse(
+            choices = listOf(
+                ChatCompletionResponse.Choice(
+                    index = 0,
+                    message = ChatCompletionResponse.Message(content = JsonPrimitive(text)),
+                    finishReason = "stop"
+                )
+            )
+        )
+    )
+
+    private fun aiGenerationService(api: AiApi): AiProgramGenerationService {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val submitTool: CoachTool = SubmitFullProgramTool(
+            userRepository, foodRepository, exerciseRepository,
+            nutritionRepository, workoutRepository, planVersionRepository, db, json
+        )
+        val registry = CoachToolRegistry(setOf(submitTool))
+        val orchestrator = CoachOrchestrator(AiClient(api, json), registry, json)
+        return AiProgramGenerationService(
+            orchestrator, chatRepository, SecureKeyStore(context), json, foodRepository, exerciseRepository
+        )
+    }
+
+    private fun coordinator(api: AiApi): ProgramGenerationCoordinator =
+        ProgramGenerationCoordinator(
+            aiGeneration = aiGenerationService(api),
+            offlineEngine = GenerateProgramsUseCase(
+                userRepository, foodRepository, exerciseRepository,
+                nutritionRepository, workoutRepository, planVersionRepository
+            )
+        )
+
+    private fun buildExecutor(api: AiApi = ScriptedApi(mutableListOf())): CoachActionExecutor =
+        CoachActionExecutor(
+            db = db,
+            changeRepository = changeRepository,
+            userRepository = userRepository,
+            generationCoordinator = Lazy { coordinator(api) },
+            json = json
+        )
+
+    /**
+     * CoachService completo: usa lo STESSO provider scriptato sia per il turno di chat
+     * (che propone la rigenerazione) sia per il turno di generazione (submit_full_program).
+     */
+    private fun coachService(api: AiApi): CoachService {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val tools = mutableSetOf<CoachTool>(
+            ProposeRegeneratePlanTool(actionExecutor),
+            SubmitFullProgramTool(
+                userRepository, foodRepository, exerciseRepository,
+                nutritionRepository, workoutRepository, planVersionRepository, db, json
+            )
+        )
+        val orchestrator = CoachOrchestrator(AiClient(api, json), CoachToolRegistry(tools), json)
+        return CoachService(
+            userRepository, nutritionRepository, workoutRepository,
+            com.fitcoach.app.data.repository.ProgressRepository(db.progressDao(), db.checkInDao()),
+            changeRepository, chatRepository,
+            com.fitcoach.app.data.repository.NutritionDiaryRepository(db),
+            com.fitcoach.app.data.repository.ShoppingRepository(db, nutritionRepository, foodRepository),
+            com.fitcoach.app.data.repository.SubstitutionRepository(db, nutritionRepository, foodRepository),
+            foodRepository, AiClient(api, json), SecureKeyStore(context), orchestrator
+        )
+    }
+
+    private suspend fun buildValidProposal(): AiProgramProposal {
+        val foods = FoodFilter.allowedFoods(foodRepository.getAll(), profile)
+        val exercises = exerciseRepository.getAll()
+        val energy = EnergyCalculator.compute(profile)!!
+        val applied = CarbCyclingEngine.shouldApplyCarbCycling(profile)
+        val cycling = if (applied) CarbCyclingEngine.build(profile, energy)
+        else CarbCyclingEngine.buildUniform(profile, energy)
+        val training = WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek)
+        val dayTypes = if (applied) {
+            CarbCyclingEngine.assignDayTypes(cycling.highDays, cycling.mediumDays, cycling.lowDays, training)
+        } else List(7) { CarbDayType.MEDIUM }
+        val days = MealPlanGenerator.generate(profile, cycling, foods, dayTypes)
+        val built = WorkoutPlanBuilder.build(profile, exercises, training)
+
+        return AiProgramProposal(
+            strategy = "Ricomposizione con carb cycling",
+            nutrition = AiNutritionProposal(days = days.map { d ->
+                AiNutritionDay(
+                    dayIndex = d.dayIndex, dayType = d.dayType.name,
+                    meals = d.meals.map { m ->
+                        AiMeal(slot = m.slot.name, entries = m.entries.map { e ->
+                            AiFoodEntry(foodName = e.foodName, grams = e.grams, unit = e.unit.name)
+                        })
+                    }
+                )
+            }),
+            workout = AiWorkoutProposal(
+                split = built.splitType.name, rationale = "Split scelto dai motori",
+                days = built.days.filterNot { it.isRestDay }.map { d ->
+                    AiWorkoutDay(
+                        dayIndex = d.dayIndex, title = d.title,
+                        muscleGroups = d.muscleGroups.map { it.name },
+                        exercises = d.exercises.map { e ->
+                            AiPlannedExercise(
+                                exerciseName = e.exerciseName, sets = e.sets,
+                                minReps = e.minReps, maxReps = e.maxReps,
+                                restSeconds = e.restSeconds, targetRir = e.targetRir,
+                                technique = e.intensityTechnique.name, techniqueReason = e.techniqueReason
+                            )
+                        }
+                    )
+                }
+            ),
+            calendar = AiCalendarProposal(
+                workoutDayIndices = training, restDayIndices = (0..6).filterNot { it in training }
+            )
+        )
+    }
+
+    private fun proposalJson(p: AiProgramProposal, scope: String): String {
+        val base = json.encodeToString(AiProgramProposal.serializer(), p)
+        val obj = json.parseToJsonElement(base) as JsonObject
+        return json.encodeToString(
+            JsonObject.serializer(),
+            JsonObject(obj + ("scope" to JsonPrimitive(scope)))
+        )
+    }
+
+    private fun regenerateArgs(scope: String) = json.encodeToString(
+        JsonObject.serializer(),
+        JsonObject(
+            mapOf(
+                "scope" to JsonPrimitive(scope),
+                "title" to JsonPrimitive("Rigenerazione $scope"),
+                "problem" to JsonPrimitive("Richiesta dell'utente di cambiare la struttura.")
+            )
+        )
+    )
+
+    /** Simula la chat: l'AI propone la rigenerazione e il coach registra la proposta. */
+    private suspend fun askCoachToRegenerate(scope: String): Long {
+        val api = ScriptedApi(
+            mutableListOf(
+                toolCallResponse("propose_regenerate_plan", regenerateArgs(scope)),
+                textResponse("Ho preparato la proposta di rigenerazione: confermala per applicarla.")
+            )
+        )
+        val reply = coachService(api).send("Voglio cambiare la struttura del programma ($scope).")
+        val pending = reply.pendingChange
+        assertThat(pending).isNotNull()
+        assertThat(pending!!.status).isEqualTo(ChangeStatus.PROPOSED)
+        return pending.id
+    }
+
+    // ---------------------------------------------------------------- TESTS
+
+    @Test
+    fun `chat propone la rigenerazione e non applica nulla finche non si conferma`() = runTest {
+        val changeId = askCoachToRegenerate("WORKOUT")
+        // La proposta esiste, ma nulla e stato rigenerato: nessun piano attivo.
+        assertThat(changeRepository.getById(changeId)!!.status).isEqualTo(ChangeStatus.PROPOSED)
+        assertThat(nutritionRepository.getActivePlan()).isNull()
+        assertThat(workoutRepository.getActivePlan()).isNull()
+    }
+
+    @Test
+    fun `conferma rigenera solo la scheda quando l'ambito e WORKOUT`() = runTest {
+        // Programma iniziale completo (AI).
+        val setup = ScriptedApi(
+            mutableListOf(
+                toolCallResponse("submit_full_program", proposalJson(buildValidProposal(), "BOTH")),
+                textResponse("Programma generato.")
+            )
+        )
+        assertThat(coordinator(setup).generate(profile))
+            .isInstanceOf(GenerateProgramsUseCase.Result.Success::class.java)
+        val originalNutritionId = nutritionRepository.getActivePlan()!!.id
+        val originalWorkoutId = workoutRepository.getActivePlan()!!.id
+
+        val changeId = askCoachToRegenerate("WORKOUT")
+        // Alla conferma la rigenerazione usa lo stesso motore AI (submit_full_program).
+        val exec = buildExecutor(
+            ScriptedApi(
+                mutableListOf(
+                    toolCallResponse("submit_full_program", proposalJson(buildValidProposal(), "WORKOUT")),
+                    textResponse("Scheda rigenerata.")
+                )
+            )
+        )
+        val result = exec.apply(changeId)
+
+        assertThat(result).isInstanceOf(com.fitcoach.app.data.repository.ApplyResult.Applied::class.java)
+        assertThat(workoutRepository.getActivePlan()!!.id).isNotEqualTo(originalWorkoutId)
+        // Ambito WORKOUT: la nutrizione resta invariata (stesso id attivo).
+        assertThat(nutritionRepository.getActivePlan()!!.id).isEqualTo(originalNutritionId)
+    }
+
+    @Test
+    fun `conferma rigenera solo la nutrizione quando l'ambito e NUTRITION`() = runTest {
+        val setup = ScriptedApi(
+            mutableListOf(
+                toolCallResponse("submit_full_program", proposalJson(buildValidProposal(), "BOTH")),
+                textResponse("Programma generato.")
+            )
+        )
+        coordinator(setup).generate(profile)
+        val originalNutritionId = nutritionRepository.getActivePlan()!!.id
+        val originalWorkoutId = workoutRepository.getActivePlan()!!.id
+
+        val changeId = askCoachToRegenerate("NUTRITION")
+        val exec = buildExecutor(
+            ScriptedApi(
+                mutableListOf(
+                    toolCallResponse("submit_full_program", proposalJson(buildValidProposal(), "NUTRITION")),
+                    textResponse("Piano alimentare rigenerato.")
+                )
+            )
+        )
+        val result = exec.apply(changeId)
+
+        assertThat(result).isInstanceOf(com.fitcoach.app.data.repository.ApplyResult.Applied::class.java)
+        assertThat(nutritionRepository.getActivePlan()!!.id).isNotEqualTo(originalNutritionId)
+        assertThat(workoutRepository.getActivePlan()!!.id).isEqualTo(originalWorkoutId)
+    }
+
+    @Test
+    fun `ambito BOTH rigenera entrambe le parti`() = runTest {
+        val setup = ScriptedApi(
+            mutableListOf(
+                toolCallResponse("submit_full_program", proposalJson(buildValidProposal(), "BOTH")),
+                textResponse("Programma generato.")
+            )
+        )
+        coordinator(setup).generate(profile)
+        val originalNutritionId = nutritionRepository.getActivePlan()!!.id
+        val originalWorkoutId = workoutRepository.getActivePlan()!!.id
+
+        val changeId = askCoachToRegenerate("BOTH")
+        val exec = buildExecutor(
+            ScriptedApi(
+                mutableListOf(
+                    toolCallResponse("submit_full_program", proposalJson(buildValidProposal(), "BOTH")),
+                    textResponse("Programma rigenerato.")
+                )
+            )
+        )
+        exec.apply(changeId)
+
+        assertThat(nutritionRepository.getActivePlan()!!.id).isNotEqualTo(originalNutritionId)
+        assertThat(workoutRepository.getActivePlan()!!.id).isNotEqualTo(originalWorkoutId)
+    }
+
+    @Test
+    fun `il rollback riattiva i piani precedenti dopo una rigenerazione`() = runTest {
+        val setup = ScriptedApi(
+            mutableListOf(
+                toolCallResponse("submit_full_program", proposalJson(buildValidProposal(), "BOTH")),
+                textResponse("Programma generato.")
+            )
+        )
+        coordinator(setup).generate(profile)
+        val originalNutritionId = nutritionRepository.getActivePlan()!!.id
+        val originalWorkoutId = workoutRepository.getActivePlan()!!.id
+
+        val changeId = askCoachToRegenerate("BOTH")
+        val exec = buildExecutor(
+            ScriptedApi(
+                mutableListOf(
+                    toolCallResponse("submit_full_program", proposalJson(buildValidProposal(), "BOTH")),
+                    textResponse("Programma rigenerato.")
+                )
+            )
+        )
+        exec.apply(changeId)
+        assertThat(nutritionRepository.getActivePlan()!!.id).isNotEqualTo(originalNutritionId)
+
+        val revert = exec.revert(changeId)
+
+        assertThat(revert).isInstanceOf(com.fitcoach.app.data.repository.ApplyResult.Reverted::class.java)
+        assertThat(nutritionRepository.getActivePlan()!!.id).isEqualTo(originalNutritionId)
+        assertThat(workoutRepository.getActivePlan()!!.id).isEqualTo(originalWorkoutId)
+        assertThat(changeRepository.getById(changeId)!!.status).isEqualTo(ChangeStatus.REVERTED)
+    }
+
+    @Test
+    fun `provider irraggiungibile non lascia piani incoerenti`() = runTest {
+        val setup = ScriptedApi(
+            mutableListOf(
+                toolCallResponse("submit_full_program", proposalJson(buildValidProposal(), "BOTH")),
+                textResponse("Programma generato.")
+            )
+        )
+        coordinator(setup).generate(profile)
+        val originalNutritionId = nutritionRepository.getActivePlan()!!.id
+        val originalWorkoutId = workoutRepository.getActivePlan()!!.id
+
+        val changeId = askCoachToRegenerate("BOTH")
+        // Nessuna risposta dal provider alla conferma: la rigenerazione fallisce.
+        val exec = buildExecutor(ScriptedApi(mutableListOf()))
+        val result = exec.apply(changeId)
+
+        assertThat(result).isInstanceOf(com.fitcoach.app.data.repository.ApplyResult.Failed::class.java)
+        // I piani precedenti restano attivi: nessuno stato incoerente.
+        assertThat(nutritionRepository.getActivePlan()!!.id).isEqualTo(originalNutritionId)
+        assertThat(workoutRepository.getActivePlan()!!.id).isEqualTo(originalWorkoutId)
+        assertThat(changeRepository.getById(changeId)!!.status).isEqualTo(ChangeStatus.PROPOSED)
+    }
+
+    @Test
+    fun `una proposta non valida dell'AI viene bloccata e non cambia il programma`() = runTest {
+        val setup = ScriptedApi(
+            mutableListOf(
+                toolCallResponse("submit_full_program", proposalJson(buildValidProposal(), "BOTH")),
+                textResponse("Programma generato.")
+            )
+        )
+        coordinator(setup).generate(profile)
+        val originalNutritionId = nutritionRepository.getActivePlan()!!.id
+        val originalWorkoutId = workoutRepository.getActivePlan()!!.id
+
+        // Proposta invalida: solo 2 giorni di allenamento invece dei 3 dichiarati.
+        val invalid = buildValidProposal().let { p ->
+            val kept = p.workout.days.take(2)
+            p.copy(
+                workout = p.workout.copy(days = kept),
+                calendar = p.calendar.copy(
+                    workoutDayIndices = kept.map { it.dayIndex },
+                    restDayIndices = (0..6).filterNot { it in kept.map { d -> d.dayIndex } }
+                )
+            )
+        }
+
+        val changeId = askCoachToRegenerate("WORKOUT")
+        val exec = buildExecutor(
+            ScriptedApi(
+                mutableListOf(
+                    toolCallResponse("submit_full_program", proposalJson(invalid, "WORKOUT")),
+                    textResponse("Devo correggere la scheda.")
+                )
+            )
+        )
+        val result = exec.apply(changeId)
+
+        assertThat(result).isInstanceOf(com.fitcoach.app.data.repository.ApplyResult.Failed::class.java)
+        assertThat(workoutRepository.getActivePlan()!!.id).isEqualTo(originalWorkoutId)
+        assertThat(nutritionRepository.getActivePlan()!!.id).isEqualTo(originalNutritionId)
+    }
+}

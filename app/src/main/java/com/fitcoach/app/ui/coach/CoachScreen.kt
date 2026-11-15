@@ -136,6 +136,36 @@ fun CoachScreen(
             state.pendingChange?.let { change ->
                 item { ProposalCard(change = change, onApprove = viewModel::approvePending, onReject = viewModel::rejectPending) }
             }
+
+            if (state.appliedChanges.isNotEmpty()) {
+                item {
+                    SectionCard {
+                        Column {
+                            Text("Modifiche applicate", style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface)
+                            Spacer(Modifier.height(4.dp))
+                            Text("Puoi annullare una modifica e ripristinare il programma precedente.",
+                                style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                            Spacer(Modifier.height(8.dp))
+                            state.appliedChanges.forEach { change ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(change.title, style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface)
+                                        Text(change.proposedChange, style = MaterialTheme.typography.labelSmall,
+                                            color = TextSecondary)
+                                    }
+                                    TextButton(onClick = { viewModel.revert(change.id) }) { Text("Annulla") }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         Row(

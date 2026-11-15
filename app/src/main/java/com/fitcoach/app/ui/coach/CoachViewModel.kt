@@ -27,6 +27,8 @@ data class CoachUiState(
     val input: String = "",
     val sending: Boolean = false,
     val pendingChange: ProgramChange? = null,
+    /** Modifiche gia applicate, con possibilita di annullamento (rollback). */
+    val appliedChanges: List<ProgramChange> = emptyList(),
     val message: String? = null,
     val providerConfigured: Boolean = false,
     val providerLabel: String = ""
@@ -52,13 +54,19 @@ class CoachViewModel @Inject constructor(
         viewModelScope.launch {
             val messages = chatRepository.getRecent(limit = 100)
             val settings = chatRepository.getAiSettings()
-            val pending = changeRepository.getAll()
+            val allChanges = changeRepository.getAll()
+            val pending = allChanges
                 .filter { it.status == ChangeStatus.PROPOSED }
                 .maxByOrNull { it.createdAt }
+            val applied = allChanges
+                .filter { it.status == ChangeStatus.APPLIED }
+                .sortedByDescending { it.appliedAt ?: it.createdAt }
+                .take(10)
             _state.value = _state.value.copy(
                 loading = false,
                 messages = messages,
                 pendingChange = pending,
+                appliedChanges = applied,
                 providerConfigured = settings.provider != AiProvider.OPENAI || settings.model.isNotBlank(),
                 providerLabel = "${settings.provider.label} · ${settings.model.ifBlank { settings.provider.defaultModel }}"
             )

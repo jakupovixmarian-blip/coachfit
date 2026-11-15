@@ -178,6 +178,14 @@ Strumenti (in `domain/coach/tools`, iniettati come `Set<CoachTool>` via Hilt):
   allenamento, aggiustamento calorie/volume, deload): registrano una **proposta** che
   l'utente conferma o annulla tramite il flusso esistente. L'AI non applica mai una
   modifica direttamente.
+- **Rigenerazione per ambito** – `propose_regenerate_plan(scope)`: l'AI la usa quando la
+  richiesta cambia la **struttura** del programma (numero di giorni, nuova split, giorni
+  HIGH/MEDIUM/LOW del carb cycling, cambio di strategia), non per una modifica puntuale.
+  Sceglie l'ambito `WORKOUT`, `NUTRITION` o `BOTH`. Alla conferma dell'utente la
+  rigenerazione passa dallo **stesso motore unico** della generazione iniziale
+  (`ProgramGenerationCoordinator` → `submit_full_program`): un solo motore, una sola
+  autorità decisionale. Per le modifiche puntuali l'AI preferisce gli strumenti `propose_*`
+  specifici.
 
 La generazione del percorso (piano alimentare + scheda) avviene tramite il **Coach AI**:
 il modello produce il JSON con strategia e struttura, l'app risolve gli identificativi
@@ -185,6 +193,12 @@ locali e **rifiuta** ogni piano che non rispetta i valori nutrizionali, il datab
 esercizi o i vincoli utente. Il motore matematico offline resta disponibile ma **solo
 come scelta esplicita dell'utente** quando il provider AI non è configurato: non
 sostituisce mai l'autorità decisionale dell'AI.
+
+Il collegamento **chat → rigenerazione per ambito** è verificato end-to-end
+(`CoachChatRegenerationIntegrationTest`): la chat propone, l'utente conferma, il motore
+unico rigenera solo la parte richiesta; in caso di provider non raggiungibile o proposta
+non valida **nessun piano viene alterato** e la rigenerazione è **annullabile** (i piani
+precedenti vengono riattivati).
 
 ## Base di conoscenza
 

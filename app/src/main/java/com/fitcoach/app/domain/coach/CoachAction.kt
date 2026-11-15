@@ -34,11 +34,21 @@ data class CoachAction(
         const val ACTION_ADJUST_VOLUME = "ADJUST_VOLUME"
         const val ACTION_ADJUST_FREQUENCY = "ADJUST_FREQUENCY"
         const val ACTION_DELOAD = "DELOAD"
+
+        /**
+         * Rigenerazione strutturale di una o entrambe le parti del programma tramite
+         * il motore unico (ProgramGenerationCoordinator + submit_full_program). Non e
+         * una sostituzione puntuale: serve quando la richiesta dell'utente cambia la
+         * struttura (nuova split, nuovi giorni, cambio strategia), non un singolo valore.
+         */
+        const val ACTION_REGENERATE_PLAN = "REGENERATE_PLAN"
+
         const val ACTION_NONE = "NONE"
 
         val VALID = setOf(
             ACTION_SUBSTITUTE_FOOD, ACTION_SUBSTITUTE_EXERCISE, ACTION_MOVE_WORKOUT,
-            ACTION_ADJUST_CALORIES, ACTION_ADJUST_VOLUME, ACTION_ADJUST_FREQUENCY, ACTION_DELOAD
+            ACTION_ADJUST_CALORIES, ACTION_ADJUST_VOLUME, ACTION_ADJUST_FREQUENCY, ACTION_DELOAD,
+            ACTION_REGENERATE_PLAN
         )
     }
 }

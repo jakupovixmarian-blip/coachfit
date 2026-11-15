@@ -19,6 +19,7 @@ import com.fitcoach.app.domain.coach.tools.ListExercisesTool
 import com.fitcoach.app.domain.coach.tools.ListFoodsTool
 import com.fitcoach.app.domain.coach.tools.MoveWorkoutTool
 import com.fitcoach.app.domain.coach.tools.ProposeDeloadTool
+import com.fitcoach.app.domain.coach.tools.ProposeRegeneratePlanTool
 import com.fitcoach.app.domain.coach.tools.SubstituteExerciseTool
 import com.fitcoach.app.domain.coach.tools.SubstituteFoodTool
 import com.fitcoach.app.domain.coach.tools.ValidateWorkoutPlanTool
@@ -68,4 +69,5 @@ object CoachToolsModule {
     @Provides @IntoSet fun adjustCalories(t: AdjustCaloriesTool): CoachTool = t
     @Provides @IntoSet fun adjustVolume(t: AdjustVolumeTool): CoachTool = t
     @Provides @IntoSet fun deload(t: ProposeDeloadTool): CoachTool = t
+    @Provides @IntoSet fun regenerate(t: ProposeRegeneratePlanTool): CoachTool = t
 }
