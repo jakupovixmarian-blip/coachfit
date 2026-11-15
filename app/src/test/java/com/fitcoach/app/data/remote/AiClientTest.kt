@@ -197,4 +197,59 @@ class AiClientTest {
         assertThat(api.sent).hasSize(3)
         assertThat(api.sent[2].temperature).isNull()
     }
+
+    @Test
+    fun `con function tools su gpt-5 invia reasoning_effort none`() = runTest {
+        val api = RecordingApi(mutableListOf(okResponse()))
+        val client = AiClient(api, json)
+
+        client.complete(
+            config(AiProvider.OPENAI, "gpt-5.6"),
+            listOf(ChatMessageDto("user", "genera")),
+            tools = listOf(
+                ToolDefinition(function = FunctionDefinition("echo", "eco", kotlinx.serialization.json.JsonObject(emptyMap())))
+            )
+        )
+
+        val body = api.sent.first()
+        assertThat(body.reasoningEffort).isEqualTo("none")
+    }
+
+    @Test
+    fun `senza function tools non invia reasoning_effort`() = runTest {
+        val api = RecordingApi(mutableListOf(okResponse()))
+        val client = AiClient(api, json)
+
+        client.complete(config(AiProvider.OPENAI, "gpt-5.6"), listOf(ChatMessageDto("user", "ciao")))
+
+        assertThat(api.sent.first().reasoningEffort).isNull()
+    }
+
+    @Test
+    fun `ritenta con reasoning_effort none quando il provider rifiuta i tools con reasoning`() = runTest {
+        val api = RecordingApi(
+            mutableListOf(
+                errorResponse(
+                    400,
+                    "Function tools with reasoning_effort are not supported for gpt-5.6 in " +
+                        "/v1/chat/completions. To use function tools, use /v1/responses or set " +
+                        "reasoning_effort to \"none\""
+                ),
+                okResponse()
+            )
+        )
+        val client = AiClient(api, json)
+
+        val result = client.complete(
+            config(AiProvider.OPENAI, "gpt-5.6"),
+            listOf(ChatMessageDto("user", "genera")),
+            tools = listOf(
+                ToolDefinition(function = FunctionDefinition("echo", "eco", kotlinx.serialization.json.JsonObject(emptyMap())))
+            )
+        )
+
+        assertThat(result).isInstanceOf(AiResult.Success::class.java)
+        assertThat(api.sent).hasSize(2)
+        assertThat(api.sent[1].reasoningEffort).isEqualTo("none")
+    }
 }

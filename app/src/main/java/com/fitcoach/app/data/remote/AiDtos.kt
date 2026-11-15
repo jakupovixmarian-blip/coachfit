@@ -29,7 +29,13 @@ data class ChatCompletionRequest(
     /** Strumenti (function calling) disponibili per il modello. */
     val tools: List<ToolDefinition>? = null,
     /** Politica di scelta degli strumenti: auto/none/required oppure oggetto forzato. */
-    @SerialName("tool_choice") val toolChoice: JsonElement? = null
+    @SerialName("tool_choice") val toolChoice: JsonElement? = null,
+    /**
+     * Sforzo di ragionamento per i modelli OpenAI recenti (gpt-5.x, o-series).
+     * OpenAI rifiuta i function tools su `/v1/chat/completions` quando lo sforzo
+     * di ragionamento e attivo: in quel caso va inviato `"none"`.
+     */
+    @SerialName("reasoning_effort") val reasoningEffort: String? = null
 ) {
     @Serializable
     data class ResponseFormat(val type: String = "json_object")
@@ -51,6 +57,7 @@ data class ChatCompletionRequest(
         ): ChatCompletionRequest {
             val newParam = AiParameterPolicy.tokenParamFor(provider, model) ==
                 TokenParam.MAX_COMPLETION_TOKENS
+            val hasTools = !tools.isNullOrEmpty()
             return ChatCompletionRequest(
                 model = model,
                 messages = messages,
@@ -59,7 +66,13 @@ data class ChatCompletionRequest(
                 maxCompletionTokens = if (newParam) maxTokens else null,
                 responseFormat = responseFormat,
                 tools = tools,
-                toolChoice = if (tools.isNullOrEmpty()) null else toolChoice
+                toolChoice = if (hasTools) toolChoice else null,
+                // OpenAI rifiuta i function tools su /v1/chat/completions quando il
+                // modello applica un reasoning_effort di default (gpt-5.6:
+                // "Function tools with reasoning_effort are not supported ... set
+                // reasoning_effort to \"none\""). Con strumenti si forza "none";
+                // senza strumenti si lascia il default del provider.
+                reasoningEffort = if (hasTools && newParam) REASONING_EFFORT_NONE else null
             )
         }
 
@@ -82,6 +95,23 @@ data class ChatCompletionRequest(
          */
         fun withoutTemperature(request: ChatCompletionRequest): ChatCompletionRequest =
             request.copy(temperature = null)
+
+        /**
+         * Rimuove `reasoning_effort` (alcuni endpoint non riconoscono il campo e lo
+         * rifiutano): il payload viene inviato senza, lasciando il default.
+         */
+        fun withoutReasoningEffort(request: ChatCompletionRequest): ChatCompletionRequest =
+            request.copy(reasoningEffort = null)
+
+        /**
+         * Forza `reasoning_effort = "none"`: necessario per usare i function tools
+         * su `/v1/chat/completions` con i modelli OpenAI di ragionamento (gpt-5.x).
+         */
+        fun withReasoningNone(request: ChatCompletionRequest): ChatCompletionRequest =
+            request.copy(reasoningEffort = REASONING_EFFORT_NONE)
+
+        /** Valore di reasoning_effort che abilita i function tools su Chat Completions. */
+        const val REASONING_EFFORT_NONE = "none"
     }
 }
 

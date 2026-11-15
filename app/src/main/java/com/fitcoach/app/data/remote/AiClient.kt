@@ -98,6 +98,23 @@ class AiClient @Inject constructor(
                     Learned(dropTemperature = true, alternateTokenParam = learned?.alternateTokenParam == true)
             }
         }
+        // Function tools rifiutati perche il modello applica un reasoning_effort:
+        // forza "none" (OpenAI gpt-5.x su /v1/chat/completions).
+        if (result is AiResult.Failure && AiParameterPolicy.isFunctionToolsWithReasoningError(result.message)) {
+            request = ChatCompletionRequest.withReasoningNone(request)
+            result = sendOnce(config, request)
+            // Se l'endpoint non conosce proprio il campo, riprova senza.
+            if (result is AiResult.Failure && AiParameterPolicy.isUnknownReasoningEffortError(result.message)) {
+                request = ChatCompletionRequest.withoutReasoningEffort(request)
+                result = sendOnce(config, request)
+            }
+        }
+        // Alcuni endpoint non riconoscono `reasoning_effort` e lo rifiutano a
+        // prescindere: in quel caso va rimosso.
+        if (result is AiResult.Failure && AiParameterPolicy.isUnknownReasoningEffortError(result.message)) {
+            request = ChatCompletionRequest.withoutReasoningEffort(request)
+            result = sendOnce(config, request)
+        }
         return result
     }
 

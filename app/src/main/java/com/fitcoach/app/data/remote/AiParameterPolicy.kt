@@ -75,4 +75,27 @@ object AiParameterPolicy {
             m.contains("unsupported") ||
             m.contains("only the default")
     }
+
+    /**
+     * Rileva il rifiuto dei function tools perche il modello applica un
+     * reasoning_effort non nullo (OpenAI gpt-5.x su /v1/chat/completions):
+     * "Function tools with reasoning_effort are not supported for gpt-5.6 in
+     * /v1/chat/completions. To use function tools, use /v1/responses or set
+     * reasoning_effort to \"none\"".
+     */
+    fun isFunctionToolsWithReasoningError(message: String): Boolean {
+        val m = message.lowercase()
+        if (!m.contains("reasoning_effort") && !m.contains("reasoning effort")) return false
+        return m.contains("function tools") || m.contains("tools with") ||
+            m.contains("not supported") || m.contains("tool")
+    }
+
+    /** Rileva il rifiuto del campo `reasoning_effort` (endpoint che non lo conosce). */
+    fun isUnknownReasoningEffortError(message: String): Boolean {
+        val m = message.lowercase()
+        if (!m.contains("reasoning_effort") && !m.contains("reasoning effort")) return false
+        return m.contains("unknown") || m.contains("unrecognized") ||
+            m.contains("unsupported") || m.contains("not supported") ||
+            m.contains("invalid") || m.contains("unexpected")
+    }
 }
