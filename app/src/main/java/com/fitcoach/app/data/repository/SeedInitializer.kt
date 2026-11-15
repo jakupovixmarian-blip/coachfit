@@ -1,5 +1,6 @@
 package com.fitcoach.app.data.repository
 
+import android.content.Context
 import com.fitcoach.app.data.local.Mappers.toEntity
 import com.fitcoach.app.data.local.dao.ExerciseDao
 import com.fitcoach.app.data.local.dao.FoodDao
@@ -7,9 +8,12 @@ import com.fitcoach.app.data.local.dao.NotificationDao
 import com.fitcoach.app.data.local.dao.ScientificSourceDao
 import com.fitcoach.app.data.local.entity.NotificationRecordEntity
 import com.fitcoach.app.domain.knowledge.ScientificSourceSeedData
+import com.fitcoach.app.domain.model.FoodItem
 import com.fitcoach.app.domain.model.MealSlot
+import com.fitcoach.app.domain.nutrition.FoodAssetImporter
 import com.fitcoach.app.domain.nutrition.FoodSeedData
 import com.fitcoach.app.domain.workout.ExerciseSeedData
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,6 +23,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class SeedInitializer @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val foodDao: FoodDao,
     private val exerciseDao: ExerciseDao,
     private val notificationDao: NotificationDao,
@@ -26,6 +31,7 @@ class SeedInitializer @Inject constructor(
 ) {
     suspend fun seedIfNeeded() {
         seedFoodsIncrementally()
+        seedUsdaAssetIfNeeded()
         if (exerciseDao.count() == 0) {
             exerciseDao.insertAll(ExerciseSeedData.exercises.map { it.toEntity() })
         }
@@ -48,12 +54,33 @@ class SeedInitializer @Inject constructor(
             return
         }
         val missing = FoodSeedData.foods.filter { food ->
-            foodDao.getByNormalizedName(com.fitcoach.app.domain.model.FoodItem.normalizeName(food.name)) == null
+            foodDao.getByNormalizedName(FoodItem.normalizeName(food.name)) == null
         }
         if (missing.isNotEmpty()) {
             foodDao.insertAll(missing.map { it.toEntity() })
         }
     }
+
+    /**
+     * Importa il database globale USDA FoodData Central (SR Legacy, ~7800
+     * alimenti) dall'asset `food_usda_sr_legacy.tsv`. L'import avviene una sola
+     * volta (guardia su [FoodDao.countBySource]) e non sovrascrive gli alimenti
+     * gia presenti. Questo da all'app un database interno ampio e sempre
+     * disponibile offline, indipendente dalle API esterne.
+     */
+    private suspend fun seedUsdaAssetIfNeeded() {
+        if (foodDao.countBySource(FoodAssetImporter.USDA_SOURCE) > 0) return
+        val existing = foodDao.getAll().map { it.name.lowercase() }.toHashSet()
+        val items = context.assets.open(USDA_ASSET).bufferedReader().use { reader ->
+            FoodAssetImporter.parseTsv(reader, FoodAssetImporter.USDA_SOURCE)
+        }
+        // L'indice su `name` e unico: salta i nomi gia presenti per non sovrascrivere
+        // alimenti seed (o creati dall'utente) gia referenziati dai pasti.
+        val toInsert = items.filter { it.name.lowercase() !in existing }
+        if (toInsert.isEmpty()) return
+        toInsert.chunked(500).forEach { foodDao.insertAll(it.map { f -> f.toEntity() }) }
+    }
+
 
     private fun defaultNotifications(): List<NotificationRecordEntity> {
         var code = 100
@@ -84,5 +111,9 @@ class SeedInitializer @Inject constructor(
                 body = "Pesati a digiuno.", triggerTime = "07:00", requestCode = code
             )
         )
+    }
+
+    private companion object {
+        const val USDA_ASSET = "food_usda_sr_legacy.tsv"
     }
 }

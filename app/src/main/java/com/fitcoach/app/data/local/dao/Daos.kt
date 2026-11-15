@@ -91,7 +91,8 @@ interface FoodDao {
 
     @Query(
         "SELECT * FROM food_database WHERE normalizedName LIKE '%' || :query || '%' " +
-            "OR lower(name) LIKE '%' || :query || '%' OR lower(brand) LIKE '%' || :query || '%' ORDER BY name"
+            "OR lower(name) LIKE '%' || :query || '%' OR lower(brand) LIKE '%' || :query || '%' " +
+            "ORDER BY name LIMIT 120"
     )
     suspend fun searchNormalized(query: String): List<FoodItemEntity>
 
@@ -106,6 +107,9 @@ interface FoodDao {
 
     @Query("SELECT COUNT(*) FROM food_database")
     suspend fun count(): Int
+
+    @Query("SELECT COUNT(*) FROM food_database WHERE source = :source")
+    suspend fun countBySource(source: String): Int
 }
 
 @Dao

@@ -46,6 +46,17 @@ class ListFoodsTool @Inject constructor(
         if (!category.isNullOrBlank()) foods = foods.filter { it.category.lowercase() == category }
         if (!tag.isNullOrBlank()) foods = foods.filter { f -> f.tags.any { it.lowercase().contains(tag) } }
 
+        // Senza query esplicita, dai priorita al catalogo curato italiano (CREA,
+        // con sostituti definiti) invece che alle migliaia di voci USDA generiche:
+        // l'AI costruisce cosi piani con alimenti adatti all'utente italiano.
+        if (query.isNullOrBlank()) {
+            foods = foods.sortedWith(
+                compareByDescending<FoodItem> { it.substituteNames.isNotEmpty() }
+                    .thenByDescending { it.source.contains("CREA") }
+                    .thenBy { it.name }
+            )
+        }
+
         val total = foods.size
         val items = foods.take(limit).map { food ->
             JsonOut.obj(

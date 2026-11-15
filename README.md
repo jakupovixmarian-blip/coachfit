@@ -112,10 +112,55 @@ seed è **incrementale**: gli alimenti nuovi vengono aggiunti agli aggiornamenti
 duplicare quelli già presenti. Un test di integrità (`FoodSeedDataTest`) verifica assenza di
 duplicati, fonti dichiarate, coerenza calorie/macronutrienti e validità delle sostituzioni.
 
+### Database globale integrato (offline)
+
+Oltre al seed curato, l'app include un **database alimentare globale** confezionato
+nell'APK: **USDA FoodData Central – SR Legacy**, ~**7.800 alimenti** con valori nutrizionali
+verificati per 100 g (proteine, carboidrati, grassi, fibra, kcal, categoria). È importato in
+Room al primo avvio (`SeedInitializer.seedUsdaAssetIfNeeded`) dall'asset
+`app/src/main/assets/food_usda_sr_legacy.tsv` (≈740 KB) e resta **sempre disponibile
+offline**, senza dipendere dalle API esterne.
+
+- L'import è **idempotente** (guardia su `FoodDao.countBySource`): avviene una sola volta.
+- Un test (`FoodAssetImporterTest`) valida l'asset reale: numerosità, assenza di duplicati e
+  valori negativi, univocità degli `sourceId`, coerenza calorie/macronutrienti e copertura
+  degli alimenti comuni.
+- L'asset è **rigenerabile** con `python3 tools/build_food_asset.py` (pubblico dominio USDA).
+- Nella ricerca l'**ordine di risoluzione** resta: **locale (Room, ~7.800 voci)** → **Open
+  Food Facts** (prodotti/marche) → **USDA FoodData Central** (API, fallback). Nel tool AI
+  `list_foods` il catalogo curato italiano (CREA, con sostituti) è **prioritario** quando non
+  c'è una query, così i piani usano alimenti adatti all'utente italiano; la ricerca testuale
+  consulta comunque l'intero database globale.
+
 **Ricerca con fotocamera (stile Yazio).** Dal Diario → *Aggiungi alimento* → *Scansiona
 codice a barre* si apre la fotocamera (CameraX + ML Kit). Inquadrando il codice EAN/UPC il
 prodotto viene cercato su Open Food Facts e registrato con i suoi valori reali. Richiede il
 permesso `CAMERA`, chiesto al primo utilizzo.
+
+### Fonti dati esterne valutate
+
+Per completezza, l'app può attingere a più fonti. Solo le prime due sono integrate come
+**dump offline**; le altre sono raggiungibili via API o download su richiesta.
+
+| Fonte | Ambito | Dump offline | Note |
+|-------|--------|--------------|------|
+| USDA FoodData Central – SR Legacy | Globale | Sì (~7.800 alimenti, 6 MB zip) | **Integrata nell'APK**. Pubblico dominio. |
+| Open Food Facts | Globale | Sì (≈1,5 GB csv.gz) | **Integrata via API** (ricerca + barcode). ODbL. |
+| USDA FoodData Central – Branded | Globale/USA | Via API (richiede chiave) | Prodotti di marca. |
+| CREA (alimentinutrizione.it) | Italia | No (consultazione web) | Fonte del catalogo curato. |
+| CIQUAL (ANSES) | Francia | Sì (XLS) | ~3.000 alimenti. |
+| Swiss Food Composition Database | Svizzera | Sì (XLSX) | ~1.000 alimenti. |
+| CoFID (McCance & Widdowson) | Regno Unito | Sì | ~3.000 alimenti. |
+| Fineli | Finlandia | Sì (download) | Pubblico dominio. |
+| Frida | Danimarca | Sì (download) | — |
+| NEVO | Paesi Bassi | Sì (download) | — |
+| Matvaretabellen | Norvegia | Sì (download) | — |
+| BLS | Germania | A pagamento | Licenza commerciale. |
+
+Il dump globale completo di Open Food Facts (1,5 GB) **non** viene confezionato nell'APK:
+sarebbe sproporzionato per un'app mobile. La strategia adottata è quindi *database globale
+interno compatto* (USDA) **+** *API on-demand* (Open Food Facts/USDA) con **cache locale**.
+
 
 ## Componenti matematiche (deterministiche, testate)
 
@@ -345,7 +390,7 @@ app/src/main/java/com/fitcoach/app/
 
 ## Test
 
-Test automatici (**284 test**, 41 classi). Coprono i calcoli matematici e i validatori, la
+Test automatici (**295 test**, 44 classi). Coprono i calcoli matematici e i validatori, la
 catena di generazione dal Coach AI (proposta → validazione → persistenza), il check-in
 settimanale end-to-end, la chat con rigenerazione per ambito e la persistenza su Room reale:
 
@@ -356,6 +401,9 @@ settimanale end-to-end, la chat con rigenerazione per ambito e la persistenza su
   atteso vs ricevuto per ogni vincolo fallito), progressive overload (double progression),
   fatica, analisi peso, anamnesi guidata (parsing, gate, contraddizioni), budget mensile,
   mappatura fonti alimentari, parametri AI per provider.
+- **Database alimentare**: `FoodSeedDataTest` (integrità del catalogo curato) e
+  `FoodAssetImporterTest` (asset globale USDA: numerosità, dedup, `sourceId` univoci,
+  coerenza calorie/macronutrienti, copertura alimenti comuni).
 - **Catena AI su Room reale**: `AiProgramGenerationFlowIntegrationTest` (proposta AI →
   `submit_full_program` → validazione → persistenza), `NutritionChainIntegrationTest`
   (generazione → spesa → diario, incl. rigenerazioni concorrenti senza lista vuota),
