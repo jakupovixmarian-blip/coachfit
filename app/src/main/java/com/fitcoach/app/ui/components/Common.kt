@@ -367,6 +367,8 @@ fun EmptyState(
     message: String,
     modifier: Modifier = Modifier,
     action: (@Composable () -> Unit)? = null,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
 ) {
     val shape = RoundedCornerShape(FitRadius.lg)
     Column(
@@ -402,6 +404,15 @@ fun EmptyState(
         if (action != null) {
             Spacer(Modifier.height(10.dp))
             action()
+        } else if (actionLabel != null && onAction != null) {
+            Spacer(Modifier.height(10.dp))
+            TextButton(onClick = onAction) {
+                Text(
+                    text = actionLabel,
+                    style = FitTextStyles.bodyStrong,
+                    color = Emerald,
+                )
+            }
         }
     }
 }
