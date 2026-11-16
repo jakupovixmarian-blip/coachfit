@@ -104,6 +104,7 @@ import kotlinx.coroutines.delay
  *       onOpenWorkout    = { navController.navigate(Routes.WORKOUT) },
  *       onOpenProgress   = { navController.navigate(Routes.PROGRESS) },
  *       onOpenCoach      = { navController.navigate(Routes.COACH) },
+ *       onOpenAnamnesis  = { navController.navigate(Routes.ANAMNESIS) },
  *       onLogWeight      = { apriSheetPeso() },        // funzione già esistente
  *       onSkipWorkout    = { salvaOverride() },        // WorkoutScheduleOverride
  *       onGenerateProgram= { generaProgramma() },      // AiProgramGenerationService
@@ -125,6 +126,7 @@ fun DashboardContent(
     onOpenWorkout: () -> Unit,
     onOpenProgress: () -> Unit,
     onOpenCoach: () -> Unit,
+    onOpenAnamnesis: () -> Unit,
     onLogWeight: () -> Unit,
     onSkipWorkout: () -> Unit,
     onGenerateProgram: () -> Unit,
@@ -148,6 +150,7 @@ fun DashboardContent(
                 onOpenWorkout = onOpenWorkout,
                 onOpenProgress = onOpenProgress,
                 onOpenCoach = onOpenCoach,
+                onOpenAnamnesis = onOpenAnamnesis,
                 onLogWeight = onLogWeight,
                 onSkipWorkout = onSkipWorkout,
             )
@@ -167,6 +170,7 @@ private fun DashboardBody(
     onOpenWorkout: () -> Unit,
     onOpenProgress: () -> Unit,
     onOpenCoach: () -> Unit,
+    onOpenAnamnesis: () -> Unit,
     onLogWeight: () -> Unit,
     onSkipWorkout: () -> Unit,
 ) {
@@ -179,22 +183,30 @@ private fun DashboardBody(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         StaggeredEntry(0, motionEnabled) { DashboardHeader(state) }
-        StaggeredEntry(1, motionEnabled) { KcalHeroCard(state, onOpenNutrition) }
-        StaggeredEntry(2, motionEnabled) { MacroRailCard(state, onOpenNutrition) }
-        StaggeredEntry(3, motionEnabled) { TodaySummaryCard(state) }
-        StaggeredEntry(4, motionEnabled) {
+        if (state.needsAnamnesis) {
+            StaggeredEntry(1, motionEnabled) {
+                AnamnesisCard(state.anamnesisSummary, onOpenAnamnesis)
+            }
+        }
+        if (state.warnings.isNotEmpty()) {
+            StaggeredEntry(2, motionEnabled) { WarningsCard(state.warnings) }
+        }
+        StaggeredEntry(3, motionEnabled) { KcalHeroCard(state, onOpenNutrition) }
+        StaggeredEntry(4, motionEnabled) { MacroRailCard(state, onOpenNutrition) }
+        StaggeredEntry(5, motionEnabled) { TodaySummaryCard(state) }
+        StaggeredEntry(6, motionEnabled) {
             WorkoutCard(state.workout, onOpenWorkout, onSkipWorkout)
         }
-        StaggeredEntry(5, motionEnabled) {
+        StaggeredEntry(7, motionEnabled) {
             ProgressCard(state.weight, onOpenProgress, onLogWeight)
         }
-        StaggeredEntry(6, motionEnabled) {
+        StaggeredEntry(8, motionEnabled) {
             RecoveryRow(state.sleepHours, state.weeklyVolumeKg)
         }
-        StaggeredEntry(7, motionEnabled) { CoachCard(state.lastCoachMessage, onOpenCoach) }
+        StaggeredEntry(9, motionEnabled) { CoachCard(state.lastCoachMessage, onOpenCoach) }
         val notification = state.nextNotification
         if (notification != null) {
-            StaggeredEntry(8, motionEnabled) { NextNotificationRow(notification) }
+            StaggeredEntry(10, motionEnabled) { NextNotificationRow(notification) }
         }
     }
 }
@@ -465,6 +477,14 @@ private fun TodaySummaryCard(state: DashboardUiState) {
         Column {
             SectionHeader(title = "Oggi", subtitle = state.weekdayLabel.ifBlank { null })
             Spacer(Modifier.height(12.dp))
+            if (!state.goalLabel.isNullOrBlank()) {
+                SummaryRow(
+                    label = "Obiettivo",
+                    value = state.goalLabel,
+                    accent = EmeraldLight,
+                )
+                Spacer(Modifier.height(10.dp))
+            }
             SummaryRow(
                 label = "Pasti registrati",
                 value = if (state.meals.planned > 0) {
@@ -856,6 +876,82 @@ private fun NextNotificationRow(notification: DashboardNotification) {
             color = TextLow,
             maxLines = 1,
         )
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* 10. Anamnesi incompleta + avvisi reali                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Invito a completare l'anamnesi. Compare solo se il dato è davvero mancante:
+ * senza anamnesi il Coach AI non può generare nulla, quindi è la prima azione.
+ */
+@Composable
+private fun AnamnesisCard(summary: String?, onOpenAnamnesis: () -> Unit) {
+    SectionCard {
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Anamnesi da completare",
+                    style = FitTextStyles.bodyStrong,
+                    color = TextPrimary,
+                    modifier = Modifier.weight(1f),
+                )
+                Pill(text = "Richiesta", color = WarningAmber)
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = summary?.takeIf { it.isNotBlank() }
+                    ?: "Senza anamnesi il Coach AI non può generare nutrizione e scheda.",
+                style = FitTextStyles.bodySmall,
+                color = TextSecondary,
+            )
+            Spacer(Modifier.height(12.dp))
+            GhostButton(
+                text = "Completa l'anamnesi",
+                onClick = onOpenAnamnesis,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+/**
+ * Avvisi prodotti dai controlli reali (allergie, incongruenze, limitazioni).
+ * Non sono decorativi: sono gli stessi messaggi che bloccano la generazione.
+ */
+@Composable
+private fun WarningsCard(warnings: List<String>) {
+    SectionCard {
+        Column {
+            Text(
+                text = "DA CONTROLLARE",
+                style = FitTextStyles.label,
+                color = WarningAmber,
+            )
+            Spacer(Modifier.height(8.dp))
+            warnings.forEach { warning ->
+                Row(
+                    modifier = Modifier.padding(bottom = 6.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 6.dp)
+                            .size(5.dp)
+                            .clip(CircleShape)
+                            .background(WarningAmber),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = warning,
+                        style = FitTextStyles.bodySmall,
+                        color = TextPrimary,
+                    )
+                }
+            }
+        }
     }
 }
 

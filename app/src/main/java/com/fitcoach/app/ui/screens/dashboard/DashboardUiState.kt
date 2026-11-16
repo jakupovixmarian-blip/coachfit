@@ -29,6 +29,11 @@ package com.fitcoach.app.ui.screens.dashboard
  *   weeklyVolumeKg    <- volume totale (kg) delle WorkoutSession degli ultimi 7 giorni
  *   lastCoachMessage  <- ultimo ChatMessage della conversazione corrente
  *   nextNotification  <- NotificationRecord programmata più vicina
+ *   goalLabel         <- UserProfile.obiettivo, già etichettato (es. "Ricomposizione")
+ *   needsAnamnesis    <- true se l'anamnesi è incompleta (blocca la generazione)
+ *   anamnesisSummary  <- sintesi dell'ultima anamnesi confermata (sezioni compilate)
+ *   warnings          <- avvisi reali del Validatore/AnamnesisEngine (allergie,
+ *                        incongruenze, limitazioni): mai inventati dalla UI
  *   hasPlan           <- false dopo l'anamnesi ma senza NutritionPlan/WorkoutPlan
  *
  * Tutti i campi nullable significano "dato non registrato": la UI mostra uno
@@ -106,6 +111,18 @@ data class DashboardUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val hasPlan: Boolean = true,
+
+    /** Obiettivo dichiarato in anamnesi, già in forma leggibile. */
+    val goalLabel: String? = null,
+
+    /** true quando l'anamnesi è incompleta: la Dashboard invita a completarla. */
+    val needsAnamnesis: Boolean = false,
+
+    /** Sintesi dell'ultima anamnesi confermata, mostrata come promemoria. */
+    val anamnesisSummary: String? = null,
+
+    /** Avvisi prodotti dai controlli reali (allergie, incongruenze, limitazioni). */
+    val warnings: List<String> = emptyList(),
 
     val greeting: String = "",
     val weekdayLabel: String = "",
