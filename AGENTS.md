@@ -126,3 +126,24 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
 - **Fonti esterne valutate** (dump vs API): USDA SR Legacy (integrata), Open Food Facts
   (API, dump globale 1,5 GB troppo grande per l'APK), CIQUAL/Swiss/CoFID/Fineli/Frida/NEVO/
   Matvaretabellen (dump disponibili), BLS (a pagamento). Tabella completa nel README.
+
+## Collaudo dei difetti segnalati (bugfix sessione)
+
+Test di collaudo reali (Robolectric + Room in-memory, nessun mock) in
+`app/src/test/java/com/fitcoach/app/collaudo/`:
+
+- `FoodCatalogCollaudoTest` — BUG 1/4: il contesto di generazione conteneva i primi 90
+  alimenti in ordine alfabetico (fast food USA in inglese). Ora `FoodCatalogSelector`
+  antepone il catalogo CREA ed esclude ristorazione/fast food/marche. Le liste UI
+  (`FoodDao.observeAll/getAll`) ordinano CREA-first.
+- `WorkoutSessionLifecycleCollaudoTest` — BUG 2/3: `WorkoutRepository.abandonSession`
+  chiude una seduta senza serie valide come `SKIPPED` (non `COMPLETED`, non resta
+  `IN_PROGRESS`); `WorkoutViewModel.startManualRest` avvia il recupero su richiesta.
+- `NavigationFlowCollaudoTest` — BUG 5/6: su `MainActivity` reale ogni tab apre la sua
+  schermata; tornare alla Dashboard dopo il workout non lascia schermate vuote.
+- `DashboardRenderCollaudoTest` — sweep di tap sulla Dashboard: nessun tocco generico
+  naviga ad Allenamento.
+
+Nota test: `WorkoutViewModel.runRestTimer`/`syncStopwatch` usano `System.currentTimeMillis`
+in un loop con `delay`. Nei test NON usare `advanceUntilIdle` (gira all'infinito): pompare
+lo scheduler con `runCurrent` e attendere la condizione reale.

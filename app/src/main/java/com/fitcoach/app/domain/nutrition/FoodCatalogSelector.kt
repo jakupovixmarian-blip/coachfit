@@ -1,0 +1,56 @@
+package com.fitcoach.app.domain.nutrition
+
+import com.fitcoach.app.domain.model.FoodItem
+import com.fitcoach.app.domain.model.UserProfile
+
+/**
+ * Seleziona gli alimenti da mostrare al Coach AI durante la generazione.
+ *
+ * Il database interno contiene ~7.800 voci USDA (FoodData Central) in inglese,
+ * molte delle quali sono prodotti industriali o piatti da ristorazione
+ * (es. "APPLEBEE'S ...", "ARBY'S ..."). Prendendo i primi alimenti in ordine
+ * alfabetico, il modello riceveva SOLO voci in inglese di fast food: da qui i
+ * piani con nomi stranieri e poco coerenti.
+ *
+ * Regole della selezione:
+ *  1. si parte dagli alimenti CREA (tabelle italiane, nomi italiani): hanno la
+ *     priorita e sono quelli che l'utente riconosce;
+ *  2. si escludono le categorie non pertinenti a un piano alimentare
+ *     (ristorazione, fast food, alimenti per l'infanzia, bevande);
+ *  3. si completa con alimenti USDA "generici" solo se serve, evitando i nomi
+ *     che sembrano prodotti di marca;
+ *  4. si mantiene un tetto massimo per non eccedere il contesto del modello.
+ */
+object FoodCatalogSelector {
+
+    /** Categorie escluse: non sono alimenti base di un piano nutrizionale. */
+    private val excludedCategories = setOf(
+        "Ristorazione",
+        "Fast food",
+        "Alimenti per l'infanzia",
+        "Bevande",
+        "Snack",
+        "Dolci"
+    )
+
+    /** Un nome "di marca" contiene apostrofi, virgole o parole tipiche del confezionato. */
+    private val brandPattern = Regex("""['’,]|\b(INC|LLC|KRAFT|COMPANY|BRAND|RESTAURANT|MCDONALD)\b""")
+
+    fun forGeneration(
+        all: List<FoodItem>,
+        profile: UserProfile,
+        limit: Int = 90
+    ): List<FoodItem> {
+        val allowed = FoodFilter.allowedFoods(all, profile)
+        val italian = allowed.filter { isItalianSource(it) && it.category !in excludedCategories }
+        val generic = allowed.filter {
+            !isItalianSource(it) && it.category !in excludedCategories && !brandPattern.containsMatchIn(it.name)
+        }
+        return (italian + generic)
+            .distinctBy { FoodItem.normalizeName(it.name) }
+            .take(limit)
+    }
+
+    private fun isItalianSource(food: FoodItem): Boolean =
+        food.source.startsWith("CREA", ignoreCase = true)
+}

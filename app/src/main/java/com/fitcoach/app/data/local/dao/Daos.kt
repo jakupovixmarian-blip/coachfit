@@ -68,10 +68,12 @@ interface UserPreferencesDao {
 
 @Dao
 interface FoodDao {
-    @Query("SELECT * FROM food_database ORDER BY name")
+    // L'ordinamento antepone il catalogo curato italiano (CREA): l'utente vede
+    // prima gli alimenti che riconosce, poi le migliaia di voci USDA in inglese.
+    @Query("SELECT * FROM food_database ORDER BY CASE WHEN source LIKE 'CREA%' THEN 0 ELSE 1 END, name")
     fun observeAll(): Flow<List<FoodItemEntity>>
 
-    @Query("SELECT * FROM food_database ORDER BY name")
+    @Query("SELECT * FROM food_database ORDER BY CASE WHEN source LIKE 'CREA%' THEN 0 ELSE 1 END, name")
     suspend fun getAll(): List<FoodItemEntity>
 
     @Query("SELECT * FROM food_database WHERE id = :id")

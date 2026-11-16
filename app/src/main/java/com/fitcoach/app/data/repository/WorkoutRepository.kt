@@ -547,6 +547,35 @@ class WorkoutRepository @Inject constructor(
         true
     }
 
+    /**
+     * Chiude una seduta avviata e poi abbandonata senza serie valide.
+     *
+     * Serve al caso reale segnalato: l'utente apre l'allenamento, magari non
+     * completa nulla e non riesce piu a uscire dalla seduta (resta IN_PROGRESS
+     * per sempre). La seduta viene marcata [SessionStatus.SKIPPED] e non
+     * [SessionStatus.COMPLETED]: non e un allenamento svolto, quindi non deve
+     * contare nel volume settimanale ne generare performance. Se esistono serie
+     * valide la sessione viene COMPLETATA come prima.
+     */
+    suspend fun abandonSession(sessionId: Long): Boolean = db.withTransaction {
+        val entity = sessionDao.getById(sessionId) ?: return@withTransaction false
+        if (entity.status != SessionStatus.IN_PROGRESS) return@withTransaction false
+        val validSets = setDao.getForSession(sessionId).count {
+            it.completed && !it.isWarmup && it.actualReps > 0 && it.weightKg >= 0.0
+        }
+        if (validSets > 0) {
+            sessionDao.update(
+                entity.copy(status = SessionStatus.COMPLETED, completedAt = System.currentTimeMillis())
+            )
+            aggregatePerformance(sessionId)
+        } else {
+            sessionDao.update(
+                entity.copy(status = SessionStatus.SKIPPED, completedAt = System.currentTimeMillis())
+            )
+        }
+        true
+    }
+
     /** Calcola e salva l'aggregato di performance per ogni esercizio della sessione. */
     private suspend fun aggregatePerformance(sessionId: Long) {
         val sets = setDao.getForSession(sessionId).filter { it.completed && !it.isWarmup }

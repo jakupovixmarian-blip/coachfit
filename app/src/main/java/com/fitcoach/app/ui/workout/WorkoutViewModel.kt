@@ -569,13 +569,41 @@ class WorkoutViewModel @Inject constructor(
                     (_state.value.session?.painReported ?: false),
                 painNotes = _state.value.painNotes
             )
+            if (completed) {
+                _state.value = _state.value.copy(
+                    finishDialog = false,
+                    message = "Allenamento completato. Ottimo lavoro!"
+                )
+            } else {
+                // Nessuna serie valida: l'utente vuole comunque chiudere la seduta.
+                // Non e un allenamento svolto, quindi non viene conteggiata.
+                val closed = workoutRepository.abandonSession(session.id)
+                _state.value = _state.value.copy(
+                    finishDialog = false,
+                    message = if (closed) "Sessione chiusa senza serie registrate."
+                    else "Sessione non completata: registra almeno una serie valida."
+                )
+            }
+            load()
+        }
+    }
+
+    /** Chiude subito la seduta in corso senza passare dal riepilogo finale. */
+    fun abandonSession() {
+        viewModelScope.launch {
+            val session = _state.value.session ?: return@launch
+            val closed = workoutRepository.abandonSession(session.id)
             _state.value = _state.value.copy(
-                finishDialog = !completed,
-                message = if (completed) "Allenamento completato. Ottimo lavoro!"
-                else "Sessione non completata: registra almeno una serie valida."
+                message = if (closed) "Sessione chiusa." else "Impossibile chiudere la sessione."
             )
             load()
         }
+    }
+
+    /** Avvia il cronometro di recupero su richiesta, con la durata tipica dell'esercizio. */
+    fun startManualRest() {
+        val seconds = _state.value.today?.exercises?.firstOrNull()?.restSeconds ?: 90
+        startRest(seconds, "Recupero avviato manualmente")
     }
 
     fun convertFreeSessionToRoutine() {

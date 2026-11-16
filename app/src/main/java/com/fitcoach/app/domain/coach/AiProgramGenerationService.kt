@@ -9,7 +9,7 @@ import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.FoodItem
 import com.fitcoach.app.domain.model.UserProfile
-import com.fitcoach.app.domain.nutrition.FoodFilter
+import com.fitcoach.app.domain.nutrition.FoodCatalogSelector
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -55,7 +55,7 @@ class AiProgramGenerationService @Inject constructor(
         if (!profile.isAnamnesisReady) {
             return Result.Failure("Completa e conferma l'anamnesi prima di generare il programma.", false)
         }
-        val foods = FoodFilter.allowedFoods(foodRepository.getAll(), profile)
+        val foods = FoodCatalogSelector.forGeneration(foodRepository.getAll(), profile)
         val exercises = exerciseRepository.getAll()
         if (foods.isEmpty()) return Result.Failure("Nessun alimento compatibile disponibile nel database.", false)
         if (exercises.isEmpty()) return Result.Failure("Database esercizi vuoto: impossibile validare la scheda.", false)

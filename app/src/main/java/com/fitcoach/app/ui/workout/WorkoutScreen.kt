@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -317,11 +318,34 @@ fun WorkoutScreen(
 
             if (session?.status == com.fitcoach.app.domain.model.SessionStatus.IN_PROGRESS) {
                 item {
-                    Button(
-                        onClick = { viewModel.openFinishDialog() },
-                        modifier = Modifier.fillMaxWidth()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text("Termina allenamento")
+                        Button(
+                            onClick = { viewModel.openFinishDialog() },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Termina allenamento")
+                        }
+                        OutlinedButton(
+                            onClick = { viewModel.abandonSession() },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Abbandona")
+                        }
+                    }
+                }
+                if (!state.resting) {
+                    item {
+                        OutlinedButton(
+                            onClick = { viewModel.startManualRest() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Filled.Timer, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Avvia recupero")
+                        }
                     }
                 }
             }
