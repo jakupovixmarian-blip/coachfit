@@ -37,6 +37,34 @@ Solo la chat AI richiede Internet.
 
 ## Interfaccia
 
+### Stato dell'aggancio grafico "Obsidian Meridian" (AppJet)
+
+La nuova identità grafica (palette, tipografia Sora/Inter/JetBrains Mono, componenti
+ridisegnati) è **compilata nell'APK**. Ogni schermata di AppJet è un file `XxxContent.kt`
+(stateless) più `XxxUiState.kt`; l'aggancio al ViewModel reale avviene una schermata per volta.
+
+| Schermata | `Content` AppJet | Agganciata |
+|-----------|------------------|------------|
+| Dashboard | `DashboardContent.kt` | ✅ |
+| Onboarding | `OnboardingContent.kt` | — |
+| Workout | `WorkoutContent.kt` | — |
+| Nutrizione | `NutritionContent.kt` | — |
+| Diario | `DiaryContent.kt` | — |
+| Progressi | `ProgressContent.kt` | — |
+| Coach AI | `CoachContent.kt` | — |
+| Anamnesi | `AnamnesisContent.kt` | — |
+| Spesa | `ShoppingContent.kt` | — |
+| Impostazioni | `SettingsContent.kt` | — |
+| Provider AI | `ProviderAiContent.kt` | — |
+| Notifiche | `NotificationsContent.kt` | — |
+| Profilo | `EditProfileContent.kt` | — |
+| Conoscenza | `KnowledgeContent.kt` | — |
+| Scheda personalizzata | `CustomPlanContent.kt` | — |
+
+Le schermate non ancora agganciate mostrano la grafica precedente pur usando la palette e i
+componenti nuovi: le funzionalità restano intatte. L'aggancio è puramente di presentazione e
+non modifica `data/` né `domain/`.
+
 - Dark mode predefinita, nero/antracite con accento verde smeraldo.
 - Bottom bar: **Dashboard · Piano · Spesa · Diario · Workout · Progressi · Coach**.
 - La dashboard mostra giorno, tipo di giornata (HIGH/MEDIUM/LOW), calorie, macro,
