@@ -1,85 +1,118 @@
 package com.fitcoach.app.ui.navigation
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import com.fitcoach.app.ui.theme.AiAccent
+import com.fitcoach.app.ui.theme.AiSoft
+import com.fitcoach.app.ui.theme.BrandSoft
 import com.fitcoach.app.ui.theme.Emerald
+import com.fitcoach.app.ui.theme.FitAnthracite
+import com.fitcoach.app.ui.theme.FitTextStyles
+import com.fitcoach.app.ui.theme.TextLow
+import com.fitcoach.app.ui.theme.TextSecondary
 
+/* =============================================================================
+ * FitCoach 2.0 — "Obsidian Meridian" · FitCoachBottomBar.kt
+ * -----------------------------------------------------------------------------
+ * VINCOLI RISPETTATI:
+ *  - La barra mostra 5 tab: Dashboard · Alimentazione · Allenamento ·
+ *    Progressi · Coach AI (una mano sola, thumb zone).
+ *  - L'enum TopLevelDestination NON viene ridefinito e NON viene svuotato:
+ *    continua a contenere tutte e 7 le voci. Spesa e Diario restano voci
+ *    dell'enum, restano raggiungibili come schermate di secondo livello e le
+ *    loro route (Routes.SHOPPING, Routes.DIARY) restano intatte.
+ *  - Nessuna stringa di route modificata: il filtro usa le stringhe esistenti.
+ *  - Destinations.kt non va toccato da questo file.
+ *
+ * Se in Destinations.kt le route sono costanti di Routes (es. Routes.DASHBOARD),
+ * puoi sostituire le private const qui sotto con quelle: sono gli stessi valori.
+ * ========================================================================== */
+
+private const val RouteDashboard = "dashboard"
+private const val RouteNutrition = "nutrition"
+private const val RouteWorkout = "workout"
+private const val RouteProgress = "progress"
+private const val RouteCoach = "coach"
+
+/** Ordine dei 5 tab nella barra. */
+private val PrimaryRouteOrder = listOf(
+    RouteDashboard,
+    RouteNutrition,
+    RouteWorkout,
+    RouteProgress,
+    RouteCoach,
+)
+
+/**
+ * Barra di navigazione principale.
+ *
+ * Il tab Coach AI usa l'accento dedicato (magenta) invece del brand Ion: è
+ * l'unico punto della navigazione in cui l'AI si distingue dal resto dell'app.
+ *
+ * @param currentRoute rotta corrente; il tab corrispondente viene evidenziato.
+ */
 @Composable
-fun FitCoachBottomBar(
-    navController: NavHostController,
-    currentRoute: String?
-) {
+fun FitCoachBottomBar(navController: NavHostController, currentRoute: String?) {
+    val destinations = TopLevelDestination.values()
+        .filter { it.route in PrimaryRouteOrder }
+        .sortedBy { PrimaryRouteOrder.indexOf(it.route) }
+
+    if (destinations.isEmpty()) return
+
     NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 0.dp
+        containerColor = FitAnthracite,
+        contentColor = TextSecondary,
+        tonalElevation = 0.dp,
     ) {
-        TopLevelDestination.entries.forEach { destination ->
+        destinations.forEach { destination ->
+            val isAiTab = destination.route == RouteCoach
             val selected = currentRoute == destination.route
-            val tint by animateColorAsState(
-                targetValue = if (selected) Emerald else MaterialTheme.colorScheme.onSurfaceVariant,
-                animationSpec = tween(200),
-                label = "navTint"
-            )
+            val accent = if (isAiTab) AiAccent else Emerald
+
             NavigationBarItem(
                 selected = selected,
                 onClick = {
-                    if (!selected) {
+                    if (currentRoute != destination.route) {
                         navController.navigate(destination.route) {
-                            popUpTo(Routes.DASHBOARD) { saveState = true }
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
                             launchSingleTop = true
                             restoreState = true
                         }
                     }
                 },
                 icon = {
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .then(
-                                if (selected) Modifier.background(Emerald.copy(alpha = 0.12f))
-                                else Modifier
-                            ),
-                        contentAlignment = androidx.compose.ui.Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = destination.icon,
-                            contentDescription = destination.label,
-                            tint = tint,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = destination.icon,
+                        contentDescription = destination.label,
+                        modifier = Modifier.size(22.dp),
+                    )
                 },
                 label = {
                     Text(
                         text = destination.shortLabel,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = tint,
-                        maxLines = 1
+                        style = FitTextStyles.caption,
+                        maxLines = 1,
                     )
                 },
+                alwaysShowLabel = true,
                 colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = Color.Transparent
+                    selectedIconColor = accent,
+                    selectedTextColor = accent,
+                    indicatorColor = if (isAiTab) AiSoft else BrandSoft,
+                    unselectedIconColor = TextLow,
+                    unselectedTextColor = TextLow,
                 ),
-                alwaysShowLabel = true
             )
         }
     }

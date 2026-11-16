@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Inter — famiglia di testo di FitCoach 2.0 (licenza OFL 1.1).
+  TTF ufficiale variabile con due assi: "opsz" (ottico) e "wght" (peso).
+  Fissiamo opsz a 14 (dimensioni di testo) e i quattro pesi usati.
+-->
+<font-family xmlns:android="http://schemas.android.com/apk/res/android">
+    <font
+        android:font="@font/inter_variable"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        android:fontVariationSettings="'opsz' 14, 'wght' 400" />
+    <font
+        android:font="@font/inter_variable"
+        android:fontStyle="normal"
+        android:fontWeight="500"
+        android:fontVariationSettings="'opsz' 14, 'wght' 500" />
+    <font
+        android:font="@font/inter_variable"
+        android:fontStyle="normal"
+        android:fontWeight="600"
+        android:fontVariationSettings="'opsz' 14, 'wght' 600" />
+    <font
+        android:font="@font/inter_variable"
+        android:fontStyle="normal"
+        android:fontWeight="700"
+        android:fontVariationSettings="'opsz' 14, 'wght' 700" />
+</font-family>
