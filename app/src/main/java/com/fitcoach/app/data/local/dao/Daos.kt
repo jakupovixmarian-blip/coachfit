@@ -137,6 +137,9 @@ interface NutritionPlanDao {
     @Query("UPDATE nutrition_plans SET isActive = 0")
     suspend fun deactivateAll()
 
+    @Query("UPDATE nutrition_plans SET isActive = :active WHERE id = :id")
+    suspend fun setActive(id: Long, active: Boolean)
+
     @Query("DELETE FROM nutrition_plans WHERE id = :id")
     suspend fun delete(id: Long)
 
@@ -259,6 +262,9 @@ interface WorkoutPlanDao {
 
     @Query("UPDATE workout_plans SET isActive = 0")
     suspend fun deactivateAll()
+
+    @Query("UPDATE workout_plans SET isActive = :active WHERE id = :id")
+    suspend fun setActive(id: Long, active: Boolean)
 
     @Query("DELETE FROM workout_plans WHERE id = :id")
     suspend fun delete(id: Long)

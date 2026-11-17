@@ -9,7 +9,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.fitcoach.app.ui.theme.AiAccent
 import com.fitcoach.app.ui.theme.AiSoft
@@ -84,13 +83,7 @@ fun FitCoachBottomBar(navController: NavHostController, currentRoute: String?) {
                 selected = selected,
                 onClick = {
                     if (currentRoute != destination.route) {
-                        navController.navigate(destination.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                        navController.navigateTopLevel(destination.route)
                     }
                 },
                 icon = {

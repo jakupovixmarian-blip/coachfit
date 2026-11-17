@@ -37,6 +37,79 @@ class NutritionRepository @Inject constructor(
         return loadFullPlan(entity.id)
     }
 
+    /** Tutti i piani salvati (AI e manuali), dal piu recente. */
+    suspend fun getAllPlans(): List<NutritionPlan> =
+        planDao.getAll().mapNotNull { loadFullPlan(it.id) }
+
+    /** Rende attivo un piano esistente (avvio del piano scelto dall'utente). */
+    suspend fun setActivePlan(planId: Long) = db.withTransaction {
+        planDao.deactivateAll()
+        planDao.setActive(planId, true)
+    }
+
+    /**
+     * Crea un piano alimentare MANUALE: 7 giorni con i pasti vuoti e i target
+     * calcolati dai motori deterministici (formule documentate, non valori
+     * inventati). L'utente compila poi i pasti a mano dalla schermata
+     * Alimentazione. I target restano modificabili giorno per giorno.
+     */
+    suspend fun createManualPlan(
+        profile: UserProfile,
+        energy: EnergyResult,
+        cycling: CarbCyclingPlan,
+        dayTypes: List<com.fitcoach.app.domain.model.CarbDayType>,
+        trainingDayIndices: List<Int>
+    ): Long = db.withTransaction {
+        val previousVersion = planDao.getActive()?.version ?: 0
+        planDao.deactivateAll()
+        val planId = planDao.insert(
+            NutritionPlanEntity(
+                profileId = profile.id,
+                name = "Piano manuale – ${java.time.LocalDate.now()}",
+                isActive = true,
+                bmr = energy.bmr,
+                tdee = energy.tdee,
+                weeklyCalories = cycling.weeklyKcal,
+                weeklyKcalBalance = cycling.weeklyKcal - energy.tdee * 7,
+                bmrFormula = energy.bmrFormula,
+                tdeeFormula = energy.tdeeFormula,
+                highCarbDays = cycling.highDays,
+                mediumCarbDays = cycling.mediumDays,
+                lowCarbDays = cycling.lowDays,
+                proteinGPerKg = if (profile.weightKg != null && profile.weightKg > 0) {
+                    cycling.targets.values.first().protein / profile.weightKg
+                } else 0.0,
+                carbCyclingApplied = true,
+                version = previousVersion + 1
+            )
+        )
+        dayTypes.forEachIndexed { dayIndex, dayType ->
+            val target = cycling.targets[dayType]
+                ?: com.fitcoach.app.domain.model.CarbDayTarget(
+                    type = dayType, kcal = energy.tdee, protein = 0.0, carbs = 0.0, fat = 0.0
+                )
+            val dayId = dayDao.insertAll(
+                listOf(
+                    NutritionDayEntity(
+                        planId = planId,
+                        dayIndex = dayIndex,
+                        dayType = dayType,
+                        targetKcal = target.kcal,
+                        targetProtein = target.protein,
+                        targetCarbs = target.carbs,
+                        targetFat = target.fat,
+                        workoutDayIndex = trainingDayIndices.getOrNull(dayIndex)
+                            ?.takeIf { it == dayIndex }
+                    )
+                )
+            ).first()
+            // Pasti vuoti pronti da riempire manualmente: nessun alimento inventato.
+            val slots = com.fitcoach.app.domain.model.MealSlot.entries.take(profile.mealsPerDay.coerceIn(3, 6))
+            mealDao.insertAll(slots.map { MealEntity(nutritionDayId = dayId, slot = it, time = it.defaultTime) })
+        }
+        planId
+    }
+
     suspend fun savePlan(
         profile: UserProfile,
         energy: EnergyResult,

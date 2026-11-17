@@ -25,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.fitcoach.app.ui.navigation.Routes
+import com.fitcoach.app.ui.navigation.navigateTopLevel
 import com.fitcoach.app.ui.screens.dashboard.DashboardContent
 import com.fitcoach.app.ui.theme.Emerald
 
@@ -48,10 +49,10 @@ fun DashboardScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         DashboardContent(
             state = state,
-            onOpenNutrition = { navController.navigate(Routes.NUTRITION) },
-            onOpenWorkout = { navController.navigate(Routes.WORKOUT) },
-            onOpenProgress = { navController.navigate(Routes.PROGRESS) },
-            onOpenCoach = { navController.navigate(Routes.COACH) },
+            onOpenNutrition = { navController.navigateTopLevel(Routes.NUTRITION) },
+            onOpenWorkout = { navController.navigateTopLevel(Routes.WORKOUT) },
+            onOpenProgress = { navController.navigateTopLevel(Routes.PROGRESS) },
+            onOpenCoach = { navController.navigateTopLevel(Routes.COACH) },
             onOpenAnamnesis = { navController.navigate(Routes.ANAMNESIS) },
             onLogWeight = { showWeightDialog = true },
             onSkipWorkout = { viewModel.skipTodayWorkout() },

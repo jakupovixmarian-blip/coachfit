@@ -49,7 +49,9 @@ data class NutritionUiState(
     // Modifica manuale del piano: pasto a cui aggiungere un alimento.
     val addFoodToMeal: Meal? = null,
     val addFoodGrams: String = "",
-    val selectedFoodToAdd: FoodItem? = null
+    val selectedFoodToAdd: FoodItem? = null,
+    // Piani salvati (AI e manuali): per scegliere quale avviare.
+    val plans: List<NutritionPlan> = emptyList()
 ) {
     val selectedDay: NutritionDay?
         get() = plan?.days?.firstOrNull { it.dayIndex == selectedDayIndex }
@@ -81,7 +83,8 @@ class NutritionViewModel @Inject constructor(
                 loading = false,
                 plan = plan,
                 selectedDayIndex = _state.value.selectedDayIndex.coerceIn(0, 6),
-                checks = checks
+                checks = checks,
+                plans = nutritionRepository.getAllPlans()
             )
         }
     }
@@ -122,7 +125,70 @@ class NutritionViewModel @Inject constructor(
             }
             val plan = nutritionRepository.getActivePlan()
             _state.value = _state.value.copy(generating = false, plan = plan, message = message)
+            refreshPlanList()
         }
+    }
+
+    /**
+     * Crea un piano alimentare MANUALE: struttura a 7 giorni con carb cycling e
+     * target calcolati dai motori deterministici (formule documentate). I pasti
+     * restano vuoti: l'utente li compila a mano dalla schermata. Non vengono
+     * inventati alimenti ne valori.
+     */
+    fun createManualPlan() {
+        viewModelScope.launch {
+            val profile = userRepository.get()
+            if (profile == null || !profile.isComplete) {
+                _state.value = _state.value.copy(message = "Completa prima il profilo (età, altezza, peso).")
+                return@launch
+            }
+            val energy = com.fitcoach.app.domain.nutrition.EnergyCalculator.compute(profile)
+            if (energy == null) {
+                _state.value = _state.value.copy(
+                    message = "Servono peso, altezza, età e sesso per stimare il fabbisogno."
+                )
+                return@launch
+            }
+            val cycling = com.fitcoach.app.domain.nutrition.CarbCyclingEngine.build(profile, energy)
+            val dayTypes = com.fitcoach.app.domain.nutrition.CarbCyclingEngine.assignDayTypes(
+                highDays = cycling.highDays,
+                mediumDays = cycling.mediumDays,
+                lowDays = cycling.lowDays,
+                trainingDayIndices = trainingDayIndices(profile)
+            )
+            nutritionRepository.createManualPlan(
+                profile = profile,
+                energy = energy,
+                cycling = cycling,
+                dayTypes = dayTypes,
+                trainingDayIndices = trainingDayIndices(profile)
+            )
+            val plan = nutritionRepository.getActivePlan()
+            _state.value = _state.value.copy(
+                plan = plan,
+                selectedDayIndex = 0,
+                message = "Piano manuale creato. Aggiungi gli alimenti ai pasti."
+            )
+            refreshPlanList()
+        }
+    }
+
+    /** Riporta i target del giorno selezionato a quelli calcolati (stima) — nessun valore inventato. */
+    private fun trainingDayIndices(profile: com.fitcoach.app.domain.model.UserProfile): List<Int> =
+        (0 until profile.trainingDaysPerWeek.coerceIn(0, 7)).toList()
+
+    /** Rende attivo un piano esistente (avvio del piano AI o di quello manuale). */
+    fun activatePlan(planId: Long) {
+        viewModelScope.launch {
+            nutritionRepository.setActivePlan(planId)
+            val plan = nutritionRepository.getActivePlan()
+            _state.value = _state.value.copy(plan = plan, selectedDayIndex = 0, message = "Piano attivato.")
+            refreshPlanList()
+        }
+    }
+
+    private suspend fun refreshPlanList() {
+        _state.value = _state.value.copy(plans = nutritionRepository.getAllPlans())
     }
 
     fun startSubstitution(entry: MealEntry) {

@@ -175,6 +175,41 @@ fun WorkoutScreen(
             }
         }
 
+        if (state.plans.size > 1) {
+            item {
+                SectionCard {
+                    Column {
+                        SectionHeader("Schede salvate", "Scegli quale avviare")
+                        Spacer(Modifier.height(8.dp))
+                        state.plans.forEach { saved ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        saved.name,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        "${saved.splitType.label} · ${saved.days.count { !it.isRestDay }} giorni",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary
+                                    )
+                                }
+                                if (saved.isActive) {
+                                    Pill("Attiva", Emerald)
+                                } else {
+                                    TextButton(onClick = { viewModel.activatePlan(saved.id) }) { Text("Attiva") }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if (state.section == WorkoutSection.LOG) {
             item {
                 ExerciseLogSection(

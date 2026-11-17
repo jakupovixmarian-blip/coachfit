@@ -80,7 +80,9 @@ data class WorkoutUiState(
     // Impostazione rapida dei carichi di tutta la seduta (all'inizio dell'allenamento).
     val setupWeights: Boolean = false,
     val setupQueue: List<PlannedExercise> = emptyList(),
-    val setupIndex: Int = 0
+    val setupIndex: Int = 0,
+    // Schede salvate (AI e manuali): per scegliere quale avviare.
+    val plans: List<WorkoutPlan> = emptyList()
 )
 
 /** Le due sotto-sezioni della schermata Allenamento. */
@@ -139,9 +141,19 @@ class WorkoutViewModel @Inject constructor(
                 session = session,
                 lastPerformances = lastPerformances,
                 history = history,
-                performancesByExercise = performancesByExercise
+                performancesByExercise = performancesByExercise,
+                plans = workoutRepository.getAllPlans()
             )
             syncStopwatch(session)
+        }
+    }
+
+    /** Rende attiva una scheda esistente (AI o manuale): avvio esplicito del piano scelto. */
+    fun activatePlan(planId: Long) {
+        viewModelScope.launch {
+            workoutRepository.setActivePlan(planId)
+            _state.value = _state.value.copy(message = "Scheda attivata.")
+            load()
         }
     }
 

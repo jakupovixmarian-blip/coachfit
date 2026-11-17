@@ -19,6 +19,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -101,7 +103,13 @@ fun NutritionScreen(
                         Button(onClick = { viewModel.generatePlan() }, enabled = !state.generating) {
                             Icon(Icons.Filled.Refresh, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text(if (state.generating) "Generazione..." else "Genera piano")
+                            Text(if (state.generating) "Generazione..." else "Genera piano (Coach AI)")
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(onClick = { viewModel.createManualPlan() }) {
+                            Icon(Icons.Filled.Edit, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Crea piano manuale")
                         }
                     }
                 }
@@ -126,8 +134,51 @@ fun NutritionScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 SectionHeader("Alimentazione", plan.name)
-                IconButton(onClick = { viewModel.generatePlan() }) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Rigenera", tint = Emerald)
+                Row {
+                    IconButton(onClick = { navController.navigate(com.fitcoach.app.ui.navigation.Routes.DIARY) }) {
+                        Icon(Icons.Filled.EventNote, contentDescription = "Diario", tint = Emerald)
+                    }
+                    IconButton(onClick = { viewModel.createManualPlan() }) {
+                        Icon(Icons.Filled.Edit, contentDescription = "Crea piano manuale", tint = TextSecondary)
+                    }
+                    IconButton(onClick = { viewModel.generatePlan() }) {
+                        Icon(Icons.Filled.Refresh, contentDescription = "Rigenera", tint = Emerald)
+                    }
+                }
+            }
+        }
+
+        if (state.plans.size > 1) {
+            item {
+                SectionCard {
+                    Column {
+                        SectionHeader("Piani salvati", "Scegli quale avviare")
+                        Spacer(Modifier.height(8.dp))
+                        state.plans.forEach { saved ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        saved.name,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        "BMR ${saved.bmr.toInt()} · TDEE ${saved.tdee.toInt()} kcal",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary
+                                    )
+                                }
+                                if (saved.isActive) {
+                                    Pill("Attivo", Emerald)
+                                } else {
+                                    TextButton(onClick = { viewModel.activatePlan(saved.id) }) { Text("Attiva") }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

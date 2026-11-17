@@ -71,10 +71,22 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
 - **Integrazione**: le funzionalità nutrizionali (piano, sostituzioni, spesa, diario)
   condividono lo stesso database alimentare e gli stessi identificativi del piano. Non
   creare moduli indipendenti.
-- **Room**: DB version attuale **11**. Aggiungendo entita/DAO ricordarsi di importarli in
+- **Room**: DB version attuale **12**. Aggiungendo entita/DAO ricordarsi di importarli in
   `FitCoachDatabase.kt` (un import mancante causa `[ksp] MissingType`), registrare la
-  migrazione in `Migrations.kt` e i mapper in `Mappers.kt`. Lo schema esportato sta in
-  `app/schemas/`. La v10 aggiunge lo storico degli esiti delle modifiche del coach; la v11 aggiunge la persistenza Room isolata per anamnesi e checkpoint di generazione 2.0.
+  migrazione in `Migrations.kt` **e in `di/DatabaseModule.provideDatabase`** (una migrazione
+  definita ma non registrata fa scattare il fallback distruttivo e azzera i dati) e i mapper
+  in `Mappers.kt`. Lo schema esportato sta in `app/schemas/`. La v10 aggiunge lo storico
+  degli esiti delle modifiche del coach; la v11 la persistenza Room isolata per anamnesi e
+  checkpoint di generazione 2.0; la v12 lo stato "acquistato" della lista della spesa.
+  **Nessun `fallbackToDestructiveMigration`**: una migrazione mancante deve fallire in modo
+  esplicito, mai cancellare profilo, piani e storico dell'utente.
+- **Navigazione di primo livello (Home che "sparisce")**: tutte le destinazioni top-level
+  (Dashboard, Alimentazione, Spesa, Allenamento, Progressi, Coach) si aprono SEMPRE con
+  `NavController.navigateTopLevel(route)` (`ui/navigation/Nav.kt`), sia dalla barra inferiore
+  sia dalle card della Dashboard. Mescolare navigazioni "bare" (senza opzioni) e navigazioni
+  con `popUpTo(start){saveState}` + `restoreState` corrompe il ripristino dei tab: toccando
+  Home l'app ripristinava Allenamento/Alimentazione e la Home sembrava irraggiungibile.
+  Collaudo: `collaudo/NavOptionsCollaudoTest.kt`.
 - **UI**: usare i componenti condivisi in `ui/components` (`SectionCard`, `SectionHeader`,
   `StatTile`, `MacroBar`, `Pill`, `EmptyState`, `LoadingBox`) e i colori del tema
   (`Emerald`, `CarbsColor`, `TextSecondary`, ...). Le schermate sono `LazyColumn`.
@@ -169,6 +181,25 @@ Da "Alimentazione" l'utente puo aggiungere un alimento a un pasto (icona `+`) ce
 nel catalogo reale e indicando i grammi, oppure rimuovere una voce (icona cestino). I macro
 sono ricalcolati dai grammi tramite `NutritionRepository.addEntryToMeal`, senza rigenerare
 il piano. `removeEntry` elimina la voce.
+
+## Piano MANUALE (senza AI) e scelta del piano attivo
+
+- **Piano alimentare manuale**: `NutritionRepository.createManualPlan(profile, energy,
+  cycling, dayTypes, trainingDayIndices)` crea 7 giorni con i tipi HIGH/MEDIUM/LOW del carb
+  cycling e i target calcolati dai motori deterministici (`EnergyCalculator`,
+  `CarbCyclingEngine`) — **nessun valore inventato** — ma con i **pasti vuoti** da compilare
+  a mano (stessi strumenti della modifica manuale). Avviato da "Alimentazione" (pulsante
+  "Crea piano manuale"). I target restano modificabili.
+- **Scelta del piano da avviare**: `getAllPlans()` + `setActivePlan(id)` su
+  `NutritionRepository` e `WorkoutRepository`. La UI mostra la sezione "Piani salvati" /
+  "Schede salvate" quando ce n'e piu di uno, con pulsante "Attiva" (l'attivo e marcato).
+  Cosi l'utente decide esplicitamente se usare il percorso AI o quello manuale.
+- **Diario raggiungibile**: il Diario alimentare (`Routes.DIARY`) si apre dall'icona
+  `EventNote` in "Alimentazione" (`NutritionScreen`). Prima era definito nel NavHost ma non
+  raggiungibile da nessuna schermata, quindi non si potevano registrare gli alimenti extra
+  (fuori piano) ne vedere l'eccesso rispetto al target.
+- Collaudo: `integration/ManualPlanIntegrationTest.kt` (piano manuale su Room reale, pasti
+  vuoti, compilazione pasto + extra, eccesso vs target, passaggio tra piani).
 
 Nota test: `WorkoutViewModel.runRestTimer`/`syncStopwatch` usano `System.currentTimeMillis`
 in un loop con `delay`. Nei test NON usare `advanceUntilIdle` (gira all'infinito): pompare

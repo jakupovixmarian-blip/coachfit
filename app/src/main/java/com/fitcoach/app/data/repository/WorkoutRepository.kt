@@ -57,6 +57,16 @@ class WorkoutRepository @Inject constructor(
         return loadFullPlan(entity.id)
     }
 
+    /** Tutte le schede salvate (AI e manuali), dalla piu recente. */
+    suspend fun getAllPlans(): List<WorkoutPlan> =
+        planDao.getAll().mapNotNull { loadFullPlan(it.id) }
+
+    /** Rende attiva una scheda esistente (avvio della scheda scelta dall'utente). */
+    suspend fun setActivePlan(planId: Long) = db.withTransaction {
+        planDao.deactivateAll()
+        planDao.setActive(planId, true)
+    }
+
     suspend fun savePlan(
         profile: UserProfile,
         built: WorkoutPlanBuilder.BuiltPlan,
