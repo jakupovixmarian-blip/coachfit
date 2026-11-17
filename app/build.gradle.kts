@@ -101,6 +101,13 @@ android {
         unitTests.isReturnDefaultValues = true
         unitTests.isIncludeAndroidResources = true
     }
+
+    sourceSets {
+        // Gli schemi Room esportati servono a MigrationTestHelper (test unitari
+        // Robolectric, che leggono gli asset della variante debug). Il percorso
+        // "schemas/<db>/<version>.json" combacia con quello atteso dall'helper.
+        getByName("debug").assets.srcDir("$projectDir/schemas")
+    }
 }
 
 ksp {

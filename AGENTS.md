@@ -80,6 +80,13 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
   checkpoint di generazione 2.0; la v12 lo stato "acquistato" della lista della spesa.
   **Nessun `fallbackToDestructiveMigration`**: una migrazione mancante deve fallire in modo
   esplicito, mai cancellare profilo, piani e storico dell'utente.
+- **Test delle migrazioni**: `app/src/test/.../data/local/MigrationTest.kt` valida gli schemi
+  con `MigrationTestHelper` (Robolectric) contro gli schema esportati e verifica la
+  conservazione dei dati. Gli schemi sono resi asset della variante debug in
+  `app/build.gradle.kts` (`sourceSets["debug"].assets.srcDir(schemas)`) perche i test
+  Robolectric leggono gli asset della variante debug. Il test ha scoperto un bug reale:
+  `MIGRATION_1_2` ri-aggiungeva `activityFactorOverride`/`calorieTargetOverride` (gia in v1)
+  -> "duplicate column name" in upgrade da v1. Aggiungendo migrazioni, estendere questo test.
 - **Navigazione di primo livello (Home che "sparisce")**: tutte le destinazioni top-level
   (Dashboard, Alimentazione, Spesa, Allenamento, Progressi, Coach) si aprono SEMPRE con
   `NavController.navigateTopLevel(route)` (`ui/navigation/Nav.kt`), sia dalla barra inferiore

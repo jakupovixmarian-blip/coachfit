@@ -53,10 +53,10 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
             "currentLoadsJson TEXT NOT NULL DEFAULT ''",
             "secondaryGoals TEXT NOT NULL DEFAULT ''",
             "desiredOutcome TEXT NOT NULL DEFAULT ''",
-            "targetTimelineWeeks INTEGER",
-            "activityFactorOverride REAL",
-            "calorieTargetOverride REAL"
+            "targetTimelineWeeks INTEGER"
         )
+        // NB: activityFactorOverride e calorieTargetOverride esistono gia in v1:
+        // NON vanno ri-aggiunte (causerebbe "duplicate column name" in upgrade).
         profileCols.forEach { db.execSQL("ALTER TABLE user_profile ADD COLUMN $it") }
 
         // --- exercises: pattern di movimento e difficolta ---
