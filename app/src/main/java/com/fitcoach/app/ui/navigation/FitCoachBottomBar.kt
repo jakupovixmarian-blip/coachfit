@@ -24,12 +24,12 @@ import com.fitcoach.app.ui.theme.TextSecondary
  * FitCoach 2.0 — "Obsidian Meridian" · FitCoachBottomBar.kt
  * -----------------------------------------------------------------------------
  * VINCOLI RISPETTATI:
- *  - La barra mostra 5 tab: Dashboard · Alimentazione · Allenamento ·
- *    Progressi · Coach AI (una mano sola, thumb zone).
+ *  - La barra mostra 6 tab: Dashboard · Alimentazione · Spesa · Allenamento ·
+ *    Progressi · Coach AI.
  *  - L'enum TopLevelDestination NON viene ridefinito e NON viene svuotato:
- *    continua a contenere tutte e 7 le voci. Spesa e Diario restano voci
- *    dell'enum, restano raggiungibili come schermate di secondo livello e le
- *    loro route (Routes.SHOPPING, Routes.DIARY) restano intatte.
+ *    continua a contenere tutte e 7 le voci. Il Diario resta una voce dell'enum
+ *    ed e raggiungibile come schermata di secondo livello; la sua route
+ *    (Routes.DIARY) resta intatta.
  *  - Nessuna stringa di route modificata: il filtro usa le stringhe esistenti.
  *  - Destinations.kt non va toccato da questo file.
  *
@@ -39,14 +39,16 @@ import com.fitcoach.app.ui.theme.TextSecondary
 
 private const val RouteDashboard = "dashboard"
 private const val RouteNutrition = "nutrition"
+private const val RouteShopping = "shopping"
 private const val RouteWorkout = "workout"
 private const val RouteProgress = "progress"
 private const val RouteCoach = "coach"
 
-/** Ordine dei 5 tab nella barra. */
+/** Ordine dei tab nella barra. */
 private val PrimaryRouteOrder = listOf(
     RouteDashboard,
     RouteNutrition,
+    RouteShopping,
     RouteWorkout,
     RouteProgress,
     RouteCoach,

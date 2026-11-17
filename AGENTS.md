@@ -143,6 +143,32 @@ Test di collaudo reali (Robolectric + Room in-memory, nessun mock) in
   schermata; tornare alla Dashboard dopo il workout non lascia schermate vuote.
 - `DashboardRenderCollaudoTest` — sweep di tap sulla Dashboard: nessun tocco generico
   naviga ad Allenamento.
+- `SubstitutionCompatibilityCollaudoTest` — BUG: albume→yogurt greco rifiutato.
+  `FoodSubstitutionEngine` ora applica una tolleranza allargata quando originale e
+  sostituto condividono lo stesso macro dominante (ruolo alimentare equivalente).
+- `ManualPlanEditCollaudoTest` — NOVITA: modifica manuale del piano. Verifica che
+  `NutritionRepository.addEntryToMeal` calcoli i macro dai grammi reali (110 kcal/100 g × 2
+  = 220 kcal) e che `removeEntry` elimini la voce.
+- `BleMeasurementParserCollaudoTest` — NOVITA: decodifica dei payload BLE standard
+  (Weight Measurement 0x2A9D, Heart Rate Measurement 0x2A37) su byte costruiti secondo la
+  specifica Bluetooth SIG, inclusa la conversione lb→kg e i payload troncati.
+
+## Dispositivi Bluetooth (BLE)
+
+`domain/device/BleDeviceManager.kt` scansiona e si collega a bilance (Weight Scale Service
+0x181D) e cardiofrequenzimetri (Heart Rate Service 0x180D) reali; `BleMeasurementParser`
+decodifica i payload. La UI (`ui/settings/DevicesScreen.kt`, voce "Dispositivi" in
+Impostazioni) chiede i permessi runtime corretti per la versione di Android
+(`BLUETOOTH_SCAN`/`BLUETOOTH_CONNECT` su API 31+, `ACCESS_FINE_LOCATION` fino ad API 30) e
+registra il peso letto nei progressi solo dopo conferma. Nessun valore inventato: se il
+dispositivo non risponde, la UI lo dichiara.
+
+## Modifica manuale del piano alimentare
+
+Da "Alimentazione" l'utente puo aggiungere un alimento a un pasto (icona `+`) cercandolo
+nel catalogo reale e indicando i grammi, oppure rimuovere una voce (icona cestino). I macro
+sono ricalcolati dai grammi tramite `NutritionRepository.addEntryToMeal`, senza rigenerare
+il piano. `removeEntry` elimina la voce.
 
 Nota test: `WorkoutViewModel.runRestTimer`/`syncStopwatch` usano `System.currentTimeMillis`
 in un loop con `delay`. Nei test NON usare `advanceUntilIdle` (gira all'infinito): pompare

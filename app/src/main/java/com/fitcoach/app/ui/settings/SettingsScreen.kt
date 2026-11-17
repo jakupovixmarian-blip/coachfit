@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.MenuBook
@@ -120,6 +121,14 @@ fun SettingsScreen(
                     title = "Notifiche",
                     subtitle = "Pasti, allenamento, idratazione",
                     onClick = { navController.navigate(Routes.NOTIFICATION_SETTINGS) }
+                )
+            }
+            item {
+                SettingsRow(
+                    icon = Icons.Filled.Bluetooth,
+                    title = "Dispositivi",
+                    subtitle = "Collega bilancia e cardiofrequenzimetro",
+                    onClick = { navController.navigate(Routes.DEVICES) }
                 )
             }
             item {

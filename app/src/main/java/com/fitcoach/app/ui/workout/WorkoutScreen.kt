@@ -274,6 +274,15 @@ fun WorkoutScreen(
                             Spacer(Modifier.width(8.dp))
                             Text("Avvia sessione di ${weekdayNames.getOrElse(state.selectedDayIndex) { "oggi" }}")
                         }
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { viewModel.startWeightSetup() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Filled.Edit, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Imposta carichi e ripetizioni")
+                        }
                     } else {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Pill("In corso", Emerald)
@@ -296,7 +305,8 @@ fun WorkoutScreen(
                     total = state.restTotalSeconds,
                     reason = state.restReason,
                     onSkip = { viewModel.skipRest() },
-                    onAdd = { viewModel.addRestTime(30) }
+                    onAdd = { viewModel.addRestTime(it) },
+                    onSetManual = { viewModel.startRestWithSeconds(it) }
                 )
             }
         }
@@ -425,6 +435,19 @@ fun WorkoutScreen(
             onSelect = { viewModel.applySubstitution(it) },
             onDismiss = { viewModel.closeSubstitution() }
         )
+    }
+
+    if (state.setupWeights) {
+        state.setupQueue.getOrNull(state.setupIndex)?.let { planned ->
+            WeightSetupDialog(
+                planned = planned,
+                position = state.setupIndex + 1,
+                total = state.setupQueue.size,
+                onSave = { weight, reps -> viewModel.saveSetupWeight(weight, reps) },
+                onSkip = { viewModel.skipSetupStep() },
+                onDismiss = { viewModel.closeWeightSetup() }
+            )
+        }
     }
 
     state.editingExercise?.let { planned ->
@@ -858,26 +881,60 @@ private fun RestTimerCard(
     total: Int,
     reason: String,
     onSkip: () -> Unit,
-    onAdd: () -> Unit
+    onAdd: (Int) -> Unit,
+    onSetManual: (Int) -> Unit
 ) {
     val progress = if (total > 0) (total - remaining).toFloat() / total else 0f
+    var manualInput by remember { mutableStateOf("") }
     SectionCard {
-        Column {
-            SectionHeader("Recupero", formatRest(remaining))
-            Spacer(Modifier.height(8.dp))
-            LinearProgressIndicator(
-                progress = { progress.coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth(),
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            SectionHeader("Recupero", reason.ifBlank { "Recupero in corso" })
+            Spacer(Modifier.height(16.dp))
+            Text(
+                formatRest(remaining),
+                style = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.Bold,
                 color = Emerald
             )
-            if (reason.isNotBlank()) {
-                Spacer(Modifier.height(6.dp))
-                Text(reason, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-            }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(14.dp))
+            LinearProgressIndicator(
+                progress = { progress.coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth().height(8.dp),
+                color = Emerald
+            )
+            Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(onClick = onAdd, modifier = Modifier.weight(1f)) { Text("+30s") }
+                OutlinedButton(onClick = { onAdd(30) }, modifier = Modifier.weight(1f)) { Text("+30s") }
+                OutlinedButton(onClick = { onAdd(60) }, modifier = Modifier.weight(1f)) { Text("+1 min") }
                 Button(onClick = onSkip, modifier = Modifier.weight(1f)) { Text("Salta") }
+            }
+            Spacer(Modifier.height(16.dp))
+            Text(
+                "Imposta un tempo manuale (minuti)",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
+            )
+            Spacer(Modifier.height(6.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = manualInput,
+                    onValueChange = { manualInput = it.filter { c -> c.isDigit() } },
+                    label = { Text("Minuti") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+                Button(
+                    onClick = {
+                        val minutes = manualInput.toIntOrNull()
+                        if (minutes != null) onSetManual(minutes * 60)
+                        manualInput = ""
+                    },
+                    enabled = (manualInput.toIntOrNull() ?: 0) > 0
+                ) { Text("Avvia") }
             }
         }
     }
@@ -1077,6 +1134,59 @@ private fun SubstitutionDialog(
         },
         confirmButton = {},
         dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } }
+    )
+}
+
+@Composable
+private fun WeightSetupDialog(
+    planned: PlannedExercise,
+    position: Int,
+    total: Int,
+    onSave: (Double?, Int?) -> Unit,
+    onSkip: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var weight by remember { mutableStateOf(planned.targetWeightKg?.let { "%.1f".format(it) } ?: "") }
+    var reps by remember { mutableStateOf(planned.targetReps?.toString() ?: planned.minReps.toString()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("${planned.exerciseName} ($position/$total)") },
+        text = {
+            Column {
+                Text(
+                    "Imposta il carico e le ripetizioni previsti. Potrai modificarli in ogni " +
+                        "serie durante l'allenamento.",
+                    style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = weight,
+                    onValueChange = { weight = it },
+                    label = { Text("Carico (kg)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = reps,
+                    onValueChange = { reps = it.filter { c -> c.isDigit() } },
+                    label = { Text("Ripetizioni") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onSave(weight.replace(',', '.').toDoubleOrNull(), reps.toIntOrNull())
+            }) { Text(if (position == total) "Fine" else "Avanti") }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onSkip) { Text("Salta") }
+                TextButton(onClick = onDismiss) { Text("Chiudi") }
+            }
+        }
     )
 }
 

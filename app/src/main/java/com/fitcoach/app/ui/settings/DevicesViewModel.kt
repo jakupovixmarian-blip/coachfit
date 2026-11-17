@@ -1,0 +1,142 @@
+package com.fitcoach.app.ui.settings
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.fitcoach.app.data.repository.ProgressRepository
+import com.fitcoach.app.domain.device.BleDeviceManager
+import com.fitcoach.app.domain.device.DiscoveredDevice
+import com.fitcoach.app.domain.device.Measurement
+import com.fitcoach.app.domain.model.WeightRecord
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import javax.inject.Inject
+
+data class DevicesUiState(
+    val bluetoothSupported: Boolean = false,
+    val permissionGranted: Boolean = false,
+    val scanning: Boolean = false,
+    val devices: List<DiscoveredDevice> = emptyList(),
+    val connectedDevice: DiscoveredDevice? = null,
+    val reading: Boolean = false,
+    val lastMeasurement: Measurement? = null,
+    val message: String? = null
+)
+
+/**
+ * Gestisce la sezione Dispositivi: scansione BLE reale, collegamento e lettura
+ * di bilance e cardiofrequenzimetri. Il peso letto da una bilancia viene
+ * registrato nei progressi solo dopo conferma esplicita dell'utente.
+ */
+@HiltViewModel
+class DevicesViewModel @Inject constructor(
+    private val bleDeviceManager: BleDeviceManager,
+    private val progressRepository: ProgressRepository
+) : ViewModel() {
+
+    private val _state = MutableStateFlow(DevicesUiState())
+    val state: StateFlow<DevicesUiState> = _state.asStateFlow()
+
+    private var scanJob: Job? = null
+    private var readJob: Job? = null
+
+    init {
+        refreshCapabilities()
+    }
+
+    fun refreshCapabilities() {
+        _state.value = _state.value.copy(
+            bluetoothSupported = bleDeviceManager.isSupported(),
+            permissionGranted = bleDeviceManager.hasPermission()
+        )
+    }
+
+    fun requiredPermissions(): List<String> = bleDeviceManager.requiredPermissions()
+
+    /** Avvia la scansione BLE reale e aggiorna la lista man mano che arrivano i dispositivi. */
+    fun startScan() {
+        refreshCapabilities()
+        if (!_state.value.bluetoothSupported) {
+            _state.value = _state.value.copy(
+                message = "Bluetooth non disponibile o disattivato. Attivalo per cercare dispositivi."
+            )
+            return
+        }
+        if (!_state.value.permissionGranted) {
+            _state.value = _state.value.copy(
+                message = "Concedi i permessi Bluetooth per cercare dispositivi."
+            )
+            return
+        }
+        scanJob?.cancel()
+        _state.value = _state.value.copy(scanning = true, devices = emptyList(), message = null)
+        scanJob = viewModelScope.launch {
+            bleDeviceManager.scan()
+                .catch { _state.value = _state.value.copy(scanning = false, message = "Scansione interrotta.") }
+                .collect { devices ->
+                    _state.value = _state.value.copy(devices = devices)
+                }
+        }
+    }
+
+    fun stopScan() {
+        scanJob?.cancel()
+        scanJob = null
+        _state.value = _state.value.copy(scanning = false)
+    }
+
+    /** Si collega al dispositivo scelto e ne legge una misurazione reale. */
+    fun connect(device: DiscoveredDevice) {
+        stopScan()
+        readJob?.cancel()
+        _state.value = _state.value.copy(connectedDevice = device, reading = true, message = null)
+        readJob = viewModelScope.launch {
+            val measurement = bleDeviceManager.readMeasurement(device.address, device.kind)
+                .catch { emit(null) }
+                .firstOrNull()
+            _state.value = if (measurement != null) {
+                _state.value.copy(reading = false, lastMeasurement = measurement)
+            } else {
+                _state.value.copy(
+                    reading = false,
+                    message = "Nessuna misurazione ricevuta. Il dispositivo potrebbe usare un protocollo proprietario."
+                )
+            }
+        }
+    }
+
+    /** Salva il peso letto dalla bilancia nei progressi, alla data odierna. */
+    fun saveWeight(weightKg: Double) {
+        viewModelScope.launch {
+            if (weightKg !in 20.0..400.0) {
+                _state.value = _state.value.copy(message = "Peso fuori intervallo plausibile (20-400 kg).")
+                return@launch
+            }
+            progressRepository.addWeight(
+                WeightRecord(
+                    profileId = 1L,
+                    dateEpochDay = LocalDate.now().toEpochDay(),
+                    weightKg = weightKg,
+                    note = "Letto da ${_state.value.connectedDevice?.name ?: "dispositivo BLE"}"
+                )
+            )
+            _state.value = _state.value.copy(
+                message = "Peso ${"%.1f".format(weightKg)} kg registrato nei progressi."
+            )
+        }
+    }
+
+    fun clearMeasurement() {
+        _state.value = _state.value.copy(lastMeasurement = null)
+    }
+
+    fun consumeMessage() {
+        _state.value = _state.value.copy(message = null)
+    }
+}

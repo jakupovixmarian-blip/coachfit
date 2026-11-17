@@ -9,6 +9,7 @@ import com.fitcoach.app.data.repository.NutritionRepository
 import com.fitcoach.app.data.repository.SubstitutionRepository
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.domain.model.FoodItem
+import com.fitcoach.app.domain.model.Meal
 import com.fitcoach.app.domain.model.MealEntry
 import com.fitcoach.app.domain.model.NutritionDay
 import com.fitcoach.app.domain.model.NutritionPlan
@@ -44,7 +45,11 @@ data class NutritionUiState(
     val foodSearchQuery: String = "",
     val foodSearchResults: List<FoodItem> = emptyList(),
     val foodSearchLoading: Boolean = false,
-    val foodSearchNote: String? = null
+    val foodSearchNote: String? = null,
+    // Modifica manuale del piano: pasto a cui aggiungere un alimento.
+    val addFoodToMeal: Meal? = null,
+    val addFoodGrams: String = "",
+    val selectedFoodToAdd: FoodItem? = null
 ) {
     val selectedDay: NutritionDay?
         get() = plan?.days?.firstOrNull { it.dayIndex == selectedDayIndex }
@@ -268,5 +273,57 @@ class NutritionViewModel @Inject constructor(
 
     fun consumeMessage() {
         _state.value = _state.value.copy(message = null)
+    }
+
+    /** Apre il riquadro per aggiungere manualmente un alimento a un pasto. */
+    fun openAddFood(meal: Meal) {
+        _state.value = _state.value.copy(
+            addFoodToMeal = meal, addFoodGrams = "", selectedFoodToAdd = null,
+            foodSearchQuery = "", foodSearchResults = emptyList(), foodSearchNote = null
+        )
+    }
+
+    fun closeAddFood() {
+        _state.value = _state.value.copy(addFoodToMeal = null, selectedFoodToAdd = null, addFoodGrams = "")
+    }
+
+    fun updateAddFoodGrams(value: String) {
+        _state.value = _state.value.copy(addFoodGrams = value.filter { c -> c.isDigit() || c == ',' || c == '.' })
+    }
+
+    fun selectFoodToAdd(food: FoodItem) {
+        _state.value = _state.value.copy(selectedFoodToAdd = food)
+    }
+
+    /** Conferma l'aggiunta manuale dell'alimento scelto con i grammi indicati. */
+    fun confirmAddFood() {
+        viewModelScope.launch {
+            val meal = _state.value.addFoodToMeal ?: return@launch
+            val food = _state.value.selectedFoodToAdd
+            if (food == null) {
+                _state.value = _state.value.copy(message = "Seleziona un alimento da aggiungere.")
+                return@launch
+            }
+            val grams = _state.value.addFoodGrams.replace(',', '.').toDoubleOrNull()
+            if (grams == null || grams <= 0 || grams > 3000) {
+                _state.value = _state.value.copy(message = "Inserisci una quantita valida in grammi.")
+                return@launch
+            }
+            nutritionRepository.addEntryToMeal(meal.id, food, grams, food.defaultUnit)
+            _state.value = _state.value.copy(
+                addFoodToMeal = null, selectedFoodToAdd = null, addFoodGrams = "",
+                message = "${food.name} aggiunto a ${meal.slot.label}."
+            )
+            load()
+        }
+    }
+
+    /** Rimuove manualmente un alimento dal piano. */
+    fun removeEntry(entry: MealEntry) {
+        viewModelScope.launch {
+            nutritionRepository.removeEntry(entry)
+            _state.value = _state.value.copy(message = "${entry.foodName} rimosso dal piano.")
+            load()
+        }
     }
 }

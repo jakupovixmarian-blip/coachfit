@@ -42,4 +42,5 @@ object Routes {
     const val NOTIFICATION_SETTINGS = "notification_settings"
     const val PROFILE_EDIT = "profile_edit"
     const val KNOWLEDGE = "knowledge"
+    const val DEVICES = "devices"
 }

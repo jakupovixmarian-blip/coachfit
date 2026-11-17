@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -16,7 +17,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -28,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -207,11 +212,31 @@ fun NutritionScreen(
                         meal = meal,
                         checks = state.checks,
                         onToggle = viewModel::toggleEntry,
-                        onSubstitute = viewModel::startSubstitution
+                        onSubstitute = viewModel::startSubstitution,
+                        onAddFood = { viewModel.openAddFood(meal) },
+                        onRemoveEntry = viewModel::removeEntry
                     )
                 }
             }
         }
+    }
+
+    state.addFoodToMeal?.let { meal ->
+        AddFoodDialog(
+            mealLabel = meal.slot.label,
+            query = state.foodSearchQuery,
+            results = state.foodSearchResults,
+            loading = state.foodSearchLoading,
+            note = state.foodSearchNote,
+            grams = state.addFoodGrams,
+            selected = state.selectedFoodToAdd,
+            onQueryChange = viewModel::updateFoodSearch,
+            onSearch = viewModel::searchFoods,
+            onSelect = viewModel::selectFoodToAdd,
+            onGramsChange = viewModel::updateAddFoodGrams,
+            onConfirm = viewModel::confirmAddFood,
+            onDismiss = viewModel::closeAddFood
+        )
     }
 
     state.substitutionEntry?.let { entry ->
@@ -238,17 +263,99 @@ fun NutritionScreen(
 }
 
 @Composable
+private fun AddFoodDialog(
+    mealLabel: String,
+    query: String,
+    results: List<FoodItem>,
+    loading: Boolean,
+    note: String?,
+    grams: String,
+    selected: FoodItem?,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    onSelect: (FoodItem) -> Unit,
+    onGramsChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Aggiungi a $mealLabel") },
+        text = {
+            Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = onQueryChange,
+                        label = { Text("Cerca alimento") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = onSearch) {
+                        Icon(Icons.Filled.Search, contentDescription = "Cerca", tint = Emerald)
+                    }
+                }
+                if (loading) {
+                    Spacer(Modifier.height(8.dp))
+                    CircularProgressIndicator(Modifier.size(24.dp), color = Emerald)
+                }
+                note?.let {
+                    Spacer(Modifier.height(6.dp))
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                }
+                Spacer(Modifier.height(8.dp))
+                results.forEach { food ->
+                    val isSelected = selected?.id == food.id
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(selected = isSelected, onClick = { onSelect(food) })
+                        Column(Modifier.weight(1f)) {
+                            Text(food.name, style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "${food.kcalPer100g.toInt()} kcal/100 g · P ${food.proteinPer100g.toInt()} · " +
+                                    "C ${food.carbsPer100g.toInt()} · G ${food.fatPer100g.toInt()}",
+                                style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = grams,
+                    onValueChange = onGramsChange,
+                    label = { Text("Quantita (g)") },
+                    singleLine = true,
+                    enabled = selected != null,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = selected != null) { Text("Aggiungi") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Annulla") }
+        }
+    )
+}
+
+@Composable
 private fun MealCard(
     meal: Meal,
     checks: Map<Long, Long>,
     onToggle: (MealEntry) -> Unit,
-    onSubstitute: (MealEntry) -> Unit
+    onSubstitute: (MealEntry) -> Unit,
+    onAddFood: () -> Unit,
+    onRemoveEntry: (MealEntry) -> Unit
 ) {
     SectionCard {
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
                     Text(
@@ -259,7 +366,12 @@ private fun MealCard(
                     )
                     Text(meal.time, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                 }
-                Text("${meal.kcal.toInt()} kcal", style = MaterialTheme.typography.labelLarge, color = Emerald)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("${meal.kcal.toInt()} kcal", style = MaterialTheme.typography.labelLarge, color = Emerald)
+                    IconButton(onClick = onAddFood) {
+                        Icon(Icons.Filled.Add, contentDescription = "Aggiungi alimento", tint = Emerald)
+                    }
+                }
             }
             Spacer(Modifier.height(8.dp))
             meal.entries.forEach { entry ->
@@ -283,6 +395,9 @@ private fun MealCard(
                     }
                     IconButton(onClick = { onSubstitute(entry) }) {
                         Icon(Icons.Filled.SwapHoriz, contentDescription = "Sostituisci", tint = TextSecondary)
+                    }
+                    IconButton(onClick = { onRemoveEntry(entry) }) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Rimuovi", tint = TextSecondary)
                     }
                 }
             }

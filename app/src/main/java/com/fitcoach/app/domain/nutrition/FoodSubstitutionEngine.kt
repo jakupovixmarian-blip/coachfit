@@ -25,6 +25,20 @@ object FoodSubstitutionEngine {
         val fatPercent: Double = 10.0
     )
 
+    /**
+     * Tolleranze quando originale e sostituto hanno lo STESSO ruolo macro
+     * (es. albume -> yogurt greco, entrambe fonti proteiche). In questo caso lo
+     * scambio e nutrizionalmente sensato: si allentano i vincoli del pasto sui
+     * macro NON dominanti, mantenendo stretto il macro dominante e il tetto
+     * calorico giornaliero.
+     */
+    private val SAME_ROLE_TOLERANCE = Tolerance(
+        kcalPercent = 20.0,
+        proteinPercent = 10.0,
+        carbsPercent = 30.0,
+        fatPercent = 30.0
+    )
+
     data class Request(
         val original: FoodItem,
         val originalGrams: Double,
@@ -74,43 +88,63 @@ object FoodSubstitutionEngine {
     fun evaluate(req: Request): Result {
         require(req.originalGrams > 0) { "La quantita originale deve essere positiva." }
 
-        val originalMacros = macrosFor(req.original, req.originalGrams)
-        val mealBefore = req.mealOther + originalMacros
-        val dayBefore = req.dayPlannedOther + originalMacros
+        // Se originale e sostituto svolgono lo stesso ruolo macro (entrambe fonti
+        // proteiche, entrambi cereali, ecc.) lo scambio e lecito: si usano
+        // tolleranze piu ampie per i macro non dominanti del pasto, cosi una
+        // sostituzione sensata (albume -> yogurt greco) non viene rifiutata.
+        val effectiveReq = if (sameMacroRole(req.original, req.substitute) &&
+            req.tolerance == Tolerance()
+        ) {
+            req.copy(tolerance = SAME_ROLE_TOLERANCE)
+        } else {
+            req
+        }
 
-        val dominant = MealPlanGenerator.dominantMacro(req.original)
-        val idealGrams = MealPlanGenerator.substituteGrams(req.original, req.originalGrams, req.substitute)
-        val baseGrams = snap(idealGrams.coerceIn(1.0, req.maxGrams))
-        val baseSubMacros = macrosFor(req.substitute, baseGrams)
+        val originalMacros = macrosFor(effectiveReq.original, effectiveReq.originalGrams)
+        val mealBefore = effectiveReq.mealOther + originalMacros
+        val dayBefore = effectiveReq.dayPlannedOther + originalMacros
 
-        val baseMealAfter = req.mealOther + baseSubMacros
-        val baseDayAfter = req.dayPlannedOther + baseSubMacros
-        val baseViolations = violations(baseMealAfter, baseDayAfter, mealBefore, dayBefore, req.dayTarget, req.tolerance)
+        val dominant = MealPlanGenerator.dominantMacro(effectiveReq.original)
+        val idealGrams = MealPlanGenerator.substituteGrams(effectiveReq.original, effectiveReq.originalGrams, effectiveReq.substitute)
+        val baseGrams = snap(idealGrams.coerceIn(1.0, effectiveReq.maxGrams))
+        val baseSubMacros = macrosFor(effectiveReq.substitute, baseGrams)
+
+        val baseMealAfter = effectiveReq.mealOther + baseSubMacros
+        val baseDayAfter = effectiveReq.dayPlannedOther + baseSubMacros
+        val baseViolations = violations(baseMealAfter, baseDayAfter, mealBefore, dayBefore, effectiveReq.dayTarget, effectiveReq.tolerance)
 
         if (baseViolations.isEmpty()) {
             return result(
                 Status.COMPATIBLE, baseGrams, baseSubMacros, null,
-                mealBefore, baseMealAfter, dayBefore, baseDayAfter, req,
+                mealBefore, baseMealAfter, dayBefore, baseDayAfter, effectiveReq,
                 violations = emptyList(),
                 notes = listOf("Sostituzione equivalente: quantita calcolata sul macro dominante (${dominant.label()}).")
             )
         }
 
         // Tentativo di riequilibrio con un secondo alimento (sostituzione combinata).
-        combinedAttempt(req, baseGrams, baseSubMacros, mealBefore, dayBefore, originalMacros)?.let { return it }
+        combinedAttempt(effectiveReq, baseGrams, baseSubMacros, mealBefore, dayBefore, originalMacros)?.let { return it }
 
         // Tentativo di aggiustamento dei grammi entro una finestra ragionevole.
-        val searched = searchGrams(req, mealBefore, dayBefore)
+        val searched = searchGrams(effectiveReq, mealBefore, dayBefore)
         if (searched != null) return searched
 
         // Nessuna soluzione: restituiamo la piu vicina con le violazioni spiegate.
         return result(
             Status.INCOMPATIBLE, baseGrams, baseSubMacros, null,
-            mealBefore, baseMealAfter, dayBefore, baseDayAfter, req,
+            mealBefore, baseMealAfter, dayBefore, baseDayAfter, effectiveReq,
             violations = baseViolations,
             notes = listOf("La sostituzione non rispetta i vincoli del piano. Scegli un'altra alternativa.")
         )
     }
+
+    /**
+     * Vero se [a] e [b] hanno lo stesso macro dominante (stesso ruolo nel pasto):
+     * due fonti proteiche, due cereali, due grassi. In tal caso lo scambio non
+     * altera la struttura del pasto e va ammesso con tolleranze piu ampie.
+     */
+    private fun sameMacroRole(a: FoodItem, b: FoodItem): Boolean =
+        MealPlanGenerator.dominantMacro(a) == MealPlanGenerator.dominantMacro(b)
 
     /** Cerca un quantitativo che soddisfi tutti i vincoli entro +/-40% del valore ideale. */
     private fun searchGrams(

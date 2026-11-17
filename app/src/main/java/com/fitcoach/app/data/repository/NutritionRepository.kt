@@ -136,6 +136,49 @@ class NutritionRepository @Inject constructor(
         fat: Double
     ) = entryDao.replaceEntry(entryId, newFoodId, newFoodName, grams, kcal, protein, carbs, fat)
 
+    /** Aggiunge manualmente un alimento a un pasto, calcolando i macro dai grammi. */
+    suspend fun addEntryToMeal(
+        mealId: Long,
+        food: com.fitcoach.app.domain.model.FoodItem,
+        grams: Double,
+        unit: com.fitcoach.app.domain.model.FoodUnit
+    ): Long {
+        val factor = grams / 100.0
+        return entryDao.insertAll(
+            listOf(
+                MealEntryEntity(
+                    mealId = mealId,
+                    foodItemId = food.id,
+                    foodName = food.name,
+                    grams = grams,
+                    unit = unit,
+                    kcal = food.kcalPer100g * factor,
+                    protein = food.proteinPer100g * factor,
+                    carbs = food.carbsPer100g * factor,
+                    fat = food.fatPer100g * factor
+                )
+            )
+        ).firstOrNull() ?: 0L
+    }
+
+    /** Rimuove manualmente un alimento dal pasto. */
+    suspend fun removeEntry(entry: com.fitcoach.app.domain.model.MealEntry) {
+        entryDao.delete(
+            MealEntryEntity(
+                id = entry.id,
+                mealId = entry.mealId,
+                foodItemId = entry.foodItemId,
+                foodName = entry.foodName,
+                grams = entry.grams,
+                unit = entry.unit,
+                kcal = entry.kcal,
+                protein = entry.protein,
+                carbs = entry.carbs,
+                fat = entry.fat
+            )
+        )
+    }
+
     suspend fun getDayWithMeals(dayId: Long): NutritionDay? {
         val day = dayDao.getById(dayId) ?: return null
         return day.toDomainWithMeals()

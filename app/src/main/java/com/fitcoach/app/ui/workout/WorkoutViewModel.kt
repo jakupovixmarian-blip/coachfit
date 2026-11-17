@@ -76,7 +76,11 @@ data class WorkoutUiState(
     val section: WorkoutSection = WorkoutSection.PROGRAM,
     val performancesByExercise: Map<String, List<ExercisePerformance>> = emptyMap(),
     // Cronometro durata sessione.
-    val sessionElapsedSeconds: Int = 0
+    val sessionElapsedSeconds: Int = 0,
+    // Impostazione rapida dei carichi di tutta la seduta (all'inizio dell'allenamento).
+    val setupWeights: Boolean = false,
+    val setupQueue: List<PlannedExercise> = emptyList(),
+    val setupIndex: Int = 0
 )
 
 /** Le due sotto-sezioni della schermata Allenamento. */
@@ -604,6 +608,79 @@ class WorkoutViewModel @Inject constructor(
     fun startManualRest() {
         val seconds = _state.value.today?.exercises?.firstOrNull()?.restSeconds ?: 90
         startRest(seconds, "Recupero avviato manualmente")
+    }
+
+    /**
+     * Imposta manualmente la durata del recupero (in secondi) e la avvia.
+     * L'utente digita il tempo desiderato invece di accettare solo i preset.
+     */
+    fun startRestWithSeconds(seconds: Int) {
+        if (seconds <= 0) {
+            _state.value = _state.value.copy(message = "Inserisci una durata di recupero valida.")
+            return
+        }
+        val capped = seconds.coerceIn(5, 3600)
+        startRest(capped, "Recupero impostato manualmente")
+    }
+
+    /**
+     * Avvia l'impostazione rapida dei carichi: apre in sequenza un riquadro per
+     * ogni esercizio della seduta, cosi l'utente imposta carico e ripetizioni
+     * previsti PRIMA di iniziare, senza dover aprire un esercizio alla volta.
+     */
+    fun startWeightSetup() {
+        viewModelScope.launch {
+            if (!isSessionActive()) {
+                val day = _state.value.today
+                if (day == null) {
+                    _state.value = _state.value.copy(message = "Nessuna seduta programmata per oggi.")
+                    return@launch
+                }
+                if (day.id == 0L) workoutRepository.startFreeSession(_state.value.selectedEpochDay)
+                else workoutRepository.startSession(day, _state.value.selectedEpochDay)
+                load()
+            }
+            val queue = _state.value.today?.exercises.orEmpty()
+            if (queue.isEmpty()) {
+                _state.value = _state.value.copy(message = "Nessun esercizio da configurare.")
+                return@launch
+            }
+            _state.value = _state.value.copy(setupWeights = true, setupQueue = queue, setupIndex = 0)
+        }
+    }
+
+    /** Salva il carico/rep impostato per l'esercizio corrente e passa al successivo. */
+    fun saveSetupWeight(weightKg: Double?, reps: Int?) {
+        viewModelScope.launch {
+            val current = _state.value.setupQueue.getOrNull(_state.value.setupIndex) ?: return@launch
+            if (current.id != 0L && (weightKg != null || reps != null)) {
+                workoutRepository.updateTarget(current.id, weightKg, reps)
+            }
+            advanceSetup()
+        }
+    }
+
+    /** Salta l'esercizio corrente senza modificare i valori previsti. */
+    fun skipSetupStep() {
+        advanceSetup()
+    }
+
+    /** Chiude l'impostazione rapida lasciando invariati i carichi. */
+    fun closeWeightSetup() {
+        _state.value = _state.value.copy(setupWeights = false, setupQueue = emptyList(), setupIndex = 0)
+    }
+
+    private fun advanceSetup() {
+        val next = _state.value.setupIndex + 1
+        if (next >= _state.value.setupQueue.size) {
+            _state.value = _state.value.copy(
+                setupWeights = false, setupQueue = emptyList(), setupIndex = 0,
+                message = "Carichi impostati per la seduta."
+            )
+            viewModelScope.launch { load() }
+        } else {
+            _state.value = _state.value.copy(setupIndex = next)
+        }
     }
 
     fun convertFreeSessionToRoutine() {
