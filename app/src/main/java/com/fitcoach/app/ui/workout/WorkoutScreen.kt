@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.ExpandMore
@@ -228,6 +229,9 @@ fun WorkoutScreen(
                                     navController.navigate(com.fitcoach.app.ui.navigation.Routes.CUSTOM_WORKOUT_EDIT.replace("{planId}", saved.id.toString()))
                                 }) {
                                     Icon(Icons.Filled.Edit, contentDescription = "Modifica scheda", tint = TextSecondary)
+                                }
+                                IconButton(onClick = { viewModel.duplicatePlan(saved) }) {
+                                    Icon(Icons.Filled.ContentCopy, contentDescription = "Duplica scheda", tint = TextSecondary)
                                 }
                                 IconButton(onClick = { viewModel.openRenamePlan(saved) }) {
                                     Icon(Icons.Filled.Edit, contentDescription = "Rinomina scheda", tint = TextSecondary)

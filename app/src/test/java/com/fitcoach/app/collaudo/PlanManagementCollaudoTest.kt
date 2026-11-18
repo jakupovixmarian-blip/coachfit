@@ -132,6 +132,35 @@ class PlanManagementCollaudoTest {
         assertThat(workout.getActivePlan()!!.id).isEqualTo(secondId)
     }
 
+    @Test
+    fun `duplicare un piano alimentare crea una copia attiva senza toccare l'originale`() = runTest {
+        val originalId = createNutritionPlan()
+        val original = nutrition.getActivePlan()!!
+        val copyId = nutrition.duplicatePlan(originalId)!!
+        assertThat(copyId).isNotEqualTo(originalId)
+        assertThat(nutrition.getAllPlans().count { it.isActive }).isEqualTo(1)
+        assertThat(nutrition.getActivePlan()!!.id).isEqualTo(copyId)
+        assertThat(nutrition.getActivePlan()!!.days).hasSize(original.days.size)
+        assertThat(nutrition.getAllPlans().first { it.id == originalId }.days)
+            .hasSize(original.days.size)
+        assertThat(nutrition.getActivePlan()!!.version).isEqualTo(original.version + 1)
+    }
+
+    @Test
+    fun `duplicare una scheda workout copia struttura ed esercizi su una nuova versione`() = runTest {
+        val originalId = workout.savePlan(profile, builtWorkout("Originale"))
+        val original = workout.getActivePlan()!!
+        val copyId = workout.duplicatePlan(originalId)!!
+        assertThat(copyId).isNotEqualTo(originalId)
+        assertThat(workout.getAllPlans().count { it.isActive }).isEqualTo(1)
+        val copy = workout.getActivePlan()!!
+        assertThat(copy.id).isEqualTo(copyId)
+        assertThat(copy.version).isEqualTo(original.version + 1)
+        assertThat(copy.days.first { !it.isRestDay }.exercises).hasSize(1)
+        assertThat(workout.getAllPlans().first { it.id == originalId }.days)
+            .hasSize(original.days.size)
+    }
+
     private fun builtWorkout(label: String): WorkoutPlanBuilder.BuiltPlan {
         val exercise = PlannedExercise(
             exerciseId = 1L,

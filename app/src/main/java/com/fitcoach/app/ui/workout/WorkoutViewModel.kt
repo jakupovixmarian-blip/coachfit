@@ -183,6 +183,18 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
+    fun duplicatePlan(plan: WorkoutPlan) {
+        viewModelScope.launch {
+            val newId = workoutRepository.duplicatePlan(plan.id)
+            if (newId == null) {
+                _state.value = _state.value.copy(message = "Impossibile duplicare la scheda.")
+                return@launch
+            }
+            _state.value = _state.value.copy(message = "Copia della scheda creata e attivata.")
+            load()
+        }
+    }
+
     fun askDeletePlan(plan: WorkoutPlan) {
         _state.value = _state.value.copy(deletingPlan = plan)
     }

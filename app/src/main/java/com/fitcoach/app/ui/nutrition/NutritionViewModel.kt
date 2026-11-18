@@ -236,6 +236,22 @@ class NutritionViewModel @Inject constructor(
         }
     }
 
+
+    fun duplicatePlan(plan: NutritionPlan) {
+        viewModelScope.launch {
+            val newId = nutritionRepository.duplicatePlan(plan.id)
+            if (newId == null) {
+                _state.value = _state.value.copy(message = "Impossibile duplicare il piano.")
+                return@launch
+            }
+            val active = nutritionRepository.getActivePlan()
+            _state.value = _state.value.copy(
+                plan = active, selectedDayIndex = 0, message = "Copia creata e attivata."
+            )
+            refreshPlanList()
+        }
+    }
+
     private suspend fun refreshPlanList() {
         _state.value = _state.value.copy(plans = nutritionRepository.getAllPlans())
     }

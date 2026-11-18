@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventNote
@@ -177,6 +178,9 @@ fun NutritionScreen(
                                     Pill("Attivo", Emerald)
                                 } else {
                                     TextButton(onClick = { viewModel.activatePlan(saved.id) }) { Text("Attiva") }
+                                }
+                                IconButton(onClick = { viewModel.duplicatePlan(saved) }) {
+                                    Icon(Icons.Filled.ContentCopy, contentDescription = "Duplica piano", tint = TextSecondary)
                                 }
                                 IconButton(onClick = { viewModel.openRenamePlan(saved) }) {
                                     Icon(Icons.Filled.Edit, contentDescription = "Modifica nome piano", tint = TextSecondary)
