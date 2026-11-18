@@ -253,6 +253,9 @@ fun NutritionScreen(
                             IconButton(onClick = { viewModel.openEditDay(day) }) {
                                 Icon(Icons.Filled.Edit, contentDescription = "Modifica target giornata", tint = TextSecondary)
                             }
+                            IconButton(onClick = { viewModel.openEditDayType(day) }) {
+                                Icon(Icons.Filled.SwapHoriz, contentDescription = "Cambia tipo giornata", tint = TextSecondary)
+                            }
                             Pill(day.dayType.label, carbColor(day.dayType))
                         }
                         Spacer(Modifier.height(12.dp))
@@ -302,6 +305,14 @@ fun NutritionScreen(
             onGramsChange = viewModel::updateAddFoodGrams,
             onConfirm = viewModel::confirmAddFood,
             onDismiss = viewModel::closeAddFood
+        )
+    }
+
+    state.editingDayType?.let { dayToEdit ->
+        DayTypeDialog(
+            current = dayToEdit.dayType,
+            onSelect = viewModel::saveEditDayType,
+            onDismiss = viewModel::closeEditDayType
         )
     }
 
@@ -430,6 +441,32 @@ private fun EditEntryDialog(
         },
         confirmButton = { TextButton(onClick = onConfirm) { Text("Salva") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } }
+    )
+}
+
+@Composable
+private fun DayTypeDialog(
+    current: com.fitcoach.app.domain.model.CarbDayType,
+    onSelect: (com.fitcoach.app.domain.model.CarbDayType) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Tipo giornata") },
+        text = {
+            Column {
+                com.fitcoach.app.domain.model.CarbDayType.entries.forEach { type ->
+                    FilterChip(
+                        selected = type == current,
+                        onClick = { onSelect(type) },
+                        label = { Text(type.label) },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Chiudi") } }
     )
 }
 

@@ -57,6 +57,7 @@ data class NutritionUiState(
     val editDayProtein: String = "",
     val editDayCarbs: String = "",
     val editDayFat: String = "",
+    val editingDayType: NutritionDay? = null,
     val editingMeal: Meal? = null,
     val editMealTime: String = "",
     // Piani salvati (AI e manuali): per scegliere quale avviare.
@@ -327,6 +328,26 @@ class NutritionViewModel @Inject constructor(
             }
             _state.value = _state.value.copy(editingDay = null, message = "Target della giornata aggiornati.")
             load()
+        }
+    }
+
+    fun openEditDayType(day: NutritionDay) { _state.value = _state.value.copy(editingDayType = day) }
+    fun closeEditDayType() { _state.value = _state.value.copy(editingDayType = null) }
+
+    fun saveEditDayType(type: com.fitcoach.app.domain.model.CarbDayType) {
+        val day = _state.value.editingDayType ?: return
+        val planId = _state.value.plan?.id
+        if (planId == null) return
+        viewModelScope.launch {
+            val ok = nutritionRepository.updateDayTypeAsNewPlanVersion(
+                planId, day.id, type, _state.value.epochDay
+            )
+            if (ok) {
+                _state.value = _state.value.copy(editingDayType = null, message = "Tipo giornata aggiornato.")
+                load()
+            } else {
+                _state.value = _state.value.copy(message = "Impossibile aggiornare il tipo giornata.")
+            }
         }
     }
 
