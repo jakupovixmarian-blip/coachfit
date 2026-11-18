@@ -42,7 +42,7 @@ Lo script `/workspace/build.sh` avvolge Gradle e imposta l'ambiente:
 
 ```bash
 /workspace/build.sh :app:compileDebugKotlin   # compilazione veloce
-/workspace/build.sh :app:testDebugUnitTest    # test unitari (235 test all'ultimo run)
+/workspace/build.sh :app:testDebugUnitTest    # test unitari (347 test all'ultimo run)
 /workspace/build.sh :app:assembleDebug        # APK debug
 /workspace/build.sh :app:assembleRelease      # APK release (firmabile)
 ```
@@ -101,8 +101,21 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
   del piano e lascia intatta la precedente. L'editor nutrizionale consente ora di modificare
   i grammi di una voce e ricalcola i macro dai valori del catalogo. Collaudo: 337 test verdi.
 - **Notifiche**: il posticipo usa `UserPreferences.deferMinutes` (5..120 minuti) e il valore
-  viene propagato nell'intent dell'allarme, nell'azione di snooze e nella riprogrammazione
-  giornaliera/settimanale. Non reintrodurre un valore fisso nel `ReminderReceiver`.
+  viene propagato nell'intent dell'allarme, nell'azione di snooze e nella programmazione
+  giornaliera/settimanale. Non reintrodurre un valore fisso nel `ReminderReceiver`. Le notifiche
+  di pasto e allenamento portano un deep link (`EXTRA_DEEP_LINK_ROUTE`, `ReminderReceiver.routeFor`)
+  e le azioni Posticipa/Conferma; `MainActivity` è `singleTop` e instrada la rotta pendente in
+  `FitCoachNavHost`.
+- **Statistiche per intervallo**: `StatisticsEngine` (`domain/adaptive/`, PURO) aggrega pesate,
+  diario reale, sedute completate e prestazioni su `StatRange` = settimana/mese/trimestre. I campi
+  restano `null` quando mancano dati (nessuno zero o stima inventata). `ProgressViewModel` espone
+  `statRange` + `statistics`; `ProgressScreen.AdvancedStatisticsSection` mostra le metriche e i
+  grafici (calorie/giorno a barre, volume/seduta e peso nel periodo a linea). Aggiungendo
+  statistiche, estenderle qui e in `collaudo/StatisticsEngineCollaudoTest.kt`.
+- **Recovery del provider AI**: `AiClient.sendOnce` ritenta con backoff solo gli errori
+  transitori (rete, 408/429/5xx, max `MAX_TRANSIENT_RETRIES`), mai quelli di configurazione
+  (401/404/400). La chat espone `CoachViewModel.retry()` (pulsante "Riprova"): rimuove il
+  messaggio di errore e rinvia l'ultimo messaggio senza duplicarlo (`lastUserMessage`/`canRetry`).
 
 
 
