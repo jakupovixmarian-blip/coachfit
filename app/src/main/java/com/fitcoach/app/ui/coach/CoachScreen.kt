@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
@@ -24,6 +25,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -188,6 +190,22 @@ fun CoachScreen(
                     CircularProgressIndicator(modifier = Modifier.width(20.dp), color = Emerald)
                 } else {
                     Icon(Icons.Filled.Send, contentDescription = "Invia", tint = Emerald)
+                }
+            }
+        }
+
+        if (state.canRetry) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    onClick = { viewModel.retry() },
+                    enabled = !state.sending
+                ) {
+                    Icon(Icons.Filled.Refresh, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Riprova")
                 }
             }
         }

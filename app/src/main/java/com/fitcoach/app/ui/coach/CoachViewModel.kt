@@ -31,7 +31,10 @@ data class CoachUiState(
     val appliedChanges: List<ProgramChange> = emptyList(),
     val message: String? = null,
     val providerConfigured: Boolean = false,
-    val providerLabel: String = ""
+    val providerLabel: String = "",
+    /** Ultimo messaggio dell'utente, per riprovare dopo un errore di rete. */
+    val lastUserMessage: String? = null,
+    val canRetry: Boolean = false
 )
 
 @HiltViewModel
@@ -78,9 +81,28 @@ class CoachViewModel @Inject constructor(
     fun send() {
         val text = _state.value.input.trim()
         if (text.isEmpty() || _state.value.sending) return
+        _state.value = _state.value.copy(input = "")
+        dispatch(text, echoUser = true)
+    }
+
+    /** Riprova l'ultimo messaggio dopo un errore transitorio, senza duplicarlo in chat. */
+    fun retry() {
+        val text = _state.value.lastUserMessage ?: return
+        if (_state.value.sending) return
         viewModelScope.launch {
-            _state.value = _state.value.copy(sending = true, input = "")
-            chatRepository.add(ChatMessage(role = ChatRole.USER, content = text))
+            // Rimuovi il messaggio di errore prima di riprovare.
+            _state.value.messages.filter { it.isError }.forEach { chatRepository.delete(it.id) }
+            load()
+        }
+        dispatch(text, echoUser = false)
+    }
+
+    private fun dispatch(text: String, echoUser: Boolean) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                sending = true, canRetry = false, lastUserMessage = text
+            )
+            if (echoUser) chatRepository.add(ChatMessage(role = ChatRole.USER, content = text))
             load()
 
             val reply = coachService.send(text)
@@ -93,7 +115,9 @@ class CoachViewModel @Inject constructor(
                         isError = true
                     )
                 )
-                _state.value = _state.value.copy(sending = false, message = reply.providerError)
+                _state.value = _state.value.copy(
+                    sending = false, message = reply.providerError, canRetry = true
+                )
                 load()
                 return@launch
             }
@@ -125,7 +149,7 @@ class CoachViewModel @Inject constructor(
                 }
             }
 
-            _state.value = _state.value.copy(sending = false)
+            _state.value = _state.value.copy(sending = false, canRetry = false, lastUserMessage = null)
             load()
         }
     }

@@ -252,4 +252,31 @@ class AiClientTest {
         assertThat(api.sent).hasSize(2)
         assertThat(api.sent[1].reasoningEffort).isEqualTo("none")
     }
+
+    @Test
+    fun `ritenta con backoff sugli errori transitori e poi riesce`() = runTest {
+        val api = RecordingApi(
+            mutableListOf(
+                errorResponse(503, "Service temporarily unavailable"),
+                okResponse()
+            )
+        )
+        val client = AiClient(api, json)
+
+        val result = client.complete(config(AiProvider.GROQ, "llama-3.3-70b-versatile"), listOf(ChatMessageDto("user", "ciao")))
+
+        assertThat(result).isInstanceOf(AiResult.Success::class.java)
+        assertThat(api.sent).hasSize(2)
+    }
+
+    @Test
+    fun `non ritenta sugli errori di configurazione`() = runTest {
+        val api = RecordingApi(mutableListOf(errorResponse(401, "Invalid API key")))
+        val client = AiClient(api, json)
+
+        val result = client.complete(config(AiProvider.GROQ, "llama-3.3-70b-versatile"), listOf(ChatMessageDto("user", "ciao")))
+
+        assertThat(result).isInstanceOf(AiResult.Failure::class.java)
+        assertThat(api.sent).hasSize(1)
+    }
 }

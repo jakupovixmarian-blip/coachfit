@@ -128,19 +128,40 @@ class AiClient @Inject constructor(
         request: ChatCompletionRequest
     ): AiResult {
         val auth = config.apiKey?.takeIf { it.isNotBlank() }?.let { "Bearer $it" }
-        return try {
-            val response = api.chatCompletions(
-                url = config.completionsUrl,
-                authorization = auth,
-                referer = if (config.provider == AiProvider.OPENROUTER) OPENROUTER_REFERER else null,
-                title = if (config.provider == AiProvider.OPENROUTER) OPENROUTER_TITLE else null,
-                body = request
-            )
-            handleResponse(response)
-        } catch (io: IOException) {
-            AiResult.Failure("Impossibile raggiungere il provider. Controlla la connessione Internet e il Base URL.")
-        } catch (t: Throwable) {
-            AiResult.Failure("Errore durante la chiamata al provider: ${t.message ?: t::class.simpleName}")
+        var lastFailure: AiResult.Failure? = null
+        // Riprova solo errori transitori (rete, 429, 5xx) con backoff: un errore
+        // di configurazione (401/404/400) non migliora ritentando.
+        for (attempt in 0..MAX_TRANSIENT_RETRIES) {
+            val result = try {
+                val response = api.chatCompletions(
+                    url = config.completionsUrl,
+                    authorization = auth,
+                    referer = if (config.provider == AiProvider.OPENROUTER) OPENROUTER_REFERER else null,
+                    title = if (config.provider == AiProvider.OPENROUTER) OPENROUTER_TITLE else null,
+                    body = request
+                )
+                handleResponse(response)
+            } catch (io: IOException) {
+                AiResult.Failure("Impossibile raggiungere il provider. Controlla la connessione Internet e il Base URL.")
+            } catch (t: Throwable) {
+                AiResult.Failure("Errore durante la chiamata al provider: ${t.message ?: t::class.simpleName}")
+            }
+            if (result is AiResult.Success) return result
+            if (!isTransient(result)) return result
+            lastFailure = result as AiResult.Failure
+            if (attempt < MAX_TRANSIENT_RETRIES) {
+                kotlinx.coroutines.delay(RETRY_BASE_DELAY_MS * (1L shl attempt))
+            }
+        }
+        return lastFailure ?: AiResult.Failure("Errore sconosciuto durante la chiamata al provider.")
+    }
+
+    /** Un fallimento e transitorio se la rete e caduta o il provider e sovraccarico. */
+    private fun isTransient(result: AiResult): Boolean = when (result) {
+        is AiResult.Success -> false
+        is AiResult.Failure -> {
+            val code = result.httpCode
+            code == null || code == 408 || code == 429 || code >= 500
         }
     }
 
@@ -215,5 +236,9 @@ class AiClient @Inject constructor(
         private const val OPENROUTER_REFERER = "https://fitcoach.app"
         private const val OPENROUTER_TITLE = "FitCoach"
         private const val CONNECTION_TEST_MAX_TOKENS = 256
+
+        /** Numero massimo di ritentativi per errori transitori (rete, 429, 5xx). */
+        const val MAX_TRANSIENT_RETRIES = 2
+        private const val RETRY_BASE_DELAY_MS = 700L
     }
 }
