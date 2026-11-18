@@ -111,6 +111,36 @@ class NutritionDiaryRepository @Inject constructor(
         }
     }
 
+    /** Conferma il pasto previsto: attiva (senza invertire) la voce di piano del giorno. */
+    suspend fun confirmPlanEntry(entry: MealEntry, slot: MealSlot, time: String, epochDay: Long) {
+        db.withTransaction {
+            val existing = diaryDao.getByPlanEntry(entry.id, epochDay)
+            if (existing != null) {
+                if (!existing.active) diaryDao.setActive(existing.id, true)
+                return@withTransaction
+            }
+            diaryDao.insert(
+                DiaryEntry(
+                    dateEpochDay = epochDay,
+                    mealSlot = slot,
+                    time = time,
+                    foodItemId = entry.foodItemId,
+                    foodName = entry.foodName,
+                    grams = entry.grams,
+                    unit = entry.unit,
+                    kcal = entry.kcal,
+                    protein = entry.protein,
+                    carbs = entry.carbs,
+                    fat = entry.fat,
+                    source = DiarySource.PLAN,
+                    planEntryId = entry.id,
+                    nutritionPlanId = planDao.getActive()?.id,
+                    active = true
+                ).toEntity()
+            )
+        }
+    }
+
     /** Aggiunge un alimento fuori piano, calcolando i valori dalla quantita. */
     suspend fun addExtraFood(food: FoodItem, grams: Double, slot: MealSlot, time: String, epochDay: Long): Long {
         val factor = grams / 100.0

@@ -8,6 +8,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -34,11 +35,23 @@ import com.fitcoach.app.ui.workout.CustomWorkoutScreen
 import com.fitcoach.app.ui.workout.WorkoutScreen
 
 @Composable
-fun FitCoachNavHost(navController: NavHostController) {
+fun FitCoachNavHost(
+    navController: NavHostController,
+    pendingRoute: String? = null,
+    onRouteConsumed: () -> Unit = {}
+) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
     val showBottomBar = currentRoute in TopLevelDestination.entries.map { it.route }
+
+    LaunchedEffect(pendingRoute) {
+        val route = pendingRoute ?: return@LaunchedEffect
+        if (route in TopLevelDestination.entries.map { it.route }) {
+            navController.navigateTopLevel(route)
+            onRouteConsumed()
+        }
+    }
 
     Scaffold(
         bottomBar = {

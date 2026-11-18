@@ -12,14 +12,20 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import com.fitcoach.app.notifications.ReminderReceiver
 import com.fitcoach.app.ui.navigation.FitCoachNavHost
 import com.fitcoach.app.ui.theme.FitCoachTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private var pendingRoute by mutableStateOf<String?>(null)
 
     private val notificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -29,15 +35,29 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         requestNotificationPermissionIfNeeded()
         requestExactAlarmPermissionIfNeeded()
+        pendingRoute = intent.deepLinkRoute()
         setContent {
             FitCoachTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val navController = rememberNavController()
-                    FitCoachNavHost(navController = navController)
+                    FitCoachNavHost(
+                        navController = navController,
+                        pendingRoute = pendingRoute,
+                        onRouteConsumed = { pendingRoute = null }
+                    )
                 }
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingRoute = intent.deepLinkRoute()
+    }
+
+    private fun Intent.deepLinkRoute(): String? =
+        getStringExtra(ReminderReceiver.EXTRA_DEEP_LINK_ROUTE)
 
     private fun requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

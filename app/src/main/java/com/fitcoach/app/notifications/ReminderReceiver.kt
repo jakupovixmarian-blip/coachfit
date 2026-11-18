@@ -9,17 +9,35 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.fitcoach.app.MainActivity
 import com.fitcoach.app.R
+import com.fitcoach.app.data.repository.NutritionDiaryRepository
+import com.fitcoach.app.data.repository.NutritionRepository
+import com.fitcoach.app.domain.model.MealSlot
+import com.fitcoach.app.domain.nutrition.NutritionDiaryEngine
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * Riceve gli allarmi dei promemoria e mostra la notifica.
- * Supporta azioni: Posticipa (snooze) e Conferma (apre l'app).
+ * Azioni: Posticipa (snooze), Conferma (registra il pasto o apre l'app),
+ * apertura della schermata pertinente tramite deep link.
  */
+@AndroidEntryPoint
 class ReminderReceiver : BroadcastReceiver() {
+
+    @Inject lateinit var nutritionRepository: NutritionRepository
+    @Inject lateinit var diaryRepository: NutritionDiaryRepository
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
         if (action == ACTION_SNOOZE) {
             handleSnooze(context, intent)
+            return
+        }
+        if (action == ACTION_CONFIRM) {
+            handleConfirm(context, intent)
             return
         }
 
@@ -46,13 +64,7 @@ class ReminderReceiver : BroadcastReceiver() {
         deferMinutes: Int
     ) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
-        val contentIntent = PendingIntent.getActivity(
-            context, requestCode,
-            Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val contentIntent = deepLinkPendingIntent(context, kind, requestCode)
 
         val snoozeIntent = PendingIntent.getBroadcast(
             context, requestCode + 1000,
@@ -68,6 +80,25 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val confirmIntent = PendingIntent.getBroadcast(
+            context, requestCode + 3000,
+            Intent(context, ReminderReceiver::class.java).apply {
+                action = ACTION_CONFIRM
+                putExtra(EXTRA_KIND, kind)
+                putExtra(EXTRA_TITLE, title)
+                putExtra(EXTRA_BODY, body)
+                putExtra(EXTRA_CHANNEL, channel)
+                putExtra(EXTRA_REQUEST_CODE, requestCode)
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val confirmLabel = when {
+            kind.startsWith("MEAL_") -> context.getString(R.string.notif_action_confirm_meal)
+            kind == "WORKOUT" -> context.getString(R.string.notif_action_confirm_workout)
+            else -> context.getString(R.string.notif_action_confirm)
+        }
+
         val notification = NotificationCompat.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
@@ -77,7 +108,7 @@ class ReminderReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .setContentIntent(contentIntent)
             .addAction(0, context.getString(R.string.notif_action_defer), snoozeIntent)
-            .addAction(0, context.getString(R.string.notif_action_confirm), contentIntent)
+            .addAction(0, confirmLabel, confirmIntent)
             .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -88,6 +119,62 @@ class ReminderReceiver : BroadcastReceiver() {
             }
         } else {
             manager.notify(requestCode, notification)
+        }
+    }
+
+    private fun deepLinkPendingIntent(context: Context, kind: String, requestCode: Int): PendingIntent {
+        val route = deepLinkRouteFor(kind)
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_DEEP_LINK_ROUTE, route)
+        }
+        return PendingIntent.getActivity(
+            context, requestCode, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    /**
+     * Conferma reale: per i pasti registra il pasto previsto del giorno (spunta le
+     * voci di piano dello slot) cosi il diario riflette quanto previsto; per gli
+     * altri promemoria apre direttamente la schermata pertinente.
+     */
+    private fun handleConfirm(context: Context, intent: Intent) {
+        val kind = intent.getStringExtra(EXTRA_KIND).orEmpty()
+        if (!kind.startsWith("MEAL_")) {
+            val manager = context.getSystemService(NotificationManager::class.java)
+            manager?.cancel(intent.getIntExtra(EXTRA_REQUEST_CODE, 0))
+            context.startActivity(
+                Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    putExtra(EXTRA_DEEP_LINK_ROUTE, deepLinkRouteFor(kind))
+                }
+            )
+            return
+        }
+        val slot = kind.removePrefix("MEAL_").let { name ->
+            MealSlot.entries.firstOrNull { it.name == name }
+        } ?: return
+        val requestCode = intent.getIntExtra(EXTRA_REQUEST_CODE, 0)
+        val pendingResult = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val epochDay = NutritionDiaryRepository.todayEpochDay()
+                val dayIndex = NutritionDiaryEngine.dayIndexFor(epochDay)
+                val day = nutritionRepository.getActivePlan()?.days?.firstOrNull { it.dayIndex == dayIndex }
+                val meal = day?.meals?.firstOrNull { it.slot == slot }
+                meal?.entries?.forEach { entry ->
+                    diaryRepository.confirmPlanEntry(entry, slot, meal.time, epochDay)
+                }
+                nutritionRepository.getActivePlan()?.days
+                    ?.firstOrNull { it.dayIndex == dayIndex }
+                    ?.meals?.firstOrNull { it.slot == slot }?.let { confirmed ->
+                        nutritionRepository.confirmMeal(confirmed.id, true)
+                    }
+            } finally {
+                context.getSystemService(NotificationManager::class.java)?.cancel(requestCode)
+                pendingResult.finish()
+            }
         }
     }
 
@@ -162,8 +249,18 @@ class ReminderReceiver : BroadcastReceiver() {
         const val EXTRA_HOUR = "extra_hour"
         const val EXTRA_MINUTE = "extra_minute"
         const val EXTRA_DEFER_MINUTES = "extra_defer_minutes"
+        const val EXTRA_DEEP_LINK_ROUTE = "extra_deep_link_route"
 
         const val ACTION_SNOOZE = "com.fitcoach.app.action.SNOOZE"
+        const val ACTION_CONFIRM = "com.fitcoach.app.action.CONFIRM"
         const val SNOOZE_MINUTES = 15
+
+        /** Destinazione aperta toccando la notifica, in base al tipo di promemoria. */
+        fun deepLinkRouteFor(kind: String): String = when {
+            kind.startsWith("MEAL_") -> "diary"
+            kind == "WORKOUT" -> "workout"
+            kind == "CHECKIN" || kind == "WEIGHT" -> "progress"
+            else -> "dashboard"
+        }
     }
 }

@@ -25,4 +25,6 @@
 
     <string name="notif_action_defer">Posticipa</string>
     <string name="notif_action_confirm">Conferma</string>
+    <string name="notif_action_confirm_meal">Confermo il pasto</string>
+    <string name="notif_action_confirm_workout">Inizio allenamento</string>
 </resources>
