@@ -259,6 +259,26 @@ class WorkoutRepository @Inject constructor(
         return day.toDomain(planned.map { it.toDomain() })
     }
 
+
+    /** Duplica una scheda creando una nuova versione attiva e lasciando intatta l'originale. */
+    suspend fun duplicatePlan(planId: Long): Long? = db.withTransaction {
+        val current = planDao.getById(planId) ?: return@withTransaction null
+        val oldMesos = mesoDao.getForPlan(planId)
+        planDao.deactivateAll()
+        val newPlanId = planDao.insert(
+            current.copy(id = 0L, isActive = true, createdAt = System.currentTimeMillis(), version = current.version + 1)
+        )
+        oldMesos.forEach { oldMeso ->
+            val newMesoId = mesoDao.insert(oldMeso.copy(id = 0L, planId = newPlanId))
+            dayDao.getForMesocycle(oldMeso.id).forEach { oldDay ->
+                val newDayId = dayDao.insertAll(listOf(oldDay.copy(id = 0L, mesocycleId = newMesoId))).first()
+                val exercises = plannedDao.getForDay(oldDay.id)
+                if (exercises.isNotEmpty()) plannedDao.insertAll(exercises.map { it.copy(id = 0L, workoutDayId = newDayId) })
+            }
+        }
+        newPlanId
+    }
+
     suspend fun getActiveDays(weekStartEpochDay: Long? = null): List<WorkoutDay> {
         val plan = planDao.getActive() ?: return emptyList()
         val mesos = mesoDao.getForPlan(plan.id)

@@ -408,6 +408,10 @@ class NutritionRepository @Inject constructor(
 
 
 
+    /** Duplica un piano creando una nuova versione attiva e lasciando intatto l'originale. */
+    suspend fun duplicatePlan(planId: Long): Long? = clonePlanVersion(planId)?.first
+
+
     suspend fun replaceEntryWithFood(
         entryId: Long,
         newFoodId: Long,
