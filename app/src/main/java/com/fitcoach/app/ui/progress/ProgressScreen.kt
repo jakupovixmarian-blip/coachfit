@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.fitcoach.app.ui.components.BarChart
 import com.fitcoach.app.ui.components.ChartPoint
 import com.fitcoach.app.ui.components.LineChart
 import com.fitcoach.app.ui.components.LoadingBox
@@ -299,6 +300,16 @@ fun ProgressScreen(
             }
         }
 
+        state.statistics?.let { stats ->
+            item {
+                AdvancedStatisticsSection(
+                    stats = stats,
+                    selectedRange = state.statRange,
+                    onSelectRange = viewModel::setStatRange
+                )
+            }
+        }
+
         item {
             WeeklyCheckInSection(
                 state = state,
@@ -433,6 +444,100 @@ private fun CheckInMetrics(report: WeeklyCheckInAnalyzer.Report) {
             "${report.progressionCount} in crescita, ${report.stagnationCount} stabili, ${report.regressionCount} in calo"
         )
         MetricRow("Recupero", "${report.recoverySeverity}/3")
+    }
+}
+
+@Composable
+private fun AdvancedStatisticsSection(
+    stats: com.fitcoach.app.domain.adaptive.RangeStatistics,
+    selectedRange: com.fitcoach.app.domain.adaptive.StatRange,
+    onSelectRange: (com.fitcoach.app.domain.adaptive.StatRange) -> Unit
+) {
+    SectionCard {
+        Column {
+            SectionHeader("Statistiche avanzate", "Storico settimana · mese · trimestre")
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                com.fitcoach.app.domain.adaptive.StatRange.entries.forEach { range ->
+                    if (range == selectedRange) {
+                        Button(onClick = { onSelectRange(range) }) { Text(range.label) }
+                    } else {
+                        OutlinedButton(onClick = { onSelectRange(range) }) { Text(range.label) }
+                    }
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            MetricRow("Pesate registrate", "${stats.weightSamples}")
+            MetricRow("Peso medio", stats.avgWeightKg?.let { "%.1f kg".format(it) } ?: "dati insufficienti")
+            MetricRow(
+                "Variazione peso",
+                stats.weightDeltaKg?.let { "%+.2f kg nel periodo".format(it) } ?: "dati insufficienti"
+            )
+            MetricRow("Giorni tracciati", "${stats.daysTracked}")
+            MetricRow("Calorie medie", stats.avgKcal?.let { "%.0f kcal".format(it) } ?: "nessun dato")
+            MetricRow(
+                "Macro medi",
+                if (stats.avgProtein == null) "nessun dato" else
+                    "P %.0f g · C %.0f g · G %.0f g".format(
+                        stats.avgProtein, stats.avgCarbs ?: 0.0, stats.avgFat ?: 0.0
+                    )
+            )
+            MetricRow(
+                "Aderenza media",
+                stats.avgAdherencePercent?.let { "%.0f%%".format(it) } ?: "n/d"
+            )
+            MetricRow("Sedute completate", "${stats.sessionsCompleted}")
+            MetricRow(
+                "Volume totale",
+                "%.0f kg".format(stats.totalVolumeKg)
+            )
+            MetricRow(
+                "Volume medio per seduta",
+                stats.avgVolumePerSessionKg?.let { "%.0f kg".format(it) } ?: "n/d"
+            )
+            stats.bestLift?.let { best ->
+                MetricRow(
+                    "Miglior prestazione",
+                    "${best.exerciseName}: %.0f kg x ${best.reps}".format(best.topWeightKg)
+                )
+                best.estimated1Rm?.let {
+                    MetricRow("1RM stimato", "%.0f kg".format(it))
+                }
+            }
+            if (stats.caloriesSeries.size >= 2) {
+                Spacer(Modifier.height(12.dp))
+                Text("Calorie per giorno", style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(6.dp))
+                BarChart(
+                    values = stats.caloriesSeries.map { it.value.toFloat() },
+                    labels = stats.caloriesSeries.map { it.label },
+                    color = CarbsColor
+                )
+            }
+            if (stats.volumeSeries.size >= 2) {
+                Spacer(Modifier.height(12.dp))
+                Text("Volume per seduta (kg)", style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(6.dp))
+                LineChart(
+                    points = stats.volumeSeries.map { ChartPoint(it.label, it.value) },
+                    lineColor = Emerald,
+                    unitSuffix = " kg"
+                )
+            }
+            if (stats.weightSeries.size >= 2) {
+                Spacer(Modifier.height(12.dp))
+                Text("Peso nel periodo", style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(6.dp))
+                LineChart(
+                    points = stats.weightSeries.map { ChartPoint(it.label, it.value) },
+                    lineColor = ProteinColor,
+                    unitSuffix = " kg"
+                )
+            }
+        }
     }
 }
 

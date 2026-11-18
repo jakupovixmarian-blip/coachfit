@@ -111,6 +111,12 @@ class NutritionDiaryRepository @Inject constructor(
         }
     }
 
+    /** Tutte le voci del diario del piano attivo (per le statistiche storiche). */
+    suspend fun allEntries(): List<DiaryEntry> {
+        val activePlanId = planDao.getActive()?.id
+        return diaryDao.getAll().filterForActivePlan(activePlanId).map { it.toDomain() }
+    }
+
     /** Conferma il pasto previsto: attiva (senza invertire) la voce di piano del giorno. */
     suspend fun confirmPlanEntry(entry: MealEntry, slot: MealSlot, time: String, epochDay: Long) {
         db.withTransaction {

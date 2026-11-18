@@ -5,10 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.fitcoach.app.data.repository.ApplyResult
 import com.fitcoach.app.data.repository.ChangeRepository
 import com.fitcoach.app.data.repository.CoachActionExecutor
+import com.fitcoach.app.data.repository.NutritionDiaryRepository
 import com.fitcoach.app.data.repository.ProgressPhotoRepository
 import com.fitcoach.app.data.repository.ProgressRepository
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
+import com.fitcoach.app.domain.adaptive.StatisticsEngine
+import com.fitcoach.app.domain.adaptive.StatRange
 import com.fitcoach.app.domain.adaptive.WeeklyCheckInAnalyzer
 import com.fitcoach.app.domain.adaptive.WeightAnalyzer
 import com.fitcoach.app.domain.model.CheckIn
@@ -42,6 +45,8 @@ data class ProgressUiState(
     val checkInReport: WeeklyCheckInAnalyzer.Report? = null,
     val checkInProposals: List<ProgramChange> = emptyList(),
     val volumeBySession: List<VolumePoint> = emptyList(),
+    val statRange: StatRange = StatRange.WEEK,
+    val statistics: com.fitcoach.app.domain.adaptive.RangeStatistics? = null,
     val photos: List<ProgressPhoto> = emptyList(),
     val message: String? = null,
     val weightInput: String = "",
@@ -58,6 +63,8 @@ class ProgressViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val changeRepository: ChangeRepository,
     private val actionExecutor: CoachActionExecutor,
+    private val diaryRepository: NutritionDiaryRepository,
+    private val nutritionRepository: com.fitcoach.app.data.repository.NutritionRepository,
     private val runWeeklyCheckIn: RunWeeklyCheckInUseCase
 ) : ViewModel() {
 
@@ -73,7 +80,7 @@ class ProgressViewModel @Inject constructor(
             val weights = progressRepository.getWeights()
             val circumferences = progressRepository.getCircumferences()
             val photos = photoRepository.photos.first()
-            val sessions = workoutRepository.getRecentSessions(limit = 60)
+            val sessions = workoutRepository.getRecentSessions(limit = 400)
             val checkIn = progressRepository.getLatestCheckIn()
             _state.value = _state.value.copy(
                 loading = false,
@@ -87,7 +94,31 @@ class ProgressViewModel @Inject constructor(
                     .sortedBy { it.dateEpochDay }
                     .map { VolumePoint(it.dateEpochDay, it.totalVolumeKg) }
             )
+            loadStatistics()
         }
+    }
+
+    fun setStatRange(range: StatRange) {
+        _state.value = _state.value.copy(statRange = range)
+        viewModelScope.launch { loadStatistics() }
+    }
+
+    private suspend fun loadStatistics() {
+        val today = LocalDate.now().toEpochDay()
+        val plan = nutritionRepository.getActivePlan()
+        val statistics = StatisticsEngine.compute(
+            range = _state.value.statRange,
+            todayEpochDay = today,
+            weights = progressRepository.getWeights(),
+            diary = diaryRepository.allEntries(),
+            sessions = workoutRepository.getSessionsBetween(today - 120, today),
+            performances = workoutRepository.getPerformanceByExercise().values.flatten(),
+            targetKcalFor = { epochDay ->
+                val dayIndex = com.fitcoach.app.domain.nutrition.NutritionDiaryEngine.dayIndexFor(epochDay)
+                plan?.days?.firstOrNull { it.dayIndex == dayIndex }?.targetKcal ?: 0.0
+            }
+        )
+        _state.value = _state.value.copy(statistics = statistics)
     }
 
     fun updateWeightInput(v: String) { _state.value = _state.value.copy(weightInput = v) }
