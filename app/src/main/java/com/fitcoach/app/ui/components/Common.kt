@@ -91,6 +91,13 @@ fun SectionCard(
                     colors = listOf(FitSurfaceVariant, FitSurface),
                 ),
             )
+            // Sheen interno (Hyperion): riflesso bianco in alto, nessuna superficie piatta.
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color.White.copy(alpha = 0.05f), Color.Transparent),
+                    endY = 72f,
+                ),
+            )
             .border(width = 1.dp, color = FitOutline, shape = shape)
             .padding(16.dp),
     ) {

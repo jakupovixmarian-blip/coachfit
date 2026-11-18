@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 
 /* =============================================================================
- * FitCoach 2.0 — "Obsidian Meridian" · Motion.kt
+ * FitCoach 2.0 — identita "Hyperion" · Motion.kt
  * -----------------------------------------------------------------------------
  * Material3 risolto = 1.3.1: MotionScheme / ExpressiveMotionScheme NON esistono
  * (arrivano nella 1.4.x-alpha). Qui quindi solo:
@@ -40,6 +40,15 @@ object FitDuration {
 
     /** Cambio tab, apparizione di blocchi. */
     const val Medium = 260
+
+    /** Ingresso schermata, apertura sheet (sharedAxisX / slideUp). */
+    const val Screen = 320
+
+    /** Crescita delle barre dei grafici. */
+    const val Bars = 420
+
+    /** Disegno dei grafici a linea e sweep dei ring. */
+    const val Chart = 520
 
     /** Ingresso schermata, disegno grafici, roll dei numeri. */
     const val Slow = 380

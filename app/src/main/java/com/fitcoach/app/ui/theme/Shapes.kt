@@ -6,11 +6,11 @@ import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
 /* =============================================================================
- * FitCoach 2.0 — "Obsidian Meridian" · Shapes.kt
+ * FitCoach 2.0 — identita "Hyperion" · Shapes.kt
  * -----------------------------------------------------------------------------
- * Regola: nessun raggio sopra 22.dp sulle superfici. Solo bottom sheet e
- * dialog usano 28.dp. I bordi troppo arrotondati sono esplicitamente vietati
- * dalla direzione grafica.
+ * Scala Hyperion: xs 8 · sm 10 · md 14 · lg 18 · xl 22 · sheet 28 · pill 999.
+ * Regola: nessun raggio uniforme. Superfici normali 18, hero e proposta AI 22,
+ * campi e KPI 14, chip e segmenti pill. Solo sheet e dialog arrivano a 28.
  * ========================================================================== */
 
 /** Raggi come costanti: usali per gli shape non coperti da MaterialTheme.shapes. */

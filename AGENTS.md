@@ -112,6 +112,15 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
   `statRange` + `statistics`; `ProgressScreen.AdvancedStatisticsSection` mostra le metriche e i
   grafici (calorie/giorno a barre, volume/seduta e peso nel periodo a linea). Aggiungendo
   statistiche, estenderle qui e in `collaudo/StatisticsEngineCollaudoTest.kt`.
+- **Identita grafica Hyperion**: la palette/identita dell'app e **Hyperion** (consegna grafica
+  AppJet, commit `c3200ed` in `fitcoach2.4`), che sostituisce integralmente "Obsidian Meridian"
+  (smeraldo `#00E599`). Fonte unica dei valori: `design/tokens.json` della consegna. Ciano/blu
+  = brand e azione, viola/magenta = AI, verde = progresso. I nomi dei `val` in `Color.kt` NON
+  cambiano (solo i valori hex), cosi tutta l'app si ritinta senza toccare i chiamanti.
+  `HyperionBackground` (`ui/theme/Theme.kt`) disegna lo sfondo ambientale a tre aure radiali
+  (vietato il nero piatto) e va lasciato trasparente il `Scaffold` di `FitCoachNavHost` e la
+  `Surface` di `MainActivity` perche l'aura si veda. `SectionCard` ha lo sheen interno.
+  Non reintrodurre gli hex vietati: `#00E599 #00C584 #5CFFC4 #00D2FF #9D4EDD #FFD54F #080B0A`.
 - **Recovery del provider AI**: `AiClient.sendOnce` ritenta con backoff solo gli errori
   transitori (rete, 408/429/5xx, max `MAX_TRANSIENT_RETRIES`), mai quelli di configurazione
   (401/404/400). La chat espone `CoachViewModel.retry()` (pulsante "Riprova"): rimuove il

@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -54,6 +55,8 @@ fun FitCoachNavHost(
     }
 
     Scaffold(
+        // Trasparente: lascia vedere lo sfondo ambientale Hyperion disegnato in MainActivity.
+        containerColor = Color.Transparent,
         bottomBar = {
             if (showBottomBar) {
                 FitCoachBottomBar(navController = navController, currentRoute = currentRoute)

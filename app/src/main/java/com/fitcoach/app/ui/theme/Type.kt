@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.sp
 import com.fitcoach.app.R
 
 /* =============================================================================
- * FitCoach 2.0 — "Obsidian Meridian" · Type.kt
+ * FitCoach 2.0 — identita "Hyperion" · Type.kt
  * -----------------------------------------------------------------------------
  * Tre famiglie, tutte incluse nell'APK (offline-first, nessun downloadable font):
  *   Sora            -> display, titoli, numeri di sezione
@@ -40,8 +40,8 @@ val JetBrainsMonoFamily = FontFamily(
 )
 
 /**
- * Stili Material3 rimappati sulla scala Obsidian Meridian.
- * `labelLarge` è pensato per le etichette MAIUSCOLE (12.sp, tracking 0.9):
+ * Stili Material3 rimappati sulla scala tipografica Hyperion.
+ * `labelLarge` è pensato per le etichette MAIUSCOLE (11.5.sp, tracking 1.0):
  * applica `.uppercase()` nel composable quando serve.
  */
 val FitTypography = Typography(
@@ -72,22 +72,22 @@ val FitTypography = Typography(
     headlineLarge = TextStyle(
         fontFamily = SoraFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 28.sp,
-        lineHeight = 34.sp,
+        fontSize = 27.sp,
+        lineHeight = 33.sp,
         letterSpacing = (-0.4).sp,
     ),
     headlineMedium = TextStyle(
         fontFamily = SoraFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
+        fontSize = 21.sp,
+        lineHeight = 27.sp,
         letterSpacing = (-0.2).sp,
     ),
     headlineSmall = TextStyle(
         fontFamily = SoraFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        lineHeight = 24.sp,
+        fontSize = 17.sp,
+        lineHeight = 23.sp,
         letterSpacing = (-0.1).sp,
     ),
 
@@ -95,8 +95,8 @@ val FitTypography = Typography(
     titleLarge = TextStyle(
         fontFamily = SoraFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        lineHeight = 24.sp,
+        fontSize = 17.sp,
+        lineHeight = 23.sp,
         letterSpacing = (-0.1).sp,
     ),
     titleMedium = TextStyle(
@@ -109,7 +109,7 @@ val FitTypography = Typography(
     titleSmall = TextStyle(
         fontFamily = InterFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 13.sp,
+        fontSize = 13.5.sp,
         lineHeight = 19.sp,
         letterSpacing = 0.1.sp,
     ),
@@ -125,7 +125,7 @@ val FitTypography = Typography(
     bodyMedium = TextStyle(
         fontFamily = InterFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 13.sp,
+        fontSize = 13.5.sp,
         lineHeight = 19.sp,
         letterSpacing = 0.1.sp,
     ),
@@ -140,10 +140,10 @@ val FitTypography = Typography(
     // --- Label -----------------------------------------------------------
     labelLarge = TextStyle(
         fontFamily = InterFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 12.sp,
+        fontWeight = FontWeight.Bold,
+        fontSize = 11.5.sp,
         lineHeight = 16.sp,
-        letterSpacing = 0.9.sp,
+        letterSpacing = 1.0.sp,
     ),
     labelMedium = TextStyle(
         fontFamily = InterFamily,
@@ -193,13 +193,13 @@ object FitTextStyles {
     /** Didascalia / meta (12/16). */
     val caption = FitTypography.bodySmall
 
-    /** Numero protagonista (32/36, mono tabulare). */
+    /** Numero protagonista (34/38, mono tabulare). */
     val numericXL = TextStyle(
         fontFamily = JetBrainsMonoFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 32.sp,
-        lineHeight = 36.sp,
-        letterSpacing = (-0.5).sp,
+        fontSize = 34.sp,
+        lineHeight = 38.sp,
+        letterSpacing = (-1.0).sp,
     )
 
     /** Numero di tile (24/28). */
@@ -208,7 +208,7 @@ object FitTextStyles {
         fontWeight = FontWeight.SemiBold,
         fontSize = 24.sp,
         lineHeight = 28.sp,
-        letterSpacing = (-0.3).sp,
+        letterSpacing = (-0.4).sp,
     )
 
     /** Numero in riga (17/22). */
@@ -217,7 +217,7 @@ object FitTextStyles {
         fontWeight = FontWeight.Medium,
         fontSize = 17.sp,
         lineHeight = 22.sp,
-        letterSpacing = 0.sp,
+        letterSpacing = (-0.2).sp,
     )
 
     /** Numero piccolo: assi dei grafici, grammi, serie (13/18). */

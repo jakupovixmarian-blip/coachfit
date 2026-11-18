@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import com.fitcoach.app.notifications.ReminderReceiver
 import com.fitcoach.app.ui.navigation.FitCoachNavHost
 import com.fitcoach.app.ui.theme.FitCoachTheme
+import com.fitcoach.app.ui.theme.HyperionBackground
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -38,13 +39,18 @@ class MainActivity : ComponentActivity() {
         pendingRoute = intent.deepLinkRoute()
         setContent {
             FitCoachTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    val navController = rememberNavController()
-                    FitCoachNavHost(
-                        navController = navController,
-                        pendingRoute = pendingRoute,
-                        onRouteConsumed = { pendingRoute = null }
-                    )
+                HyperionBackground {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = androidx.compose.ui.graphics.Color.Transparent,
+                    ) {
+                        val navController = rememberNavController()
+                        FitCoachNavHost(
+                            navController = navController,
+                            pendingRoute = pendingRoute,
+                            onRouteConsumed = { pendingRoute = null }
+                        )
+                    }
                 }
             }
         }
