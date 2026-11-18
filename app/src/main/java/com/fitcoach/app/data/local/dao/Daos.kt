@@ -125,6 +125,9 @@ interface NutritionPlanDao {
     @Query("SELECT * FROM nutrition_plans ORDER BY createdAt DESC")
     suspend fun getAll(): List<NutritionPlanEntity>
 
+    @Query("SELECT * FROM nutrition_plans WHERE isActive = 1 ORDER BY createdAt DESC")
+    suspend fun getAllActive(): List<NutritionPlanEntity>
+
     @Query("SELECT * FROM nutrition_plans WHERE id = :id")
     suspend fun getById(id: Long): NutritionPlanEntity?
 
@@ -181,6 +184,9 @@ interface MealDao {
 
     @Query("SELECT * FROM meals WHERE id = :id")
     suspend fun getById(id: Long): MealEntity?
+
+    @Query("SELECT * FROM meals WHERE nutritionDayId IN (:dayIds) ORDER BY nutritionDayId, time")
+    suspend fun getForDays(dayIds: List<Long>): List<MealEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(meals: List<MealEntity>): List<Long>
@@ -254,11 +260,17 @@ interface WorkoutPlanDao {
     @Query("SELECT * FROM workout_plans ORDER BY createdAt DESC")
     suspend fun getAll(): List<WorkoutPlanEntity>
 
+    @Query("SELECT * FROM workout_plans WHERE isActive = 1 ORDER BY createdAt DESC")
+    suspend fun getAllActive(): List<WorkoutPlanEntity>
+
     @Query("SELECT * FROM workout_plans WHERE id = :id")
     suspend fun getById(id: Long): WorkoutPlanEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(plan: WorkoutPlanEntity): Long
+
+    @Update
+    suspend fun update(plan: WorkoutPlanEntity)
 
     @Query("UPDATE workout_plans SET isActive = 0")
     suspend fun deactivateAll()

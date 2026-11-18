@@ -33,18 +33,57 @@ class NutritionRepository @Inject constructor(
     }
 
     suspend fun getActivePlan(): NutritionPlan? {
+        normalizeActivePlan()
         val entity = planDao.getActive() ?: return null
         return loadFullPlan(entity.id)
     }
 
     /** Tutti i piani salvati (AI e manuali), dal piu recente. */
-    suspend fun getAllPlans(): List<NutritionPlan> =
-        planDao.getAll().mapNotNull { loadFullPlan(it.id) }
+    suspend fun getAllPlans(): List<NutritionPlan> {
+        normalizeActivePlan()
+        return planDao.getAll().mapNotNull { loadFullPlan(it.id) }
+    }
 
     /** Rende attivo un piano esistente (avvio del piano scelto dall'utente). */
     suspend fun setActivePlan(planId: Long) = db.withTransaction {
+        if (planDao.getById(planId) == null) return@withTransaction
         planDao.deactivateAll()
         planDao.setActive(planId, true)
+    }
+
+    /** Ripara database creati da versioni precedenti che lasciavano piu piani attivi. */
+    private suspend fun normalizeActivePlan() = db.withTransaction {
+        val all = planDao.getAll()
+        val active = all.filter { it.isActive }
+        val keep = when {
+            active.size == 1 -> null
+            active.isNotEmpty() -> active.maxWithOrNull(compareBy({ it.createdAt }, { it.id }))
+            else -> all.maxWithOrNull(compareBy({ it.createdAt }, { it.id }))
+        }
+        if (keep != null) {
+            planDao.deactivateAll()
+            planDao.setActive(keep.id, true)
+        }
+    }
+
+    suspend fun renamePlan(planId: Long, name: String): Boolean {
+        val plan = planDao.getById(planId) ?: return false
+        val normalized = name.trim()
+        if (normalized.isEmpty()) return false
+        planDao.update(plan.copy(name = normalized))
+        return true
+    }
+
+    suspend fun deletePlan(planId: Long): Boolean = db.withTransaction {
+        val plan = planDao.getById(planId) ?: return@withTransaction false
+        planDao.delete(planId)
+        if (plan.isActive) {
+            planDao.getAll().maxWithOrNull(compareBy({ it.createdAt }, { it.id }))?.let {
+                planDao.deactivateAll()
+                planDao.setActive(it.id, true)
+            }
+        }
+        true
     }
 
     /**

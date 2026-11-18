@@ -87,6 +87,14 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
   Robolectric leggono gli asset della variante debug. Il test ha scoperto un bug reale:
   `MIGRATION_1_2` ri-aggiungeva `activityFactorOverride`/`calorieTargetOverride` (gia in v1)
   -> "duplicate column name" in upgrade da v1. Aggiungendo migrazioni, estendere questo test.
+- **Gestione piani salvati**: `NutritionRepository` e `WorkoutRepository` normalizzano lo stato per
+  garantire esattamente un piano attivo (riparano anche i database precedenti con piu flag
+  `isActive`). Entrambi espongono rename/delete; la selezione disattiva tutti gli altri.
+  La schermata Allenamento usa `custom_workout/{planId}` per modificare una scheda esistente
+  in-place, senza crearne una copia. `NutritionDiaryRepository` filtra le voci collegate al
+  piano attivo: gli spuntini di vecchi piani non gonfiano piu il consumo giornaliero.
+  `collaudo/PlanManagementCollaudoTest.kt` copre isolamento, selezione, CRUD e modifica reale.
+
 - **Navigazione di primo livello (Home che "sparisce")**: tutte le destinazioni top-level
   (Dashboard, Alimentazione, Spesa, Allenamento, Progressi, Coach) si aprono SEMPRE con
   `NavController.navigateTopLevel(route)` (`ui/navigation/Nav.kt`), sia dalla barra inferiore

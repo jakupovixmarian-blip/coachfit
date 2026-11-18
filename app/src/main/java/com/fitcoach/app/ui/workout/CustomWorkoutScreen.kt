@@ -60,10 +60,15 @@ private val weekdayNames = listOf("Lunedì", "Martedì", "Mercoledì", "Giovedì
 @Composable
 fun CustomWorkoutScreen(
     navController: NavHostController,
+    editPlanId: Long? = null,
     viewModel: CustomWorkoutViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+
+    LaunchedEffect(editPlanId) {
+        if (editPlanId != null) viewModel.load(editPlanId)
+    }
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -104,7 +109,7 @@ fun CustomWorkoutScreen(
                 }
                 Column(Modifier.weight(1f)) {
                     Text(
-                        "Crea scheda personalizzata",
+                        if (editPlanId == null) "Crea scheda personalizzata" else "Modifica scheda",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -153,7 +158,7 @@ fun CustomWorkoutScreen(
             ) {
                 Icon(Icons.Filled.Check, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text(if (state.saving) "Salvataggio..." else "Salva scheda come attiva")
+                Text(if (state.saving) "Salvataggio..." else if (editPlanId == null) "Salva scheda come attiva" else "Salva modifiche")
             }
         }
     }

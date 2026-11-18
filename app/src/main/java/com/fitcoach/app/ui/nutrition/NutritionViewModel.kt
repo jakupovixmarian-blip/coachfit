@@ -51,7 +51,9 @@ data class NutritionUiState(
     val addFoodGrams: String = "",
     val selectedFoodToAdd: FoodItem? = null,
     // Piani salvati (AI e manuali): per scegliere quale avviare.
-    val plans: List<NutritionPlan> = emptyList()
+    val plans: List<NutritionPlan> = emptyList(),
+    val editingPlan: NutritionPlan? = null,
+    val deletingPlan: NutritionPlan? = null
 ) {
     val selectedDay: NutritionDay?
         get() = plan?.days?.firstOrNull { it.dayIndex == selectedDayIndex }
@@ -184,6 +186,43 @@ class NutritionViewModel @Inject constructor(
             val plan = nutritionRepository.getActivePlan()
             _state.value = _state.value.copy(plan = plan, selectedDayIndex = 0, message = "Piano attivato.")
             refreshPlanList()
+        }
+    }
+
+    fun openRenamePlan(plan: NutritionPlan) {
+        _state.value = _state.value.copy(editingPlan = plan)
+    }
+
+    fun closeRenamePlan() {
+        _state.value = _state.value.copy(editingPlan = null)
+    }
+
+    fun renamePlan(name: String) {
+        val plan = _state.value.editingPlan ?: return
+        viewModelScope.launch {
+            if (nutritionRepository.renamePlan(plan.id, name)) {
+                _state.value = _state.value.copy(editingPlan = null, message = "Piano rinominato.")
+                load()
+            } else {
+                _state.value = _state.value.copy(message = "Inserisci un nome valido.")
+            }
+        }
+    }
+
+    fun askDeletePlan(plan: NutritionPlan) {
+        _state.value = _state.value.copy(deletingPlan = plan)
+    }
+
+    fun closeDeletePlan() {
+        _state.value = _state.value.copy(deletingPlan = null)
+    }
+
+    fun deletePlan() {
+        val plan = _state.value.deletingPlan ?: return
+        viewModelScope.launch {
+            nutritionRepository.deletePlan(plan.id)
+            _state.value = _state.value.copy(deletingPlan = null, message = "Piano eliminato.")
+            load()
         }
     }
 

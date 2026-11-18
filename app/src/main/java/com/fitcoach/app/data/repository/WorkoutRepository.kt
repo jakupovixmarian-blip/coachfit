@@ -53,18 +53,57 @@ class WorkoutRepository @Inject constructor(
     }
 
     suspend fun getActivePlan(): WorkoutPlan? {
+        normalizeActivePlan()
         val entity = planDao.getActive() ?: return null
         return loadFullPlan(entity.id)
     }
 
     /** Tutte le schede salvate (AI e manuali), dalla piu recente. */
-    suspend fun getAllPlans(): List<WorkoutPlan> =
-        planDao.getAll().mapNotNull { loadFullPlan(it.id) }
+    suspend fun getAllPlans(): List<WorkoutPlan> {
+        normalizeActivePlan()
+        return planDao.getAll().mapNotNull { loadFullPlan(it.id) }
+    }
 
     /** Rende attiva una scheda esistente (avvio della scheda scelta dall'utente). */
     suspend fun setActivePlan(planId: Long) = db.withTransaction {
+        if (planDao.getById(planId) == null) return@withTransaction
         planDao.deactivateAll()
         planDao.setActive(planId, true)
+    }
+
+    /** Ripara database creati da versioni precedenti che lasciavano piu schede attive. */
+    private suspend fun normalizeActivePlan() = db.withTransaction {
+        val all = planDao.getAll()
+        val active = all.filter { it.isActive }
+        val keep = when {
+            active.size == 1 -> null
+            active.isNotEmpty() -> active.maxWithOrNull(compareBy({ it.createdAt }, { it.id }))
+            else -> all.maxWithOrNull(compareBy({ it.createdAt }, { it.id }))
+        }
+        if (keep != null) {
+            planDao.deactivateAll()
+            planDao.setActive(keep.id, true)
+        }
+    }
+
+    suspend fun renamePlan(planId: Long, name: String): Boolean {
+        val plan = planDao.getById(planId) ?: return false
+        val normalized = name.trim()
+        if (normalized.isEmpty()) return false
+        planDao.update(plan.copy(name = normalized))
+        return true
+    }
+
+    suspend fun deletePlan(planId: Long): Boolean = db.withTransaction {
+        val plan = planDao.getById(planId) ?: return@withTransaction false
+        planDao.delete(planId)
+        if (plan.isActive) {
+            planDao.getAll().maxWithOrNull(compareBy({ it.createdAt }, { it.id }))?.let {
+                planDao.deactivateAll()
+                planDao.setActive(it.id, true)
+            }
+        }
+        true
     }
 
     suspend fun savePlan(
@@ -83,6 +122,38 @@ class WorkoutRepository @Inject constructor(
                 version = previousVersion + 1
             )
         )
+        insertWorkoutStructure(planId, profile, built, mesocycleWeeks)
+        planId
+    }
+
+    /** Aggiorna una scheda esistente senza crearne una copia e senza perdere il suo id. */
+    suspend fun updatePlan(
+        planId: Long,
+        profile: UserProfile,
+        built: WorkoutPlanBuilder.BuiltPlan,
+        mesocycleWeeks: Int = 6
+    ): Boolean = db.withTransaction {
+        val current = planDao.getById(planId) ?: return@withTransaction false
+        planDao.update(
+            current.copy(
+                splitType = built.splitType,
+                isActive = true,
+                version = current.version + 1
+            )
+        )
+        planDao.deactivateAll()
+        planDao.setActive(planId, true)
+        mesoDao.deleteForPlan(planId)
+        insertWorkoutStructure(planId, profile, built, mesocycleWeeks)
+        true
+    }
+
+    private suspend fun insertWorkoutStructure(
+        planId: Long,
+        profile: UserProfile,
+        built: WorkoutPlanBuilder.BuiltPlan,
+        mesocycleWeeks: Int
+    ) {
         val meso = defaultMesocycle(planId, profile, mesocycleWeeks)
         val mesoId = mesoDao.insert(
             MesocycleEntity(
@@ -95,7 +166,6 @@ class WorkoutRepository @Inject constructor(
                 progressionModel = meso.progressionModel
             )
         )
-
         built.days.forEach { day ->
             val dayId = dayDao.insertAll(
                 listOf(
@@ -109,32 +179,29 @@ class WorkoutRepository @Inject constructor(
                 )
             ).first()
             if (!day.isRestDay) {
-                plannedDao.insertAll(
-                    day.exercises.map { pe ->
-                        PlannedExerciseEntity(
-                            workoutDayId = dayId,
-                            exerciseId = pe.exerciseId,
-                            exerciseName = pe.exerciseName,
-                            primaryMuscle = pe.primaryMuscle,
-                            orderIndex = pe.orderIndex,
-                            sets = pe.sets,
-                            minReps = pe.minReps,
-                            maxReps = pe.maxReps,
-                            restSeconds = pe.restSeconds,
-                            targetRir = pe.targetRir,
-                            technique = pe.technique,
-                            category = pe.category,
-                            selectionReason = pe.selectionReason,
-                            restReason = pe.restReason,
-                            intensityTechnique = pe.intensityTechnique,
-                            techniqueReason = pe.techniqueReason,
-                            movementPattern = pe.movementPattern
-                        )
-                    }
-                )
+                plannedDao.insertAll(day.exercises.map { pe ->
+                    PlannedExerciseEntity(
+                        workoutDayId = dayId,
+                        exerciseId = pe.exerciseId,
+                        exerciseName = pe.exerciseName,
+                        primaryMuscle = pe.primaryMuscle,
+                        orderIndex = pe.orderIndex,
+                        sets = pe.sets,
+                        minReps = pe.minReps,
+                        maxReps = pe.maxReps,
+                        restSeconds = pe.restSeconds,
+                        targetRir = pe.targetRir,
+                        technique = pe.technique,
+                        category = pe.category,
+                        selectionReason = pe.selectionReason,
+                        restReason = pe.restReason,
+                        intensityTechnique = pe.intensityTechnique,
+                        techniqueReason = pe.techniqueReason,
+                        movementPattern = pe.movementPattern
+                    )
+                })
             }
         }
-        planId
     }
 
     suspend fun getDay(dayId: Long): WorkoutDay? {

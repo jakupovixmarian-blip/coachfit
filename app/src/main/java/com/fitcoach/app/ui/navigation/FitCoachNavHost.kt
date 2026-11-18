@@ -62,6 +62,15 @@ fun FitCoachNavHost(navController: NavHostController) {
             composable(Routes.DIARY) { DiaryScreen(navController) }
             composable(Routes.WORKOUT) { WorkoutScreen(navController) }
             composable(Routes.CUSTOM_WORKOUT) { CustomWorkoutScreen(navController) }
+            composable(
+                route = Routes.CUSTOM_WORKOUT_EDIT,
+                arguments = listOf(navArgument("planId") { type = NavType.LongType })
+            ) { entry ->
+                CustomWorkoutScreen(
+                    navController = navController,
+                    editPlanId = entry.arguments?.getLong("planId")
+                )
+            }
             composable(Routes.PROGRESS) { ProgressScreen(navController) }
             composable(Routes.COACH) { CoachScreen(navController) }
             composable(Routes.ONBOARDING) { OnboardingScreen(navController) }

@@ -13,6 +13,9 @@ import com.fitcoach.app.domain.model.MealSlot
 import com.fitcoach.app.domain.model.WeeklyNutritionSummary
 import com.fitcoach.app.domain.nutrition.NutritionDiaryEngine
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import javax.inject.Inject
@@ -34,17 +37,32 @@ class NutritionDiaryRepository @Inject constructor(
     private val planDao = db.nutritionPlanDao()
     private val dayDao = db.nutritionDayDao()
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     fun observeForDay(epochDay: Long): Flow<List<DiaryEntry>> =
-        diaryDao.observeForDay(epochDay).map { list -> list.map { it.toDomain() } }
+        planDao.observeActive().flatMapLatest { plan ->
+            kotlinx.coroutines.flow.flow {
+                val activeEntryIds = activePlanEntryIds(plan?.id)
+                diaryDao.observeForDay(epochDay).collect { entries ->
+                    emit(entries.filterForActivePlan(activeEntryIds).map { it.toDomain() })
+                }
+            }
+        }
 
-    suspend fun entriesForDay(epochDay: Long): List<DiaryEntry> =
-        diaryDao.getForDay(epochDay).map { it.toDomain() }
+    suspend fun entriesForDay(epochDay: Long): List<DiaryEntry> {
+        val activeEntryIds = activePlanEntryIds(planDao.getActive()?.id)
+        return diaryDao.getForDay(epochDay)
+            .filterForActivePlan(activeEntryIds)
+            .map { it.toDomain() }
+    }
 
-    /** Mappa planEntryId -> voce del diario (attiva) per mostrare le spunte in Alimentazione. */
-    suspend fun planChecks(epochDay: Long): Map<Long, DiaryEntry> =
-        diaryDao.getForDay(epochDay)
+    /** Mappa planEntryId -> voce del diario del SOLO piano attivo. */
+    suspend fun planChecks(epochDay: Long): Map<Long, DiaryEntry> {
+        val activeEntryIds = activePlanEntryIds(planDao.getActive()?.id)
+        return diaryDao.getForDay(epochDay)
+            .filterForActivePlan(activeEntryIds)
             .filter { it.planEntryId != null && it.active }
             .associate { it.planEntryId!! to it.toDomain() }
+    }
 
     /** Bilancio del giorno: obiettivo del piano vs consumato reale (voci attive). */
     suspend fun balanceForDay(epochDay: Long): DailyBalance {
@@ -55,7 +73,10 @@ class NutritionDiaryRepository @Inject constructor(
 
     suspend fun weeklySummary(weekStartEpochDay: Long): WeeklyNutritionSummary {
         val plan = activePlanDomain()
-        val entries = diaryDao.getBetween(weekStartEpochDay, weekStartEpochDay + 6).map { it.toDomain() }
+        val activeEntryIds = activePlanEntryIds(plan?.id)
+        val entries = diaryDao.getBetween(weekStartEpochDay, weekStartEpochDay + 6)
+            .filterForActivePlan(activeEntryIds)
+            .map { it.toDomain() }
         return NutritionDiaryEngine.weeklySummary(plan, entries, weekStartEpochDay)
     }
 
@@ -151,6 +172,22 @@ class NutritionDiaryRepository @Inject constructor(
     suspend fun delete(entryId: Long) {
         val entity = diaryDao.getById(entryId) ?: return
         diaryDao.delete(entity)
+    }
+
+    /** Restituisce gli id delle voci alimentari appartenenti al piano attivo. */
+    private suspend fun activePlanEntryIds(planId: Long?): Set<Long> {
+        if (planId == null) return emptySet()
+        val days = dayDao.getForPlan(planId)
+        if (days.isEmpty()) return emptySet()
+        val meals = db.mealDao().getForDays(days.map { it.id })
+        if (meals.isEmpty()) return emptySet()
+        return db.mealEntryDao().getForMeals(meals.map { it.id }).mapTo(mutableSetOf()) { it.id }
+    }
+
+    private fun List<com.fitcoach.app.data.local.entity.DiaryEntryEntity>.filterForActivePlan(
+        activeEntryIds: Set<Long>
+    ): List<com.fitcoach.app.data.local.entity.DiaryEntryEntity> = filter {
+        it.source != DiarySource.PLAN || (it.planEntryId != null && it.planEntryId in activeEntryIds)
     }
 
     /** Riporta al piano lo stato dei consumi: disattiva tutte le voci di piano del giorno. */

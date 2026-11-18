@@ -82,7 +82,9 @@ data class WorkoutUiState(
     val setupQueue: List<PlannedExercise> = emptyList(),
     val setupIndex: Int = 0,
     // Schede salvate (AI e manuali): per scegliere quale avviare.
-    val plans: List<WorkoutPlan> = emptyList()
+    val plans: List<WorkoutPlan> = emptyList(),
+    val editingPlan: WorkoutPlan? = null,
+    val deletingPlan: WorkoutPlan? = null
 )
 
 /** Le due sotto-sezioni della schermata Allenamento. */
@@ -153,6 +155,43 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             workoutRepository.setActivePlan(planId)
             _state.value = _state.value.copy(message = "Scheda attivata.")
+            load()
+        }
+    }
+
+    fun openRenamePlan(plan: WorkoutPlan) {
+        _state.value = _state.value.copy(editingPlan = plan)
+    }
+
+    fun closeRenamePlan() {
+        _state.value = _state.value.copy(editingPlan = null)
+    }
+
+    fun renamePlan(name: String) {
+        val plan = _state.value.editingPlan ?: return
+        viewModelScope.launch {
+            if (workoutRepository.renamePlan(plan.id, name)) {
+                _state.value = _state.value.copy(editingPlan = null, message = "Scheda rinominata.")
+                load()
+            } else {
+                _state.value = _state.value.copy(message = "Inserisci un nome valido.")
+            }
+        }
+    }
+
+    fun askDeletePlan(plan: WorkoutPlan) {
+        _state.value = _state.value.copy(deletingPlan = plan)
+    }
+
+    fun closeDeletePlan() {
+        _state.value = _state.value.copy(deletingPlan = null)
+    }
+
+    fun deletePlan() {
+        val plan = _state.value.deletingPlan ?: return
+        viewModelScope.launch {
+            workoutRepository.deletePlan(plan.id)
+            _state.value = _state.value.copy(deletingPlan = null, message = "Scheda eliminata.")
             load()
         }
     }

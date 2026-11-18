@@ -35,6 +35,7 @@ object Routes {
     const val DIARY = "diary"
     const val WORKOUT = "workout"
     const val CUSTOM_WORKOUT = "custom_workout"
+    const val CUSTOM_WORKOUT_EDIT = "custom_workout/{planId}"
     const val PROGRESS = "progress"
     const val COACH = "coach"
     const val SETTINGS = "settings"

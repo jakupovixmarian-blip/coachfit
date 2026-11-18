@@ -42,7 +42,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -148,7 +150,7 @@ fun NutritionScreen(
             }
         }
 
-        if (state.plans.size > 1) {
+        if (state.plans.isNotEmpty()) {
             item {
                 SectionCard {
                     Column {
@@ -175,6 +177,12 @@ fun NutritionScreen(
                                     Pill("Attivo", Emerald)
                                 } else {
                                     TextButton(onClick = { viewModel.activatePlan(saved.id) }) { Text("Attiva") }
+                                }
+                                IconButton(onClick = { viewModel.openRenamePlan(saved) }) {
+                                    Icon(Icons.Filled.Edit, contentDescription = "Modifica nome piano", tint = TextSecondary)
+                                }
+                                IconButton(onClick = { viewModel.askDeletePlan(saved) }) {
+                                    Icon(Icons.Filled.Delete, contentDescription = "Elimina piano", tint = TextSecondary)
                                 }
                             }
                         }
@@ -310,7 +318,51 @@ fun NutritionScreen(
         )
     }
 
+    state.editingPlan?.let { planToEdit ->
+        PlanNameDialog(
+            title = "Modifica piano",
+            initialName = planToEdit.name,
+            onConfirm = viewModel::renamePlan,
+            onDismiss = viewModel::closeRenamePlan
+        )
+    }
+    state.deletingPlan?.let { planToDelete ->
+        AlertDialog(
+            onDismissRequest = viewModel::closeDeletePlan,
+            title = { Text("Eliminare il piano?") },
+            text = { Text("Il piano \"${planToDelete.name}\" e tutti i suoi pasti verranno eliminati. Il diario storico restera invariato.") },
+            confirmButton = {
+                TextButton(onClick = viewModel::deletePlan) { Text("Elimina", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = viewModel::closeDeletePlan) { Text("Annulla") } }
+        )
+    }
+
     SnackbarHost(snackbar)
+}
+
+@Composable
+private fun PlanNameDialog(
+    title: String,
+    initialName: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var name by remember(initialName) { mutableStateOf(initialName) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Nome piano") },
+                singleLine = true
+            )
+        },
+        confirmButton = { TextButton(onClick = { onConfirm(name) }) { Text("Salva") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } }
+    )
 }
 
 @Composable

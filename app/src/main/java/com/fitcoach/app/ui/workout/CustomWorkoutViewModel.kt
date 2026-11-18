@@ -75,15 +75,21 @@ class CustomWorkoutViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(CustomWorkoutUiState())
     val state: StateFlow<CustomWorkoutUiState> = _state.asStateFlow()
+    private var editingPlanId: Long? = null
 
     init {
         load()
     }
 
-    fun load() {
+    fun load(planId: Long? = null) {
+        if (planId != null) editingPlanId = planId
         viewModelScope.launch {
             val library = exerciseRepository.getAll()
-            val existing = workoutRepository.getActivePlan()
+            val existing = if (editingPlanId != null) {
+                workoutRepository.getAllPlans().firstOrNull { it.id == editingPlanId }
+            } else {
+                workoutRepository.getActivePlan()
+            }
             val days = if (existing != null && existing.days.isNotEmpty()) {
                 existing.days.sortedBy { it.dayIndex }.map { day ->
                     DraftDay(
@@ -274,16 +280,21 @@ class CustomWorkoutViewModel @Inject constructor(
                 .groupingBy { it.primaryMuscle }
                 .fold(0) { acc, ex -> acc + ex.sets }
 
+            val built = WorkoutPlanBuilder.BuiltPlan(
+                splitType = SplitType.CUSTOM,
+                days = domainDays,
+                weeklyVolumePerGroup = weeklyVolume,
+                notes = listOf("Scheda personalizzata creata manualmente.")
+            )
             runCatching {
-                workoutRepository.savePlan(
-                    profile = profile,
-                    built = WorkoutPlanBuilder.BuiltPlan(
-                        splitType = SplitType.CUSTOM,
-                        days = domainDays,
-                        weeklyVolumePerGroup = weeklyVolume,
-                        notes = listOf("Scheda personalizzata creata manualmente.")
-                    )
-                )
+                if (editingPlanId != null) {
+                    check(workoutRepository.updatePlan(editingPlanId!!, profile, built)) {
+                        "La scheda da modificare non esiste piu."
+                    }
+                } else {
+                    workoutRepository.savePlan(profile, built)
+                    true
+                }
             }.onSuccess {
                 _state.value = _state.value.copy(
                     saving = false,

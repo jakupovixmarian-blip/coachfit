@@ -175,7 +175,7 @@ fun WorkoutScreen(
             }
         }
 
-        if (state.plans.size > 1) {
+        if (state.plans.isNotEmpty()) {
             item {
                 SectionCard {
                     Column {
@@ -202,6 +202,17 @@ fun WorkoutScreen(
                                     Pill("Attiva", Emerald)
                                 } else {
                                     TextButton(onClick = { viewModel.activatePlan(saved.id) }) { Text("Attiva") }
+                                }
+                                IconButton(onClick = {
+                                    navController.navigate(com.fitcoach.app.ui.navigation.Routes.CUSTOM_WORKOUT_EDIT.replace("{planId}", saved.id.toString()))
+                                }) {
+                                    Icon(Icons.Filled.Edit, contentDescription = "Modifica scheda", tint = TextSecondary)
+                                }
+                                IconButton(onClick = { viewModel.openRenamePlan(saved) }) {
+                                    Icon(Icons.Filled.Edit, contentDescription = "Rinomina scheda", tint = TextSecondary)
+                                }
+                                IconButton(onClick = { viewModel.askDeletePlan(saved) }) {
+                                    Icon(Icons.Filled.Delete, contentDescription = "Elimina scheda", tint = TextSecondary)
                                 }
                             }
                         }
@@ -524,7 +535,51 @@ fun WorkoutScreen(
         )
     }
 
+    state.editingPlan?.let { planToEdit ->
+        PlanNameDialog(
+            title = "Rinomina scheda",
+            initialName = planToEdit.name,
+            onConfirm = viewModel::renamePlan,
+            onDismiss = viewModel::closeRenamePlan
+        )
+    }
+    state.deletingPlan?.let { planToDelete ->
+        AlertDialog(
+            onDismissRequest = viewModel::closeDeletePlan,
+            title = { Text("Eliminare la scheda?") },
+            text = { Text("La scheda \"${planToDelete.name}\" e la sua struttura verranno eliminate. Lo storico delle sessioni restera invariato.") },
+            confirmButton = {
+                TextButton(onClick = viewModel::deletePlan) { Text("Elimina", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = viewModel::closeDeletePlan) { Text("Annulla") } }
+        )
+    }
+
     SnackbarHost(snackbar)
+}
+
+@Composable
+private fun PlanNameDialog(
+    title: String,
+    initialName: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var name by remember(initialName) { mutableStateOf(initialName) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Nome scheda") },
+                singleLine = true
+            )
+        },
+        confirmButton = { TextButton(onClick = { onConfirm(name) }) { Text("Salva") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } }
+    )
 }
 
 @Composable
