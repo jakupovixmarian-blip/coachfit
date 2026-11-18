@@ -84,7 +84,11 @@ data class WorkoutUiState(
     // Schede salvate (AI e manuali): per scegliere quale avviare.
     val plans: List<WorkoutPlan> = emptyList(),
     val editingPlan: WorkoutPlan? = null,
-    val deletingPlan: WorkoutPlan? = null
+    val deletingPlan: WorkoutPlan? = null,
+    val editingMesocycle: com.fitcoach.app.domain.model.Mesocycle? = null,
+    val mesocycleWeeksInput: String = "",
+    val mesocycleDeloadInput: String = "",
+    val mesocycleProgressionInput: String = ""
 )
 
 /** Le due sotto-sezioni della schermata Allenamento. */
@@ -192,6 +196,50 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             workoutRepository.deletePlan(plan.id)
             _state.value = _state.value.copy(deletingPlan = null, message = "Scheda eliminata.")
+            load()
+        }
+    }
+
+    fun openEditMesocycle(mesocycle: com.fitcoach.app.domain.model.Mesocycle) {
+        _state.value = _state.value.copy(
+            editingMesocycle = mesocycle,
+            mesocycleWeeksInput = mesocycle.weekCount.toString(),
+            mesocycleDeloadInput = mesocycle.deloadWeekIndex?.toString().orEmpty(),
+            mesocycleProgressionInput = mesocycle.progressionModel
+        )
+    }
+
+    fun closeEditMesocycle() {
+        _state.value = _state.value.copy(editingMesocycle = null)
+    }
+
+    fun updateMesocycleFields(weeks: String, deload: String, progression: String) {
+        _state.value = _state.value.copy(
+            mesocycleWeeksInput = weeks,
+            mesocycleDeloadInput = deload,
+            mesocycleProgressionInput = progression
+        )
+    }
+
+    fun saveMesocycle() {
+        val meso = _state.value.editingMesocycle ?: return
+        val planId = _state.value.plan?.id
+        val weeks = _state.value.mesocycleWeeksInput.toIntOrNull()
+        val deload = _state.value.mesocycleDeloadInput.toIntOrNull()
+        val progression = _state.value.mesocycleProgressionInput.trim()
+        if (planId == null || weeks == null || weeks !in 1..52 || deload != null && deload !in 1..weeks || progression.isBlank()) {
+            _state.value = _state.value.copy(message = "Controlla durata, deload e modello di progressione.")
+            return
+        }
+        viewModelScope.launch {
+            val ok = workoutRepository.updateMesocycleAsNewPlanVersion(
+                planId, meso.id, weeks, deload, progression
+            )
+            if (!ok) {
+                _state.value = _state.value.copy(message = "Impossibile creare la nuova versione della scheda.")
+                return@launch
+            }
+            _state.value = _state.value.copy(editingMesocycle = null, message = "Mesociclo aggiornato.")
             load()
         }
     }

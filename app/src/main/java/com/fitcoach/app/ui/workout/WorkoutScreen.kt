@@ -175,6 +175,27 @@ fun WorkoutScreen(
             }
         }
 
+        if (plan.mesocycles.isNotEmpty()) {
+            item {
+                val meso = plan.mesocycles.first()
+                SectionCard {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            SectionHeader("Mesociclo", "${meso.weekCount} settimane · ${meso.progressionModel}")
+                        }
+                        Text(
+                            meso.deloadWeekIndex?.let { "Deload S$it" } ?: "Deload non impostato",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary
+                        )
+                        IconButton(onClick = { viewModel.openEditMesocycle(meso) }) {
+                            Icon(Icons.Filled.Edit, contentDescription = "Modifica mesociclo", tint = TextSecondary)
+                        }
+                    }
+                }
+            }
+        }
+
         if (state.plans.isNotEmpty()) {
             item {
                 SectionCard {
@@ -535,6 +556,17 @@ fun WorkoutScreen(
         )
     }
 
+    state.editingMesocycle?.let { meso ->
+        MesocycleDialog(
+            weeks = state.mesocycleWeeksInput,
+            deload = state.mesocycleDeloadInput,
+            progression = state.mesocycleProgressionInput,
+            onChange = viewModel::updateMesocycleFields,
+            onConfirm = viewModel::saveMesocycle,
+            onDismiss = viewModel::closeEditMesocycle
+        )
+    }
+
     state.editingPlan?.let { planToEdit ->
         PlanNameDialog(
             title = "Rinomina scheda",
@@ -556,6 +588,30 @@ fun WorkoutScreen(
     }
 
     SnackbarHost(snackbar)
+}
+
+@Composable
+private fun MesocycleDialog(
+    weeks: String,
+    deload: String,
+    progression: String,
+    onChange: (String, String, String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Modifica mesociclo") },
+        text = {
+            Column {
+                OutlinedTextField(weeks, { onChange(it, deload, progression) }, label = { Text("Durata (settimane)") }, singleLine = true)
+                OutlinedTextField(deload, { onChange(weeks, it, progression) }, label = { Text("Settimana deload (opzionale)") }, singleLine = true)
+                OutlinedTextField(progression, { onChange(weeks, deload, it) }, label = { Text("Modello di progressione") }, singleLine = true)
+            }
+        },
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Salva nuova versione") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } }
+    )
 }
 
 @Composable

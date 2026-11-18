@@ -152,6 +152,51 @@ class WorkoutRepository @Inject constructor(
         true
     }
 
+
+    /** Crea una nuova versione della scheda con i parametri del mesociclo aggiornati. */
+    suspend fun updateMesocycleAsNewPlanVersion(
+        planId: Long,
+        mesocycleId: Long,
+        weekCount: Int,
+        deloadWeekIndex: Int?,
+        progressionModel: String
+    ): Boolean = db.withTransaction {
+        if (weekCount !in 1..52 || deloadWeekIndex != null && deloadWeekIndex !in 1..weekCount) {
+            return@withTransaction false
+        }
+        val current = planDao.getById(planId) ?: return@withTransaction false
+        val oldMesos = mesoDao.getForPlan(planId)
+        if (oldMesos.none { it.id == mesocycleId }) return@withTransaction false
+        planDao.deactivateAll()
+        val newPlanId = planDao.insert(
+            current.copy(
+                id = 0L,
+                isActive = true,
+                createdAt = System.currentTimeMillis(),
+                version = current.version + 1
+            )
+        )
+        oldMesos.forEach { oldMeso ->
+            val newMesoId = mesoDao.insert(
+                oldMeso.copy(
+                    id = 0L,
+                    planId = newPlanId,
+                    weekCount = if (oldMeso.id == mesocycleId) weekCount else oldMeso.weekCount,
+                    deloadWeekIndex = if (oldMeso.id == mesocycleId) deloadWeekIndex else oldMeso.deloadWeekIndex,
+                    progressionModel = if (oldMeso.id == mesocycleId) progressionModel else oldMeso.progressionModel
+                )
+            )
+            dayDao.getForMesocycle(oldMeso.id).forEach { oldDay ->
+                val newDayId = dayDao.insertAll(listOf(oldDay.copy(id = 0L, mesocycleId = newMesoId))).first()
+                val oldExercises = plannedDao.getForDay(oldDay.id)
+                if (oldExercises.isNotEmpty()) {
+                    plannedDao.insertAll(oldExercises.map { it.copy(id = 0L, workoutDayId = newDayId) })
+                }
+            }
+        }
+        true
+    }
+
     private suspend fun insertWorkoutStructure(
         planId: Long,
         profile: UserProfile,
