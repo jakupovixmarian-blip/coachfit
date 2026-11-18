@@ -297,6 +297,116 @@ class NutritionRepository @Inject constructor(
         true
     }
 
+    private suspend fun clonePlanVersion(
+        planId: Long,
+        dayTransform: (NutritionDayEntity) -> NutritionDayEntity = { it },
+        mealTransform: (MealEntity) -> MealEntity = { it },
+        entryTransform: (MealEntryEntity) -> MealEntryEntity = { it }
+    ): Pair<Long, Map<Long, Long>>? = db.withTransaction {
+        val currentPlan = planDao.getById(planId) ?: return@withTransaction null
+        val oldDays = dayDao.getForPlan(planId)
+        planDao.deactivateAll()
+        val newPlanId = planDao.insert(
+            currentPlan.copy(
+                id = 0L,
+                isActive = true,
+                createdAt = System.currentTimeMillis(),
+                version = currentPlan.version + 1
+            )
+        )
+        val entryMap = mutableMapOf<Long, Long>()
+        oldDays.forEach { oldDay ->
+            val newDayId = dayDao.insertAll(
+                listOf(dayTransform(oldDay.copy(id = 0L, planId = newPlanId)))
+            ).first()
+            mealDao.getForDay(oldDay.id).forEach { oldMeal ->
+                val newMealId = mealDao.insertAll(
+                    listOf(mealTransform(oldMeal.copy(id = 0L, nutritionDayId = newDayId)))
+                ).first()
+                val oldEntries = entryDao.getForMeal(oldMeal.id)
+                if (oldEntries.isNotEmpty()) {
+                    val newEntries = oldEntries.map { oldEntry ->
+                        entryTransform(oldEntry.copy(id = 0L, mealId = newMealId))
+                    }
+                    val newIds = entryDao.insertAll(newEntries)
+                    oldEntries.zip(newIds).forEach { (oldEntry, newEntryId) ->
+                        entryMap[oldEntry.id] = newEntryId
+                    }
+                }
+            }
+        }
+        newPlanId to entryMap
+    }
+
+    private suspend fun relinkCurrentDiary(
+        oldToNewEntries: Map<Long, Long>,
+        newPlanId: Long,
+        epochDay: Long
+    ) {
+        val diaryDao = db.diaryEntryDao()
+        oldToNewEntries.forEach { (oldId, newId) ->
+            diaryDao.relinkPlanEntryForDate(oldId, newId, newPlanId, epochDay)
+        }
+    }
+
+    suspend fun updateDayTargetsAsNewPlanVersion(
+        planId: Long,
+        dayId: Long,
+        kcal: Double,
+        protein: Double,
+        carbs: Double,
+        fat: Double,
+        diaryEpochDay: Long
+    ): Boolean {
+        if (kcal <= 0 || protein < 0 || carbs < 0 || fat < 0) return false
+        val result = clonePlanVersion(
+            planId = planId,
+            dayTransform = { day ->
+                if (day.id == dayId) day.copy(
+                    targetKcal = kcal,
+                    targetProtein = protein,
+                    targetCarbs = carbs,
+                    targetFat = fat
+                ) else day
+            }
+        ) ?: return false
+        relinkCurrentDiary(result.second, result.first, diaryEpochDay)
+        return true
+    }
+
+    suspend fun updateDayTypeAsNewPlanVersion(
+        planId: Long,
+        dayId: Long,
+        dayType: com.fitcoach.app.domain.model.CarbDayType,
+        diaryEpochDay: Long
+    ): Boolean {
+        val result = clonePlanVersion(
+            planId = planId,
+            dayTransform = { day -> if (day.id == dayId) day.copy(dayType = dayType) else day }
+        ) ?: return false
+        relinkCurrentDiary(result.second, result.first, diaryEpochDay)
+        return true
+    }
+
+    suspend fun updateMealScheduleAsNewPlanVersion(
+        planId: Long,
+        mealId: Long,
+        slot: com.fitcoach.app.domain.model.MealSlot,
+        time: String,
+        diaryEpochDay: Long
+    ): Boolean {
+        if (!Regex("^([01]\\\\d|2[0-3]):[0-5]\\\\d$").matches(time)) return false
+        val result = clonePlanVersion(
+            planId = planId,
+            mealTransform = { meal ->
+                if (meal.id == mealId) meal.copy(slot = slot, time = time) else meal
+            }
+        ) ?: return false
+        relinkCurrentDiary(result.second, result.first, diaryEpochDay)
+        return true
+    }
+
+
 
     suspend fun replaceEntryWithFood(
         entryId: Long,

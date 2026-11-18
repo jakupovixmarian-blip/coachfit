@@ -244,10 +244,15 @@ fun NutritionScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            SectionHeader(
-                                "Giorno ${day.dayIndex + 1}",
-                                "Target: ${day.targetKcal.toInt()} kcal"
-                            )
+                            Column(Modifier.weight(1f)) {
+                                SectionHeader(
+                                    "Giorno ${day.dayIndex + 1}",
+                                    "Target: ${day.targetKcal.toInt()} kcal"
+                                )
+                            }
+                            IconButton(onClick = { viewModel.openEditDay(day) }) {
+                                Icon(Icons.Filled.Edit, contentDescription = "Modifica target giornata", tint = TextSecondary)
+                            }
                             Pill(day.dayType.label, carbColor(day.dayType))
                         }
                         Spacer(Modifier.height(12.dp))
@@ -296,6 +301,19 @@ fun NutritionScreen(
             onGramsChange = viewModel::updateAddFoodGrams,
             onConfirm = viewModel::confirmAddFood,
             onDismiss = viewModel::closeAddFood
+        )
+    }
+
+    state.editingDay?.let { dayToEdit ->
+        DayTargetDialog(
+            dayLabel = "Giorno ${dayToEdit.dayIndex + 1}",
+            kcal = state.editDayKcal,
+            protein = state.editDayProtein,
+            carbs = state.editDayCarbs,
+            fat = state.editDayFat,
+            onChange = viewModel::updateDayTargetFields,
+            onConfirm = viewModel::saveEditDay,
+            onDismiss = viewModel::closeEditDay
         )
     }
 
@@ -376,6 +394,35 @@ private fun EditEntryDialog(
             }
         },
         confirmButton = { TextButton(onClick = onConfirm) { Text("Salva") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } }
+    )
+}
+
+@Composable
+private fun DayTargetDialog(
+    dayLabel: String,
+    kcal: String,
+    protein: String,
+    carbs: String,
+    fat: String,
+    onChange: (String, String, String, String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Target $dayLabel") },
+        text = {
+            Column {
+                Text("I valori modificano una nuova versione del piano.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(kcal, { onChange(it, protein, carbs, fat) }, label = { Text("Calorie (kcal)") }, singleLine = true)
+                OutlinedTextField(protein, { onChange(kcal, it, carbs, fat) }, label = { Text("Proteine (g)") }, singleLine = true)
+                OutlinedTextField(carbs, { onChange(kcal, protein, it, fat) }, label = { Text("Carboidrati (g)") }, singleLine = true)
+                OutlinedTextField(fat, { onChange(kcal, protein, carbs, it) }, label = { Text("Grassi (g)") }, singleLine = true)
+            }
+        },
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Salva nuova versione") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } }
     )
 }

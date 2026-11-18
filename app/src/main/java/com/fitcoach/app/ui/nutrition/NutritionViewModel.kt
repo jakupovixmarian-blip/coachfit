@@ -52,6 +52,11 @@ data class NutritionUiState(
     val selectedFoodToAdd: FoodItem? = null,
     val editingEntry: MealEntry? = null,
     val editEntryGrams: String = "",
+    val editingDay: NutritionDay? = null,
+    val editDayKcal: String = "",
+    val editDayProtein: String = "",
+    val editDayCarbs: String = "",
+    val editDayFat: String = "",
     // Piani salvati (AI e manuali): per scegliere quale avviare.
     val plans: List<NutritionPlan> = emptyList(),
     val editingPlan: NutritionPlan? = null,
@@ -258,17 +263,17 @@ class NutritionViewModel @Inject constructor(
             val food = foodRepository.getAll().firstOrNull { it.id == entry.foodItemId }
             val factor = grams / entry.grams.coerceAtLeast(0.001)
             val planId = _state.value.plan?.id
-            if (planId == null || !nutritionRepository.updateEntryAsNewPlanVersion(
-                    planId = planId,
-                    entryId = entry.id,
-                    grams = grams,
-                    kcal = food?.kcalPer100g?.times(grams / 100.0) ?: entry.kcal * factor,
-                    protein = food?.proteinPer100g?.times(grams / 100.0) ?: entry.protein * factor,
-                    carbs = food?.carbsPer100g?.times(grams / 100.0) ?: entry.carbs * factor,
-                    fat = food?.fatPer100g?.times(grams / 100.0) ?: entry.fat * factor,
-                    diaryEpochDay = _state.value.epochDay
-                )
-            ) {
+            val updated = planId != null && nutritionRepository.updateEntryAsNewPlanVersion(
+                planId = planId,
+                entryId = entry.id,
+                grams = grams,
+                kcal = food?.kcalPer100g?.times(grams / 100.0) ?: entry.kcal * factor,
+                protein = food?.proteinPer100g?.times(grams / 100.0) ?: entry.protein * factor,
+                carbs = food?.carbsPer100g?.times(grams / 100.0) ?: entry.carbs * factor,
+                fat = food?.fatPer100g?.times(grams / 100.0) ?: entry.fat * factor,
+                diaryEpochDay = _state.value.epochDay
+            )
+            if (!updated) {
                 _state.value = _state.value.copy(message = "Impossibile creare la nuova versione del piano.")
                 return@launch
             }
@@ -277,6 +282,48 @@ class NutritionViewModel @Inject constructor(
                 editEntryGrams = "",
                 message = "Quantita aggiornata: ${grams.toInt()} g."
             )
+            load()
+        }
+    }
+
+    fun openEditDay(day: NutritionDay) {
+        _state.value = _state.value.copy(
+            editingDay = day,
+            editDayKcal = day.targetKcal.toString(),
+            editDayProtein = day.targetProtein.toString(),
+            editDayCarbs = day.targetCarbs.toString(),
+            editDayFat = day.targetFat.toString()
+        )
+    }
+
+    fun closeEditDay() { _state.value = _state.value.copy(editingDay = null) }
+
+    fun updateDayTargetFields(kcal: String, protein: String, carbs: String, fat: String) {
+        _state.value = _state.value.copy(
+            editDayKcal = kcal, editDayProtein = protein, editDayCarbs = carbs, editDayFat = fat
+        )
+    }
+
+    fun saveEditDay() {
+        val day = _state.value.editingDay ?: return
+        val kcal = _state.value.editDayKcal.replace(',', '.').toDoubleOrNull()
+        val protein = _state.value.editDayProtein.replace(',', '.').toDoubleOrNull()
+        val carbs = _state.value.editDayCarbs.replace(',', '.').toDoubleOrNull()
+        val fat = _state.value.editDayFat.replace(',', '.').toDoubleOrNull()
+        val planId = _state.value.plan?.id
+        if (planId == null || kcal == null || protein == null || carbs == null || fat == null) {
+            _state.value = _state.value.copy(message = "Inserisci tutti i target numerici.")
+            return
+        }
+        viewModelScope.launch {
+            val ok = nutritionRepository.updateDayTargetsAsNewPlanVersion(
+                planId, day.id, kcal, protein, carbs, fat, _state.value.epochDay
+            )
+            if (!ok) {
+                _state.value = _state.value.copy(message = "Target non validi o piano non disponibile.")
+                return@launch
+            }
+            _state.value = _state.value.copy(editingDay = null, message = "Target della giornata aggiornati.")
             load()
         }
     }
