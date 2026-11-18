@@ -28,6 +28,7 @@ class NotificationScheduler @Inject constructor(
 
     private val alarmManager: AlarmManager =
         context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    private var deferMinutesForSchedule: Int = 15
 
     fun createChannels() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -57,6 +58,7 @@ class NotificationScheduler @Inject constructor(
 
     /** Riprogramma tutte le notifiche in base alle preferenze e alle impostazioni salvate. */
     fun scheduleAll(prefs: UserPreferences, records: List<NotificationRecord> = emptyList()) {
+        deferMinutesForSchedule = prefs.deferMinutes.coerceIn(5, 120)
         cancelAll()
         if (!prefs.notificationsEnabled) return
 
@@ -141,7 +143,8 @@ class NotificationScheduler @Inject constructor(
         kind: String,
         title: String,
         body: String,
-        channel: String
+        channel: String,
+        deferMinutes: Int = deferMinutesForSchedule
     ) {
         val (hour, minute) = parseTime(time)
         val trigger = Calendar.getInstance().apply {
@@ -151,7 +154,7 @@ class NotificationScheduler @Inject constructor(
             set(Calendar.MILLISECOND, 0)
             if (before(Calendar.getInstance())) add(Calendar.DAY_OF_YEAR, 1)
         }.timeInMillis
-        setAlarm(requestCode, trigger, kind, title, body, channel, repeatingDaily = true)
+        setAlarm(requestCode, trigger, kind, title, body, channel, repeatingDaily = true, deferMinutes = deferMinutes)
     }
 
     internal fun scheduleWeekly(
@@ -161,7 +164,8 @@ class NotificationScheduler @Inject constructor(
         kind: String,
         title: String,
         body: String,
-        channel: String
+        channel: String,
+        deferMinutes: Int = deferMinutesForSchedule
     ) {
         val (hour, minute) = parseTime(time)
         val trigger = Calendar.getInstance().apply {
@@ -173,7 +177,7 @@ class NotificationScheduler @Inject constructor(
             set(Calendar.DAY_OF_WEEK, calendarDayOfWeek(dayOfWeek))
             if (before(Calendar.getInstance())) add(Calendar.WEEK_OF_YEAR, 1)
         }.timeInMillis
-        setAlarm(requestCode, trigger, kind, title, body, channel, repeatingDaily = false, weekly = true, dayOfWeek = dayOfWeek)
+        setAlarm(requestCode, trigger, kind, title, body, channel, repeatingDaily = false, weekly = true, dayOfWeek = dayOfWeek, deferMinutes = deferMinutes)
     }
 
     private fun scheduleHydration(prefs: UserPreferences, baseCode: Int) {
@@ -262,7 +266,8 @@ class NotificationScheduler @Inject constructor(
         channel: String,
         repeatingDaily: Boolean,
         weekly: Boolean = false,
-        dayOfWeek: Int = 0
+        dayOfWeek: Int = 0,
+        deferMinutes: Int = deferMinutesForSchedule
     ) {
         val triggerCalendar = Calendar.getInstance().apply { timeInMillis = triggerAtMillis }
         val intent = Intent(context, ReminderReceiver::class.java).apply {
@@ -276,6 +281,7 @@ class NotificationScheduler @Inject constructor(
             putExtra(ReminderReceiver.EXTRA_DAY_OF_WEEK, dayOfWeek)
             putExtra(ReminderReceiver.EXTRA_HOUR, triggerCalendar.get(Calendar.HOUR_OF_DAY))
             putExtra(ReminderReceiver.EXTRA_MINUTE, triggerCalendar.get(Calendar.MINUTE))
+            putExtra(ReminderReceiver.EXTRA_DEFER_MINUTES, deferMinutes.coerceIn(5, 120))
         }
         val pending = PendingIntent.getBroadcast(
             context, requestCode, intent,

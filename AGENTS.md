@@ -100,6 +100,10 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
   la migrazione ripara prima eventuali duplicati. La modifica workout crea una nuova versione
   del piano e lascia intatta la precedente. L'editor nutrizionale consente ora di modificare
   i grammi di una voce e ricalcola i macro dai valori del catalogo. Collaudo: 337 test verdi.
+- **Notifiche**: il posticipo usa `UserPreferences.deferMinutes` (5..120 minuti) e il valore
+  viene propagato nell'intent dell'allarme, nell'azione di snooze e nella riprogrammazione
+  giornaliera/settimanale. Non reintrodurre un valore fisso nel `ReminderReceiver`.
+
 
 
 - **Navigazione di primo livello (Home che "sparisce")**: tutte le destinazioni top-level

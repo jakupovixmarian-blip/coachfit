@@ -29,7 +29,8 @@ class ReminderReceiver : BroadcastReceiver() {
         val channel = intent.getStringExtra(EXTRA_CHANNEL) ?: CHANNEL_MEALS
         val requestCode = intent.getIntExtra(EXTRA_REQUEST_CODE, 0)
 
-        showNotification(context, requestCode, title, body, channel, kind)
+        val deferMinutes = intent.getIntExtra(EXTRA_DEFER_MINUTES, SNOOZE_MINUTES).coerceIn(5, 120)
+        showNotification(context, requestCode, title, body, channel, kind, deferMinutes)
 
         // Riprogramma l'allarme per il giorno/settimana successivo.
         reschedule(context, intent, requestCode)
@@ -41,7 +42,8 @@ class ReminderReceiver : BroadcastReceiver() {
         title: String,
         body: String,
         channel: String,
-        kind: String
+        kind: String,
+        deferMinutes: Int
     ) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         val contentIntent = PendingIntent.getActivity(
@@ -61,6 +63,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 putExtra(EXTRA_CHANNEL, channel)
                 putExtra(EXTRA_KIND, kind)
                 putExtra(EXTRA_REQUEST_CODE, requestCode)
+                putExtra(EXTRA_DEFER_MINUTES, deferMinutes)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -94,10 +97,11 @@ class ReminderReceiver : BroadcastReceiver() {
         val channel = intent.getStringExtra(EXTRA_CHANNEL) ?: CHANNEL_MEALS
         val kind = intent.getStringExtra(EXTRA_KIND) ?: ""
         val requestCode = intent.getIntExtra(EXTRA_REQUEST_CODE, 0)
+        val deferMinutes = intent.getIntExtra(EXTRA_DEFER_MINUTES, SNOOZE_MINUTES).coerceIn(5, 120)
 
-        // Posticipo di 15 minuti tramite WorkManager one-shot (semplice e affidabile).
+        // Posticipo configurabile tramite AlarmManager one-shot.
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
-        val trigger = System.currentTimeMillis() + SNOOZE_MINUTES * 60_000L
+        val trigger = System.currentTimeMillis() + deferMinutes * 60_000L
         val retry = PendingIntent.getBroadcast(
             context, requestCode + 2000,
             Intent(context, ReminderReceiver::class.java).apply {
@@ -106,6 +110,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 putExtra(EXTRA_BODY, body)
                 putExtra(EXTRA_CHANNEL, channel)
                 putExtra(EXTRA_REQUEST_CODE, requestCode)
+                putExtra(EXTRA_DEFER_MINUTES, deferMinutes)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -121,6 +126,7 @@ class ReminderReceiver : BroadcastReceiver() {
         val repeatDaily = intent.getBooleanExtra(EXTRA_REPEAT_DAILY, false)
         val weekly = intent.getBooleanExtra(EXTRA_WEEKLY, false)
         val dayOfWeek = intent.getIntExtra(EXTRA_DAY_OF_WEEK, 0)
+        val deferMinutes = intent.getIntExtra(EXTRA_DEFER_MINUTES, SNOOZE_MINUTES).coerceIn(5, 120)
 
         // L'allarme originale non e ripetitivo: lo ripianifichiamo per il periodo successivo.
         if (repeatDaily || weekly) {
@@ -130,9 +136,9 @@ class ReminderReceiver : BroadcastReceiver() {
             if (hour >= 0 && minute >= 0) {
                 val time = "%02d:%02d".format(hour, minute)
                 if (weekly) {
-                    scheduler.scheduleWeekly(requestCode, dayOfWeek, time, kind, title, body, channel)
+                    scheduler.scheduleWeekly(requestCode, dayOfWeek, time, kind, title, body, channel, deferMinutes)
                 } else {
-                    scheduler.scheduleDaily(requestCode, time, kind, title, body, channel)
+                    scheduler.scheduleDaily(requestCode, time, kind, title, body, channel, deferMinutes)
                 }
             }
         }
@@ -155,6 +161,7 @@ class ReminderReceiver : BroadcastReceiver() {
         const val EXTRA_DAY_OF_WEEK = "extra_day_of_week"
         const val EXTRA_HOUR = "extra_hour"
         const val EXTRA_MINUTE = "extra_minute"
+        const val EXTRA_DEFER_MINUTES = "extra_defer_minutes"
 
         const val ACTION_SNOOZE = "com.fitcoach.app.action.SNOOZE"
         const val SNOOZE_MINUTES = 15
