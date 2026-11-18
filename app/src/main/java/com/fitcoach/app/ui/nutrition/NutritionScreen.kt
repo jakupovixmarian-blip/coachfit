@@ -278,6 +278,7 @@ fun NutritionScreen(
                         onToggle = viewModel::toggleEntry,
                         onSubstitute = viewModel::startSubstitution,
                         onEditEntry = viewModel::openEditEntry,
+                        onEditMeal = { viewModel.openEditMeal(meal) },
                         onAddFood = { viewModel.openAddFood(meal) },
                         onRemoveEntry = viewModel::removeEntry
                     )
@@ -314,6 +315,16 @@ fun NutritionScreen(
             onChange = viewModel::updateDayTargetFields,
             onConfirm = viewModel::saveEditDay,
             onDismiss = viewModel::closeEditDay
+        )
+    }
+
+    state.editingMeal?.let { mealToEdit ->
+        MealScheduleDialog(
+            mealLabel = mealToEdit.slot.label,
+            time = state.editMealTime,
+            onTimeChange = viewModel::updateEditMealTime,
+            onConfirm = viewModel::saveEditMeal,
+            onDismiss = viewModel::closeEditMeal
         )
     }
 
@@ -368,6 +379,30 @@ fun NutritionScreen(
     }
 
     SnackbarHost(snackbar)
+}
+
+@Composable
+private fun MealScheduleDialog(
+    mealLabel: String,
+    time: String,
+    onTimeChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Orario $mealLabel") },
+        text = {
+            OutlinedTextField(
+                value = time,
+                onValueChange = onTimeChange,
+                label = { Text("Orario (HH:mm)") },
+                singleLine = true
+            )
+        },
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Salva nuova versione") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } }
+    )
 }
 
 @Composable
@@ -537,6 +572,7 @@ private fun MealCard(
     onToggle: (MealEntry) -> Unit,
     onSubstitute: (MealEntry) -> Unit,
     onEditEntry: (MealEntry) -> Unit,
+    onEditMeal: () -> Unit,
     onAddFood: () -> Unit,
     onRemoveEntry: (MealEntry) -> Unit
 ) {
@@ -558,6 +594,9 @@ private fun MealCard(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("${meal.kcal.toInt()} kcal", style = MaterialTheme.typography.labelLarge, color = Emerald)
+                    IconButton(onClick = onEditMeal) {
+                        Icon(Icons.Filled.Edit, contentDescription = "Modifica orario pasto", tint = TextSecondary)
+                    }
                     IconButton(onClick = onAddFood) {
                         Icon(Icons.Filled.Add, contentDescription = "Aggiungi alimento", tint = Emerald)
                     }

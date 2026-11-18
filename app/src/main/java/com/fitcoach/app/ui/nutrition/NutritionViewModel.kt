@@ -57,6 +57,8 @@ data class NutritionUiState(
     val editDayProtein: String = "",
     val editDayCarbs: String = "",
     val editDayFat: String = "",
+    val editingMeal: Meal? = null,
+    val editMealTime: String = "",
     // Piani salvati (AI e manuali): per scegliere quale avviare.
     val plans: List<NutritionPlan> = emptyList(),
     val editingPlan: NutritionPlan? = null,
@@ -324,6 +326,34 @@ class NutritionViewModel @Inject constructor(
                 return@launch
             }
             _state.value = _state.value.copy(editingDay = null, message = "Target della giornata aggiornati.")
+            load()
+        }
+    }
+
+    fun openEditMeal(meal: Meal) {
+        _state.value = _state.value.copy(editingMeal = meal, editMealTime = meal.time)
+    }
+
+    fun closeEditMeal() { _state.value = _state.value.copy(editingMeal = null, editMealTime = "") }
+
+    fun updateEditMealTime(value: String) { _state.value = _state.value.copy(editMealTime = value) }
+
+    fun saveEditMeal() {
+        val meal = _state.value.editingMeal ?: return
+        val planId = _state.value.plan?.id
+        if (planId == null) {
+            _state.value = _state.value.copy(message = "Piano non disponibile.")
+            return
+        }
+        viewModelScope.launch {
+            val ok = nutritionRepository.updateMealScheduleAsNewPlanVersion(
+                planId, meal.id, meal.slot, _state.value.editMealTime, _state.value.epochDay
+            )
+            if (!ok) {
+                _state.value = _state.value.copy(message = "Orario non valido: usa HH:mm.")
+                return@launch
+            }
+            _state.value = _state.value.copy(editingMeal = null, message = "Orario pasto aggiornato.")
             load()
         }
     }
