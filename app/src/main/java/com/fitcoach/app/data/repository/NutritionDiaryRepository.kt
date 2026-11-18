@@ -41,25 +41,24 @@ class NutritionDiaryRepository @Inject constructor(
     fun observeForDay(epochDay: Long): Flow<List<DiaryEntry>> =
         planDao.observeActive().flatMapLatest { plan ->
             kotlinx.coroutines.flow.flow {
-                val activeEntryIds = activePlanEntryIds(plan?.id)
                 diaryDao.observeForDay(epochDay).collect { entries ->
-                    emit(entries.filterForActivePlan(activeEntryIds).map { it.toDomain() })
+                    emit(entries.filterForActivePlan(plan?.id).map { it.toDomain() })
                 }
             }
         }
 
     suspend fun entriesForDay(epochDay: Long): List<DiaryEntry> {
-        val activeEntryIds = activePlanEntryIds(planDao.getActive()?.id)
+        val activePlanId = planDao.getActive()?.id
         return diaryDao.getForDay(epochDay)
-            .filterForActivePlan(activeEntryIds)
+            .filterForActivePlan(activePlanId)
             .map { it.toDomain() }
     }
 
     /** Mappa planEntryId -> voce del diario del SOLO piano attivo. */
     suspend fun planChecks(epochDay: Long): Map<Long, DiaryEntry> {
-        val activeEntryIds = activePlanEntryIds(planDao.getActive()?.id)
+        val activePlanId = planDao.getActive()?.id
         return diaryDao.getForDay(epochDay)
-            .filterForActivePlan(activeEntryIds)
+            .filterForActivePlan(activePlanId)
             .filter { it.planEntryId != null && it.active }
             .associate { it.planEntryId!! to it.toDomain() }
     }
@@ -73,9 +72,8 @@ class NutritionDiaryRepository @Inject constructor(
 
     suspend fun weeklySummary(weekStartEpochDay: Long): WeeklyNutritionSummary {
         val plan = activePlanDomain()
-        val activeEntryIds = activePlanEntryIds(plan?.id)
         val entries = diaryDao.getBetween(weekStartEpochDay, weekStartEpochDay + 6)
-            .filterForActivePlan(activeEntryIds)
+            .filterForActivePlan(plan?.id)
             .map { it.toDomain() }
         return NutritionDiaryEngine.weeklySummary(plan, entries, weekStartEpochDay)
     }
@@ -106,6 +104,7 @@ class NutritionDiaryRepository @Inject constructor(
                     fat = entry.fat,
                     source = DiarySource.PLAN,
                     planEntryId = entry.id,
+                    nutritionPlanId = planDao.getActive()?.id,
                     active = true
                 ).toEntity()
             )
@@ -174,20 +173,10 @@ class NutritionDiaryRepository @Inject constructor(
         diaryDao.delete(entity)
     }
 
-    /** Restituisce gli id delle voci alimentari appartenenti al piano attivo. */
-    private suspend fun activePlanEntryIds(planId: Long?): Set<Long> {
-        if (planId == null) return emptySet()
-        val days = dayDao.getForPlan(planId)
-        if (days.isEmpty()) return emptySet()
-        val meals = db.mealDao().getForDays(days.map { it.id })
-        if (meals.isEmpty()) return emptySet()
-        return db.mealEntryDao().getForMeals(meals.map { it.id }).mapTo(mutableSetOf()) { it.id }
-    }
-
     private fun List<com.fitcoach.app.data.local.entity.DiaryEntryEntity>.filterForActivePlan(
-        activeEntryIds: Set<Long>
+        activePlanId: Long?
     ): List<com.fitcoach.app.data.local.entity.DiaryEntryEntity> = filter {
-        it.source != DiarySource.PLAN || (it.planEntryId != null && it.planEntryId in activeEntryIds)
+        it.source != DiarySource.PLAN || (it.nutritionPlanId != null && it.nutritionPlanId == activePlanId)
     }
 
     /** Riporta al piano lo stato dei consumi: disattiva tutte le voci di piano del giorno. */

@@ -118,12 +118,17 @@ class PlanManagementCollaudoTest {
         assertThat(workout.getActivePlan()!!.id).isEqualTo(secondId)
 
         assertThat(workout.updatePlan(firstId, profile, builtWorkout("Aggiornata"))).isTrue()
-        assertThat(workout.getActivePlan()!!.id).isEqualTo(firstId)
+        val editedId = workout.getActivePlan()!!.id
+        assertThat(editedId).isNotEqualTo(firstId)
+        assertThat(workout.getActivePlan()!!.version).isEqualTo(2)
         assertThat(workout.getActivePlan()!!.days.first { !it.isRestDay }.exercises).hasSize(1)
-        assertThat(workout.renamePlan(firstId, "Scheda forza")).isTrue()
-        assertThat(workout.getAllPlans().first { it.id == firstId }.name).isEqualTo("Scheda forza")
-        assertThat(workout.deletePlan(firstId)).isTrue()
-        assertThat(workout.getAllPlans()).hasSize(1)
+        val previous = workout.getAllPlans().first { it.id == firstId }
+        assertThat(previous.version).isEqualTo(1)
+        assertThat(previous.days.first { !it.isRestDay }.title).isEqualTo("Prima")
+        assertThat(workout.renamePlan(editedId, "Scheda forza")).isTrue()
+        assertThat(workout.getAllPlans().first { it.id == editedId }.name).isEqualTo("Scheda forza")
+        assertThat(workout.deletePlan(editedId)).isTrue()
+        assertThat(workout.getAllPlans()).hasSize(2)
         assertThat(workout.getActivePlan()!!.id).isEqualTo(secondId)
     }
 

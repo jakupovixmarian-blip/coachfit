@@ -272,6 +272,7 @@ fun NutritionScreen(
                         checks = state.checks,
                         onToggle = viewModel::toggleEntry,
                         onSubstitute = viewModel::startSubstitution,
+                        onEditEntry = viewModel::openEditEntry,
                         onAddFood = { viewModel.openAddFood(meal) },
                         onRemoveEntry = viewModel::removeEntry
                     )
@@ -295,6 +296,16 @@ fun NutritionScreen(
             onGramsChange = viewModel::updateAddFoodGrams,
             onConfirm = viewModel::confirmAddFood,
             onDismiss = viewModel::closeAddFood
+        )
+    }
+
+    state.editingEntry?.let { entry ->
+        EditEntryDialog(
+            foodName = entry.foodName,
+            grams = state.editEntryGrams,
+            onGramsChange = viewModel::updateEditEntryGrams,
+            onConfirm = viewModel::saveEditEntry,
+            onDismiss = viewModel::closeEditEntry
         )
     }
 
@@ -339,6 +350,34 @@ fun NutritionScreen(
     }
 
     SnackbarHost(snackbar)
+}
+
+@Composable
+private fun EditEntryDialog(
+    foodName: String,
+    grams: String,
+    onGramsChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Modifica quantita") },
+        text = {
+            Column {
+                Text(foodName, style = MaterialTheme.typography.titleSmall)
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = grams,
+                    onValueChange = onGramsChange,
+                    label = { Text("Quantita (g)") },
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Salva") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } }
+    )
 }
 
 @Composable
@@ -450,6 +489,7 @@ private fun MealCard(
     checks: Map<Long, Long>,
     onToggle: (MealEntry) -> Unit,
     onSubstitute: (MealEntry) -> Unit,
+    onEditEntry: (MealEntry) -> Unit,
     onAddFood: () -> Unit,
     onRemoveEntry: (MealEntry) -> Unit
 ) {
@@ -495,6 +535,9 @@ private fun MealCard(
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
+                    }
+                    IconButton(onClick = { onEditEntry(entry) }) {
+                        Icon(Icons.Filled.Edit, contentDescription = "Modifica quantita", tint = TextSecondary)
                     }
                     IconButton(onClick = { onSubstitute(entry) }) {
                         Icon(Icons.Filled.SwapHoriz, contentDescription = "Sostituisci", tint = TextSecondary)

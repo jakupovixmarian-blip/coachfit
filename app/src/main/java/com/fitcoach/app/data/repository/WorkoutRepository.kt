@@ -126,7 +126,10 @@ class WorkoutRepository @Inject constructor(
         planId
     }
 
-    /** Aggiorna una scheda esistente senza crearne una copia e senza perdere il suo id. */
+    /**
+     * Crea una nuova versione della scheda lasciando intatta quella precedente.
+     * Le sessioni storiche continuano cosi a riferirsi alla struttura originale.
+     */
     suspend fun updatePlan(
         planId: Long,
         profile: UserProfile,
@@ -134,17 +137,18 @@ class WorkoutRepository @Inject constructor(
         mesocycleWeeks: Int = 6
     ): Boolean = db.withTransaction {
         val current = planDao.getById(planId) ?: return@withTransaction false
-        planDao.update(
+        planDao.deactivateAll()
+        val newPlanId = planDao.insert(
             current.copy(
+                id = 0L,
+                name = current.name,
                 splitType = built.splitType,
                 isActive = true,
+                createdAt = System.currentTimeMillis(),
                 version = current.version + 1
             )
         )
-        planDao.deactivateAll()
-        planDao.setActive(planId, true)
-        mesoDao.deleteForPlan(planId)
-        insertWorkoutStructure(planId, profile, built, mesocycleWeeks)
+        insertWorkoutStructure(newPlanId, profile, built, mesocycleWeeks)
         true
     }
 

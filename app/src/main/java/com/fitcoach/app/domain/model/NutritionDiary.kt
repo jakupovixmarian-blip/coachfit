@@ -20,6 +20,8 @@ data class DiaryEntry(
     val source: DiarySource = DiarySource.EXTRA,
     /** Voce del piano collegata (null per gli extra). Evita il doppio conteggio. */
     val planEntryId: Long? = null,
+    /** Piano nutrizionale di origine; nullo per gli alimenti extra. */
+    val nutritionPlanId: Long? = null,
     /** False se la voce e stata deselezionata: resta nello storico ma non conta. */
     val active: Boolean = true,
     val createdAt: Long = System.currentTimeMillis()

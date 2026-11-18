@@ -273,3 +273,48 @@ val MIGRATION_11_12 = object : Migration(11, 12) {
         db.execSQL("ALTER TABLE shopping_items ADD COLUMN purchased INTEGER NOT NULL DEFAULT 0")
     }
 }
+
+/** Migrazione schema v12 -> v13: identita esplicita del piano nel diario e vincoli attivi. */
+val MIGRATION_12_13 = object : Migration(12, 13) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE diary_entries ADD COLUMN nutritionPlanId INTEGER")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_diary_entries_nutritionPlanId` ON `diary_entries` (`nutritionPlanId`)")
+        db.execSQL(
+            """
+            UPDATE diary_entries
+            SET nutritionPlanId = (
+                SELECT nutrition_days.planId
+                FROM meal_entries
+                INNER JOIN meals ON meals.id = meal_entries.mealId
+                INNER JOIN nutrition_days ON nutrition_days.id = meals.nutritionDayId
+                WHERE meal_entries.id = diary_entries.planEntryId
+            )
+            WHERE source = 'PLAN' AND planEntryId IS NOT NULL
+            """.trimIndent()
+        )
+
+        // Ripara i database creati dalla versione con piu piani attivi prima di
+        // installare i trigger che rendono invalido quello stato.
+        db.execSQL(
+            """
+            UPDATE nutrition_plans
+            SET isActive = 0
+            WHERE isActive = 1 AND id NOT IN (
+                SELECT MAX(id) FROM nutrition_plans
+                WHERE isActive = 1 GROUP BY profileId
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
+            UPDATE workout_plans
+            SET isActive = 0
+            WHERE isActive = 1 AND id NOT IN (
+                SELECT MAX(id) FROM workout_plans
+                WHERE isActive = 1 GROUP BY profileId
+            )
+            """.trimIndent()
+        )
+        createActivePlanTriggers(db)
+    }
+}

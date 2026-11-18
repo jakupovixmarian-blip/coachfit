@@ -24,7 +24,7 @@ Sviluppato per fasi verificabili. Ogni fase è stata compilata e testata.
 
 - **Kotlin**, **Jetpack Compose**, **Material 3**
 - **MVVM + Clean Architecture** (domain / data / ui)
-- **Room** (24 entità, DAO, migrazioni, schema esportato; DB v12)
+- **Room** (24 entità, DAO, migrazioni, schema esportato; DB v13)
 - **Coroutines / Flow**, **WorkManager**, **AlarmManager** (notifiche esatte)
 - **DataStore** per le impostazioni, **Hilt** per la dependency injection
 - **Retrofit / OkHttp + kotlinx.serialization** per le API AI

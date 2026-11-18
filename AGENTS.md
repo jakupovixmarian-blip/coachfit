@@ -71,19 +71,20 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
 - **Integrazione**: le funzionalità nutrizionali (piano, sostituzioni, spesa, diario)
   condividono lo stesso database alimentare e gli stessi identificativi del piano. Non
   creare moduli indipendenti.
-- **Room**: DB version attuale **12**. Aggiungendo entita/DAO ricordarsi di importarli in
+- **Room**: DB version attuale **13**. La v13 aggiunge l'identita esplicita del piano nelle voci diario e i vincoli SQLite per un solo piano attivo per profilo. Aggiungendo entita/DAO ricordarsi di importarli in
   `FitCoachDatabase.kt` (un import mancante causa `[ksp] MissingType`), registrare la
   migrazione in `Migrations.kt` **e in `di/DatabaseModule.provideDatabase`** (una migrazione
   definita ma non registrata fa scattare il fallback distruttivo e azzera i dati) e i mapper
   in `Mappers.kt`. Lo schema esportato sta in `app/schemas/`. La v10 aggiunge lo storico
   degli esiti delle modifiche del coach; la v11 la persistenza Room isolata per anamnesi e
-  checkpoint di generazione 2.0; la v12 lo stato "acquistato" della lista della spesa.
+  checkpoint di generazione 2.0; la v12 lo stato "acquistato" della lista della spesa; la v13
+  il legame esplicito delle voci diario al piano e i trigger di integrita per il piano attivo.
   **Nessun `fallbackToDestructiveMigration`**: una migrazione mancante deve fallire in modo
   esplicito, mai cancellare profilo, piani e storico dell'utente.
 - **Test delle migrazioni**: `app/src/test/.../data/local/MigrationTest.kt` valida gli schemi
   con `MigrationTestHelper` (Robolectric) contro gli schema esportati e verifica la
-  conservazione dei dati. Gli schemi sono resi asset della variante debug in
-  `app/build.gradle.kts` (`sourceSets["debug"].assets.srcDir(schemas)`) perche i test
+  conservazione dei dati e i vincoli v13 per un solo piano attivo. Gli schemi sono resi asset
+  della variante debug in `app/build.gradle.kts` (`sourceSets["debug"].assets.srcDir(schemas)`) perche i test
   Robolectric leggono gli asset della variante debug. Il test ha scoperto un bug reale:
   `MIGRATION_1_2` ri-aggiungeva `activityFactorOverride`/`calorieTargetOverride` (gia in v1)
   -> "duplicate column name" in upgrade da v1. Aggiungendo migrazioni, estendere questo test.
@@ -94,6 +95,12 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
   in-place, senza crearne una copia. `NutritionDiaryRepository` filtra le voci collegate al
   piano attivo: gli spuntini di vecchi piani non gonfiano piu il consumo giornaliero.
   `collaudo/PlanManagementCollaudoTest.kt` copre isolamento, selezione, CRUD e modifica reale.
+- **Sprint 1 piano/storico**: DB v13 aggiunge `nutritionPlanId` esplicito alle voci diario e
+  backfill dalle relazioni legacy. Trigger SQLite impediscono piu piani attivi per profilo;
+  la migrazione ripara prima eventuali duplicati. La modifica workout crea una nuova versione
+  del piano e lascia intatta la precedente. L'editor nutrizionale consente ora di modificare
+  i grammi di una voce e ricalcola i macro dai valori del catalogo. Collaudo: 337 test verdi.
+
 
 - **Navigazione di primo livello (Home che "sparisce")**: tutte le destinazioni top-level
   (Dashboard, Alimentazione, Spesa, Allenamento, Progressi, Coach) si aprono SEMPRE con

@@ -570,6 +570,7 @@ data class AiProviderSettingsEntity(
     indices = [
         Index("dateEpochDay"),
         Index("planEntryId"),
+        Index("nutritionPlanId"),
         Index("mealSlot"),
         Index(value = ["dateEpochDay", "planEntryId"], unique = true)
     ]
@@ -589,6 +590,8 @@ data class DiaryEntryEntity(
     val fat: Double,
     val source: DiarySource = DiarySource.EXTRA,
     val planEntryId: Long? = null,
+    /** Piano nutrizionale di origine; nullo per gli alimenti extra. */
+    val nutritionPlanId: Long? = null,
     val active: Boolean = true,
     val createdAt: Long = System.currentTimeMillis()
 )

@@ -50,6 +50,8 @@ data class NutritionUiState(
     val addFoodToMeal: Meal? = null,
     val addFoodGrams: String = "",
     val selectedFoodToAdd: FoodItem? = null,
+    val editingEntry: MealEntry? = null,
+    val editEntryGrams: String = "",
     // Piani salvati (AI e manuali): per scegliere quale avviare.
     val plans: List<NutritionPlan> = emptyList(),
     val editingPlan: NutritionPlan? = null,
@@ -228,6 +230,48 @@ class NutritionViewModel @Inject constructor(
 
     private suspend fun refreshPlanList() {
         _state.value = _state.value.copy(plans = nutritionRepository.getAllPlans())
+    }
+
+    fun openEditEntry(entry: MealEntry) {
+        _state.value = _state.value.copy(
+            editingEntry = entry,
+            editEntryGrams = if (entry.grams % 1.0 == 0.0) entry.grams.toInt().toString() else entry.grams.toString()
+        )
+    }
+
+    fun closeEditEntry() {
+        _state.value = _state.value.copy(editingEntry = null, editEntryGrams = "")
+    }
+
+    fun updateEditEntryGrams(value: String) {
+        _state.value = _state.value.copy(editEntryGrams = value)
+    }
+
+    fun saveEditEntry() {
+        val entry = _state.value.editingEntry ?: return
+        val grams = _state.value.editEntryGrams.replace(',', '.').toDoubleOrNull()
+        if (grams == null || grams <= 0.0 || grams > 10_000.0) {
+            _state.value = _state.value.copy(message = "Inserisci una quantita valida (0-10000 g).")
+            return
+        }
+        viewModelScope.launch {
+            val food = foodRepository.getAll().firstOrNull { it.id == entry.foodItemId }
+            val factor = grams / entry.grams.coerceAtLeast(0.001)
+            nutritionRepository.replaceMealEntry(
+                entryId = entry.id,
+                grams = grams,
+                kcal = food?.kcalPer100g?.times(grams / 100.0) ?: entry.kcal * factor,
+                protein = food?.proteinPer100g?.times(grams / 100.0) ?: entry.protein * factor,
+                carbs = food?.carbsPer100g?.times(grams / 100.0) ?: entry.carbs * factor,
+                fat = food?.fatPer100g?.times(grams / 100.0) ?: entry.fat * factor
+            )
+            _state.value = _state.value.copy(
+                editingEntry = null,
+                editEntryGrams = "",
+                message = "Quantita aggiornata: ${grams.toInt()} g."
+            )
+            load()
+        }
     }
 
     fun startSubstitution(entry: MealEntry) {

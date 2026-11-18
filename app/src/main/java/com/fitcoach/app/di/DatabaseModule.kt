@@ -2,7 +2,9 @@ package com.fitcoach.app.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
 import com.fitcoach.app.data.local.FitCoachDatabase
+import com.fitcoach.app.data.local.createActivePlanTriggers
 import com.fitcoach.app.data.local.MIGRATION_1_2
 import com.fitcoach.app.data.local.MIGRATION_2_3
 import com.fitcoach.app.data.local.MIGRATION_3_4
@@ -14,6 +16,7 @@ import com.fitcoach.app.data.local.MIGRATION_8_9
 import com.fitcoach.app.data.local.MIGRATION_9_10
 import com.fitcoach.app.data.local.MIGRATION_10_11
 import com.fitcoach.app.data.local.MIGRATION_11_12
+import com.fitcoach.app.data.local.MIGRATION_12_13
 import com.fitcoach.app.data.local.dao.AiSettingsDao
 import com.fitcoach.app.data.local.dao.CheckInDao
 import com.fitcoach.app.data.local.dao.ChatDao
@@ -58,8 +61,13 @@ object DatabaseModule {
     fun provideDatabase(@ApplicationContext context: Context): FitCoachDatabase =
         Room.databaseBuilder(context, FitCoachDatabase::class.java, FitCoachDatabase.DB_NAME)
             .addMigrations(
-                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12
+                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13
             )
+            .addCallback(object : RoomDatabase.Callback() {
+                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                    createActivePlanTriggers(db)
+                }
+            })
             // Nessun fallback distruttivo: aggiornare l'app non deve mai azzerare
             // profilo, piani e storico. Una migrazione mancante deve fallire in modo
             // esplicito (e va aggiunta), non cancellare i dati dell'utente.

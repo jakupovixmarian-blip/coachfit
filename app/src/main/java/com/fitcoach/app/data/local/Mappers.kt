@@ -249,14 +249,16 @@ object Mappers {
         id = id, dateEpochDay = dateEpochDay, mealSlot = mealSlot, time = time,
         foodItemId = foodItemId, foodName = foodName, grams = grams, unit = unit,
         kcal = kcal, protein = protein, carbs = carbs, fat = fat, source = source,
-        planEntryId = planEntryId, active = active, createdAt = createdAt
+        planEntryId = planEntryId, nutritionPlanId = nutritionPlanId,
+        active = active, createdAt = createdAt
     )
 
     fun DiaryEntry.toEntity() = DiaryEntryEntity(
         id = id, dateEpochDay = dateEpochDay, mealSlot = mealSlot, time = time,
         foodItemId = foodItemId, foodName = foodName, grams = grams, unit = unit,
         kcal = kcal, protein = protein, carbs = carbs, fat = fat, source = source,
-        planEntryId = planEntryId, active = active, createdAt = createdAt
+        planEntryId = planEntryId, nutritionPlanId = nutritionPlanId,
+        active = active, createdAt = createdAt
     )
 
     fun ShoppingItemEntity.toDomain() = ShoppingItem(

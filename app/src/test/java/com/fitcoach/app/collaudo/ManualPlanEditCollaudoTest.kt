@@ -98,6 +98,28 @@ class ManualPlanEditCollaudoTest {
     }
 
     @Test
+    fun `modificare i grammi ricalcola i macro dai valori dell alimento`() = runBlocking {
+        val (dayId, mealId) = seedPlanWithMeal()
+        val food = repoFood(db.foodDao().getByName("Petto di pollo")!!.id)
+        repo.addEntryToMeal(mealId, food, grams = 150.0, unit = FoodUnit.RAW)
+
+        val entry = repo.getDayWithMeals(dayId)!!.meals.first { it.slot == MealSlot.LUNCH }.entries.first()
+        repo.replaceMealEntry(
+            entryId = entry.id,
+            grams = 250.0,
+            kcal = food.kcalPer100g * 2.5,
+            protein = food.proteinPer100g * 2.5,
+            carbs = food.carbsPer100g * 2.5,
+            fat = food.fatPer100g * 2.5
+        )
+
+        val updated = repo.getDayWithMeals(dayId)!!.meals.first { it.slot == MealSlot.LUNCH }.entries.first()
+        assertThat(updated.grams).isEqualTo(250.0)
+        assertThat(updated.kcal).isWithin(0.5).of(275.0)
+        assertThat(updated.protein).isWithin(0.1).of(58.25)
+    }
+
+    @Test
     fun `rimuovere un alimento lo elimina dal pasto`() = runBlocking {
         val (dayId, mealId) = seedPlanWithMeal()
         val food = repoFood(db.foodDao().getByName("Petto di pollo")!!.id)
