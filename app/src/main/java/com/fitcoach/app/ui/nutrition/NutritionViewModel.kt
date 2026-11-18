@@ -257,14 +257,21 @@ class NutritionViewModel @Inject constructor(
         viewModelScope.launch {
             val food = foodRepository.getAll().firstOrNull { it.id == entry.foodItemId }
             val factor = grams / entry.grams.coerceAtLeast(0.001)
-            nutritionRepository.replaceMealEntry(
-                entryId = entry.id,
-                grams = grams,
-                kcal = food?.kcalPer100g?.times(grams / 100.0) ?: entry.kcal * factor,
-                protein = food?.proteinPer100g?.times(grams / 100.0) ?: entry.protein * factor,
-                carbs = food?.carbsPer100g?.times(grams / 100.0) ?: entry.carbs * factor,
-                fat = food?.fatPer100g?.times(grams / 100.0) ?: entry.fat * factor
-            )
+            val planId = _state.value.plan?.id
+            if (planId == null || !nutritionRepository.updateEntryAsNewPlanVersion(
+                    planId = planId,
+                    entryId = entry.id,
+                    grams = grams,
+                    kcal = food?.kcalPer100g?.times(grams / 100.0) ?: entry.kcal * factor,
+                    protein = food?.proteinPer100g?.times(grams / 100.0) ?: entry.protein * factor,
+                    carbs = food?.carbsPer100g?.times(grams / 100.0) ?: entry.carbs * factor,
+                    fat = food?.fatPer100g?.times(grams / 100.0) ?: entry.fat * factor,
+                    diaryEpochDay = _state.value.epochDay
+                )
+            ) {
+                _state.value = _state.value.copy(message = "Impossibile creare la nuova versione del piano.")
+                return@launch
+            }
             _state.value = _state.value.copy(
                 editingEntry = null,
                 editEntryGrams = "",

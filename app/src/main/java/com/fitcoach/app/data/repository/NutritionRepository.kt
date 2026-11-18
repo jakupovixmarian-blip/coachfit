@@ -237,6 +237,67 @@ class NutritionRepository @Inject constructor(
     suspend fun replaceMealEntry(entryId: Long, grams: Double, kcal: Double, protein: Double, carbs: Double, fat: Double) =
         entryDao.updateEntry(entryId, grams, kcal, protein, carbs, fat)
 
+    /** Crea una nuova versione del piano senza mutare la precedente. */
+    suspend fun updateEntryAsNewPlanVersion(
+        planId: Long,
+        entryId: Long,
+        grams: Double,
+        kcal: Double,
+        protein: Double,
+        carbs: Double,
+        fat: Double,
+        diaryEpochDay: Long
+    ): Boolean = db.withTransaction {
+        val currentPlan = planDao.getById(planId) ?: return@withTransaction false
+        val oldDays = dayDao.getForPlan(planId)
+        val oldMeals = oldDays.flatMap { mealDao.getForDay(it.id) }
+        val entriesByMeal = oldMeals.associateWith { meal -> entryDao.getForMeal(meal.id) }
+        if (entriesByMeal.values.flatten().none { it.id == entryId }) return@withTransaction false
+
+        planDao.deactivateAll()
+        val newPlanId = planDao.insert(
+            currentPlan.copy(
+                id = 0L,
+                isActive = true,
+                createdAt = System.currentTimeMillis(),
+                version = currentPlan.version + 1
+            )
+        )
+        var newEntryId: Long? = null
+        oldDays.forEach { oldDay ->
+            val newDayId = dayDao.insertAll(listOf(oldDay.copy(id = 0L, planId = newPlanId))).first()
+            mealDao.getForDay(oldDay.id).forEach { oldMeal ->
+                val newMealId = mealDao.insertAll(
+                    listOf(oldMeal.copy(id = 0L, nutritionDayId = newDayId))
+                ).first()
+                val oldEntries = entriesByMeal[oldMeal].orEmpty()
+                if (oldEntries.isNotEmpty()) {
+                    val newEntries = oldEntries.map { oldEntry ->
+                        if (oldEntry.id == entryId) {
+                            oldEntry.copy(
+                                id = 0L,
+                                mealId = newMealId,
+                                grams = grams,
+                                kcal = kcal,
+                                protein = protein,
+                                carbs = carbs,
+                                fat = fat
+                            )
+                        } else oldEntry.copy(id = 0L, mealId = newMealId)
+                    }
+                    val newIds = entryDao.insertAll(newEntries)
+                    oldEntries.zip(newIds).firstOrNull { it.first.id == entryId }?.let {
+                        newEntryId = it.second
+                    }
+                }
+            }
+        }
+        val copiedEntryId = newEntryId ?: return@withTransaction false
+        db.diaryEntryDao().relinkPlanEntryForDate(entryId, copiedEntryId, newPlanId, diaryEpochDay)
+        true
+    }
+
+
     suspend fun replaceEntryWithFood(
         entryId: Long,
         newFoodId: Long,

@@ -692,6 +692,9 @@ interface DiaryEntryDao {
     @Query("DELETE FROM diary_entries WHERE planEntryId = :planEntryId")
     suspend fun deleteByPlanEntry(planEntryId: Long)
 
+    @Query("UPDATE diary_entries SET planEntryId = :newPlanEntryId, nutritionPlanId = :newPlanId WHERE planEntryId = :oldPlanEntryId AND dateEpochDay = :epochDay")
+    suspend fun relinkPlanEntryForDate(oldPlanEntryId: Long, newPlanEntryId: Long, newPlanId: Long, epochDay: Long)
+
     @Query("DELETE FROM diary_entries WHERE dateEpochDay = :epochDay AND source = 'PLAN'")
     suspend fun deletePlanEntriesForDay(epochDay: Long)
 }
