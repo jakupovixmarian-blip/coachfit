@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.fitcoach.app.MainActivity
 import com.fitcoach.app.R
@@ -171,9 +172,13 @@ class ReminderReceiver : BroadcastReceiver() {
                     ?.meals?.firstOrNull { it.slot == slot }?.let { confirmed ->
                         nutritionRepository.confirmMeal(confirmed.id, true)
                     }
+            } catch (t: Throwable) {
+                // La conferma dal promemoria gira fuori da qualsiasi UI: senza
+                // questa cattura l'errore chiude il processo dell'app.
+                Log.e("ReminderReceiver", "Conferma pasto non riuscita", t)
             } finally {
                 context.getSystemService(NotificationManager::class.java)?.cancel(requestCode)
-                pendingResult.finish()
+                runCatching { pendingResult?.finish() }
             }
         }
     }

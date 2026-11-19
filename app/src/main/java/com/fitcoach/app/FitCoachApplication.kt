@@ -1,9 +1,11 @@
 package com.fitcoach.app
 
 import android.app.Application
+import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.fitcoach.app.data.repository.NotificationRepository
+import com.fitcoach.app.diagnostics.CrashLog
 import com.fitcoach.app.data.repository.PreferencesRepository
 import com.fitcoach.app.data.repository.SeedInitializer
 import com.fitcoach.app.notifications.NotificationScheduler
@@ -41,12 +43,17 @@ class FitCoachApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        CrashLog.install(this)
         notificationScheduler.createChannels()
         appScope.launch {
-            seedInitializer.seedIfNeeded()
-            val prefs = preferencesRepository.getOrCreate()
-            val records = notificationRepository.getAll()
-            notificationScheduler.scheduleAll(prefs, records)
+            // Un errore qui (seme, notifiche, permessi allarme) non deve chiudere
+            // l'app all'avvio: va registrato e l'avvio prosegue.
+            runCatching {
+                seedInitializer.seedIfNeeded()
+                val prefs = preferencesRepository.getOrCreate()
+                val records = notificationRepository.getAll()
+                notificationScheduler.scheduleAll(prefs, records)
+            }.onFailure { Log.e("FitCoachApp", "Avvio non completato", it) }
         }
     }
 }

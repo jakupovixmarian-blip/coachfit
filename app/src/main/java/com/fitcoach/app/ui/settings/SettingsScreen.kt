@@ -30,7 +30,14 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import android.content.Intent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.fitcoach.app.diagnostics.CrashLog
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -55,6 +62,22 @@ fun SettingsScreen(
     backupViewModel: BackupViewModel = hiltViewModel(),
     coachAuthorizationViewModel: CoachAuthorizationViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    var crashLog by remember { mutableStateOf(CrashLog.read(context)) }
+    val onShareCrashLog: () -> Unit = {
+        crashLog?.let { text ->
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_SUBJECT, "FitCoach — errore registrato")
+                putExtra(Intent.EXTRA_TEXT, text)
+            }
+            context.startActivity(Intent.createChooser(intent, "Condividi il log"))
+        }
+    }
+    val onClearCrashLog: () -> Unit = {
+        CrashLog.clear(context)
+        crashLog = null
+    }
     val exportState by exportViewModel.state.collectAsStateWithLifecycle()
     val backupState by backupViewModel.state.collectAsStateWithLifecycle()
     val coachAuthorizationState by coachAuthorizationViewModel.state.collectAsStateWithLifecycle()
@@ -203,6 +226,34 @@ fun SettingsScreen(
                             Icon(Icons.Filled.FileDownload, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
                             Text(if (exportState.exporting) "Esportazione..." else "Esporta tutto (JSON)")
+                        }
+                    }
+                }
+            }
+
+            item {
+                SectionCard(modifier = Modifier.fillMaxWidth()) {
+                    Column {
+                        SectionHeader("Diagnostica", "Ultimo errore registrato sul dispositivo")
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            if (crashLog == null) "Nessun errore registrato."
+                            else "Un errore e stato registrato. Condividi il file per l'analisi.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = onShareCrashLog,
+                                enabled = crashLog != null,
+                                modifier = Modifier.weight(1f)
+                            ) { Text("Condividi errore") }
+                            OutlinedButton(
+                                onClick = onClearCrashLog,
+                                enabled = crashLog != null,
+                                modifier = Modifier.weight(1f)
+                            ) { Text("Elimina") }
                         }
                     }
                 }

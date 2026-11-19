@@ -327,3 +327,45 @@ verso l'AI), `NutritionTargetCoherenceTest` (7, 7 giorni validi su piu profili e
 pesi 55-110 kg). `SimulatedAiPrograms` ora sceglie solo gli alimenti e delega i grammi
 al solver: se un test di integrazione torna rosso, il problema e nel solver o nel
 contratto, non nell'aritmetica simulata.
+
+## Crash all'avvio / in background: cause reali e difese
+
+Segnalazione utente "l'app continua ad andare in crash". Non esisteva alcun log
+recuperabile dal dispositivo, quindi il primo passo e rendere il crash
+diagnosticabile, non indovinare la causa.
+
+### Diagnostica
+- `diagnostics/CrashLog.kt` installa un `Thread.setDefaultUncaughtExceptionHandler`
+  che scrive `last_crash.txt` in `filesDir` (data, thread, modello, stack trace) e
+  poi delega al handler precedente (il comportamento di sistema resta invariato).
+- Impostazioni > Diagnostica mostra se un errore e registrato e permette di
+  condividerlo o eliminarlo. Il file e leggibile senza cavo USB.
+
+### Cause individuate e corrette
+1. **`SecureKeyStore` poteva chiudere il processo.** Il Keystore Android puo
+   invalidare la master key (ripristino da backup, reinstallazione, cambio di
+   blocco schermo, firmware Samsung). `MasterKey.Builder`/`EncryptedSharedPreferences`
+   sollevavano `KeyStoreException` e `AiProvidersViewModel.init` legge
+   `secureKeyStore.hasKey(...)`: aprire le impostazioni AI chiudeva l'app.
+   Ora l'archivio viene ricreato una volta (su un file con nome diverso) e ogni
+   operazione degrada a "nessuna chiave" invece di lanciare.
+2. **`BootReceiver` e `ReminderReceiver` propagavano errori fuori dalla UI.**
+   Usavano `try { ... } finally { finish() }` dentro `CoroutineScope(...).launch`:
+   senza `catch` l'eccezione raggiunge l'handler di default e chiude il processo.
+   `BootReceiver` gira su `MY_PACKAGE_REPLACED`, cioe subito dopo un aggiornamento:
+   e il caso che l'utente percepisce come "crash continuo". Ora entrambi registrano
+   l'errore e terminano. La logica e in `BootReceiver.reschedule()` (internal
+   suspend) per essere testabile in modo deterministico.
+3. **Il lavoro di avvio in `FitCoachApplication` era scoperto.** Seme del
+   database, lettura preferenze e programmazione notifiche ora sono in
+   `runCatching`, con log: un errore all'avvio non chiude piu l'app.
+
+### Verifica
+- `CrashSmokeTest` / `CrashSweepTest` aprono la `MainActivity` reale (Robolectric)
+  e tutte le schermate della barra: nessun crash.
+- `SecureKeyStoreTest` verifica round-trip e degradazione senza Keystore.
+- `CrashLogTest` verifica scrittura, lettura, cancellazione e delega dell'handler.
+- `ReceiverCrashTest` verifica che `reschedule()` registri invece di propagare.
+- Nota ambiente: su questo host non c'e `/dev/kvm`, quindi l'emulatore x86_64 non
+  parte. La verifica runtime passa da Robolectric (Activity reale) e dalla build
+  release R8, non dall'emulatore.
