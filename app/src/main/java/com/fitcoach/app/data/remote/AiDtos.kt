@@ -35,8 +35,27 @@ data class ChatCompletionRequest(
      * OpenAI rifiuta i function tools su `/v1/chat/completions` quando lo sforzo
      * di ragionamento e attivo: in quel caso va inviato `"none"`.
      */
-    @SerialName("reasoning_effort") val reasoningEffort: String? = null
+    @SerialName("reasoning_effort") val reasoningEffort: String? = null,
+    /**
+     * Interruttore della modalita Thinking di DeepSeek (`{"type":"enabled"}` /
+     * `{"type":"disabled"}`). Va inviato SOLO ai provider che la supportano: gli
+     * altri rifiuterebbero un campo sconosciuto.
+     *
+     * Regola DeepSeek: con Thinking attivo `tool_choice` puo essere solo `auto`.
+     * Per forzare un singolo strumento la richiesta va inviata con Thinking
+     * disabilitato (una sola richiesta, non un cambio globale).
+     */
+    @SerialName("thinking") val thinking: ThinkingDirective? = null
 ) {
+    /** Direttiva Thinking di DeepSeek. */
+    @Serializable
+    data class ThinkingDirective(val type: String) {
+        companion object {
+            val enabled = ThinkingDirective("enabled")
+            val disabled = ThinkingDirective("disabled")
+        }
+    }
+
     @Serializable
     data class ResponseFormat(val type: String = "json_object")
 
@@ -53,7 +72,8 @@ data class ChatCompletionRequest(
             maxTokens: Int? = null,
             responseFormat: ResponseFormat? = null,
             tools: List<ToolDefinition>? = null,
-            toolChoice: JsonElement? = null
+            toolChoice: JsonElement? = null,
+            thinking: ThinkingDirective? = null
         ): ChatCompletionRequest {
             val newParam = AiParameterPolicy.tokenParamFor(provider, model) ==
                 TokenParam.MAX_COMPLETION_TOKENS
@@ -72,7 +92,8 @@ data class ChatCompletionRequest(
                 // "Function tools with reasoning_effort are not supported ... set
                 // reasoning_effort to \"none\""). Con strumenti si forza "none";
                 // senza strumenti si lascia il default del provider.
-                reasoningEffort = if (hasTools && newParam) REASONING_EFFORT_NONE else null
+                reasoningEffort = if (hasTools && newParam) REASONING_EFFORT_NONE else null,
+                thinking = thinking
             )
         }
 
@@ -110,6 +131,13 @@ data class ChatCompletionRequest(
         fun withReasoningNone(request: ChatCompletionRequest): ChatCompletionRequest =
             request.copy(reasoningEffort = REASONING_EFFORT_NONE)
 
+        /**
+         * Riporta `tool_choice` su "auto": DeepSeek in Thinking mode rifiuta
+         * qualsiasi scelta forzata ("Thinking mode does not support this tool_choice").
+         */
+        fun withAutoToolChoice(request: ChatCompletionRequest): ChatCompletionRequest =
+            request.copy(toolChoice = ToolChoice.auto)
+
         /** Valore di reasoning_effort che abilita i function tools su Chat Completions. */
         const val REASONING_EFFORT_NONE = "none"
     }
@@ -123,7 +151,13 @@ data class ChatMessageDto(
     @SerialName("tool_calls") val toolCalls: List<ToolCallDto>? = null,
     @SerialName("tool_call_id") val toolCallId: String? = null,
     /** Nome della funzione per i messaggi role=tool. */
-    val name: String? = null
+    val name: String? = null,
+    /**
+     * Catena di pensiero restituita da DeepSeek in modalita Thinking. Va
+     * reinserita INTEGRALMENTE nei messaggi assistant successivi quando la
+     * richiesta porta `tools`: senza di essa l'API risponde HTTP 400.
+     */
+    @SerialName("reasoning_content") val reasoningContent: String? = null
 )
 
 /**
@@ -183,12 +217,30 @@ data class ChatCompletionResponse(
         @SerialName("total_tokens") val totalTokens: Int = 0
     )
 
-    /** Testo utile (contenuto vero, senza reasoning). Null se assente. */
+    /**
+     * Testo utile con fallback sul reasoning: usato quando il modello mette tutta
+     * la risposta in `reasoning_content` (alcuni reasoning model). Non va usato
+     * per decidere se il turno contiene una risposta finale quando ci sono tool call.
+     */
     val content: String? get() = choices.firstOrNull()?.message?.let { extractText(it) }
+
+    /** Solo il contenuto vero (`content`), senza fallback sul reasoning. */
+    val rawContent: String? get() = choices.firstOrNull()?.message?.let { extractContentOnly(it) }
 
     /** Motivo di fine generazione del primo choice. */
     val finishReason: String? get() = choices.firstOrNull()?.finishReason
 }
+
+/** Estrae SOLO il contenuto (`content`), senza fallback sul reasoning. */
+internal fun extractContentOnly(message: ChatCompletionResponse.Message): String? =
+    message.content?.let { element ->
+        when {
+            element.asPrimitiveOrNull() != null -> element.asPrimitiveOrNull()
+            element is kotlinx.serialization.json.JsonArray ->
+                element.mapNotNull { it.asPrimitiveOrNull() }.joinToString("")
+            else -> null
+        }
+    }
 
 /** Estrae il testo utile da un messaggio, gestendo content null/array/reasoning. */
 internal fun extractText(message: ChatCompletionResponse.Message): String? {

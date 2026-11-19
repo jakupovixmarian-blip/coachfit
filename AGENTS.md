@@ -252,3 +252,41 @@ il piano. `removeEntry` elimina la voce.
 Nota test: `WorkoutViewModel.runRestTimer`/`syncStopwatch` usano `System.currentTimeMillis`
 in un loop con `delay`. Nei test NON usare `advanceUntilIdle` (gira all'infinito): pompare
 lo scheduler con `runCurrent` e attendere la condizione reale.
+
+## DeepSeek: Thinking mode + Tool Calling (vincoli API)
+
+Il provider DeepSeek ha due regole che, se violate, producono **HTTP 400** e bloccano
+la generazione del piano alimentare. Sono verificate in
+`app/src/test/java/com/fitcoach/app/domain/coach/DeepSeekThinkingToolCallingTest.kt`
+(provider simulato che applica le stesse regole dell'API reale).
+
+1. **Con Thinking attivo `tool_choice` puo essere solo `auto`.**
+   Qualunque scelta forzata (`required` o il nome di uno strumento) restituisce
+   `"Thinking mode does not support this tool_choice"`.
+   In `CoachOrchestrator.run` la consegna obbligatoria (`requireTool`, es.
+   `submit_full_program`) viene quindi perseguita con istruzioni + sollecito, e la
+   scelta forzata si usa **solo** dopo che il modello ha risposto in prosa senza
+   consegnare (`proseMisses >= 1`). In quel caso **la singola richiesta** parte con
+   `thinking: {"type":"disabled"}`; il ragionamento non viene mai disattivato globalmente.
+   Il campo `thinking` viene inviato solo ai provider che lo supportano
+   (`AiParameterPolicy.supportsThinkingMode`, oggi DeepSeek): gli altri lo rifiuterebbero.
+
+2. **Con `tools` presenti il `reasoning_content` va reinviato integralmente.**
+   Ogni messaggio assistant che contiene `tool_calls` deve riportare il
+   `reasoning_content` ricevuto dal provider, in tutti i turni successivi della stessa
+   conversazione; altrimenti l'API risponde 400. Per questo:
+   - `ChatCompletionResponse.Message.reasoningContent` viene esposto in
+     `AiResult.Success.reasoningContent`;
+   - `assistantToolCallMessage(..., reasoningContent = ...)` lo reinserisce nel messaggio
+     assistant (`ChatMessageDto.reasoningContent`, serializzato come `reasoning_content`);
+   - il reasoning **non** viene mai usato come testo finale quando ci sono tool call
+     (`ChatCompletionResponse.rawContent` vs `content`), perche non e la risposta per
+     l'utente.
+
+Difesa in profondita: se una richiesta forzata arrivasse comunque al client con Thinking
+attivo, `AiClient` riconosce l'errore (`AiParameterPolicy.isThinkingToolChoiceError`) e
+ripete la chiamata con `tool_choice = auto` (`ChatCompletionRequest.withAutoToolChoice`).
+
+Regola generale: non esiste un secondo motore decisionale. `CoachOrchestrator` resta
+l'unica autorita; nutrizione e allenamento passano dallo stesso percorso agentico
+(`AiProgramGenerationService` -> `orchestrator.run(requireTool = "submit_full_program")`).

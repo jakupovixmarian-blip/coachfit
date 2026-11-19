@@ -52,9 +52,22 @@ object ToolChoice {
     }
 }
 
-/** Costruisce un messaggio assistant con tool calls. */
-fun assistantToolCallMessage(toolCalls: List<ToolCallDto>): ChatMessageDto =
-    ChatMessageDto(role = "assistant", content = null, toolCalls = toolCalls)
+/**
+ * Costruisce un messaggio assistant con tool calls.
+ *
+ * [reasoningContent] e la catena di pensiero DeepSeek: con i `tools` presenti va
+ * reinviata integralmente, altrimenti l'API risponde HTTP 400.
+ */
+fun assistantToolCallMessage(
+    toolCalls: List<ToolCallDto>,
+    reasoningContent: String? = null,
+    content: String? = null,
+): ChatMessageDto = ChatMessageDto(
+    role = "assistant",
+    content = content,
+    toolCalls = toolCalls,
+    reasoningContent = reasoningContent,
+)
 
 /** Costruisce un messaggio di risultato di uno strumento. */
 fun toolResultMessage(toolCallId: String, name: String, content: String): ChatMessageDto =

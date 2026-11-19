@@ -1,8 +1,10 @@
 package com.fitcoach.app.domain.coach
 
 import com.fitcoach.app.data.remote.AiClient
+import com.fitcoach.app.data.remote.AiParameterPolicy
 import com.fitcoach.app.data.remote.AiProviderConfig
 import com.fitcoach.app.data.remote.AiResult
+import com.fitcoach.app.data.remote.ChatCompletionRequest
 import com.fitcoach.app.data.remote.ChatMessageDto
 import com.fitcoach.app.data.remote.ToolChoice
 import com.fitcoach.app.data.remote.assistantToolCallMessage
@@ -62,10 +64,15 @@ class CoachOrchestrator @Inject constructor(
         maxIterations: Int = MAX_ITERATIONS,
         /**
          * Se impostato, il turno DEVE concludersi con una chiamata a questo
-         * strumento: viene forzato con `tool_choice` e, se il modello risponde
-         * in prosa senza chiamarlo, viene sollecitato a chiamarlo. Usato dalla
-         * generazione del programma (submit_full_program), dove una risposta
-         * senza consegna non ha valore.
+         * strumento: viene sollecitato nel prompt e, se il modello risponde in
+         * prosa senza chiamarlo, viene richiamato. Usato dalla generazione del
+         * programma (submit_full_program), dove una risposta senza consegna non
+         * ha valore.
+         *
+         * Il forzamento via `tool_choice` avviene SOLO se il provider lo accetta:
+         * con Thinking attivo DeepSeek ammette unicamente `auto`, quindi la
+         * richiesta forzata viene inviata con Thinking disabilitato (per quella
+         * singola richiesta) e mai disattivando il ragionamento in modo globale.
          */
         requireTool: String? = null
     ): CoachTurnResult {
@@ -80,6 +87,8 @@ class CoachOrchestrator @Inject constructor(
         val toolResults = mutableListOf<CoachToolResult>()
         var lastText = ""
         var requiredToolDelivered = false
+        /** Quante volte il modello ha risposto in prosa senza consegnare lo strumento obbligatorio. */
+        var proseMisses = 0
 
         /** Applica una risposta di successo del modello ai buffer del turno. */
         suspend fun consumeSuccess(result: AiResult.Success): Step {
@@ -89,6 +98,7 @@ class CoachOrchestrator @Inject constructor(
                 // prosa (o e stato troncato), sollecitalo: una risposta senza
                 // consegna non e accettabile.
                 if (requireTool != null && !requiredToolDelivered) {
+                    proseMisses++
                     val reason = if (result.truncated) {
                         "La risposta precedente e stata troncata per limite di token. "
                     } else ""
@@ -110,7 +120,13 @@ class CoachOrchestrator @Inject constructor(
                 )
             }
             // Registra la richiesta di tool dell'assistant, poi esegue.
-            messages += assistantToolCallMessage(result.toolCalls)
+            // Il reasoning_content va conservato: con `tools` presenti DeepSeek lo
+            // richiede integralmente nei turni successivi (altrimenti HTTP 400).
+            messages += assistantToolCallMessage(
+                toolCalls = result.toolCalls,
+                reasoningContent = result.reasoningContent,
+                content = result.content.takeIf { it.isNotBlank() }
+            )
             result.toolCalls.forEach { call ->
                 val args = parseArgs(call.function.arguments)
                 val output = toolRegistry.execute(call.function.name, args)
@@ -131,28 +147,49 @@ class CoachOrchestrator @Inject constructor(
         }
 
         repeat(maxIterations) { iteration ->
-            // Forza la consegna finche lo strumento richiesto non e stato chiamato.
-            val forcedChoice = if (requireTool != null && !requiredToolDelivered) {
-                ToolChoice.force(requireTool)
-            } else {
-                ToolChoice.auto
-            }
+            // Con Thinking attivo DeepSeek accetta SOLO `tool_choice = auto`
+            // ("Thinking mode does not support this tool_choice"). Il ragionamento
+            // resta quindi attivo e la consegna obbligatoria viene perseguita con
+            // le istruzioni e il sollecito. Solo se il modello continua a rispondere
+            // in prosa senza consegnare, UNA singola richiesta viene inviata in
+            // modalita non-thinking con lo strumento forzato: e l'unico modo
+            // ammesso per imporre un tool specifico, senza disattivare il
+            // ragionamento in modo globale.
+            val thinkingCapable = AiParameterPolicy.supportsThinkingMode(config.provider)
+            val mustDeliver = requireTool != null && !requiredToolDelivered
+            val escalateForce = mustDeliver && (!thinkingCapable || proseMisses >= 1)
+            val forcedChoice = if (escalateForce) ToolChoice.force(requireTool) else ToolChoice.auto
             val result = aiClient.complete(
                 config = config,
                 messages = messages,
                 tools = toolRegistry.definitions,
-                toolChoice = forcedChoice
+                toolChoice = forcedChoice,
+                thinking = when {
+                    !thinkingCapable -> null
+                    escalateForce -> ChatCompletionRequest.ThinkingDirective.disabled
+                    else -> ChatCompletionRequest.ThinkingDirective.enabled
+                }
             )
             when (result) {
                 is AiResult.Failure -> {
                     // Se il provider rifiuta la scelta forzata dello strumento, non
                     // perdere il tool calling: riprova lo stesso giro con "auto".
-                    if (forcedChoice != ToolChoice.auto && isToolChoiceUnsupported(result.message)) {
+                    if (forcedChoice != ToolChoice.auto &&
+                        (isToolChoiceUnsupported(result.message) ||
+                            AiParameterPolicy.isThinkingToolChoiceError(result.message))
+                    ) {
                         val auto = aiClient.complete(
                             config = config,
                             messages = messages,
                             tools = toolRegistry.definitions,
-                            toolChoice = ToolChoice.auto
+                            toolChoice = ToolChoice.auto,
+                            // Il provider ha rifiutato la scelta forzata: si torna
+                            // al ragionamento attivo con la scelta automatica.
+                            thinking = if (thinkingCapable) {
+                                ChatCompletionRequest.ThinkingDirective.enabled
+                            } else {
+                                null
+                            }
                         )
                         if (auto is AiResult.Success) {
                             when (val step = consumeSuccess(auto)) {

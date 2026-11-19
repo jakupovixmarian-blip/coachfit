@@ -90,6 +90,24 @@ object AiParameterPolicy {
             m.contains("not supported") || m.contains("tool")
     }
 
+    /**
+     * True se il provider supporta la modalita Thinking con il campo
+     * `thinking: {"type": ...}` (DeepSeek). Gli altri provider non devono
+     * ricevere il campo: lo rifiuterebbero come sconosciuto.
+     */
+    fun supportsThinkingMode(provider: AiProvider): Boolean = provider == AiProvider.DEEPSEEK
+
+    /**
+     * Con Thinking attivo DeepSeek accetta solo `tool_choice = auto`: qualunque
+     * scelta forzata (`required` oppure un nome specifico) produce
+     * "Thinking mode does not support this tool_choice".
+     */
+    fun isThinkingToolChoiceError(message: String): Boolean {
+        val m = message.lowercase()
+        if (!m.contains("thinking")) return false
+        return m.contains("tool_choice") || m.contains("tool choice")
+    }
+
     /** Rileva il rifiuto del campo `reasoning_effort` (endpoint che non lo conosce). */
     fun isUnknownReasoningEffortError(message: String): Boolean {
         val m = message.lowercase()

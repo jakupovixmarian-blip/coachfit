@@ -20,7 +20,13 @@ sealed interface AiResult {
          * `length` significa che il modello ha esaurito il budget di token: la
          * risposta (o gli argomenti di un tool call) possono essere troncati.
          */
-        val finishReason: String? = null
+        val finishReason: String? = null,
+        /**
+         * Catena di pensiero DeepSeek (`reasoning_content`). NON va mostrata
+         * all'utente: va solo reinviata al provider nei turni successivi della
+         * stessa conversazione con strumenti (protocollo Thinking + Tool Calls).
+         */
+        val reasoningContent: String? = null
     ) : AiResult {
         /** True se la generazione e stata troncata per esaurimento dei token. */
         val truncated: Boolean get() = finishReason == "length"
@@ -45,7 +51,13 @@ class AiClient @Inject constructor(
         maxTokens: Int = config.maxTokens,
         responseFormat: ChatCompletionRequest.ResponseFormat? = null,
         tools: List<ToolDefinition>? = null,
-        toolChoice: JsonElement? = null
+        toolChoice: JsonElement? = null,
+        /**
+         * Direttiva Thinking da inviare al provider. `null` = non inviare il
+         * campo (comportamento di default del provider). Rilevante per DeepSeek,
+         * dove Thinking attivo impone `tool_choice = auto`.
+         */
+        thinking: ChatCompletionRequest.ThinkingDirective? = null
     ): AiResult {
         if (config.baseUrl.isBlank()) {
             return AiResult.Failure("Base URL non configurato. Vai in Impostazioni > Provider AI.")
@@ -73,7 +85,8 @@ class AiClient @Inject constructor(
             maxTokens = maxTokens,
             responseFormat = responseFormat,
             tools = tools,
-            toolChoice = toolChoice
+            toolChoice = toolChoice,
+            thinking = thinking
         )
         if (learned?.alternateTokenParam == true) {
             request = ChatCompletionRequest.withAlternateTokenParam(request)
@@ -113,6 +126,15 @@ class AiClient @Inject constructor(
         // prescindere: in quel caso va rimosso.
         if (result is AiResult.Failure && AiParameterPolicy.isUnknownReasoningEffortError(result.message)) {
             request = ChatCompletionRequest.withoutReasoningEffort(request)
+            result = sendOnce(config, request)
+        }
+        // DeepSeek in Thinking mode accetta solo `tool_choice = auto`: se la
+        // richiesta forzava uno strumento, la si ripete con la scelta automatica
+        // invece di perdere il tool calling.
+        if (result is AiResult.Failure && AiParameterPolicy.isThinkingToolChoiceError(result.message) &&
+            request.toolChoice != null && request.toolChoice != ToolChoice.auto
+        ) {
+            request = ChatCompletionRequest.withAutoToolChoice(request)
             result = sendOnce(config, request)
         }
         return result
@@ -204,7 +226,9 @@ class AiClient @Inject constructor(
         val toolCalls = message?.toolCalls.orEmpty()
             .filter { it.function?.name?.isNotBlank() == true }
             .map { it.toRequestDto() }
-        val content = body.content
+        // Con i tool call il testo puo essere vuoto: in quel caso NON usare il
+        // reasoning come contenuto finale (non e la risposta per l'utente).
+        val content = if (toolCalls.isEmpty()) body.content else body.rawContent
         if (content.isNullOrBlank() && toolCalls.isEmpty()) {
             val reason = when (body.finishReason) {
                 "length" -> "Risposta troncata: aumenta i token massimi o accorcia la richiesta."
@@ -214,7 +238,13 @@ class AiClient @Inject constructor(
             }
             return AiResult.Failure(reason, response.code())
         }
-        return AiResult.Success((content ?: "").trim(), body.model, toolCalls, body.finishReason)
+        return AiResult.Success(
+            content = (content ?: "").trim(),
+            model = body.model,
+            toolCalls = toolCalls,
+            finishReason = body.finishReason,
+            reasoningContent = message?.reasoningContent?.takeIf { it.isNotBlank() }
+        )
     }
 
     /** Verifica rapida della connessione con un messaggio minimale. */
