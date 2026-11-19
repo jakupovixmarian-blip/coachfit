@@ -9,7 +9,10 @@ import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.FoodItem
 import com.fitcoach.app.domain.model.UserProfile
+import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
+import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.FoodCatalogSelector
+import kotlin.math.roundToInt
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -159,6 +162,30 @@ class AiProgramGenerationService @Inject constructor(
         exercises.take(120).forEach { e ->
             appendLine("${e.name} | ${e.primaryMuscle.name} | ${e.equipment.joinToString { it.name }} | ${e.minReps}-${e.maxReps} | ${e.restSeconds}s | ${e.targetRir}")
         }
+        val energy = EnergyCalculator.compute(profile)
+        if (energy != null) {
+            val cycling = if (CarbCyclingEngine.shouldApplyCarbCycling(profile)) {
+                CarbCyclingEngine.build(profile, energy)
+            } else {
+                CarbCyclingEngine.buildUniform(profile, energy)
+            }
+            appendLine("TARGET NUTRIZIONALI VINCOLANTI (verificati al salvataggio, non negoziabili):")
+            cycling.targets.forEach { (type, t) ->
+                appendLine(
+                    "  ${type.name}: ${t.kcal.roundToInt()} kcal | ${t.protein.roundToInt()} g proteine | " +
+                        "${t.carbs.roundToInt()} g carboidrati | ${t.fat.roundToInt()} g grassi"
+                )
+            }
+            appendLine("  Settimanale: ${cycling.weeklyKcal.roundToInt()} kcal; " +
+                "giornate HIGH=${cycling.highDays}, MEDIUM=${cycling.mediumDays}, LOW=${cycling.lowDays}")
+            appendLine(
+                "PROCEDURA OBBLIGATORIA per la nutrizione: per OGNI giorno chiama solve_meal_portions " +
+                    "scegliendo gli alimenti (deve esserci almeno una fonte proteica, una di carboidrati " +
+                    "e una di grassi) e usa le grammature che restituisce. Non calcolare i grammi a mano: " +
+                    "il solver usa i valori reali del catalogo. Se restituisce ok=false, cambia gli alimenti " +
+                    "e ripeti."
+            )
+        }
         appendLine("Il risultato deve avere esattamente 7 giorni nutrizionali e ${profile.trainingDaysPerWeek} giorni di allenamento.")
         appendLine("Consegnalo con lo strumento submit_full_program: la verifica e il salvataggio avvengono li.")
     }
@@ -182,11 +209,15 @@ class AiProgramGenerationService @Inject constructor(
             METODO
             1. Leggi i dati reali con gli strumenti se ti servono (get_anamnesis, list_foods,
                list_exercises, compute_energy_targets, compute_carb_cycling, compute_weekly_volume,
-               compute_portion, validate_nutrition_day, validate_workout_plan).
+               compute_portion, validate_nutrition_day, validate_workout_plan,
+               get_nutrition_targets, solve_meal_portions).
             2. Costruisci 7 giorni nutrizionali con carb cycling (HIGH nei giorni piu intensi, MEDIUM,
                LOW nei giorni di riposo) e una scheda periodizzata con esattamente i giorni dichiarati.
-            3. Verifica la scheda con validate_workout_plan e le giornate con validate_nutrition_day.
-            4. Consegnala con submit_full_program (una sola chiamata, oggetto completo). Se ricevi
+            3. Per la nutrizione: consulta get_nutrition_targets, poi per OGNI giorno chiama
+               solve_meal_portions con gli alimenti scelti. Il solver calcola le grammature sui
+               target reali. Non stimare i grammi a mano e non inventare i target.
+            4. Verifica la scheda con validate_workout_plan e le giornate con validate_nutrition_day.
+            5. Consegnala con submit_full_program (una sola chiamata, oggetto completo). Se ricevi
                ok=false, correggi SOLO i valori in 'violazioni' e richiama lo strumento.
 
             VINCOLI

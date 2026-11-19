@@ -61,6 +61,12 @@ object CoachToolsModule {
     @Provides @IntoSet fun portion(t: com.fitcoach.app.domain.coach.tools.ComputePortionTool): CoachTool = t
     @Provides @IntoSet fun substitution(t: com.fitcoach.app.domain.coach.tools.ComputeSubstitutionTool): CoachTool = t
     @Provides @IntoSet fun validateDay(t: com.fitcoach.app.domain.coach.tools.ValidateNutritionDayTool): CoachTool = t
+    @Provides @IntoSet fun nutritionTargets(
+        t: com.fitcoach.app.domain.coach.tools.GetNutritionTargetsTool
+    ): CoachTool = t
+    @Provides @IntoSet fun solvePortions(
+        t: com.fitcoach.app.domain.coach.tools.SolveMealPortionsTool
+    ): CoachTool = t
     @Provides @IntoSet fun submitProgram(t: com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool): CoachTool = t
     @Provides @IntoSet fun weeklyCheckIn(t: AnalyzeWeeklyCheckInTool): CoachTool = t
 

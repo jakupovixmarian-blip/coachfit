@@ -290,3 +290,40 @@ ripete la chiamata con `tool_choice = auto` (`ChatCompletionRequest.withAutoTool
 Regola generale: non esiste un secondo motore decisionale. `CoachOrchestrator` resta
 l'unica autorita; nutrizione e allenamento passano dallo stesso percorso agentico
 (`AiProgramGenerationService` -> `orchestrator.run(requireTool = "submit_full_program")`).
+
+## Nutrizione: target vincolanti e solver delle grammature
+
+**Sintomo**: `Il programma AI non e valido: giorno N kcal: attese 2037, ricevute 1281`
+(proteine/carboidrati/grassi sotto target della stessa proporzione), su tutti i giorni.
+
+**Causa**: il target di ogni giornata e deterministico (`CarbCyclingEngine`) e il
+validatore lo impone, ma l'AI **non lo riceveva**: doveva indovinarlo e poi centrare
+quattro macro a mano su ~35 pasti. Sbagliava sistematicamente per difetto (~60% del
+target). Non era un problema di catalogo: pollo, riso, olio, uova e avena sono nel seed.
+
+**Soluzione** — divisione netta dei compiti:
+- L'AI decide **cosa** si mangia (alimenti, pasti, ordine) e **quale** esercizio fare.
+- `MealPortionSolver` (`domain/nutrition/`) calcola **quanto**, sui valori reali del
+  catalogo: aggiustamento iterativo per ruolo (PROTEIN/CARBS/FAT), grammi interi,
+  verifica entro il 3% (molto piu stretta del 20-30% del validatore).
+- `solve_meal_portions` (tool) espone il solver: l'AI passa gli alimenti per pasto e
+  riceve le voci pronte (`foodName`/`grams`) da usare in `submit_full_program`.
+- `get_nutrition_targets` (tool) restituisce i target esatti HIGH/MEDIUM/LOW e quale
+  dayType tocca a ogni giorno. Il contesto di generazione stampa comunque la tabella
+  dei target, cosi il modello non deve nemmeno chiederla.
+
+**Onesta sui limiti** (importante, non "aggiustare" rimuovendola): se una giornata non
+e centrabile il solver restituisce `ok=false` con `IMPOSSIBILE ...` e la spiegazione
+(alimento X al minimo di 1 g gia troppo denso, oppure manca una fonte per un macro).
+L'AI deve cambiare alimenti e ripetere. Non introdurre tolleranze piu larghe, non
+aggiungere alimenti di nascosto e non far passare una giornata fuori target.
+
+`MealPortionSolver.roleOf` classifica per densita **e** quota calorica: l'uovo intero
+resta una fonte proteica (piu kcal da grassi ma 12.4 g proteine/100 g); gli alimenti
+sotto 50 kcal/100 g (verdura) sono `MIXED` e non trainano nessun macro.
+
+Test: `MealPortionSolverTest` (14), `NutritionToolContractTest` (9, contratto JSON
+verso l'AI), `NutritionTargetCoherenceTest` (7, 7 giorni validi su piu profili e
+pesi 55-110 kg). `SimulatedAiPrograms` ora sceglie solo gli alimenti e delega i grammi
+al solver: se un test di integrazione torna rosso, il problema e nel solver o nel
+contratto, non nell'aritmetica simulata.

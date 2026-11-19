@@ -19,7 +19,7 @@ import com.fitcoach.app.domain.model.SplitType
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
-import com.fitcoach.app.domain.nutrition.MealPlanGenerator
+import com.fitcoach.app.domain.nutrition.MealPortionSolver
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import com.fitcoach.app.domain.workout.WorkoutPlanValidator
 import kotlinx.serialization.json.Json
@@ -66,13 +66,34 @@ object SimulatedAiPrograms {
             List(7) { CarbDayType.MEDIUM }
         }
 
-        val byName = foods.associateBy { it.name }
         val bank = buildBank(foods)
         val nutritionDays = (0 until 7).map { dayIndex ->
             val type = dayTypes.getOrElse(dayIndex) { CarbDayType.MEDIUM }
             val target = cycling.targets[type] ?: cycling.targets[CarbDayType.MEDIUM]!!
-            val meals = fiveMealShares.mapIndexed { mealIndex, (slot, shares) ->
-                buildMeal(byName, bank, slot, shares, target.protein, target.carbs, target.fat, dayIndex, mealIndex)
+            // L'AI simulata sceglie SOLO gli alimenti per ogni pasto; le grammature
+            // le risolve MealPortionSolver, esattamente come in produzione.
+            val structure = fiveMealShares.mapIndexed { mealIndex, (slot, _) ->
+                slot.name to chooseFoods(bank, slot, dayIndex, mealIndex)
+            }
+            var solved = MealPortionSolver.solve(target, structure)
+            // Se il solver segnala una giornata non centrabile, l'AI reagisce come in
+            // produzione: rimuove le fonti di grasso aggiunte (spesso ridondanti,
+            // perche cereali e proteine ne portano gia) e riprova.
+            if (!solved.ok) {
+                val leaner = structure.map { (slot, foods) ->
+                    slot to foods.filterNot { MealPortionSolver.roleOf(it) == MealPortionSolver.Role.FAT }
+                }
+                val retry = MealPortionSolver.solve(target, leaner)
+                if (retry.ok) solved = retry
+            }
+            val meals = solved.meals.mapIndexed { mealIndex, meal ->
+                AiMeal(
+                    slot = meal.slot,
+                    time = fiveMealShares[mealIndex].first.defaultTime,
+                    entries = meal.entries.map {
+                        AiFoodEntry(foodName = it.foodName, grams = it.grams, unit = "RAW")
+                    }
+                )
             }
             AiNutritionDay(dayIndex = dayIndex, dayType = type.name, meals = meals)
         }
@@ -145,55 +166,24 @@ object SimulatedAiPrograms {
     private fun <T> pick(list: List<T>, seed: Int): T? =
         if (list.isEmpty()) null else list[((seed % list.size) + list.size) % list.size]
 
-    private fun buildMeal(
-        byName: Map<String, FoodItem>,
+    /**
+     * Scelta degli alimenti del pasto (nessuna grammatura: la calcola il solver).
+     * Include una verdura/frutta di contorno e le fonti dei tre macro.
+     */
+    private fun chooseFoods(
         bank: Bank,
         slot: MealSlot,
-        shares: Triple<Double, Double, Double>,
-        proteinTarget: Double,
-        carbsTarget: Double,
-        fatTarget: Double,
         dayIndex: Int,
         mealIndex: Int
-    ): AiMeal {
-        val (pShare, cShare, fShare) = shares
-        val entries = mutableListOf<AiFoodEntry>()
-        var protein = 0.0
-        var carbs = 0.0
-        var fat = 0.0
-
-        fun add(food: FoodItem, grams: Double) {
-            entries += AiFoodEntry(foodName = food.name, grams = grams.toInt().toDouble(), unit = food.defaultUnit.name)
-            val f = grams / 100.0
-            protein += food.proteinPer100g * f
-            carbs += food.carbsPer100g * f
-            fat += food.fatPer100g * f
-        }
-
+    ): List<FoodItem> {
+        val foods = mutableListOf<FoodItem>()
         val isBreakfast = slot == MealSlot.BREAKFAST
-        val veg = if (isBreakfast) pick(bank.fruits, dayIndex + mealIndex)
-        else pick(bank.veggies, dayIndex + mealIndex)
-        veg?.let { add(it, if (isBreakfast) 100.0 else 150.0) }
-
-        val carb = pick(bank.carbs, dayIndex * 3 + mealIndex)
-        val remainingCarbs = (carbsTarget * cShare - carbs).coerceAtLeast(0.0)
-        if (carb != null && remainingCarbs >= 5.0) {
-            add(carb, MealPlanGenerator.gramsForMacro(remainingCarbs, carb.carbsPer100g).coerceIn(15.0, 350.0))
-        }
-
-        val proteinFood = pick(bank.proteins, dayIndex * 5 + mealIndex)
-        val remainingProtein = (proteinTarget * pShare - protein).coerceAtLeast(0.0)
-        if (proteinFood != null && remainingProtein > 1.0) {
-            add(proteinFood, MealPlanGenerator.gramsForMacro(remainingProtein, proteinFood.proteinPer100g).coerceIn(20.0, 400.0))
-        }
-
-        val fatFood = pick(bank.fats, dayIndex * 2 + mealIndex)
-        val remainingFat = (fatTarget * fShare - fat).coerceAtLeast(0.0)
-        if (fatFood != null && remainingFat >= 1.0) {
-            add(fatFood, MealPlanGenerator.gramsForMacro(remainingFat, fatFood.fatPer100g).coerceIn(2.0, 60.0))
-        }
-
-        return AiMeal(slot = slot.name, time = slot.defaultTime, entries = entries)
+        (if (isBreakfast) pick(bank.fruits, dayIndex + mealIndex)
+        else pick(bank.veggies, dayIndex + mealIndex))?.let { foods += it }
+        pick(bank.carbs, dayIndex * 3 + mealIndex)?.let { foods += it }
+        pick(bank.proteins, dayIndex * 5 + mealIndex)?.let { foods += it }
+        pick(bank.fats, dayIndex * 2 + mealIndex)?.let { foods += it }
+        return foods
     }
 
     fun splitFor(daysPerWeek: Int): SplitType = when {
