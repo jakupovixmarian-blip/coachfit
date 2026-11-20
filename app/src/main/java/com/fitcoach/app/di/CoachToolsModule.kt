@@ -7,6 +7,7 @@ import com.fitcoach.app.domain.coach.tools.CoachTool
 import com.fitcoach.app.domain.coach.tools.ComputeCarbCyclingTool
 import com.fitcoach.app.domain.coach.tools.ComputeEnergyTargetsTool
 import com.fitcoach.app.domain.coach.tools.ComputeWeeklyVolumeTool
+import com.fitcoach.app.domain.coach.tools.ConsultInvictusTool
 import com.fitcoach.app.domain.coach.tools.EstimateOneRepMaxTool
 import com.fitcoach.app.domain.coach.tools.GetActiveNutritionPlanTool
 import com.fitcoach.app.domain.coach.tools.GetActiveWorkoutPlanTool
@@ -43,6 +44,9 @@ object CoachToolsModule {
     @Provides @IntoSet fun catalog(t: GetCatalogSummaryTool): CoachTool = t
     @Provides @IntoSet fun foods(t: ListFoodsTool): CoachTool = t
     @Provides @IntoSet fun exercises(t: ListExercisesTool): CoachTool = t
+
+    // La metodologia resta nei dati: il modello la interroga, non la legge tutta.
+    @Provides @IntoSet fun invictus(t: ConsultInvictusTool): CoachTool = t
 
     // ---- Lettura: stato corrente ----
     @Provides @IntoSet fun nutritionPlan(t: GetActiveNutritionPlanTool): CoachTool = t

@@ -368,6 +368,32 @@ Cosa questo corpus **non** è:
   Dove serve autorità si confronta con la letteratura indicizzata (PubMed, OpenAlex,
   Crossref — API pubbliche senza chiave) e con `ScientificSourceSeedData`.
 
+#### Il corpus si consulta, non si versa nel prompt
+
+Il corpus è **dato dell'app**, non testo del prompt. Metterlo nel contesto di generazione
+lo trasforma in un elenco interminabile: su un modello piccolo (`qwen3.5-35b-a3b`) un
+contesto gonfiato produce programmi non validi — slot dei pasti vuoti, struttura fuori
+schema. Verificato: la stessa generazione passa col contesto di base e fallisce con
+~45.000 caratteri di corpus appesi in fondo.
+
+L'interfaccia è lo strumento `consult_invictus`, sullo stesso modello di `list_foods` e
+`list_exercises`: il modello vede nome, descrizione e schema, e chiede solo la parte che
+gli serve, quando gli serve.
+
+| Area | Cosa restituisce | Voci |
+|---|---|---|
+| `allenamento` | Regole di metodo con numero e fonte | 159 |
+| `nutrizione` | Proteine, carboidrati, grassi, bilancio, timing | 134 |
+| `tecniche` | Come si esegue una tecnica d'intensità | 7 |
+| `esercizi` | Muscoli, esecuzione, errori, varianti | 141 |
+
+Ogni voce torna con `fonte` e `url`, così la proposta del coach è verificabile. Senza
+`argomento` lo strumento dà la prima regola di ogni tema: serve a orientarsi, non a
+leggere tutto. Un argomento senza risultati risponde `ok:false` invece di inventare.
+
+Il catalogo completo resta in app e continua a funzionare offline; solo la chat AI
+richiede rete.
+
 **Rigenerazione.** `tools/corpus/fetch_invictus.py` legge i 1.357 articoli via REST API
 pubblica di WordPress (`/wp-json/wp/v2/posts`, `robots.txt` consente la lettura) e
 `tools/corpus/build_invictus_corpus.py` filtra le affermazioni e riscrive la tabella
