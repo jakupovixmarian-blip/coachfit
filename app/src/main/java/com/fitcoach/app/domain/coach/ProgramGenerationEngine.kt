@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package com.fitcoach.app.domain.coach
 
 import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
@@ -16,12 +18,15 @@ import com.fitcoach.app.domain.model.SplitType
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WorkoutDay
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
+import com.fitcoach.app.domain.nutrition.CatalogNameResolver
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.MealPlanGenerator
 import com.fitcoach.app.domain.workout.CatalogBounds
 import com.fitcoach.app.domain.workout.EffectiveVolumeCalculator
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.json.Json
 import java.util.Locale
 import kotlin.math.abs
@@ -119,7 +124,9 @@ object ProgramGenerationEngine {
                 if (aiMeal.entries.isEmpty()) return null
                 val entries = aiMeal.entries.map { aiEntry ->
                     if (aiEntry.grams !in 1.0..2_000.0) return null
-                    val food = foods.firstOrNull { it.normalizedName == FoodItem.normalizeName(aiEntry.foodName) }
+                    // Stesso risolutore del validatore: se la diagnostica accetta
+                    // un nome tollerante, il salvataggio non deve rifiutarlo.
+                    val food = CatalogNameResolver.resolveFood(aiEntry.foodName, foods)
                         ?: return null
                     val factor = aiEntry.grams / 100.0
                     MealEntry(
@@ -176,7 +183,14 @@ object ProgramGenerationEngine {
             if (aiDay == null) return@map WorkoutDay(dayIndex = index, title = "Riposo", isRestDay = true)
             if (aiDay.exercises.isEmpty()) return null
             val planned = aiDay.exercises.mapIndexed { order, aiExercise ->
-                val exercise = known[normalize(aiExercise.exerciseName)] ?: return null
+                // Un esercizio senza nome o senza prescrizione non e' un esercizio:
+                // salvarlo produrrebbe una scheda con righe vuote da 0 serie.
+                if (aiExercise.exerciseName.isBlank()) return null
+                if (aiExercise.sets < 1 || aiExercise.minReps < 1 ||
+                    aiExercise.maxReps < aiExercise.minReps
+                ) return null
+                val exercise = CatalogNameResolver.resolveExercise(aiExercise.exerciseName, exercises)
+                    ?: return null
                 if (!allowedExercise(exercise, profile)) return null
                 // Stessi limiti del catalogo usati dalla diagnostica: un'unica
                 // fonte, altrimenti validate e analyze rifiutano cose diverse.
@@ -289,7 +303,9 @@ data class AiMeal(
 
 @Serializable
 data class AiFoodEntry(
+    @JsonNames("name", "food", "food_name", "alimento")
     val foodName: String = "",
+    @JsonNames("quantity", "quantityGrams", "grammi")
     val grams: Double = 0.0,
     val unit: String = "RAW"
 )
@@ -311,11 +327,20 @@ data class AiWorkoutDay(
 
 @Serializable
 data class AiPlannedExercise(
+    // Gli alias coprono le varianti di nome campo che i modelli usano di fatto.
+    // Senza di essi `ignoreUnknownKeys` faceva decodificare un esercizio con
+    // nome vuoto e 0 ripetizioni, e la diagnosi parlava di "esercizio ''".
+    @JsonNames("name", "exercise", "exercise_name", "esercizio")
     val exerciseName: String = "",
+    @JsonNames("serie")
     val sets: Int = 0,
+    @JsonNames("reps", "min_reps", "repsMin", "ripetizioni_min")
     val minReps: Int = 0,
+    @JsonNames("max_reps", "repsMax", "ripetizioni_max")
     val maxReps: Int = 0,
+    @JsonNames("rest", "rest_seconds", "recupero")
     val restSeconds: Int = 0,
+    @JsonNames("rir", "rir_target", "target_rir")
     val targetRir: Int = 0,
     val technique: String = "NONE",
     val techniqueReason: String = ""

@@ -120,6 +120,15 @@ class SubmitFullProgramTool @Inject constructor(
                     ),
                     "nota" to JsonOut.str(
                         "Correggi SOLO i valori indicati e richiama submit_full_program con l'oggetto completo."
+                    ),
+                    // Il modello veniva respinto con "alimento X non presente"
+                    // senza sapere cosa esiste: indovinava per 8 tentativi. Qui
+                    // riceve i nomi validi e puo correggere subito.
+                    "alimenti_validi" to JsonOut.strings(
+                        foods.take(60).map { it.name }
+                    ),
+                    "esercizi_validi" to JsonOut.strings(
+                        exercises.take(60).map { it.name }
                     )
                 )
             )

@@ -53,7 +53,9 @@ class AiProgramGenerationService @Inject constructor(
 
     suspend fun generate(
         profile: UserProfile,
-        scope: ProgramGenerationEngine.Scope = ProgramGenerationEngine.Scope.BOTH
+        scope: ProgramGenerationEngine.Scope = ProgramGenerationEngine.Scope.BOTH,
+        /** Avanzamento leggibile, mostrato all'utente durante l'attesa. */
+        onProgress: ((String) -> Unit)? = null
     ): Result {
         if (!profile.isAnamnesisReady) {
             return Result.Failure("Completa e conferma l'anamnesi prima di generare il programma.", false)
@@ -80,7 +82,8 @@ class AiProgramGenerationService @Inject constructor(
                 "submit_full_program (scope=${scope.name}). Non fermarti prima: devi arrivare a ok=true.",
             maxIterations = GENERATION_MAX_ITERATIONS,
             requireTool = SUBMIT_TOOL,
-            deadlineMs = GENERATION_TIMEOUT_MS
+            deadlineMs = GENERATION_TIMEOUT_MS,
+            onProgress = onProgress
         )
 
         val submission = turn.toolResults.lastOrNull { it.name == SUBMIT_TOOL }

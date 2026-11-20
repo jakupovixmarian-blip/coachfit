@@ -431,6 +431,63 @@ Il controllo usa `AiConfigResolver.resolveConfigured()`, non `resolve()`: quest'
 restituisce sempre una configurazione (anche con chiave vuota) e farebbe risultare "pronto"
 un provider mai impostato.
 
+### Nomi del catalogo: confronto tollerante
+
+L'AI scrive i nomi in italiano corrente ("Uova intere", "Riso", "Yogurt greco"),
+il catalogo usa la dicitura della fonte ("Uovo intero di gallina", "Riso bianco
+(crudo)", "Yogurt greco 0% grassi"). Il confronto era **esatto**: ogni sinonimo,
+plurale o qualificatore mancante faceva respingere un programma altrimenti
+corretto, con messaggi come:
+
+```
+giorno 1: alimento 'Uova intere' non presente nel database
+giorno 4: alimento 'Yogurt greco' non presente nel database
+```
+
+`CatalogNameResolver` risolve il nome per passi, dal piu' stretto al piu' largo:
+
+1. nome identico;
+2. sinonimo dichiarato ("spigola" -> "branzino", "cottage cheese" -> "fiocchi di latte");
+3. singolare/plurale ("uova" -> "uovo");
+4. tutte le parole presenti in entrambi i nomi ("riso" -> "Riso bianco (crudo)");
+5. stessa testa, taglio diverso ("tagliata di manzo" -> "Fesa di manzo");
+6. somiglianza lessicale, solo per nomi lunghi.
+
+Il risolutore cerca **solo nella lista che riceve**, gia' filtrata per allergie ed
+esclusioni: la tolleranza sui nomi non puo' far rientrare un alimento vietato
+(`CatalogNameResolverTest.la tolleranza sui nomi non reintroduce un alimento escluso`).
+Quando nessun candidato e' abbastanza vicino restituisce `null`: meglio un alimento
+mancante che un alimento sbagliato, perche' un falso positivo falserebbe le calorie.
+
+Lo stesso risolutore e' usato da validatore, solver delle porzioni e salvataggio.
+Prima erano tre confronti esatti separati: il solver scartava in silenzio gli
+alimenti non riconosciuti e il giorno finiva a 1463 kcal contro 1891 attese.
+
+### Un pulsante che non risponde e' un bug, non un'attesa
+
+Due difetti della generazione avevano la stessa manifestazione: schermata ferma.
+Le cause erano diverse e vale la pena tenerle distinte.
+
+**Il pulsante "Genera" non faceva nulla.** `confirm()` salvava il profilo nel
+database ma non lo riportava nello stato: `anamnesisCompleted` restava `false` in
+memoria, la guardia di `generateNow()` usciva con un `return` e nessun messaggio.
+Regola adottata: ogni blocco deve dire perche' blocca.
+
+**L'attesa era muta.** Il turno di generazione puo' durare fino a 6 minuti (8
+tentativi, 90 s di timeout ciascuno). La UI mostrava una barra immobile, quindi
+"sta lavorando" e "si e' bloccata" erano indistinguibili. `CoachOrchestrator.run`
+accetta ora `onProgress`, e la schermata scrive a che tentativo e' arrivata.
+
+**La diagnosi era inutile.** Il rifiuto diceva "alimento X non presente" senza
+elencare cosa esiste: il modello indovinava per 8 tentativi. Il rifiuto include
+ora `alimenti_validi` ed `esercizi_validi`, cosi' la correzione avviene al primo
+colpo.
+
+**Il JSON malformato passava in silenzio.** Con `ignoreUnknownKeys`, un campo
+`name` al posto di `exerciseName` produceva esercizi con nome vuoto e 0 serie, e
+la diagnosi parlava di `esercizio ''`. I campi hanno ora alias (`JsonNames`) e la
+diagnosi nomina il campo mancante (`campo 'exerciseName' mancante o vuoto`).
+
 ### Firma release
 
 Crea `keystore.properties` nella root (non versionato):

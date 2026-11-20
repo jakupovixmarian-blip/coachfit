@@ -345,7 +345,13 @@ class AnamnesisViewModel @Inject constructor(
             // Fuori dal main thread: la generazione costruisce prompt enormi e
             // risolve le grammature, bloccando la UI porterebbe all'ANR.
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                aiProgramGeneration.generate(profile)
+                aiProgramGeneration.generate(profile) { step ->
+                    // Lo stato si aggiorna dal thread principale: la barra deve
+                    // raccontare a che punto e, non restare ferma per minuti.
+                    viewModelScope.launch {
+                        _state.value = _state.value.copy(generationMessage = step)
+                    }
+                }
             }
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t

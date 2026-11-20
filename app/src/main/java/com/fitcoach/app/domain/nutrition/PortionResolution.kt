@@ -50,7 +50,11 @@ object PortionResolution {
             val initial = mutableMapOf<String, Double>()
             day.meals.forEach { meal ->
                 val picked = meal.entries.mapNotNull { entry ->
+                    // Il solver scartava in silenzio gli alimenti con nome non
+                    // identico: il pasto perdeva una fonte proteica e il giorno
+                    // finiva a 1463 kcal contro 1891 attese.
                     val food = byName[FoodItem.normalizeName(entry.foodName)]
+                        ?: CatalogNameResolver.resolveFood(entry.foodName, foods)
                     if (food != null && entry.grams in MealPortionSolver.MIN_GRAMS..MealPortionSolver.MAX_GRAMS) {
                         // La grammatura del modello, se presente, e' solo il punto
                         // di partenza: il solver la corregge comunque.
@@ -81,7 +85,12 @@ object PortionResolution {
                     .mapValues { (_, list) -> list.first().grams }
                 meal.copy(
                     entries = meal.entries.map { entry ->
-                        val grams = gramsByName[entry.foodName]
+                        // Il solver restituisce il nome canonico del catalogo: per
+                        // ritrovare la grammatura va risolto anche qui, altrimenti
+                        // il nome scritto dall'AI non combacia e i grammi restano
+                        // quelli originali.
+                        val resolved = CatalogNameResolver.resolveFood(entry.foodName, foods)
+                        val grams = gramsByName[resolved?.name] ?: gramsByName[entry.foodName]
                         if (grams == null) entry else entry.copy(grams = grams)
                     }
                 )

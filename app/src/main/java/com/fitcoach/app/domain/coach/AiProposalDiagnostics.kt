@@ -8,6 +8,7 @@ import com.fitcoach.app.domain.model.MacroTotals
 import com.fitcoach.app.domain.model.MealSlot
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
+import com.fitcoach.app.domain.nutrition.CatalogNameResolver
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.workout.CatalogBounds
 import com.fitcoach.app.domain.workout.VolumeGuidelines
@@ -106,11 +107,14 @@ object AiProposalDiagnostics {
                             errors += "giorno ${day.dayIndex}: '${entry.foodName}' con " +
                                 "%.0f g, attesi da 1 a 2000 g".format(entry.grams)
                         }
-                        val food = foods.firstOrNull {
-                            it.normalizedName == FoodItem.normalizeName(entry.foodName)
-                        }
+                        // Confronto tollerante: l'AI scrive "Uova intere" dove il
+                        // catalogo dice "Uovo intero di gallina". Il match esatto
+                        // bocciava programmi corretti.
+                        val food = CatalogNameResolver.resolveFood(entry.foodName, foods)
                         if (food == null) {
-                            errors += "giorno ${day.dayIndex}: alimento '${entry.foodName}' non presente nel database"
+                            val hint = CatalogNameResolver.foodSuggestions(entry.foodName, foods)
+                            errors += "giorno ${day.dayIndex}: alimento '${entry.foodName}' non presente nel database" +
+                                if (hint.isEmpty()) "" else " (simili: ${hint.joinToString()})"
                         } else {
                             val factor = entry.grams / 100.0
                             actual += MacroTotals(
@@ -148,6 +152,8 @@ object AiProposalDiagnostics {
 
         if (includeWorkout) {
             val known = exercises.associateBy { normalize(it.name) }
+            fun findExercise(rawName: String): Exercise? =
+                CatalogNameResolver.resolveExercise(rawName, exercises)
             val weeklySetsPerExercise = mutableMapOf<Long, Int>()
             proposal.workout.days.forEach { day ->
                 if (day.exercises.isEmpty()) {
@@ -159,7 +165,7 @@ object AiProposalDiagnostics {
                 val sessionSets = day.exercises.sumOf { it.sets }
                 val sessionCeiling = VolumeGuidelines.sessionCeiling(
                     day.exercises.map { item ->
-                        known[normalize(item.exerciseName)]?.category ?: ExerciseCategory.ISOLATION
+                        findExercise(item.exerciseName)?.category ?: ExerciseCategory.ISOLATION
                     }
                 )
                 if (sessionSets > sessionCeiling) {
@@ -170,9 +176,30 @@ object AiProposalDiagnostics {
                         "minimo ${VolumeGuidelines.MIN_SETS_PER_SESSION} per seduta"
                 }
                 day.exercises.forEach { item ->
-                    val exercise = known[normalize(item.exerciseName)]
+                    // Un JSON con nomi di campo diversi produceva esercizi con
+                    // nome vuoto e 0 ripetizioni: la diagnosi parlava di
+                    // "esercizio ''", inutile per correggere. Qui il messaggio
+                    // dice esattamente quale campo manca.
+                    if (item.exerciseName.isBlank()) {
+                        errors += "giorno workout ${day.dayIndex}: esercizio senza nome " +
+                            "(campo 'exerciseName' mancante o vuoto)"
+                        return@forEach
+                    }
+                    if (item.sets < 1) {
+                        errors += "giorno workout ${day.dayIndex}: '${item.exerciseName}' senza serie " +
+                            "(campo 'sets' mancante o zero)"
+                        return@forEach
+                    }
+                    if (item.minReps < 1 || item.maxReps < item.minReps) {
+                        errors += "giorno workout ${day.dayIndex}: '${item.exerciseName}' con ripetizioni " +
+                            "non valide (${item.minReps}-${item.maxReps}): indica minReps e maxReps"
+                        return@forEach
+                    }
+                    val exercise = findExercise(item.exerciseName)
                     if (exercise == null) {
-                        errors += "giorno workout ${day.dayIndex}: esercizio '${item.exerciseName}' non presente nel database"
+                        val hint = CatalogNameResolver.exerciseSuggestions(item.exerciseName, exercises)
+                        errors += "giorno workout ${day.dayIndex}: esercizio '${item.exerciseName}' non presente nel database" +
+                            if (hint.isEmpty()) "" else " (simili: ${hint.joinToString()})"
                     } else {
                         weeklySetsPerExercise.merge(exercise.id, item.sets, Int::plus)
                         if (!allowedExercise(exercise, profile)) {

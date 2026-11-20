@@ -84,7 +84,13 @@ class CoachOrchestrator @Inject constructor(
          * sia alla singola chiamata ([callWithBudget]): il solo controllo tra le
          * iterazioni non intercettava un provider che non risponde mai.
          */
-        deadlineMs: Long? = null
+        deadlineMs: Long? = null,
+        /**
+         * Avanzamento leggibile del turno, per la UI. Senza di esso la schermata
+         * resta su una barra immobile per minuti e l'utente non distingue
+         * "sta lavorando" da "si e bloccata".
+         */
+        onProgress: ((String) -> Unit)? = null
     ): CoachTurnResult {
         val deadlineAt = deadlineMs?.let { System.currentTimeMillis() + it }
         val messages = mutableListOf<ChatMessageDto>()
@@ -173,6 +179,10 @@ class CoachOrchestrator @Inject constructor(
         }
 
         repeat(maxIterations) { iteration ->
+            onProgress?.invoke(
+                if (iteration == 0) "Invio la richiesta al provider AI..."
+                else "Tentativo ${iteration + 1} di $maxIterations: il Coach AI sta correggendo il programma..."
+            )
             if (deadlineAt != null && System.currentTimeMillis() >= deadlineAt) {
                 return CoachTurnResult(
                     text = lastText,
