@@ -259,6 +259,16 @@ fun WorkoutScreen(
             SectionCard {
                 Column {
                     SectionHeader("Giorno selezionato", "Scegli il giorno da allenare")
+                    val todayIndex = LocalDate.now().dayOfWeek.value - 1
+                    val todayIsRest = plan.days.firstOrNull { it.dayIndex == todayIndex }?.isRestDay != false
+                    if (todayIsRest && state.selectedDayIndex != todayIndex) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Oggi non e previsto allenamento: e mostrato il prossimo giorno utile.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
                     Spacer(Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -462,10 +472,14 @@ fun WorkoutScreen(
         item {
             SectionCard {
                 Column {
-                    SectionHeader("Settimana", "Tocca un giorno per vedere gli esercizi")
+                    SectionHeader("Settimana", "Tocca un giorno per aprirlo")
                     Spacer(Modifier.height(8.dp))
-                    plan.days.forEach { day ->
-                        WeekDayCard(day = day)
+                    plan.days.sortedBy { it.dayIndex }.forEach { day ->
+                        WeekDayCard(
+                            day = day,
+                            selected = day.dayIndex == state.selectedDayIndex,
+                            onSelect = { if (!day.isRestDay) viewModel.selectDay(day.dayIndex) }
+                        )
                     }
                 }
             }
@@ -643,7 +657,7 @@ private fun PlanNameDialog(
 }
 
 @Composable
-private fun WeekDayCard(day: WorkoutDay) {
+private fun WeekDayCard(day: WorkoutDay, selected: Boolean, onSelect: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val dayLabel = weekdayNames.getOrElse(day.dayIndex) { "Giorno ${day.dayIndex + 1}" }
     Column(
@@ -659,9 +673,10 @@ private fun WeekDayCard(day: WorkoutDay) {
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    "$dayLabel · ${if (day.isRestDay) "Riposo" else day.title}",
+                    "$dayLabel · ${if (day.isRestDay) "Riposo" else day.title}" +
+                        if (selected) "  ·  in visione" else "",
                     style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = if (selected) Emerald else MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
@@ -678,6 +693,13 @@ private fun WeekDayCard(day: WorkoutDay) {
                 )
             }
             if (!day.isRestDay) {
+                IconButton(onClick = onSelect) {
+                    Icon(
+                        imageVector = Icons.Filled.PlayArrow,
+                        contentDescription = "Apri $dayLabel",
+                        tint = if (selected) Emerald else TextSecondary
+                    )
+                }
                 Icon(
                     imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                     contentDescription = if (expanded) "Comprimi" else "Espandi",

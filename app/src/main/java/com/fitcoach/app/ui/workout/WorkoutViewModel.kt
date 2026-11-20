@@ -15,6 +15,7 @@ import com.fitcoach.app.domain.model.WorkoutSet
 import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
 import com.fitcoach.app.domain.usecase.ProgramGenerationResult
 import com.fitcoach.app.domain.workout.ProgressiveOverloadEngine
+import com.fitcoach.app.domain.workout.WorkoutDaySelection
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -123,9 +124,11 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             val plan = workoutRepository.getActivePlan()
             val todayIndex = LocalDate.now().dayOfWeek.value - 1
-            val selectedIndex = _state.value.selectedDayIndex.takeIf { it >= 0 } ?: todayIndex
-            val selectedEpochDay = epochDayFor(selectedIndex)
-            val selectedDay = plan?.days?.firstOrNull { it.dayIndex == selectedIndex && !it.isRestDay }
+            // Se oggi e riposo si mostra il prossimo giorno di allenamento:
+            // altrimenti la schermata risultava vuota pur con una scheda valida.
+            val selectedIndex = WorkoutDaySelection.resolve(plan, _state.value.selectedDayIndex, todayIndex)
+            val selectedEpochDay = WorkoutDaySelection.epochDayFor(selectedIndex)
+            val selectedDay = WorkoutDaySelection.dayToShow(plan, selectedIndex)
             val session = workoutRepository.getSessionForDay(selectedEpochDay)
             val freeExercises = if (session?.workoutDayId == null && session != null) {
                 workoutRepository.getFreeExercises(session.id)
@@ -265,11 +268,7 @@ class WorkoutViewModel @Inject constructor(
      * alla seduta di questa settimana, cosi si puo registrare un allenamento
      * arretrato senza inventare date.
      */
-    private fun epochDayFor(dayIndex: Int): Long {
-        val today = LocalDate.now()
-        val monday = today.minusDays((today.dayOfWeek.value - 1).toLong())
-        return monday.plusDays(dayIndex.coerceIn(0, 6).toLong()).toEpochDay()
-    }
+    private fun epochDayFor(dayIndex: Int): Long = WorkoutDaySelection.epochDayFor(dayIndex)
 
     /** Seleziona il giorno della settimana di cui mostrare e avviare la seduta. */
     fun selectDay(dayIndex: Int) {
