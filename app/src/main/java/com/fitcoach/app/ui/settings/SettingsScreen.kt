@@ -37,6 +37,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.fitcoach.app.BuildConfig
 import com.fitcoach.app.diagnostics.CrashLog
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -282,6 +283,24 @@ fun SettingsScreen(
                                 modifier = Modifier.weight(1f)
                             ) { Text("Ripristina") }
                         }
+                    }
+                }
+
+                // Identifica la build installata: senza, due APK con lo stesso
+                // nome e versioneCode diverso sono indistinguibili sull'app.
+                SectionCard(modifier = Modifier.fillMaxWidth()) {
+                    Column {
+                        SectionHeader(
+                            "Versione",
+                            "${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            "Se qui leggi una versione diversa da quella che ti e' stata indicata, " +
+                                "hai installato un APK vecchio.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
                     }
                 }
             }

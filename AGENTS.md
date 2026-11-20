@@ -500,6 +500,31 @@ Regola generale imparata qui: **ogni percorso che chiama la rete deve fallire in
 modo leggibile**. Un `isProviderReady()` controllato prima di partire e' piu utile di
 qualunque timeout, perche l'utente riceve subito la causa vera.
 
+### Distribuzione degli APK: due file ambigui (risolto)
+
+Sintomo riportato: "l'app appena installata chiede subito l'anamnesi". Non era una
+regressione del codice: nella cartella di download convivevano DUE APK.
+
+- `FitCoach-2.2.2-debug.apk` — la build buona, con il passo provider.
+- `FitCoach-2.2.3-crashfix-debug.apk` — build di una sessione precedente, con il nome
+  che sembra piu' nuovo. Il suo onboarding va **dritto all'anamnesi** (non contiene
+  `ai_setup`, ne' "Configura il Coach AI"). Installando quello si vede esattamente il
+  comportamento segnalato.
+
+Lezioni:
+- Non lasciare piu' di un APK nella cartella servita. `serve-apk.sh` copia ma non pulisce:
+  i file vecchi restano e il piu' "recente" per nome non e' detto sia il piu' recente.
+- Il `versionCode` era 20 in entrambi i file: per Android due APK con lo stesso codice
+  sono lo stesso prodotto, quindi non c'e' modo di distinguerli ne' di sapere quale e'
+  installato. Ora e' 21 / 2.2.3, e **deve crescere** a ogni build distribuita, altrimenti
+  l'aggiornamento sopra la build esistente viene rifiutato.
+- Aggiunta la card **Versione** in Impostazioni (`BuildConfig.VERSION_NAME`/`VERSION_CODE`):
+  e' l'unico modo per l'utente di verificare cosa ha davvero in mano.
+- Per verificare un APK senza installarlo: estrarre i `.dex` con `python3 zipfile`
+  (nel container non c'e' `unzip`) e cercare le stringhe UI distintive. Un controllo sul
+  `aapt2 dump badging` da solo non basta, perche' dice la versione dichiarata, non il
+  codice che contiene.
+
 ### Trappole nei test (verificate)
 
 - `AiProvidersViewModel.save()` lancia una coroutine: navigare subito dopo distrugge il

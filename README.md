@@ -398,6 +398,17 @@ con `sdk.dir=...`.
 ./gradlew :app:assembleRelease
 ```
 
+### Quale build hai installato
+
+Impostazioni -> in fondo, la card **Versione** mostra `versionName` e `versionCode`.
+Serve a distinguere due APK con lo stesso nome ma codice diverso: se il numero non
+corrisponde a quello indicato, l'APK installato e' vecchio e va reinstallato.
+
+Nota sulle versioni: `versionCode` deve **crescere** a ogni build distribuita, altrimenti
+Android rifiuta l'aggiornamento sopra la build gia' presente. Due file con lo stesso
+`versionCode` sono indistinguibili per il sistema anche se il codice interno e' diverso.
+Tenere un solo APK per cartella di download, per evitare di installare quello sbagliato.
+
 ### Firma release
 
 Crea `keystore.properties` nella root (non versionato):
