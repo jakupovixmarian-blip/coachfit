@@ -443,6 +443,22 @@ object FoodSeedData {
      */
     val foods: List<FoodItem> = rawFoods.map { it.copy(pricePerKgEur = priceTableEurPerKg[it.name]) }
 
+    /**
+     * Pesatura corretta per categoria.
+     *
+     * Il default era [FoodUnit.RAW] per tutte le 173 voci: bresaola, prosciutto,
+     * pane, yogurt e tonno in scatola risultavano "crudo", una dicitura falsa
+     * che porta l'utente a pesare il prodotto sbagliato.
+     */
+    private fun defaultUnitFor(category: String, name: String): FoodUnit = when {
+        category in setOf("Salumi", "Latticini", "Bevande vegetali", "Integratori") ->
+            FoodUnit.AS_SOLD
+        category == "Pesce" && ("scatola" in name || "affumicato" in name) -> FoodUnit.AS_SOLD
+        category == "Cereali" && ("Pane" in name || "Fette biscottate" in name ||
+            "Grissini" in name || "Crackers" in name) -> FoodUnit.AS_SOLD
+        else -> FoodUnit.RAW
+    }
+
     private fun f(
         name: String,
         category: String,
@@ -452,7 +468,7 @@ object FoodSeedData {
         fat: Double,
         source: String,
         fiber: Double = 0.0,
-        unit: FoodUnit = FoodUnit.RAW,
+        unit: FoodUnit = defaultUnitFor(category, name),
         subs: List<String> = emptyList(),
         tags: List<String> = emptyList()
     ) = FoodItem(

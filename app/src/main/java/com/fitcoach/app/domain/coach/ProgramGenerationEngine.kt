@@ -21,6 +21,7 @@ import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.CatalogNameResolver
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.MealPlanGenerator
+import com.fitcoach.app.domain.nutrition.MealSlots
 import com.fitcoach.app.domain.workout.CatalogBounds
 import com.fitcoach.app.domain.workout.EquipmentFit
 import com.fitcoach.app.domain.workout.EffectiveVolumeCalculator
@@ -119,9 +120,16 @@ object ProgramGenerationEngine {
         val generatedDays = proposal.nutrition.days.map { aiDay ->
             val type = parseDayType(aiDay.dayType) ?: return null
             val target = cycling.targets[type] ?: return null
-            if (aiDay.meals.isEmpty() || aiDay.meals.size !in 3..6) return null
+            // Il numero di pasti e' un dato del profilo: qui si applica il cancello
+            // che decide il salvataggio. Accettare 3..6 lasciava passare piani con
+            // un pasto in meno rispetto a quanto l'utente ha dichiarato.
+            if (aiDay.meals.size != profile.mealsPerDay) return null
+            // Stesso elenco che il prompt impone al modello: numero E identita'
+            // degli slot, cosi un pasto sostituito da un altro non passa.
+            val expectedSlots = MealSlots.forMealsPerDay(profile.mealsPerDay).toSet()
             val meals = aiDay.meals.map { aiMeal ->
                 val slot = parseMealSlot(aiMeal.slot) ?: return null
+                if (slot !in expectedSlots) return null
                 if (aiMeal.entries.isEmpty()) return null
                 val entries = aiMeal.entries.map { aiEntry ->
                     if (aiEntry.grams !in 1.0..2_000.0) return null

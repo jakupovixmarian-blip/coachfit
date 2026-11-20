@@ -9,9 +9,11 @@ import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.FoodItem
 import com.fitcoach.app.domain.model.UserProfile
+import com.fitcoach.app.domain.nutrition.BreakfastConstraint
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.FoodCatalogSelector
+import com.fitcoach.app.domain.nutrition.MealSlots
 import kotlin.math.roundToInt
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -172,6 +174,8 @@ class AiProgramGenerationService @Inject constructor(
             ProgramGenerationEngine.Scope.NUTRITION -> "(SOLO nutrizione: compila comunque i giorni di allenamento e il calendario, ma verranno usati solo per i controlli)"
             ProgramGenerationEngine.Scope.WORKOUT -> "(SOLO allenamento: compila comunque la nutrizione, ma verrà usata solo per i controlli)"
         })
+        appendLine("PASTI OBBLIGATORI (esattamente questi, in quest'ordine, ogni giorno):")
+        appendLine("  " + MealSlots.describe(profile.mealsPerDay))
         appendLine("DATI ANAMNESI CONFERMATI:")
         appendLine(AnamnesisSummary.forProfile(profile))
         append(declaredHeader(profile))
@@ -236,6 +240,12 @@ class AiProgramGenerationService @Inject constructor(
                 "PASTI AL GIORNO: " +
                     AnamnesisSummary.declared(profile, "mealsPerDay", profile.mealsPerDay, "NON_DICHIARATI (usa 5)")
             )
+            // Il modello non riceveva affatto questa preferenza: generava pollo
+            // e riso a colazione pur avendo l'utente scelto "dolce".
+            appendLine(
+                "COLORE DELLA COLAZIONE (vincolo verificato): " +
+                    BreakfastConstraint.hint(profile.breakfastPreference)
+            )
             appendLine(
                 "CARICHI DICHIARATI: " + if (profile.currentLoads.isEmpty()) "NON_DICHIARATI"
                 else profile.currentLoads.entries.joinToString { "${it.key}=${it.value} kg" }
@@ -288,11 +298,13 @@ class AiProgramGenerationService @Inject constructor(
               Un nome inventato fa rifiutare l'intero programma.
             - Rispetta allergie, intolleranze, alimenti esclusi, limitazioni, attrezzatura, esperienza,
               recupero e budget.
-            - `dayType` deve essere HIGH, MEDIUM o LOW; `slot` un valore MealSlot (BREAKFAST,
-              MORNING_SNACK, LUNCH, AFTERNOON_SNACK, DINNER, EVENING_SNACK); `unit` RAW, COOKED
-              o AS_SOLD; `split` FULL_BODY, UPPER_LOWER, PUSH_PULL_LEGS o CUSTOM.
-            - Ogni giorno nutrizionale: da 3 a 6 pasti, ogni pasto con almeno un alimento, ogni
-              alimento da 1 a 2000 grammi. Esattamente 7 giorni con dayIndex 0..6.
+            - `dayType` deve essere HIGH, MEDIUM o LOW; `slot` un valore MealSlot tra quelli
+              indicati nel contesto; `unit` RAW, COOKED o AS_SOLD; `split` FULL_BODY,
+              UPPER_LOWER, PUSH_PULL_LEGS o CUSTOM.
+            - Ogni giorno nutrizionale ha ESATTAMENTE gli slot indicati nel contesto: ne' uno
+              in piu' ne' uno in meno. Un pasto mancante o aggiunto fa rifiutare il programma.
+            - Ogni pasto con almeno un alimento, ogni alimento da 1 a 2000 grammi.
+              Esattamente 7 giorni con dayIndex 0..6.
             - Ogni esercizio: `sets` da 1 a 8, `minReps`/`maxReps` da 1 a 30 (con minReps<=maxReps),
               `restSeconds` da 15 a 600, `targetRir` da 0 a 5. Sono tutti obbligatori: non ometterli.
             - Ogni seduta: 6-24 serie allenanti totali; lo stesso esercizio non oltre 24 serie

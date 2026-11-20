@@ -7,6 +7,7 @@ import com.fitcoach.app.domain.model.FoodItem
 import com.fitcoach.app.domain.model.ExerciseCategory
 import com.fitcoach.app.domain.model.MacroTotals
 import com.fitcoach.app.domain.model.MealSlot
+import com.fitcoach.app.domain.nutrition.BreakfastConstraint
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.CatalogNameResolver
@@ -121,6 +122,21 @@ object AiProposalDiagnostics {
                                     " (usa esattamente uno di questi nomi: ${hint.joinToString()})"
                                 }
                         } else {
+                            // La preferenza dolce/salata a colazione non era
+                            // verificata da nulla: il piano usciva con pollo e
+                            // riso a colazione pur essendo stata scelta "dolce".
+                            val slotOfMeal = parseMealSlot(meal.slot)
+                            if (slotOfMeal != null) {
+                                BreakfastConstraint.violations(
+                                    profile.breakfastPreference, slotOfMeal, listOf(food)
+                                ).firstOrNull()?.let { offending ->
+                                    val actual = BreakfastConstraint.flavorOf(offending)
+                                    val wanted = if (actual == BreakfastConstraint.Flavor.SAVORY) "dolce" else "salata"
+                                    errors += "giorno ${day.dayIndex}, colazione: " +
+                                        "'${offending.name}' e ${actual.name.lowercase()}, ma la colazione " +
+                                        "scelta e $wanted: sostituiscilo con alimenti adatti"
+                                }
+                            }
                             val factor = entry.grams / 100.0
                             actual += MacroTotals(
                                 food.kcalPer100g * factor,

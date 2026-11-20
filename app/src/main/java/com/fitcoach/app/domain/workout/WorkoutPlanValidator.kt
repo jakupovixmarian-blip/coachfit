@@ -33,9 +33,18 @@ object WorkoutPlanValidator {
         val ok: Boolean get() = violations.isEmpty()
     }
 
-    private const val MIN_EFFECTIVE_SETS = 8
-    private const val MAX_EFFECTIVE_SETS = 26
     private const val MAX_SETS_PER_SESSION = 30
+
+    /**
+     * Serie dirette minime perche' un gruppo sia davvero allenato.
+     *
+     * Il solo volume effettivo non bastava: conta anche lo stimolo indiretto,
+     * quindi bicipiti e tricipiti passavano il controllo con ZERO serie dirette
+     * grazie al lavoro di trazioni e distensioni. Un piano di ipertrofia senza
+     * esercizi diretti per un gruppo lo lascia sotto-allenato, e nessun numero
+     * di serie indirette compensa la mancanza di lavoro specifico.
+     */
+    private const val MIN_DIRECT_SETS = 3
 
     fun validate(
         profile: UserProfile,
@@ -99,11 +108,32 @@ object WorkoutPlanValidator {
             .effective
             .mapValues { (_, v) -> v.roundToInt() }
 
-        effective.filter { it.value < MIN_EFFECTIVE_SETS }.forEach { (g, v) ->
-            violations += "volume ${g.name}: $v serie effettive (minimo $MIN_EFFECTIVE_SETS per stimolo adeguato)"
+        // Le soglie non sono piu' due numeri fissi per tutti: dipendono dal
+        // gruppo (grande o piccolo) e dall'esperienza dichiarata.
+        val directVolume = EffectiveVolumeCalculator
+            .forExercises(plannedForVolume, catalogById)
+            .direct
+            .mapValues { (_, v) -> v.roundToInt() }
+
+        effective.forEach { (group, sets) ->
+            val range = VolumeGuidelines.forGroup(group, profile.experience)
+            if (sets < range.min) {
+                violations += "volume ${group.name}: $sets serie effettive (minimo ${range.min} " +
+                    "per ${profile.experience.name.lowercase()})"
+            }
+            if (sets > range.mrv) {
+                violations += "volume ${group.name}: $sets serie effettive (oltre il massimo " +
+                    "recuperabile ${range.mrv}: rischio recupero insufficiente)"
+            }
         }
-        effective.filter { it.value > MAX_EFFECTIVE_SETS }.forEach { (g, v) ->
-            violations += "volume ${g.name}: $v serie effettive (troppe: rischio recupero insufficiente)"
+
+        // Un gruppo allenato solo di riflesso resta scoperto: serve lavoro diretto.
+        (directVolume.keys + coveredGroups).forEach { group ->
+            val direct = directVolume[group] ?: 0
+            if (direct < MIN_DIRECT_SETS) {
+                violations += "volume ${group.name}: $direct serie dirette (minimo $MIN_DIRECT_SETS: " +
+                    "lo stimolo indiretto non sostituisce gli esercizi specifici)"
+            }
         }
 
         return Report(violations, effective, coveredGroups)
