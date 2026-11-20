@@ -345,6 +345,17 @@ object AnamnesisEngine {
     private fun isRelevant(profile: UserProfile, question: Question): Boolean =
         question.id != "currentLoads" || profile.trainingStatus != TrainingStatus.NEVER_TRAINED
 
+    /**
+     * Id delle domande a cui l'utente ha realmente risposto.
+     *
+     * [isAnswered] risponde `true` anche per i campi con default non nullable
+     * (obiettivo, tipo di lavoro, esperienza): e corretto per il flusso
+     * dell'intervista, ma non significa che l'utente abbia dichiarato quel
+     * valore. L'insieme persistito e quindi l'unica fonte attendibile; i profili
+     * creati prima di questo campo vengono riempiti dalla migrazione 13->14.
+     */
+    fun answeredIds(profile: UserProfile): Set<String> = profile.answeredQuestionIds
+
     fun isAnswered(profile: UserProfile, id: String): Boolean = when (id) {
         "age" -> profile.ageYears != null
         "sex" -> profile.sex != Sex.UNSPECIFIED

@@ -61,13 +61,16 @@ class ProfileEditViewModel @Inject constructor(
     fun updateWeight(v: String) { _state.value = _state.value.copy(weightKg = v) }
     fun updateBodyFat(v: String) { _state.value = _state.value.copy(bodyFat = v) }
     fun setRegenerate(v: Boolean) { _state.value = _state.value.copy(regenerate = v) }
-    fun setGoal(g: Goal) = update { it.copy(goal = g) }
-    fun setExperience(e: TrainingExperience) = update { it.copy(experience = e) }
-    fun setSex(s: Sex) = update { it.copy(sex = s) }
-    fun setTrainingDays(d: Int) = update { it.copy(trainingDaysPerWeek = d) }
+    fun setGoal(g: Goal) = update { it.copy(goal = g, answeredQuestionIds = it.answeredQuestionIds + "goal") }
+    fun setExperience(e: TrainingExperience) = update { it.copy(experience = e, answeredQuestionIds = it.answeredQuestionIds + "experience") }
+    fun setSex(s: Sex) = update { it.copy(sex = s, answeredQuestionIds = it.answeredQuestionIds + "sex") }
+    fun setTrainingDays(d: Int) = update { it.copy(trainingDaysPerWeek = d, answeredQuestionIds = it.answeredQuestionIds + "trainingDaysPerWeek") }
     fun toggleEquipment(e: Equipment) = update {
-        it.copy(availableEquipment = if (e in it.availableEquipment) it.availableEquipment - e
-        else it.availableEquipment + e)
+        it.copy(
+            availableEquipment = if (e in it.availableEquipment) it.availableEquipment - e
+            else it.availableEquipment + e,
+            answeredQuestionIds = it.answeredQuestionIds + "availableEquipment"
+        )
     }
 
     fun save() {
@@ -78,6 +81,11 @@ class ProfileEditViewModel @Inject constructor(
             val updated = current.copy(
                 weightKg = newWeight ?: current.weightKg,
                 bodyFatPercent = newBf ?: current.bodyFatPercent,
+                // Una misura inserita qui e una risposta dell'utente: senza
+                // registrarla resterebbe "non dichiarata" per il generatore.
+                answeredQuestionIds = current.answeredQuestionIds +
+                    listOfNotNull("weightKg".takeIf { newWeight != null }) +
+                    listOfNotNull("bodyFatPercent".takeIf { newBf != null }),
                 updatedAt = System.currentTimeMillis()
             )
             _state.value = _state.value.copy(saving = true)

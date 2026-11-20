@@ -119,6 +119,8 @@ data class UserProfileEntity(
     val anamnesisCompleted: Boolean = false,
     val anamnesisConfirmedAt: Long? = null,
     val anamnesisSummary: String = "",
+    /** Id delle domande realmente risposte dall'utente (distingue risposte da default). */
+    val answeredQuestionIds: Set<String> = emptySet(),
 
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()

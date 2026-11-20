@@ -86,7 +86,15 @@ data class OnboardingUiState(
     // Esito
     val error: String? = null,
     val warnings: List<String> = emptyList(),
-    val finished: Boolean = false
+    val finished: Boolean = false,
+    /**
+     * Id delle domande dell'anamnesi su cui l'utente ha agito in questo form.
+     *
+     * Le selezioni hanno un default visibile (obiettivo RECOMP, esperienza
+     * BEGINNER, 3 giorni, 5 pasti): registrare il valore senza sapere se e stato
+     * toccato lo farebbe passare per una scelta dell'utente.
+     */
+    val touched: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -158,8 +166,16 @@ class OnboardingViewModel @Inject constructor(
         _state.value = transform(_state.value)
     }
 
+    /** Applica una scelta a chip/selettore e la registra come dichiarata dall'utente. */
+    fun select(id: String, transform: (OnboardingUiState) -> OnboardingUiState) {
+        _state.value = transform(_state.value).let { it.copy(touched = it.touched + id) }
+    }
+
     fun toggleEquipment(e: Equipment) = update { s ->
-        s.copy(equipment = if (e in s.equipment) s.equipment - e else s.equipment + e)
+        s.copy(
+            equipment = if (e in s.equipment) s.equipment - e else s.equipment + e,
+            touched = s.touched + "availableEquipment"
+        )
     }
 
     fun togglePreference(p: DietaryPreference) = update { s ->
@@ -169,11 +185,14 @@ class OnboardingViewModel @Inject constructor(
             (s.preferences - DietaryPreference.NONE).let { if (p in it) it - p else it + p }
                 .ifEmpty { setOf(DietaryPreference.NONE) }
         }
-        s.copy(preferences = base)
+        s.copy(preferences = base, touched = s.touched + "dietaryPreferences")
     }
 
     fun togglePriorityMuscle(m: MuscleGroup) = update { s ->
-        s.copy(priorityMuscles = if (m in s.priorityMuscles) s.priorityMuscles - m else s.priorityMuscles + m)
+        s.copy(
+            priorityMuscles = if (m in s.priorityMuscles) s.priorityMuscles - m else s.priorityMuscles + m,
+            touched = s.touched + "priorityMuscles"
+        )
     }
 
     fun finish() {
@@ -239,7 +258,11 @@ class OnboardingViewModel @Inject constructor(
                 dislikedFoods = s.dislikedFoods.split(",", ";").map { it.trim() }.filter { it.isNotBlank() },
                 cookingTimeAvailable = s.cookingTime,
                 mealPrepPossible = s.mealPrepPossible,
-                prefersSimpleFoods = s.prefersSimpleFoods
+                prefersSimpleFoods = s.prefersSimpleFoods,
+                // Solo i campi che l'utente ha davvero compilato: i default del
+                // form (obiettivo RECOMP, lavoro SEDENTARY, 5 pasti) non sono
+                // dichiarazioni e non devono arrivare all'AI come dati reali.
+                answeredQuestionIds = answeredFrom(s, age, height, weight)
             )
 
             _state.value = s.copy(saving = true, error = null)
@@ -254,4 +277,33 @@ class OnboardingViewModel @Inject constructor(
             _state.value = _state.value.copy(saving = false, finished = true)
         }
     }
+
+    /**
+     * Id delle domande dell'anamnesi a cui l'utente ha risposto in questo form.
+     *
+     * Il form usa selezioni con default (obiettivo, esperienza, giorni, tipo di
+     * lavoro, pasti, budget): salvarle come "risposte" farebbe passare per
+     * dichiarati valori che l'utente non ha mai scelto. Le selezioni sono quindi
+     * registrate solo quando il campo testuale corrispondente e stato compilato.
+     * Ogni id deve esistere in [AnamnesisEngine.questions]: un id inventato non
+     * verrebbe mai letto e il dato risulterebbe comunque non dichiarato.
+     */
+    private fun answeredFrom(s: OnboardingUiState, age: Int, height: Double, weight: Double): Set<String> =
+        buildSet {
+            addAll(s.touched)
+            add("age"); add("heightCm"); add("weightKg")
+            if (s.bodyFat.isNotBlank()) add("bodyFatPercent")
+            if (s.dailySteps.isNotBlank()) add("dailySteps")
+            if (s.sleepHours.isNotBlank()) add("sleepHours")
+            if (s.trainingYears.isNotBlank()) add("trainingYears")
+            if (s.maxSessionMinutes.isNotBlank()) add("maxSessionMinutes")
+            if (s.allergies.isNotBlank()) add("allergies")
+            if (s.likedFoods.isNotBlank()) add("likedFoods")
+            if (s.dislikedFoods.isNotBlank()) add("dislikedFoods")
+            if (s.monthlyBudgetEur.isNotBlank()) add("monthlyFoodBudgetEur")
+            if (s.preferredExercises.isNotBlank()) add("preferredExercises")
+            if (s.dislikedExercises.isNotBlank()) add("dislikedExercises")
+            if (s.physicalLimitations.isNotBlank()) add("physicalLimitations")
+            if (s.movementsToAvoid.isNotBlank()) add("movementsToAvoid")
+        }
 }

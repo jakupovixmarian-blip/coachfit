@@ -66,6 +66,10 @@ class Converters {
     @TypeConverter fun stringToStringList(v: String): List<String> =
         if (v.isBlank()) emptyList() else v.split("\u001F")
 
+    @TypeConverter fun stringSetToString(v: Set<String>): String = v.joinToString("\u001F")
+    @TypeConverter fun stringToStringSet(v: String): Set<String> =
+        if (v.isBlank()) emptySet() else v.split("\u001F").filter { it.isNotBlank() }.toSet()
+
     @TypeConverter fun muscleSetToString(v: Set<MuscleGroup>): String = v.joinToString(",") { it.name }
     @TypeConverter fun stringToMuscleSet(v: String): Set<MuscleGroup> =
         if (v.isBlank()) emptySet() else v.split(",").mapNotNull { runCatching { MuscleGroup.valueOf(it) }.getOrNull() }.toSet()

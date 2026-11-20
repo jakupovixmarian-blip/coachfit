@@ -170,6 +170,12 @@ class AnamnesisViewModel @Inject constructor(
             return
         }
         var profile = AnamnesisEngine.applyAnswer(_state.value.profile, q.id, raw)
+        // Registra la provenienza: senza questo passaggio un default del profilo
+        // (obiettivo RECOMP, lavoro SEDENTARY, 5 pasti) sarebbe indistinguibile
+        // da una risposta e finirebbe nel contesto dell'AI come dato reale.
+        if (raw.isNotBlank()) {
+            profile = profile.copy(answeredQuestionIds = profile.answeredQuestionIds + q.id)
+        }
         profile = profile.copy(updatedAt = System.currentTimeMillis())
         val next = if (_state.value.editing) {
             AnamnesisEngine.nextQuestionFull(q.id)

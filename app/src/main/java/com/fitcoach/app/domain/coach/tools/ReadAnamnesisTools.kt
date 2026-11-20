@@ -4,6 +4,7 @@ import com.fitcoach.app.data.repository.ExerciseRepository
 import com.fitcoach.app.data.repository.FoodRepository
 import com.fitcoach.app.data.repository.ProgressRepository
 import com.fitcoach.app.data.repository.UserRepository
+import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
 import com.fitcoach.app.domain.model.UserProfile
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -44,6 +45,13 @@ class GetAnamnesisTool @Inject constructor(
         "anamnesiConfermata" to JsonOut.bool(p.anamnesisCompleted),
         "datiMancantiEssenziali" to JsonOut.strings(p.missingEssentialData),
         "contraddizioni" to JsonOut.strings(p.anamnesisContradictions),
+        // Provenienza dei dati: senza questo elenco l'AI non puo distinguere una
+        // risposta reale da un default del profilo (obiettivo RECOMP, lavoro
+        // SEDENTARY, 5 pasti, esperienza BEGINNER) e deciderebbe su dati mai
+        // forniti. I campi NON elencati qui vanno trattati come non disponibili.
+        "campiDichiaratiDallUtente" to JsonOut.strings(
+            AnamnesisEngine.answeredIds(p).sorted()
+        ),
         "anagrafica" to JsonOut.obj(
             "nome" to JsonOut.str(p.name),
             "eta" to JsonOut.num(p.ageYears),

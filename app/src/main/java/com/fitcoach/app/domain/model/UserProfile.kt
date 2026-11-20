@@ -91,6 +91,14 @@ data class UserProfile(
     val anamnesisConfirmedAt: Long? = null,
     /** Riepilogo testuale dell'anamnesi mostrato e confermato dall'utente. */
     val anamnesisSummary: String = "",
+    /**
+     * Id delle domande a cui l'utente ha realmente risposto.
+     *
+     * Il profilo usa default non nullable (obiettivo RECOMP, lavoro SEDENTARY,
+     * 5 pasti): senza questo insieme un valore di default e una risposta reale
+     * sono indistinguibili, e l'AI finirebbe per decidere su dati mai forniti.
+     */
+    val answeredQuestionIds: Set<String> = emptySet(),
 
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()

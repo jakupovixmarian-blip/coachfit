@@ -74,8 +74,18 @@ class CoachOrchestrator @Inject constructor(
          * richiesta forzata viene inviata con Thinking disabilitato (per quella
          * singola richiesta) e mai disattivando il ragionamento in modo globale.
          */
-        requireTool: String? = null
+        requireTool: String? = null,
+        /**
+         * Limite complessivo del turno, in millisecondi. Il ciclo puo fare fino a
+         * [maxIterations] richieste, ognuna con retry e readTimeout di 90s: senza
+         * un tetto globale la schermata puo restare su "Generazione..." per
+         * decine di minuti. Il controllo avviene tra un'iterazione e l'altra
+         * (deadline wall-clock) e non con `withTimeout`, che cancellerebbe una
+         * chiamata in corso a meta e renderebbe il turno non testabile.
+         */
+        deadlineMs: Long? = null
     ): CoachTurnResult {
+        val deadlineAt = deadlineMs?.let { System.currentTimeMillis() + it }
         val messages = mutableListOf<ChatMessageDto>()
         messages += ChatMessageDto(role = "system", content = systemPrompt)
         messages += ChatMessageDto(role = "system", content = contextPrompt)
@@ -89,6 +99,8 @@ class CoachOrchestrator @Inject constructor(
         var requiredToolDelivered = false
         /** Quante volte il modello ha risposto in prosa senza consegnare lo strumento obbligatorio. */
         var proseMisses = 0
+        /** Quante volte lo strumento obbligatorio e stato chiamato ma respinto dalla validazione. */
+        var rejectedDeliveries = 0
 
         /** Applica una risposta di successo del modello ai buffer del turno. */
         suspend fun consumeSuccess(result: AiResult.Success): Step {
@@ -129,14 +141,27 @@ class CoachOrchestrator @Inject constructor(
             )
             result.toolCalls.forEach { call ->
                 val args = parseArgs(call.function.arguments)
-                val output = toolRegistry.execute(call.function.name, args)
+                // Argomenti non parsabili = chiamata troncata (finish_reason
+                // "length") o malformata. Eseguire lo strumento con un oggetto
+                // vuoto produrrebbe una diagnosi fuorviante ("giorno 0 kcal
+                // errata") su un payload che il modello non ha mai completato.
+                val output = if (args == null) {
+                    """{"ok":false,"error":"Argomenti della chiamata non validi o troncati. """ +
+                        """Riduci la dimensione del payload e richiama lo strumento."}"""
+                } else {
+                    toolRegistry.execute(call.function.name, args)
+                }
                 trace += call.function.name
                 toolResults += CoachToolResult(call.function.name, output)
                 // Conta come consegnato SOLO se lo strumento obbligatorio ha accettato
                 // (ok=true). Se la proposta viene respinta (ok=false) la scelta forzata
                 // resta attiva e il modello riceve la diagnosi per correggersi.
-                if (call.function.name == requireTool && outputReportsOk(output)) {
-                    requiredToolDelivered = true
+                if (call.function.name == requireTool) {
+                    if (outputReportsOk(output)) {
+                        requiredToolDelivered = true
+                    } else {
+                        rejectedDeliveries++
+                    }
                 }
                 if (call.function.name in toolRegistry.writeToolNames) {
                     extractChangeId(output)?.let { pendingChangeIds += it }
@@ -147,6 +172,17 @@ class CoachOrchestrator @Inject constructor(
         }
 
         repeat(maxIterations) { iteration ->
+            if (deadlineAt != null && System.currentTimeMillis() >= deadlineAt) {
+                return CoachTurnResult(
+                    text = lastText,
+                    pendingChangeIds = pendingChangeIds,
+                    providerError = "Il Coach AI non ha completato la generazione entro " +
+                        "${(deadlineMs ?: 0) / 60_000} minuti. Il modello potrebbe essere lento o non " +
+                        "supportare bene gli strumenti: riprova o scegli un altro modello nelle Impostazioni.",
+                    toolTrace = trace,
+                    toolResults = toolResults
+                )
+            }
             // Con Thinking attivo DeepSeek accetta SOLO `tool_choice = auto`
             // ("Thinking mode does not support this tool_choice"). Il ragionamento
             // resta quindi attivo e la consegna obbligatoria viene perseguita con
@@ -157,7 +193,11 @@ class CoachOrchestrator @Inject constructor(
             // ragionamento in modo globale.
             val thinkingCapable = AiParameterPolicy.supportsThinkingMode(config.provider)
             val mustDeliver = requireTool != null && !requiredToolDelivered
-            val escalateForce = mustDeliver && (!thinkingCapable || proseMisses >= 1)
+            // Oltre alla risposta in prosa, anche una consegna ripetutamente
+            // respinta dalla validazione indica che il modello non riesce a
+            // correggersi da solo: dopo due rifiuti si forza la chiamata.
+            val escalateForce = mustDeliver &&
+                (!thinkingCapable || proseMisses >= 1 || rejectedDeliveries >= 2)
             val forcedChoice = if (escalateForce) ToolChoice.force(requireTool) else ToolChoice.auto
             val result = aiClient.complete(
                 config = config,
@@ -250,8 +290,9 @@ class CoachOrchestrator @Inject constructor(
         }
     }
 
-    private fun parseArgs(raw: String?): JsonObject =
-        raw?.let { runCatching { json.parseToJsonElement(it) as? JsonObject }.getOrNull() } ?: JsonObject(emptyMap())
+    /** Null se gli argomenti non sono un oggetto JSON valido (chiamata troncata o malformata). */
+    private fun parseArgs(raw: String?): JsonObject? =
+        raw?.let { runCatching { json.parseToJsonElement(it) as? JsonObject }.getOrNull() }
 
     /**
      * True se l'output di uno strumento riporta `ok=true`. Uno strumento di

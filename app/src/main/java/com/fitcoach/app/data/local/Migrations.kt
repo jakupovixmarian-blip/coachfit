@@ -318,3 +318,28 @@ val MIGRATION_12_13 = object : Migration(12, 13) {
         createActivePlanTriggers(db)
     }
 }
+
+/**
+ * Aggiunge la provenienza delle risposte dell'anamnesi.
+ *
+ * I database esistenti hanno un'anamnesi gia confermata, quindi tutte le
+ * domande obbligatorie erano state poste: si marcano come risposte per non
+ * degradare i piani gia generati. Le facoltative restano non dichiarate
+ * (non e possibile sapere a posteriori se l'utente le ha compilate).
+ */
+val MIGRATION_13_14 = object : Migration(13, 14) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE user_profile ADD COLUMN answeredQuestionIds TEXT NOT NULL DEFAULT ''")
+        val mandatory = listOf(
+            "age", "sex", "heightCm", "weightKg", "goal", "workType", "transportMode",
+            "sleepHours", "sleepQuality", "stressLevel", "dailyEnergy", "recoveryCapacity",
+            "mealsPerDay", "breakfastPreference", "dietaryPreferences", "cookingTimeAvailable",
+            "mealPrepPossible", "trainingStatus", "experience", "trainingDaysPerWeek",
+            "technicalLevel", "availableEquipment"
+        ).joinToString("\u001F")
+        db.execSQL(
+            "UPDATE user_profile SET answeredQuestionIds = ? WHERE anamnesisCompleted = 1",
+            arrayOf(mandatory)
+        )
+    }
+}

@@ -69,6 +69,9 @@ class AiProgramGenerationService @Inject constructor(
             )
 
         val contextPrompt = buildGenerationContext(profile, foods, exercises, scope)
+        // Il tetto di tempo vive nell'orchestratore (deadline tra le iterazioni):
+        // un `withTimeout` qui cancellerebbe la chiamata in corso e renderebbe il
+        // percorso non testabile con il tempo virtuale di runTest.
         val turn = orchestrator.run(
             config = config,
             systemPrompt = generationSystemPrompt,
@@ -77,7 +80,8 @@ class AiProgramGenerationService @Inject constructor(
             userMessage = "Genera ora la parte richiesta del mio programma e consegnala con " +
                 "submit_full_program (scope=${scope.name}). Non fermarti prima: devi arrivare a ok=true.",
             maxIterations = GENERATION_MAX_ITERATIONS,
-            requireTool = SUBMIT_TOOL
+            requireTool = SUBMIT_TOOL,
+            deadlineMs = GENERATION_TIMEOUT_MS
         )
 
         val submission = turn.toolResults.lastOrNull { it.name == SUBMIT_TOOL }
@@ -151,9 +155,7 @@ class AiProgramGenerationService @Inject constructor(
         })
         appendLine("DATI ANAMNESI CONFERMATI:")
         appendLine(AnamnesisSummary.forProfile(profile))
-        appendLine("OBIETTIVO: ${profile.goal.name}; giorni disponibili: ${profile.trainingDaysPerWeek}; pasti: ${profile.mealsPerDay}")
-        appendLine("CARICHI DICHIARATI: ${profile.currentLoads.ifEmpty { mapOf("nessuno" to 0.0) }}")
-        appendLine("ATTREZZATURA: ${profile.availableEquipment.joinToString { it.name }.ifBlank { "nessuna" }}")
+        append(declaredHeader(profile))
         appendLine("ALIMENTI CONSENTITI (nome | kcal P C F per 100g):")
         foods.take(90).forEach { f ->
             appendLine("${f.name} | ${f.kcalPer100g} ${f.proteinPer100g} ${f.carbsPer100g} ${f.fatPer100g} | unità ${f.defaultUnit.name}")
@@ -191,8 +193,45 @@ class AiProgramGenerationService @Inject constructor(
     }
 
     companion object {
+        /**
+         * Riga con obiettivo, giorni, pasti, carichi e attrezzatura.
+         *
+         * Usa [AnamnesisSummary.declared]: ripetere qui i valori del profilo come
+         * certi (obiettivo RECOMP, 5 pasti) contraddiceva il riepilogo, che li
+         * dichiara non disponibili quando l'utente non li ha confermati, e
+         * lasciava all'AI la scelta tra due istruzioni opposte.
+         */
+        internal fun declaredHeader(profile: UserProfile): String = buildString {
+            appendLine(
+                "OBIETTIVO: ${AnamnesisSummary.declared(profile, "goal", profile.goal, "NON_DICHIARATO")}"
+            )
+            // I giorni di allenamento NON sono una preferenza: il validatore
+            // rifiuta il programma se i giorni pianificati non sono esattamente
+            // trainingDaysPerWeek. Dichiararli "non disponibili" mentre il
+            // conteggio resta obbligatorio renderebbe il vincolo incomprensibile.
+            appendLine(
+                "GIORNI DI ALLENAMENTO (vincolo: esattamente ${profile.trainingDaysPerWeek} " +
+                    "sedute non di riposo, altrimenti il programma e respinto)"
+            )
+            appendLine(
+                "PASTI AL GIORNO: " +
+                    AnamnesisSummary.declared(profile, "mealsPerDay", profile.mealsPerDay, "NON_DICHIARATI (usa 5)")
+            )
+            appendLine(
+                "CARICHI DICHIARATI: " + if (profile.currentLoads.isEmpty()) "NON_DICHIARATI"
+                else profile.currentLoads.entries.joinToString { "${it.key}=${it.value} kg" }
+            )
+            appendLine(
+                "ATTREZZATURA: " + profile.availableEquipment.joinToString { it.name }
+                    .ifBlank { "NON_DICHIARATA" }
+            )
+        }
+
         private const val SUBMIT_TOOL = "submit_full_program"
         private const val GENERATION_MAX_ITERATIONS = 8
+
+        /** Tetto complessivo del turno di generazione (include retry e piu iterazioni). */
+        private const val GENERATION_TIMEOUT_MS = 6 * 60 * 1000L
 
         /**
          * Budget token per la consegna del programma. Deve coprire sia i token di

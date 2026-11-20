@@ -35,6 +35,7 @@ object Mappers {
         budgetPersons = budgetPersons,
         anamnesisCompleted = anamnesisCompleted, anamnesisConfirmedAt = anamnesisConfirmedAt,
         anamnesisSummary = anamnesisSummary,
+        answeredQuestionIds = answeredQuestionIds,
         createdAt = createdAt, updatedAt = updatedAt
     )
 
@@ -68,6 +69,7 @@ object Mappers {
         budgetPersons = budgetPersons,
         anamnesisCompleted = anamnesisCompleted, anamnesisConfirmedAt = anamnesisConfirmedAt,
         anamnesisSummary = anamnesisSummary,
+        answeredQuestionIds = answeredQuestionIds,
         createdAt = createdAt, updatedAt = System.currentTimeMillis()
     )
 

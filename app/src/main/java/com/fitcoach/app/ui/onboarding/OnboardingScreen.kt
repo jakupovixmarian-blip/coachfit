@@ -198,7 +198,7 @@ private fun StepAnagrafica(state: OnboardingUiState, vm: OnboardingViewModel) {
                 Sex.entries.forEach { sex ->
                     FilterChip(
                         selected = state.sex == sex,
-                        onClick = { vm.update { it.copy(sex = sex) } },
+                        onClick = { vm.select("sex") { it.copy(sex = sex) } },
                         label = { Text(sexLabel(sex)) }
                     )
                 }
@@ -216,7 +216,7 @@ private fun StepObiettivo(state: OnboardingUiState, vm: OnboardingViewModel) {
             Goal.entries.forEach { goal ->
                 FilterChip(
                     selected = state.goal == goal,
-                    onClick = { vm.update { it.copy(goal = goal) } },
+                    onClick = { vm.select("goal") { it.copy(goal = goal) } },
                     label = { Column { Text(goal.label, fontWeight = FontWeight.SemiBold); Text(goal.description,
                         style = MaterialTheme.typography.bodySmall, color = TextSecondary) } },
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
@@ -228,7 +228,7 @@ private fun StepObiettivo(state: OnboardingUiState, vm: OnboardingViewModel) {
             TrainingExperience.entries.forEach { exp ->
                 FilterChip(
                     selected = state.experience == exp,
-                    onClick = { vm.update { it.copy(experience = exp) } },
+                    onClick = { vm.select("experience") { it.copy(experience = exp) } },
                     label = { Text(exp.label) },
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                 )
@@ -241,7 +241,7 @@ private fun StepObiettivo(state: OnboardingUiState, vm: OnboardingViewModel) {
                 (2..6).forEach { d ->
                     FilterChip(
                         selected = state.trainingDays == d,
-                        onClick = { vm.update { it.copy(trainingDays = d) } },
+                        onClick = { vm.select("trainingDaysPerWeek") { it.copy(trainingDays = d) } },
                         label = { Text("$d") }
                     )
                 }
@@ -309,7 +309,7 @@ private fun StepNutrizione(state: OnboardingUiState, vm: OnboardingViewModel) {
                 BreakfastPreference.entries.forEach { bp ->
                     FilterChip(
                         selected = state.breakfastPreference == bp,
-                        onClick = { vm.update { it.copy(breakfastPreference = bp) } },
+                        onClick = { vm.select("breakfastPreference") { it.copy(breakfastPreference = bp) } },
                         label = { Text(bp.label) }
                     )
                 }
@@ -321,7 +321,7 @@ private fun StepNutrizione(state: OnboardingUiState, vm: OnboardingViewModel) {
                 (3..6).forEach { m ->
                     FilterChip(
                         selected = state.mealsPerDay == m,
-                        onClick = { vm.update { it.copy(mealsPerDay = m) } },
+                        onClick = { vm.select("mealsPerDay") { it.copy(mealsPerDay = m) } },
                         label = { Text("$m") }
                     )
                 }
@@ -333,7 +333,7 @@ private fun StepNutrizione(state: OnboardingUiState, vm: OnboardingViewModel) {
                 CookingTimeAvailable.entries.forEach { ct ->
                     FilterChip(
                         selected = state.cookingTime == ct,
-                        onClick = { vm.update { it.copy(cookingTime = ct) } },
+                        onClick = { vm.select("cookingTimeAvailable") { it.copy(cookingTime = ct) } },
                         label = { Text(ct.label) }
                     )
                 }
@@ -378,7 +378,7 @@ private fun StepNutrizione(state: OnboardingUiState, vm: OnboardingViewModel) {
             BudgetScope.entries.forEach { scope ->
                 FilterChip(
                     selected = state.budgetScope == scope,
-                    onClick = { vm.update { it.copy(budgetScope = scope) } },
+                    onClick = { vm.select("budgetScope") { it.copy(budgetScope = scope) } },
                     label = { Text(scope.label) },
                     modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
                 )
@@ -410,7 +410,7 @@ private fun StepStileVita(state: OnboardingUiState, vm: OnboardingViewModel) {
             WorkType.entries.forEach { wt ->
                 FilterChip(
                     selected = state.workType == wt,
-                    onClick = { vm.update { it.copy(workType = wt) } },
+                    onClick = { vm.select("workType") { it.copy(workType = wt) } },
                     label = { Text(wt.label) },
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                 )
@@ -447,7 +447,7 @@ private fun StepStileVita(state: OnboardingUiState, vm: OnboardingViewModel) {
                 TransportMode.entries.forEach { tm ->
                     FilterChip(
                         selected = state.transportMode == tm,
-                        onClick = { vm.update { it.copy(transportMode = tm) } },
+                        onClick = { vm.select("transportMode") { it.copy(transportMode = tm) } },
                         label = { Text(tm.label) }
                     )
                 }
@@ -455,16 +455,16 @@ private fun StepStileVita(state: OnboardingUiState, vm: OnboardingViewModel) {
             Spacer(Modifier.height(12.dp))
             Text("Qualita del sonno", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
             Spacer(Modifier.height(6.dp))
-            Level3Chips(state.sleepQuality) { v -> vm.update { it.copy(sleepQuality = v) } }
+            Level3Chips(state.sleepQuality) { v -> vm.select("sleepQuality") { it.copy(sleepQuality = v) } }
             Spacer(Modifier.height(12.dp))
             Text("Livello di stress", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
             Spacer(Modifier.height(6.dp))
-            Level3Chips(state.stressLevel) { v -> vm.update { it.copy(stressLevel = v) } }
+            Level3Chips(state.stressLevel) { v -> vm.select("stressLevel") { it.copy(stressLevel = v) } }
             Spacer(Modifier.height(12.dp))
             Text("Capacita di recupero percepita", style = MaterialTheme.typography.bodySmall,
                 color = TextSecondary)
             Spacer(Modifier.height(6.dp))
-            Level3Chips(state.recoveryCapacity) { v -> vm.update { it.copy(recoveryCapacity = v) } }
+            Level3Chips(state.recoveryCapacity) { v -> vm.select("recoveryCapacity") { it.copy(recoveryCapacity = v) } }
         }
     }
 }
@@ -493,7 +493,7 @@ private fun StepDettagliAllenamento(state: OnboardingUiState, vm: OnboardingView
             TechnicalLevel.entries.forEach { tl ->
                 FilterChip(
                     selected = state.technicalLevel == tl,
-                    onClick = { vm.update { it.copy(technicalLevel = tl) } },
+                    onClick = { vm.select("technicalLevel") { it.copy(technicalLevel = tl) } },
                     label = { Text(tl.label) },
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                 )

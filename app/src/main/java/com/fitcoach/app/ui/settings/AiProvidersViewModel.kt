@@ -6,10 +6,8 @@ import com.fitcoach.app.data.remote.SecureKeyStore
 import com.fitcoach.app.data.repository.ChatRepository
 import com.fitcoach.app.domain.model.AiProvider
 import com.fitcoach.app.domain.model.AiProviderSettings
-import com.fitcoach.app.v2.ai.provider.ConnectionTest
-import com.fitcoach.app.v2.ai.provider.OpenAiCompatibleClient
-import com.fitcoach.app.v2.ai.provider.ProviderConfiguration
-import com.fitcoach.app.v2.ai.provider.ProviderKind
+import com.fitcoach.app.domain.coach.AiCapabilityProbe
+import com.fitcoach.app.domain.coach.AiConfigResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +36,8 @@ data class AiProvidersUiState(
 class AiProvidersViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val secureKeyStore: SecureKeyStore,
-    private val aiClientV2: OpenAiCompatibleClient
+    private val configResolver: AiConfigResolver,
+    private val capabilityProbe: AiCapabilityProbe
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AiProvidersUiState())
@@ -122,29 +121,33 @@ class AiProvidersViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Verifica il provider sullo stesso percorso della generazione reale.
+     *
+     * Il test precedente inviava un solo messaggio di testo: rispondeva 200 anche
+     * con modelli che poi non producevano tool call, e l'utente vedeva
+     * "Connessione riuscita" seguito da una generazione che non arrivava mai.
+     * Il probe usa [AiCapabilityProbe], che invia gli strumenti come la chat.
+     */
     fun testConnection() {
         viewModelScope.launch {
             _state.value = _state.value.copy(testing = true, testStatus = null, testOk = null)
             saveCurrent()
-            val settings = chatRepository.getAiSettings()
-            val kind = ProviderKind.valueOf(settings.provider.name)
-            val result = aiClientV2.testConnection(
-                ProviderConfiguration(
-                    provider = kind,
-                    baseUrl = if (settings.useBackendProxy) settings.backendBaseUrl else settings.baseUrl,
-                    model = settings.model,
-                    credentialRef = settings.provider.name.takeUnless { settings.useBackendProxy },
-                    usesBackendProxy = settings.useBackendProxy,
-                    maxOutputTokens = settings.maxTokens.coerceIn(1, 128_000),
-                    timeoutMs = 30_000L
-                )
-            )
-            val (ok, message) = when (result) {
-                is ConnectionTest.Success -> true to
-                    "Connessione riuscita (${result.model}, ${result.latencyMs} ms)."
-                is ConnectionTest.Failure -> false to
-                    "${result.result.reason}: ${result.result.message}"
+            val config = configResolver.resolve()
+            if (config == null) {
+                val message = "Provider non configurato: inserisci la chiave o attiva il backend proxy."
+                _state.value = _state.value.copy(testing = false, testOk = false, testStatus = message)
+                return@launch
             }
+            val (ok, message) = when (val outcome = capabilityProbe.probe(config)) {
+                is AiCapabilityProbe.Outcome.Ready -> true to
+                    "Connessione riuscita con strumenti attivi (${outcome.model ?: config.model}, ${outcome.latencyMs} ms)."
+                is AiCapabilityProbe.Outcome.TextOnly -> false to
+                    "Il provider risponde ma non usa gli strumenti: ${outcome.detail} " +
+                    "La chat funziona, la generazione dei programmi no. Scegli un modello con function calling."
+                is AiCapabilityProbe.Outcome.Failed -> false to outcome.message
+            }
+            val settings = chatRepository.getAiSettings()
             chatRepository.saveAiSettings(
                 settings.copy(
                     lastTestOk = ok,

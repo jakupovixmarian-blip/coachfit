@@ -1,5 +1,6 @@
 package com.fitcoach.app.domain.coach
 
+import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
 import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.FoodItem
@@ -10,6 +11,7 @@ import com.fitcoach.app.domain.model.MealEntry
 import com.fitcoach.app.domain.model.MealSlot
 import com.fitcoach.app.domain.model.MuscleGroup
 import com.fitcoach.app.domain.model.PlannedExercise
+import com.fitcoach.app.domain.model.Sex
 import com.fitcoach.app.domain.model.SplitType
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WorkoutDay
@@ -331,17 +333,89 @@ object AiProgramProposalJson {
     }
 }
 
-/** Riepilogo testuale dell'anamnesi fornito al generatore. */
+/**
+ * Riepilogo testuale dell'anamnesi fornito al generatore.
+ *
+ * Ogni campo riporta "NON_DISPONIBILE" quando l'utente non lo ha dichiarato.
+ * Il profilo usa valori di default non nullable (obiettivo RECOMP, lavoro
+ * SEDENTARY, 5 pasti, esperienza BEGINNER) per non propagare null: stamparli
+ * come se fossero risposte farebbe decidere l'AI su dati mai forniti. Un campo
+ * si considera dichiarato solo se compare tra le risposte dell'intervista.
+ */
 object AnamnesisSummary {
-    fun forProfile(p: UserProfile): String = buildString {
-        appendLine("eta=${p.ageYears}; sesso=${p.sex}; altezza=${p.heightCm}; peso=${p.weightKg}; massa_grassa=${p.bodyFatPercent}")
-        appendLine("esperienza=${p.experience}; stato=${p.trainingStatus}; anni=${p.trainingYears}; tecnico=${p.technicalLevel}")
-        appendLine("obiettivo=${p.goal}; secondari=${p.secondaryGoals}; timeline_settimane=${p.targetTimelineWeeks}")
-        appendLine("preferenze=${p.dietaryPreferences}; esclusi=${p.excludedFoods}; allergie=${p.allergies}")
-        appendLine("limitazioni=${p.physicalLimitations}; movimenti_da_evitare=${p.movementsToAvoid}")
-        appendLine("recupero=${p.recoveryCapacity}; sonno=${p.sleepHours}/${p.sleepQuality}; stress=${p.stressLevel}; energia=${p.dailyEnergy}")
-        appendLine("lavoro=${p.workType}; passi=${p.dailySteps}; sport_extra=${p.extraSportSessionsPerWeek}; sessione_max=${p.maxSessionMinutes}")
-        appendLine("budget_settimanale=${p.weeklyFoodBudgetEur}; budget_mensile=${p.monthlyFoodBudgetEur}; persone=${p.budgetPersons}")
-        appendLine("alimenti_graditi=${p.likedFoods}; non_graditi=${p.dislikedFoods}; pasti=${p.mealsPerDay}; cucina=${p.cookingTimeAvailable}")
+
+    private const val UNKNOWN = "NON_DISPONIBILE"
+
+    /**
+     * Valore dichiarato dall'utente, oppure [fallback] se la domanda [id] non e
+     * tra le risposte registrate.
+     *
+     * Unico punto di verita per il riepilogo e per il contesto di generazione:
+     * duplicare la regola nei due prompt produceva istruzioni contraddittorie
+     * (riepilogo "NON_DISPONIBILE" + riga "OBIETTIVO: RECOMP").
+     */
+    fun declared(p: UserProfile, id: String, value: Any?, fallback: String = UNKNOWN): String =
+        if (id in AnamnesisEngine.answeredIds(p) && value != null) value.toString() else fallback
+
+    fun forProfile(p: UserProfile): String {
+        val answered = AnamnesisEngine.answeredIds(p)
+        fun d(id: String, value: Any?): String =
+            if (id in answered && value != null) value.toString() else UNKNOWN
+
+        // I campi nullable senza default non possono essere confusi con una
+        // misura inventata: se hanno un valore, l'utente li ha inseriti. Serve
+        // per il budget settimanale, che il form di onboarding salva ma che non
+        // e una domanda dell'intervista.
+        fun n(value: Any?): String = value?.toString() ?: UNKNOWN
+
+        return buildString {
+            appendLine(
+                "eta=${d("age", p.ageYears)}; sesso=${d("sex", p.sex.takeIf { it != Sex.UNSPECIFIED })}; " +
+                    "altezza=${d("heightCm", p.heightCm)}; peso=${d("weightKg", p.weightKg)}; " +
+                    "massa_grassa=${d("bodyFatPercent", p.bodyFatPercent)}"
+            )
+            appendLine(
+                "esperienza=${d("experience", p.experience)}; stato=${d("trainingStatus", p.trainingStatus)}; " +
+                    "anni=${d("trainingYears", p.trainingYears)}; tecnico=${d("technicalLevel", p.technicalLevel)}"
+            )
+            appendLine(
+                "obiettivo=${d("goal", p.goal)}; secondari=${d("secondaryGoals", p.secondaryGoals.takeIf { it.isNotEmpty() })}; " +
+                    "timeline_settimane=${d("targetTimelineWeeks", p.targetTimelineWeeks)}"
+            )
+            appendLine(
+                "preferenze=${d("dietaryPreferences", p.dietaryPreferences.takeIf { it.isNotEmpty() })}; " +
+                    "esclusi=${d("dislikedFoods", p.dislikedFoods.takeIf { it.isNotEmpty() })}; " +
+                    "allergie=${d("allergies", p.allergies.takeIf { it.isNotEmpty() })}"
+            )
+            appendLine(
+                "limitazioni=${d("physicalLimitations", p.physicalLimitations.takeIf { it.isNotEmpty() })}; " +
+                    "movimenti_da_evitare=${d("movementsToAvoid", p.movementsToAvoid.takeIf { it.isNotEmpty() })}"
+            )
+            appendLine(
+                "recupero=${d("recoveryCapacity", p.recoveryCapacity)}; " +
+                    "sonno=${d("sleepHours", p.sleepHours)}/${d("sleepQuality", p.sleepQuality)}; " +
+                    "stress=${d("stressLevel", p.stressLevel)}; energia=${d("dailyEnergy", p.dailyEnergy)}"
+            )
+            appendLine(
+                "lavoro=${d("workType", p.workType)}; passi=${d("dailySteps", p.dailySteps)}; " +
+                    "sport_extra=${d("extraSportSessionsPerWeek", p.extraSportSessionsPerWeek)}; " +
+                    "sessione_max=${d("maxSessionMinutes", p.maxSessionMinutes)}"
+            )
+            appendLine(
+                "budget_settimanale=${n(p.weeklyFoodBudgetEur)}; " +
+                    "budget_mensile=${d("monthlyFoodBudgetEur", p.monthlyFoodBudgetEur)}; " +
+                    "persone=${d("budgetPersons", p.budgetPersons)}"
+            )
+            appendLine(
+                "alimenti_graditi=${d("likedFoods", p.likedFoods.takeIf { it.isNotEmpty() })}; " +
+                    "non_graditi=${d("dislikedFoods", p.dislikedFoods.takeIf { it.isNotEmpty() })}; " +
+                    "pasti=${d("mealsPerDay", p.mealsPerDay)}; cucina=${d("cookingTimeAvailable", p.cookingTimeAvailable)}"
+            )
+            appendLine(
+                "giorni_allenamento=${d("trainingDaysPerWeek", p.trainingDaysPerWeek)}; " +
+                    "attrezzatura=${d("availableEquipment", p.availableEquipment.takeIf { it.isNotEmpty() })}; " +
+                    "carichi_attuali=${d("currentLoads", p.currentLoads.takeIf { it.isNotEmpty() })}"
+            )
+        }.trimEnd()
     }
 }
