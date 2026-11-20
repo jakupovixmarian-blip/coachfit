@@ -70,8 +70,9 @@ fun AnamnesisScreen(
         }
     }
 
-    // A generazione conclusa il ritorno alla Home e automatico: l'utente non resta
-    // bloccato sulla schermata dell'anamnesi.
+    // La generazione non parte piu' da sola: l'utente la lancia da qui dopo aver
+    // scelto il provider. Il ritorno automatico alla Home resta solo a esito
+    // positivo, cosi un errore non fa sparire la schermata con il messaggio.
     LaunchedEffect(state.generationFinished) {
         if (state.generationFinished) goDashboard()
     }
@@ -82,7 +83,7 @@ fun AnamnesisScreen(
         onOpenSummary = viewModel::openSummary,
         onCloseSummary = viewModel::closeSummary,
         onConfirm = viewModel::confirm,
-        onRetryGeneration = viewModel::retryGeneration,
+        onRetryGeneration = viewModel::generateNow,
         onStartEdit = viewModel::startEdit,
         onEditSection = viewModel::editSection,
         onStopEdit = viewModel::stopEdit,
@@ -177,7 +178,7 @@ internal fun AnamnesisContent(
                     Spacer(Modifier.height(4.dp))
                     Text(
                         state.generationMessage
-                            ?: "Il percorso verra generato automaticamente usando i dati confermati.",
+                            ?: "Anamnesi confermata. Genera il percorso quando vuoi: i dati restano salvati.",
                         style = MaterialTheme.typography.bodySmall, color = TextSecondary
                     )
                     if (state.generatingPrograms) {
@@ -189,12 +190,27 @@ internal fun AnamnesisContent(
                             style = MaterialTheme.typography.labelSmall, color = TextSecondary
                         )
                     }
-                    if (state.error != null && !state.generatingPrograms) {
-                        Spacer(Modifier.height(8.dp))
-                        OutlinedButton(
+                    // Prima della generazione il comando e' esplicito: l'utente
+                    // decide quando lanciarla, dopo aver configurato il provider.
+                    if (!state.generatingPrograms && !state.generationFinished) {
+                        Spacer(Modifier.height(12.dp))
+                        Button(
                             onClick = onRetryGeneration,
                             modifier = Modifier.fillMaxWidth()
-                        ) { Text("Riprova generazione AI") }
+                        ) {
+                            Text(
+                                if (state.error != null) "Riprova generazione AI"
+                                else "Genera piano alimentare e scheda"
+                            )
+                        }
+                    }
+                    if (state.error != null && !state.generatingPrograms) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            state.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                     state.generationWarnings.forEach { warning ->
                         Spacer(Modifier.height(4.dp))

@@ -25,7 +25,12 @@ class CrashSweepTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     private fun open(label: String) {
-        composeRule.waitForIdle()
+        // La barra compare solo dopo la lettura del profilo (startDestination
+        // null finche la query non risponde): waitForIdle non basta e il test
+        // diventava intermittente. Si attende il nodo vero.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(label).fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithText(label).performClick()
         composeRule.waitForIdle()
     }

@@ -262,8 +262,23 @@ class AnamnesisViewModel @Inject constructor(
         )
         viewModelScope.launch {
             userRepository.save(confirmed)
-            _state.value = _state.value.copy(editing = false, editSection = null, resetDone = false)
-            runAiGeneration(confirmed)
+            // La conferma SALVA soltanto. La generazione non parte da sola: prima
+            // va scelto il provider (API key, base URL, modello) e l'utente deve
+            // poter decidere quando lanciarla. Avviarla qui significava scoprire
+            // un provider mancante solo dopo aver compilato tutta l'anamnesi, e
+            // con il provider assente il turno restava appeso.
+            _state.value = _state.value.copy(
+                editing = false,
+                editSection = null,
+                resetDone = false,
+                confirmed = true,
+                showSummary = false,
+                error = null,
+                generatingPrograms = false,
+                generationFinished = false,
+                generationMessage = "Anamnesi confermata e salvata. Genera ora il piano alimentare e " +
+                    "la scheda dal Coach AI, oppure fallo più tardi: i dati restano salvati."
+            )
         }
     }
 
@@ -272,6 +287,28 @@ class AnamnesisViewModel @Inject constructor(
         val profile = _state.value.profile
         if (!profile.isAnamnesisReady || _state.value.generatingPrograms) return
         viewModelScope.launch { runAiGeneration(profile) }
+    }
+
+    /** Generazione esplicita richiesta dall'utente dopo la conferma dell'anamnesi. */
+    fun generateNow() {
+        val profile = _state.value.profile
+        if (!profile.isAnamnesisReady || _state.value.generatingPrograms) return
+        viewModelScope.launch {
+            // Il provider va verificato prima del turno: senza chiave la
+            // generazione non puo riuscire, e mostrare un'attesa infinita al
+            // posto dell'errore e' il difetto da evitare.
+            if (!aiProgramGeneration.isProviderReady()) {
+                _state.value = _state.value.copy(
+                    generatingPrograms = false,
+                    generationFinished = false,
+                    error = "Nessun provider AI configurato. Apri Impostazioni > Provider AI, " +
+                        "inserisci la chiave e salva: poi torna qui e genera il percorso.",
+                    generationMessage = "Provider AI non configurato."
+                )
+                return@launch
+            }
+            runAiGeneration(profile)
+        }
     }
 
     private suspend fun runAiGeneration(profile: UserProfile) {

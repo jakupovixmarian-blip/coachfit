@@ -40,6 +40,8 @@ object Routes {
     const val COACH = "coach"
     const val SETTINGS = "settings"
     const val AI_PROVIDERS = "ai_providers"
+    /** Primo avvio: configurazione del provider prima dell'anamnesi. */
+    const val AI_SETUP = "ai_setup"
     const val NOTIFICATION_SETTINGS = "notification_settings"
     const val PROFILE_EDIT = "profile_edit"
     const val KNOWLEDGE = "knowledge"

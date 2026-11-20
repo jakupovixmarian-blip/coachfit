@@ -25,9 +25,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +50,9 @@ import com.fitcoach.app.ui.theme.TextSecondary
 @Composable
 fun AiProvidersScreen(
     navController: NavHostController,
+    /** Primo avvio: nessun "indietro", e in fondo un pulsante che porta all'anamnesi. */
+    setupMode: Boolean = false,
+    onSetupDone: () -> Unit = {},
     viewModel: AiProvidersViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -69,11 +75,24 @@ fun AiProvidersScreen(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = "Indietro", tint = TextSecondary)
+            if (!setupMode) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(Icons.Filled.ArrowBack, contentDescription = "Indietro", tint = TextSecondary)
+                }
             }
             Text("Provider AI", style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground)
+        }
+
+        if (setupMode) {
+            Text(
+                "Prima di compilare l'anamnesi configura il Coach AI: il piano alimentare e la " +
+                    "scheda vengono costruiti dal modello che scegli qui. Puoi cambiare provider " +
+                    "in qualsiasi momento dalle Impostazioni.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
         }
 
         LazyColumn(
@@ -202,6 +221,37 @@ fun AiProvidersScreen(
                             Spacer(Modifier.width(8.dp))
                             Text(status, style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface)
+                        }
+                    }
+                }
+            }
+
+            if (setupMode) {
+                item {
+                    SectionCard {
+                        Column {
+                            SectionHeader("Conferma")
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Salva la configurazione e verifica la connessione. Il test non è " +
+                                    "obbligatorio: puoi proseguire e provarlo più tardi.",
+                                style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            var navigating by remember { mutableStateOf(false) }
+                            Button(
+                                onClick = {
+                                    if (!navigating) {
+                                        navigating = true
+                                        viewModel.save(onSaved = onSetupDone)
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text("Salva e continua") }
+                            Spacer(Modifier.height(8.dp))
+                            TextButton(onClick = onSetupDone, modifier = Modifier.fillMaxWidth()) {
+                                Text("Configura più tardi")
+                            }
                         }
                     }
                 }

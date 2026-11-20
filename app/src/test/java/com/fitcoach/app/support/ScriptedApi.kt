@@ -19,6 +19,12 @@ class ScriptedApi(
 ) : AiApi {
     val sent = mutableListOf<ChatCompletionRequest>()
 
+    /**
+     * Simula un provider che accetta la connessione e non risponde mai.
+     * Serve a verificare che un turno non possa restare appeso in attesa.
+     */
+    var hangForever: Boolean = false
+
     override suspend fun chatCompletions(
         url: String,
         authorization: String?,
@@ -28,6 +34,7 @@ class ScriptedApi(
         body: ChatCompletionRequest
     ): Response<ChatCompletionResponse> {
         sent += body
+        if (hangForever) kotlinx.coroutines.awaitCancellation()
         if (responses.isEmpty()) {
             return Response.error(503, "unavailable".toResponseBody("text/plain".toMediaType()))
         }

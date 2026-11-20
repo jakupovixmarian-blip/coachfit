@@ -33,6 +33,13 @@ object NetworkModule {
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(90, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
+        // readTimeout vale per singola lettura: un provider che apre la
+        // connessione e invia un byte ogni 80s non lo fa mai scattare, e la
+        // schermata resta su "Generazione..." a tempo indefinito. callTimeout
+        // limita la durata complessiva della richiesta, inclusi i retry del
+        // client. Il valore supera i 90s di read per non uccidere le risposte
+        // lente ma sane, e resta sotto la deadline del turno (6 min).
+        .callTimeout(150, TimeUnit.SECONDS)
         .addInterceptor(
             HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BASIC

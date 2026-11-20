@@ -21,6 +21,7 @@ import com.fitcoach.app.domain.coach.CoachOrchestrator
 import com.fitcoach.app.domain.coach.tools.CoachTool
 import com.fitcoach.app.domain.coach.tools.CoachToolRegistry
 import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
+import com.fitcoach.app.domain.model.AiProvider
 import com.fitcoach.app.domain.model.AiProviderSettings
 import com.fitcoach.app.domain.model.Goal
 import com.fitcoach.app.domain.model.Sex
@@ -272,6 +273,28 @@ class AiProgramGenerationFlowIntegrationTest {
 
         assertThat(result)
             .isInstanceOf(com.fitcoach.app.domain.usecase.ProgramGenerationResult.AnamnesisNotConfirmed::class.java)
+        assertThat(nutritionRepository.getActivePlan()).isNull()
+        assertThat(workoutRepository.getActivePlan()).isNull()
+    }
+
+    @Test
+    fun `il coordinatore blocca la generazione senza provider configurato`() = runTest {
+        // Nessun proxy e nessuna chiave: il turno non puo riuscire, quindi non
+        // deve nemmeno partire. Prima la schermata restava su "Generazione..."
+        // fino alla deadline.
+        chatRepository.saveAiSettings(
+            AiProviderSettings(provider = AiProvider.OPENAI, model = "test-model", useBackendProxy = false)
+        )
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        SecureKeyStore(context).clear(AiProvider.OPENAI.name)
+
+        val coordinator = ProgramGenerationCoordinator(aiGeneration = service(ScriptedApi(mutableListOf())))
+        val result = coordinator.generate(profile)
+
+        assertThat(result)
+            .isInstanceOf(com.fitcoach.app.domain.usecase.ProgramGenerationResult.Error::class.java)
+        assertThat((result as com.fitcoach.app.domain.usecase.ProgramGenerationResult.Error).message)
+            .contains("Nessun provider AI configurato")
         assertThat(nutritionRepository.getActivePlan()).isNull()
         assertThat(workoutRepository.getActivePlan()).isNull()
     }

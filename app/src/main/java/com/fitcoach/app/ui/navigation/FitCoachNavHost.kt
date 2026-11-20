@@ -121,6 +121,17 @@ fun FitCoachNavHost(
             composable(Routes.ANAMNESIS_EDIT) { AnamnesisScreen(navController, startInEdit = true) }
             composable(Routes.SETTINGS) { SettingsScreen(navController) }
             composable(Routes.AI_PROVIDERS) { AiProvidersScreen(navController) }
+            composable(Routes.AI_SETUP) {
+                AiProvidersScreen(
+                    navController = navController,
+                    setupMode = true,
+                    onSetupDone = {
+                        navController.navigate(Routes.ANAMNESIS) {
+                            popUpTo(Routes.ONBOARDING) { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable(Routes.NOTIFICATION_SETTINGS) { NotificationSettingsScreen(navController) }
             composable(Routes.PROFILE_EDIT) { ProfileEditScreen(navController) }
             composable(Routes.KNOWLEDGE) { KnowledgeScreen(navController) }

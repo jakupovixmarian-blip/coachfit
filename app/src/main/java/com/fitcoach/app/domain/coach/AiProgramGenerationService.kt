@@ -69,9 +69,8 @@ class AiProgramGenerationService @Inject constructor(
             )
 
         val contextPrompt = buildGenerationContext(profile, foods, exercises, scope)
-        // Il tetto di tempo vive nell'orchestratore (deadline tra le iterazioni):
-        // un `withTimeout` qui cancellerebbe la chiamata in corso e renderebbe il
-        // percorso non testabile con il tempo virtuale di runTest.
+        // Il tetto di tempo vive nell'orchestratore: deadline tra le iterazioni e
+        // budget per la singola chiamata. Qui non serve un timeout aggiuntivo.
         val turn = orchestrator.run(
             config = config,
             systemPrompt = generationSystemPrompt,
@@ -118,6 +117,13 @@ class AiProgramGenerationService @Inject constructor(
             ?: emptyList()
         return Result.Success(nutritionId, workoutId, warnings)
     }
+
+    /**
+     * True se il provider AI e utilizzabile adesso (base URL, modello e chiave
+     * o proxy). Serve alle schermate per avvisare PRIMA di lanciare un turno:
+     * un turno senza provider non puo riuscire, e l'attesa non ha senso.
+     */
+    suspend fun isProviderReady(): Boolean = resolveConfig() != null
 
     private suspend fun resolveConfig(): AiProviderConfig? {
         val settings = chatRepository.getAiSettings()

@@ -10,6 +10,7 @@ import com.fitcoach.app.data.remote.ToolChoice
 import com.fitcoach.app.data.remote.assistantToolCallMessage
 import com.fitcoach.app.data.remote.toolResultMessage
 import com.fitcoach.app.domain.coach.tools.CoachToolRegistry
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import javax.inject.Inject
@@ -79,9 +80,9 @@ class CoachOrchestrator @Inject constructor(
          * Limite complessivo del turno, in millisecondi. Il ciclo puo fare fino a
          * [maxIterations] richieste, ognuna con retry e readTimeout di 90s: senza
          * un tetto globale la schermata puo restare su "Generazione..." per
-         * decine di minuti. Il controllo avviene tra un'iterazione e l'altra
-         * (deadline wall-clock) e non con `withTimeout`, che cancellerebbe una
-         * chiamata in corso a meta e renderebbe il turno non testabile.
+         * decine di minuti. Il limite e applicato sia tra un'iterazione e l'altra
+         * sia alla singola chiamata ([callWithBudget]): il solo controllo tra le
+         * iterazioni non intercettava un provider che non risponde mai.
          */
         deadlineMs: Long? = null
     ): CoachTurnResult {
@@ -176,9 +177,7 @@ class CoachOrchestrator @Inject constructor(
                 return CoachTurnResult(
                     text = lastText,
                     pendingChangeIds = pendingChangeIds,
-                    providerError = "Il Coach AI non ha completato la generazione entro " +
-                        "${(deadlineMs ?: 0) / 60_000} minuti. Il modello potrebbe essere lento o non " +
-                        "supportare bene gli strumenti: riprova o scegli un altro modello nelle Impostazioni.",
+                    providerError = deadlineMessage(deadlineMs),
                     toolTrace = trace,
                     toolResults = toolResults
                 )
@@ -199,16 +198,28 @@ class CoachOrchestrator @Inject constructor(
             val escalateForce = mustDeliver &&
                 (!thinkingCapable || proseMisses >= 1 || rejectedDeliveries >= 2)
             val forcedChoice = if (escalateForce) ToolChoice.force(requireTool) else ToolChoice.auto
-            val result = aiClient.complete(
-                config = config,
-                messages = messages,
-                tools = toolRegistry.definitions,
-                toolChoice = forcedChoice,
-                thinking = when {
-                    !thinkingCapable -> null
-                    escalateForce -> ChatCompletionRequest.ThinkingDirective.disabled
-                    else -> ChatCompletionRequest.ThinkingDirective.enabled
-                }
+            // Il budget residuo limita la SINGOLA chiamata, non solo il ciclo:
+            // senza questo un provider che non risponde mai lascia la schermata
+            // su "Generazione..." per sempre, perche il controllo del deadline
+            // avviene solo tra un'iterazione e l'altra.
+            val result = callWithBudget(deadlineAt) {
+                aiClient.complete(
+                    config = config,
+                    messages = messages,
+                    tools = toolRegistry.definitions,
+                    toolChoice = forcedChoice,
+                    thinking = when {
+                        !thinkingCapable -> null
+                        escalateForce -> ChatCompletionRequest.ThinkingDirective.disabled
+                        else -> ChatCompletionRequest.ThinkingDirective.enabled
+                    }
+                )
+            } ?: return CoachTurnResult(
+                text = lastText,
+                pendingChangeIds = pendingChangeIds,
+                providerError = deadlineMessage(deadlineMs),
+                toolTrace = trace,
+                toolResults = toolResults
             )
             when (result) {
                 is AiResult.Failure -> {
@@ -289,6 +300,28 @@ class CoachOrchestrator @Inject constructor(
             )
         }
     }
+
+    /**
+     * Esegue la chiamata entro il budget residuo del turno.
+     *
+     * `withTimeoutOrNull` invece di `withTimeout` perche un superamento del
+     * budget e un esito previsto (il provider e lento), non un errore da
+     * propagare. Il timeout qui e ammesso anche se il commento su [deadlineMs]
+     * lo escludeva: la' il problema era cancellare una chiamata a meta quando
+     * il turno doveva ancora consegnare, qui il budget e gia finito e non c'e
+     * nulla da salvare.
+     */
+    private suspend fun <T> callWithBudget(deadlineAt: Long?, block: suspend () -> T): T? {
+        if (deadlineAt == null) return block()
+        val remaining = deadlineAt - System.currentTimeMillis()
+        if (remaining <= 0) return null
+        return withTimeoutOrNull(remaining) { block() }
+    }
+
+    private fun deadlineMessage(deadlineMs: Long?): String =
+        "Il Coach AI non ha completato la generazione entro " +
+            "${(deadlineMs ?: 0) / 60_000} minuti. Il modello potrebbe essere lento o non " +
+            "supportare bene gli strumenti: riprova o scegli un altro modello nelle Impostazioni."
 
     /** Null se gli argomenti non sono un oggetto JSON valido (chiamata troncata o malformata). */
     private fun parseArgs(raw: String?): JsonObject? =

@@ -105,10 +105,17 @@ class AiProvidersViewModel @Inject constructor(
         return settings
     }
 
-    fun save() {
+    /**
+     * [onSaved] viene invocato DOPO la scrittura: il setup del primo avvio deve
+     * navigare solo a salvataggio concluso. Navigando subito, il ViewModel
+     * della schermata uscente viene distrutto e la coroutine cancellata a metà,
+     * lasciando il provider non configurato.
+     */
+    fun save(onSaved: (() -> Unit)? = null) {
         viewModelScope.launch {
             saveCurrent()
             _state.value = _state.value.copy(message = "Impostazioni salvate.")
+            onSaved?.invoke()
         }
     }
 

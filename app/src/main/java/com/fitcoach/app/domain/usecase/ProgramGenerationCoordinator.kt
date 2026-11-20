@@ -55,6 +55,14 @@ class ProgramGenerationCoordinator @Inject constructor(
                 contradictions = profile.anamnesisContradictions
             )
         }
+        // Senza provider il turno non puo riuscire: meglio dirlo subito che
+        // lasciare la schermata su "Generazione..." fino alla deadline.
+        if (!aiGeneration.isProviderReady()) {
+            return ProgramGenerationResult.Error(
+                "Nessun provider AI configurato. Apri Impostazioni > Provider AI, inserisci la " +
+                    "chiave e salva: poi riprova a generare."
+            )
+        }
         val missing = buildList {
             if (profile.ageYears == null) add("eta")
             if (profile.heightCm == null) add("altezza")

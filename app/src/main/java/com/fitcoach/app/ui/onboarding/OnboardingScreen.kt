@@ -82,10 +82,10 @@ fun OnboardingScreen(
                 }
             }
             Spacer(Modifier.height(20.dp))
-            Button(onClick = { navController.navigate(Routes.ANAMNESIS) {
+            Button(onClick = { navController.navigate(Routes.AI_SETUP) {
                 popUpTo(Routes.ONBOARDING) { inclusive = true }
             } }) {
-                Text("Inizia l'anamnesi guidata")
+                Text("Configura il Coach AI")
             }
         }
         return

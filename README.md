@@ -113,6 +113,21 @@ La generazione dei programmi è **bloccata finché l'anamnesi non è confermata*
 dati incompleti. La dashboard mostra un avviso e riporta l'utente all'anamnesi finché non è
 completata. Il riepilogo confermato viene salvato e fornito anche al Coach AI.
 
+Confermare l'anamnesi **non avvia** la generazione: la schermata mostra il comando esplicito
+"Genera piano alimentare e scheda". Un secondo comando è **bloccato** mentre un turno è in
+corso, e dopo un errore diventa "Riprova generazione AI".
+
+La generazione richiede un **provider AI configurato**: `ProgramGenerationCoordinator` lo
+verifica prima di partire e restituisce un messaggio che porta a Impostazioni → Provider AI.
+Senza questo controllo la schermata restava su "Generazione..." fino alla scadenza del turno.
+Per lo stesso motivo il primo avvio passa da un passo di configurazione provider
+(`Routes.AI_SETUP`) tra onboarding e anamnesi, saltabile con "Configura più tardi".
+
+Ogni turno del coach ha un **tetto di tempo complessivo**: la scadenza è controllata tra
+un'iterazione e l'altra e applicata alla singola chiamata HTTP. Insieme al `callTimeout` di
+OkHttp, un provider che non risponde chiude il turno con un errore leggibile invece di
+lasciare l'app in attesa.
+
 ## Budget alimentare
 
 `BudgetEngine` tratta il budget come **vincolo effettivo**: il costo del piano è calcolato
@@ -402,7 +417,10 @@ esiste. Senza di esso la release viene generata non firmata.
 1. Abilita "Origini sconosciute" / installazione da file su Android.
 2. Copia `app-debug.apk` sul dispositivo e installalo.
 3. Al primo avvio completa l'onboarding: profilo, obiettivo, attrezzatura, preferenze
-   alimentari, limitazioni. FitCoach genera piano alimentare e scheda.
+   alimentari, limitazioni.
+4. Configura il provider AI (provider, chiave o backend proxy, modello) e premi
+   "Salva e continua": il salvataggio è confermato prima di proseguire.
+5. Completa l'anamnesi guidata e premi "Genera piano alimentare e scheda".
 
 ## Struttura del progetto
 

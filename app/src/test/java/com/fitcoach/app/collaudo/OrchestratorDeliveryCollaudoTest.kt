@@ -139,4 +139,30 @@ class OrchestratorDeliveryCollaudoTest {
         assertThat(result.providerError).contains("non ha completato")
         assertThat(result.toolResults).isEmpty()
     }
+
+    @Test
+    fun `un provider che non risponde mai chiude il turno invece di restare appeso`() = runTest {
+        val tool = StubTool("""{"ok":true}""")
+        // L'API non risponde mai: simula un endpoint che accetta la connessione e
+        // non invia nulla. Prima il deadline era controllato solo TRA le
+        // iterazioni, quindi questa chiamata non scadeva mai e la schermata
+        // restava su "Generazione..." per sempre.
+        val api = ScriptedApi(mutableListOf()).apply { hangForever = true }
+
+        val result = orchestrator(tool, api).run(
+            config = config,
+            systemPrompt = "system",
+            contextPrompt = "context",
+            history = emptyList(),
+            userMessage = "genera",
+            maxIterations = 8,
+            requireTool = "submit",
+            deadlineMs = 5_000
+        )
+
+        // Il turno deve chiudersi con un errore leggibile entro il budget, non
+        // consumare tutte le iterazioni ne attendere all'infinito.
+        assertThat(result.providerError).contains("non ha completato")
+        assertThat(result.toolResults).isEmpty()
+    }
 }
