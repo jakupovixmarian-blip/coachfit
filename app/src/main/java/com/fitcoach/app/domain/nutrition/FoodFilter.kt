@@ -29,8 +29,21 @@ object FoodFilter {
     private val animalCategories = setOf("Carne", "Salumi", "Pesce", "Uova", "Latticini")
     private val dairyCategories = setOf("Latticini")
 
+    /**
+     * Un'esclusione dichiarata dall'utente vale se compare nel nome o nella
+     * categoria dell'alimento. Il confronto e' per sottostringa perche' nessuno
+     * scrive "Petto di pollo": scrive "pollo". Il confronto esatto lascerebbe
+     * passare quasi tutte le esclusioni reali.
+     */
+    private fun matches(excluded: String, food: FoodItem): Boolean {
+        val term = excluded.trim()
+        if (term.isEmpty()) return false
+        return food.name.contains(term, ignoreCase = true) ||
+            food.category.contains(term, ignoreCase = true)
+    }
+
     fun isAllowed(food: FoodItem, profile: UserProfile): Boolean {
-        if (profile.excludedFoods.any { it.equals(food.name, ignoreCase = true) }) return false
+        if (profile.excludedFoods.any { matches(it, food) }) return false
 
         // Allergie / intolleranze: confronto case-insensitive su nome e categoria.
         val allergyHit = profile.allergies.any { a ->

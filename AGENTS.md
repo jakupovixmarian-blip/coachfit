@@ -417,6 +417,17 @@ completa (406 test). Il crash log e consultabile in Impostazioni > Diagnostica.
   `CustomPlanContent`, `CustomPlanUiState`, `ExercisePickerDialog`; tutte le funzioni
   (volume per muscolo, calendario, sonno, sessione extra, libreria) esistono in
   `ui/workout/WorkoutScreen.kt`.
+- `excludedFoods` (esclusione DURA, usata da `FoodFilter.isAllowed` e
+  `NutritionBuildTools`) era scrivibile SOLO da `OnboardingViewModel`, cioe' da una
+  schermata irraggiungibile: nessun utente poteva dichiarare "non voglio il pesce" e
+  vederlo rispettato. Ora e' una domanda dell'anamnesi (44 domande, sezione
+  "Alimentazione e budget"), con i 5 handler di `AnamnesisEngine` (question, value,
+  isAnswered, reset, summary) e la provenienza in `OnboardingViewModel.answeredFrom`.
+  NB: `dislikedFoods` NON e' un'esclusione: e' solo una preferenza morbida nel prompt.
+- `FoodFilter` confrontava `excludedFoods` per UGUAGLIANZA col nome: l'utente scrive
+  "pollo" ma il catalogo ha "Petto di pollo", quindi l'esclusione non scattava quasi
+  mai. Ora `matches()` fa `contains` su nome e categoria, come gia facevano `allergies`
+  e `NutritionBuildTools`.
 - Primo avvio: `needsAnamnesis` era `profile?.isComplete == true && !isAnamnesisReady`,
   quindi con profilo ASSENTE valeva false e la card non compariva proprio a chi ne
   aveva bisogno. Ora `needsAnamnesis(profile) = profile == null || !profile.isAnamnesisReady`

@@ -95,11 +95,16 @@ class OnboardingProvenanceCollaudoTest {
     }
 
     @Test
-    fun `l'esclusione alimentare non viene registrata come risposta inesistente`() {
-        // `excludedFoods` e un campo del form senza domanda corrispondente:
-        // registrarlo produrrebbe un id che nessuno legge.
+    fun `l'esclusione alimentare ora ha una domanda e viene registrata`() {
+        // `excludedFoods` alimenta FoodFilter (esclusione dura dal piano), quindi
+        // deve essere dichiarabile: ha una domanda nell'anamnesi e il form ne
+        // registra la provenienza come per le altre risposte testuali.
         val known = AnamnesisEngine.questions.map { it.id }.toSet()
+        assertThat(known).contains("excludedFoods")
+
         val state = OnboardingUiState(excludedFoods = "glutine")
-        assertThat(OnboardingViewModel.answeredFrom(state) - known).isEmpty()
+        val ids = OnboardingViewModel.answeredFrom(state)
+        assertThat(ids).contains("excludedFoods")
+        assertThat(ids - known).isEmpty()
     }
 }

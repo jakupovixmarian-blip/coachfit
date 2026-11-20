@@ -156,6 +156,11 @@ object AnamnesisEngine {
             kind = Kind.TEXT, required = false
         ),
         Question(
+            "excludedFoods", sections[3],
+            "Quali alimenti vuoi escludere del tutto dal piano? (separali con virgola)",
+            kind = Kind.TEXT, required = false
+        ),
+        Question(
             "cookingTimeAvailable", sections[3], "Quanto tempo hai per cucinare?",
             kind = Kind.CHOICE, options = CookingTimeAvailable.entries.map { it.name }
         ),
@@ -319,6 +324,7 @@ object AnamnesisEngine {
         "likedFoods" -> profile.likedFoods.joinToString(", ")
         "dislikedFoods" -> profile.dislikedFoods.joinToString(", ")
         "allergies" -> profile.allergies.joinToString(", ")
+        "excludedFoods" -> profile.excludedFoods.joinToString(", ")
         "cookingTimeAvailable" -> profile.cookingTimeAvailable.name
         "mealPrepPossible" -> if (profile.mealPrepPossible) "Si" else "No"
         "monthlyFoodBudgetEur" -> profile.monthlyFoodBudgetEur?.toString().orEmpty()
@@ -405,6 +411,7 @@ object AnamnesisEngine {
         "likedFoods" -> profile.likedFoods.isNotEmpty()
         "dislikedFoods" -> profile.dislikedFoods.isNotEmpty()
         "allergies" -> profile.allergies.isNotEmpty()
+        "excludedFoods" -> profile.excludedFoods.isNotEmpty()
         "cookingTimeAvailable" -> true
         "mealPrepPossible" -> true
         "monthlyFoodBudgetEur" -> profile.monthlyFoodBudgetEur != null
@@ -462,6 +469,7 @@ object AnamnesisEngine {
             "likedFoods" -> profile.copy(likedFoods = list())
             "dislikedFoods" -> profile.copy(dislikedFoods = list())
             "allergies" -> profile.copy(allergies = list())
+            "excludedFoods" -> profile.copy(excludedFoods = list())
             "cookingTimeAvailable" -> enumOrNull<CookingTimeAvailable>(v)
                 ?.let { profile.copy(cookingTimeAvailable = it) } ?: profile
             "mealPrepPossible" -> profile.copy(mealPrepPossible = parseBool(v))
@@ -514,6 +522,9 @@ object AnamnesisEngine {
             appendLine("- Preferenze: ${profile.dietaryPreferences.joinToString { it.label }}")
         }
         if (profile.allergies.isNotEmpty()) appendLine("- Allergie/intolleranze: ${profile.allergies.joinToString()}")
+        if (profile.excludedFoods.isNotEmpty()) {
+            appendLine("- Alimenti esclusi: ${profile.excludedFoods.joinToString()}")
+        }
         profile.monthlyFoodBudgetEur?.let {
             appendLine(
                 "- Budget mensile: %.0f € (${profile.budgetScope.label}, ${profile.budgetPersons} pers.)".format(it)

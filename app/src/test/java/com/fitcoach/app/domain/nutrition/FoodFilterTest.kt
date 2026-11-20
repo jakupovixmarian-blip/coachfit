@@ -73,6 +73,40 @@ class FoodFilterTest {
     }
 
     @Test
+    fun `un alimento escluso viene rimosso anche con nome parziale`() {
+        // L'utente scrive "pollo", il database ha "Petto di pollo": con il
+        // confronto esatto l'esclusione non scattava mai.
+        val p = profile.copy(excludedFoods = listOf("pollo"))
+        val all = listOf(pollo, tacchino, manzo)
+        assertThat(FoodFilter.allowedFoods(all, p).map { it.name })
+            .doesNotContain("Petto di pollo")
+        // Gli altri alimenti restano disponibili.
+        assertThat(FoodFilter.allowedFoods(all, p).map { it.name }).contains("Fesa di tacchino")
+    }
+
+    @Test
+    fun `l'esclusione vale anche per categoria`() {
+        val p = profile.copy(excludedFoods = listOf("carne"))
+        val all = listOf(pollo, tacchino, manzo, riso)
+        assertThat(FoodFilter.allowedFoods(all, p).map { it.name }).containsExactly("Riso bianco (crudo)")
+    }
+
+    @Test
+    fun `un'esclusione vuota o di soli spazi non rimuove nulla`() {
+        val p = profile.copy(excludedFoods = listOf("", "   "))
+        val all = listOf(pollo, tacchino)
+        assertThat(FoodFilter.allowedFoods(all, p)).hasSize(2)
+    }
+
+    @Test
+    fun `un alimento escluso non compare tra i sostituti`() {
+        val p = profile.copy(excludedFoods = listOf("tacchino"))
+        val all = listOf(pollo, tacchino, manzo)
+        assertThat(FoodFilter.findSubstitutes(pollo, all, p).map { it.name })
+            .doesNotContain("Fesa di tacchino")
+    }
+
+    @Test
     fun `vegan preference removes animal substitutes`() {
         val vegan = profile.copy(dietaryPreferences = setOf(DietaryPreference.VEGAN))
         val all = listOf(pollo, tacchino, manzo, riso)

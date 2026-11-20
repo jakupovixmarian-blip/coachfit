@@ -316,6 +316,7 @@ class OnboardingViewModel @Inject constructor(
                 if (s.trainingYears.isNotBlank()) add("trainingYears")
                 if (s.maxSessionMinutes.isNotBlank()) add("maxSessionMinutes")
                 if (s.allergies.isNotBlank()) add("allergies")
+                if (s.excludedFoods.isNotBlank()) add("excludedFoods")
                 if (s.likedFoods.isNotBlank()) add("likedFoods")
                 if (s.dislikedFoods.isNotBlank()) add("dislikedFoods")
                 if (s.monthlyBudgetEur.isNotBlank()) add("monthlyFoodBudgetEur")
