@@ -121,6 +121,11 @@ class SubmitFullProgramTool @Inject constructor(
                     "nota" to JsonOut.str(
                         "Correggi SOLO i valori indicati e richiama submit_full_program con l'oggetto completo."
                     ),
+                    // Il solver sa perche' non ha centrato il target (per esempio
+                    // "nessuna fonte di carboidrati nella giornata"), ma il motivo
+                    // restava in 'avvisi' del caso riuscito: il modello riceveva
+                    // "attesi 148 g, ricevuti 49 g" senza sapere cosa aggiungere.
+                    "motivo_calcolo_porzioni" to JsonOut.strings(portionNotes),
                     // Il modello veniva respinto con "alimento X non presente"
                     // senza sapere cosa esiste: indovinava per 8 tentativi. Qui
                     // riceve i nomi validi e puo correggere subito.

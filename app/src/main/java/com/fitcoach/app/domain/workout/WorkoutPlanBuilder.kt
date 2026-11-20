@@ -51,7 +51,7 @@ object WorkoutPlanBuilder {
         val usable = all.filter { ex ->
             ex.id != exercise.id &&
                 ex.primaryMuscle == exercise.primaryMuscle &&
-                (equipment == null || ex.bodyweightOnly || ex.equipment.isEmpty() || ex.equipment.any { it in equipment })
+                EquipmentFit.isAvailable(ex, equipment ?: emptySet())
         }
         val byName = usable.associateBy { it.name }
         val explicit = exercise.substituteNames.mapNotNull { byName[it] }

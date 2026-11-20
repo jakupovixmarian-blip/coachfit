@@ -15,6 +15,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +36,9 @@ import com.fitcoach.app.ui.components.LoadingBox
 import com.fitcoach.app.ui.components.SectionCard
 import com.fitcoach.app.ui.navigation.Routes
 import com.fitcoach.app.ui.theme.TextSecondary
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 
 /**
  * Anamnesi iniziale guidata (spec. §3).
@@ -211,6 +215,44 @@ internal fun AnamnesisContent(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
+                    }
+                    // La risposta grezza e l'unico modo per capire se l'errore
+                    // nasce dal modello o dal validatore: senza, ogni correzione
+                    // e un tentativo alla cieca. Va mostrata e copiabile.
+                    state.rawAiResponse?.let { grezza ->
+                        Spacer(Modifier.height(12.dp))
+                        var espansa by remember(grezza) { mutableStateOf(false) }
+                        Text(
+                            "Risposta del modello (per l'analisi)",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextSecondary
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(onClick = { espansa = !espansa }) {
+                                Text(if (espansa) "Nascondi" else "Mostra")
+                            }
+                            val clipboard = LocalClipboardManager.current
+                            Button(onClick = {
+                                clipboard.setText(AnnotatedString(grezza))
+                            }) {
+                                Text("Copia risposta")
+                            }
+                        }
+                        if (espansa) {
+                            Spacer(Modifier.height(8.dp))
+                            Surface(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = MaterialTheme.shapes.small
+                            ) {
+                                Text(
+                                    grezza.take(20_000),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(8.dp).heightIn(max = 240.dp)
+                                        .verticalScroll(rememberScrollState())
+                                )
+                            }
+                        }
                     }
                     state.generationWarnings.forEach { warning ->
                         Spacer(Modifier.height(4.dp))

@@ -27,6 +27,7 @@ import com.fitcoach.app.domain.model.WeightRecord
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.FoodSeedData
+import com.fitcoach.app.domain.workout.EquipmentFit
 import com.fitcoach.app.domain.workout.ExerciseSeedData
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import com.fitcoach.app.domain.workout.WorkoutPlanValidator
@@ -295,8 +296,7 @@ class FitCoachCollaudoTest {
         val catalog = exerciseRepository.getAll().associateBy { it.id }
         workoutRepository.getActivePlan()!!.days.flatMap { it.exercises }.forEach { planned ->
             val ex = catalog[planned.exerciseId]!!
-            val compatible = profile.availableEquipment.isEmpty() || ex.bodyweightOnly ||
-                ex.equipment.isEmpty() || ex.equipment.any { it in profile.availableEquipment }
+            val compatible = EquipmentFit.isAvailable(ex, profile)
             assertThat(compatible).isTrue()
         }
     }

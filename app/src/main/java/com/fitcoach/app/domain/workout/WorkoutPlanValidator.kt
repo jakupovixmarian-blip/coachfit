@@ -120,8 +120,7 @@ object WorkoutPlanValidator {
             com.fitcoach.app.domain.model.TechnicalLevel.COMPETENT -> 3
             com.fitcoach.app.domain.model.TechnicalLevel.PROFICIENT -> 3
         }
-        return (equipment == null || ex.bodyweightOnly || ex.equipment.isEmpty() ||
-            ex.equipment.any { it in equipment }) &&
+        return EquipmentFit.isAvailable(ex, equipment ?: emptySet()) &&
             excluded.none { ex.name.lowercase().contains(it) || ex.primaryMuscle.label.lowercase().contains(it) } &&
             disliked.none { ex.name.lowercase().contains(it) } &&
             unknown.none { ex.name.lowercase().contains(it) } &&

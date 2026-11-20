@@ -2,6 +2,7 @@ package com.fitcoach.app.domain.coach
 
 import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.Exercise
+import com.fitcoach.app.domain.workout.EquipmentFit
 import com.fitcoach.app.domain.model.FoodItem
 import com.fitcoach.app.domain.model.ExerciseCategory
 import com.fitcoach.app.domain.model.MacroTotals
@@ -114,7 +115,11 @@ object AiProposalDiagnostics {
                         if (food == null) {
                             val hint = CatalogNameResolver.foodSuggestions(entry.foodName, foods)
                             errors += "giorno ${day.dayIndex}: alimento '${entry.foodName}' non presente nel database" +
-                                if (hint.isEmpty()) "" else " (simili: ${hint.joinToString()})"
+                                if (hint.isEmpty()) {
+                                    " (nessun nome simile: scegli un alimento dall'elenco alimenti_validi)"
+                                } else {
+                                    " (usa esattamente uno di questi nomi: ${hint.joinToString()})"
+                                }
                         } else {
                             val factor = entry.grams / 100.0
                             actual += MacroTotals(
@@ -199,7 +204,11 @@ object AiProposalDiagnostics {
                     if (exercise == null) {
                         val hint = CatalogNameResolver.exerciseSuggestions(item.exerciseName, exercises)
                         errors += "giorno workout ${day.dayIndex}: esercizio '${item.exerciseName}' non presente nel database" +
-                            if (hint.isEmpty()) "" else " (simili: ${hint.joinToString()})"
+                            if (hint.isEmpty()) {
+                                " (nessun nome simile: scegli dall'elenco esercizi_validi)"
+                            } else {
+                                " (usa esattamente uno di questi nomi: ${hint.joinToString()})"
+                            }
                     } else {
                         weeklySetsPerExercise.merge(exercise.id, item.sets, Int::plus)
                         if (!allowedExercise(exercise, profile)) {
@@ -237,8 +246,7 @@ object AiProposalDiagnostics {
     }
 
     private fun allowedExercise(exercise: Exercise, profile: UserProfile): Boolean {
-        val equipmentOk = profile.availableEquipment.isEmpty() || exercise.bodyweightOnly ||
-            exercise.equipment.isEmpty() || exercise.equipment.any { it in profile.availableEquipment }
+        val equipmentOk = EquipmentFit.isAvailable(exercise, profile)
         val avoided = profile.movementsToAvoid.any {
             exercise.name.contains(it, true) || exercise.primaryMuscle.label.contains(it, true)
         }

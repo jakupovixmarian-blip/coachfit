@@ -29,8 +29,8 @@ android {
         applicationId = "com.fitcoach.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 26
-        versionName = "2.2.8"
+        versionCode = 27
+        versionName = "2.2.9"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
     }

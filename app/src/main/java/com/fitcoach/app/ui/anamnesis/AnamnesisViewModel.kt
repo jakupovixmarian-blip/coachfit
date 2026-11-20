@@ -39,6 +39,12 @@ data class AnamnesisUiState(
     val generationFinished: Boolean = false,
     val generationMessage: String? = null,
     val generationWarnings: List<String> = emptyList(),
+    /**
+     * Risposta grezza del modello quando la generazione fallisce. Mostrata
+     * all'utente per l'analisi: senza di essa la diagnosi si basa solo sul
+     * messaggio finale, che descrive il sintomo e non la causa.
+     */
+    val rawAiResponse: String? = null,
     val aiEnabled: Boolean = false,
     /** True quando si sta modificando un'anamnesi gia confermata (flusso completo, precompilato). */
     val editing: Boolean = false,
@@ -373,7 +379,15 @@ class AnamnesisViewModel @Inject constructor(
             is AiProgramGenerationService.Result.Failure -> _state.value = _state.value.copy(
                 generatingPrograms = false,
                 generationMessage = "Il Coach AI non ha potuto generare il percorso.",
-                error = result.message
+                error = result.message,
+                rawAiResponse = result.rawResponse?.also {
+                    // Salvata anche su file: se l'app viene chiusa, la risposta
+                    // resta disponibile per l'analisi invece di andare perduta.
+                    runCatching {
+                        java.io.File(context.filesDir, "ultima-risposta-ai.txt")
+                            .writeText(result.message + "\n\n=== RISPOSTA GREZZA ===\n" + it)
+                    }
+                }
             )
         }
     }

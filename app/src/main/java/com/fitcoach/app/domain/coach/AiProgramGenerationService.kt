@@ -48,7 +48,17 @@ class AiProgramGenerationService @Inject constructor(
             val warnings: List<String> = emptyList()
         ) : Result
 
-        data class Failure(val message: String, val canRetry: Boolean = true) : Result
+        /**
+         * [rawResponse] e la risposta integrale del modello quando la consegna e
+         * stata rifiutata. Serve a capire se l'errore nasce dal modello, dal
+         * prompt o dal validatore: senza il dato grezzo ogni correzione e un
+         * tentativo alla cieca.
+         */
+        data class Failure(
+            val message: String,
+            val canRetry: Boolean = true,
+            val rawResponse: String? = null
+        ) : Result
     }
 
     suspend fun generate(
@@ -111,7 +121,7 @@ class AiProgramGenerationService @Inject constructor(
                     violations.joinToString(separator = " ", prefix = "Controlli falliti: ")
                 else -> "Il programma AI non e valido e non e stato salvato."
             }
-            return Result.Failure(message)
+            return Result.Failure(message, rawResponse = output)
         }
         val nutritionId = (obj["nutritionPlanId"] as? JsonPrimitive)?.content?.toLongOrNull() ?: 0L
         val workoutId = (obj["workoutPlanId"] as? JsonPrimitive)?.content?.toLongOrNull() ?: 0L
@@ -271,6 +281,11 @@ class AiProgramGenerationService @Inject constructor(
             VINCOLI
             - Usa solo alimenti ed esercizi dei cataloghi. Non inventare identificativi, misure,
               alimenti o esercizi.
+            - COPIA I NOMI ESATTAMENTE come compaiono nel catalogo, carattere per carattere.
+              Vietato abbreviare, tradurre, declinare o riassumere: "Insalata mista" non esiste,
+              il catalogo dice "Insalata lattuga"; "Trancio di tonno" non esiste, il catalogo dice
+              "Tonno fresco". Se un alimento che vorresti non c'e', scegline un altro dalla lista.
+              Un nome inventato fa rifiutare l'intero programma.
             - Rispetta allergie, intolleranze, alimenti esclusi, limitazioni, attrezzatura, esperienza,
               recupero e budget.
             - `dayType` deve essere HIGH, MEDIUM o LOW; `slot` un valore MealSlot (BREAKFAST,

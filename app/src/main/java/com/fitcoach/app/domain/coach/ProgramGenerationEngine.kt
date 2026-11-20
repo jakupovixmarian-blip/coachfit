@@ -22,6 +22,7 @@ import com.fitcoach.app.domain.nutrition.CatalogNameResolver
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.MealPlanGenerator
 import com.fitcoach.app.domain.workout.CatalogBounds
+import com.fitcoach.app.domain.workout.EquipmentFit
 import com.fitcoach.app.domain.workout.EffectiveVolumeCalculator
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -239,12 +240,12 @@ object ProgramGenerationEngine {
     }
 
     private fun allowedExercise(exercise: Exercise, profile: UserProfile): Boolean {
-        val equipmentOk = profile.availableEquipment.isEmpty() || exercise.bodyweightOnly ||
-            exercise.equipment.isEmpty() || exercise.equipment.any { it in profile.availableEquipment }
         val avoided = profile.movementsToAvoid.any {
             exercise.name.contains(it, true) || exercise.primaryMuscle.label.contains(it, true)
         }
-        return equipmentOk && !avoided && exercise.name !in profile.dislikedExercises
+        return EquipmentFit.isAvailable(exercise, profile) &&
+            !avoided &&
+            exercise.name !in profile.dislikedExercises
     }
 
     private fun close(actual: Double, target: Double, tolerance: Double): Boolean =
