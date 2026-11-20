@@ -118,7 +118,10 @@ class WorkoutPlanValidatorTest {
             )
         )
         val report = WorkoutPlanValidator.validate(profile.copy(trainingDaysPerWeek = 1), catalog, days)
-        assertThat(report.violations.any { it.contains("minimo 8") }).isTrue()
+        // Il volume e' un avviso, non un blocco: il piano resta valido e il
+        // gruppo sotto l'intervallo di riferimento viene segnalato all'AI.
+        assertThat(report.ok).isTrue()
+        assertThat(report.warnings.any { it.contains("CHEST") && it.contains("serie effettive") }).isTrue()
     }
 
     @Test

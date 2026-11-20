@@ -9,6 +9,7 @@ import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.FoodItem
 import com.fitcoach.app.domain.model.UserProfile
+import com.fitcoach.app.domain.knowledge.KnowledgeCorpus
 import com.fitcoach.app.domain.nutrition.BreakfastConstraint
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
@@ -213,6 +214,8 @@ class AiProgramGenerationService @Inject constructor(
         }
         appendLine("Il risultato deve avere esattamente 7 giorni nutrizionali e ${profile.trainingDaysPerWeek} giorni di allenamento.")
         appendLine("Consegnalo con lo strumento submit_full_program: la verifica e il salvataggio avvengono li.")
+        appendLine()
+        appendLine(KnowledgeCorpus.promptBlock())
     }
 
     companion object {

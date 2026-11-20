@@ -81,6 +81,10 @@ class ValidateWorkoutPlanTool @Inject constructor(
                 "ok" to JsonOut.bool(report.ok),
                 "violazioni" to JsonOut.strings(report.violations),
                 "numeroViolazioni" to JsonOut.num(report.violations.size),
+                // Gli avvisi non impediscono il salvataggio: sono spunti da
+                // motivare nel rationale citando le fonti del corpus.
+                "avvisi" to JsonOut.strings(report.warnings),
+                "numeroAvvisi" to JsonOut.num(report.warnings.size),
                 "volumeEffettivoPerGruppo" to JsonOut.obj(
                     *report.effectiveVolume.map { (k, v) -> k.name to JsonOut.num(v) }.toTypedArray()
                 ),

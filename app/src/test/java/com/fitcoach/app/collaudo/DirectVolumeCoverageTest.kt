@@ -56,7 +56,7 @@ class DirectVolumeCoverageTest {
     )
 
     @Test
-    fun `bicipiti senza esercizi diretti vengono rifiutati`() {
+    fun `bicipiti senza esercizi diretti generano un avviso non un blocco`() {
         // Trazioni e rematore stimolano i bicipiti solo indirettamente.
         val days = listOf(
             day(0, setOf(MuscleGroup.BACK, MuscleGroup.BICEPS), listOf(1L to 5, 2L to 5)),
@@ -64,20 +64,31 @@ class DirectVolumeCoverageTest {
         )
         val report = WorkoutPlanValidator.validate(profile, catalog, days)
 
-        assertThat(report.ok).isFalse()
-        assertThat(report.violations.joinToString("\n")).contains("BICEPS")
-        assertThat(report.violations.joinToString("\n")).contains("serie dirette")
+        // Il giorno dichiara i bicipiti senza alcun esercizio diretto: quello e' un
+        // blocco (giornata incoerente con se stessa), non una questione di volume.
+        assertThat(report.violations.joinToString("\n")).contains("senza esercizi")
+
+        // Il volume resta un'osservazione: la scheda e' accettata e il Coach AI
+        // motiva la scelta. Un fuori range non e' un motivo di rifiuto.
+        val volumeOnly = listOf(
+            day(0, setOf(MuscleGroup.BACK), listOf(1L to 5, 2L to 5)),
+            day(1, setOf(MuscleGroup.CHEST), listOf(4L to 5, 5L to 5))
+        )
+        val accepted = WorkoutPlanValidator.validate(profile, catalog, volumeOnly)
+        assertThat(accepted.ok).isTrue()
+        assertThat(accepted.warnings.joinToString("\n")).contains("serie effettive")
     }
 
     @Test
-    fun `aggiungere il curl rende i bicipiti conformi`() {
+    fun `aggiungere il curl toglie l avviso sui bicipiti`() {
         val days = listOf(
             day(0, setOf(MuscleGroup.BACK, MuscleGroup.BICEPS), listOf(1L to 5, 2L to 4, 3L to 4)),
             day(1, setOf(MuscleGroup.CHEST, MuscleGroup.TRICEPS), listOf(4L to 5, 5L to 4))
         )
         val report = WorkoutPlanValidator.validate(profile, catalog, days)
 
-        // Con il curl i bicipiti hanno 4 serie dirette: la violazione sparisce.
+        // Con il curl i bicipiti hanno 4 serie dirette: nessun avviso li riguarda.
+        assertThat(report.warnings.joinToString("\n")).doesNotContain("BICEPS")
         assertThat(report.violations.joinToString("\n")).doesNotContain("BICEPS")
     }
 

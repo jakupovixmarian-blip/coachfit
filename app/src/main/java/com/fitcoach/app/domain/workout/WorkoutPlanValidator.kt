@@ -28,8 +28,18 @@ object WorkoutPlanValidator {
     data class Report(
         val violations: List<String>,
         val effectiveVolume: Map<MuscleGroup, Int>,
-        val coveredGroups: Set<MuscleGroup>
+        val coveredGroups: Set<MuscleGroup>,
+        /**
+         * Osservazioni non bloccanti.
+         *
+         * Il volume settimanale e' una convenzione, non un requisito di
+         * sicurezza: 10 serie di polpacci per un avanzato non sono "giuste" in
+         * assoluto. Un piano che se ne discosta viene accettato e l'AI deve
+         * motivare la scelta citando le fonti, non essere respinta.
+         */
+        val warnings: List<String> = emptyList()
     ) {
+        /** Blocchi: violazioni verificabili e non negoziabili. */
         val ok: Boolean get() = violations.isEmpty()
     }
 
@@ -55,6 +65,7 @@ object WorkoutPlanValidator {
         val allowedIds = catalog.filter { isCompatible(it, profile) }.map { it.id }.toSet()
 
         val violations = mutableListOf<String>()
+        val warnings = mutableListOf<String>()
         val plannedForVolume = mutableListOf<PlannedExercise>()
         val coveredGroups = mutableSetOf<MuscleGroup>()
 
@@ -115,28 +126,32 @@ object WorkoutPlanValidator {
             .direct
             .mapValues { (_, v) -> v.roundToInt() }
 
+        // Il volume e' materia di programmazione, non di sicurezza: fuori range
+        // produce un avviso motivato, non il rifiuto del piano. La decisione
+        // spetta al Coach AI, che la argomenta con le fonti del corpus.
         effective.forEach { (group, sets) ->
             val range = VolumeGuidelines.forGroup(group, profile.experience)
             if (sets < range.min) {
-                violations += "volume ${group.name}: $sets serie effettive (minimo ${range.min} " +
-                    "per ${profile.experience.name.lowercase()})"
+                warnings += "volume ${group.name}: $sets serie effettive, sotto l'intervallo di " +
+                    "riferimento ${range.min}-${range.max} per ${profile.experience.name.lowercase()}: " +
+                    "motivare la scelta o valutare un gruppo gia' coperto indirettamente"
             }
             if (sets > range.mrv) {
-                violations += "volume ${group.name}: $sets serie effettive (oltre il massimo " +
-                    "recuperabile ${range.mrv}: rischio recupero insufficiente)"
+                warnings += "volume ${group.name}: $sets serie effettive, oltre il massimo " +
+                    "recuperabile ${range.mrv}: verificare il recupero"
             }
         }
 
-        // Un gruppo allenato solo di riflesso resta scoperto: serve lavoro diretto.
-        (directVolume.keys + coveredGroups).forEach { group ->
+        // Un gruppo stimolato solo di riflesso resta un segnale da valutare.
+        (directVolume.keys + effective.keys + coveredGroups).forEach { group ->
             val direct = directVolume[group] ?: 0
             if (direct < MIN_DIRECT_SETS) {
-                violations += "volume ${group.name}: $direct serie dirette (minimo $MIN_DIRECT_SETS: " +
-                    "lo stimolo indiretto non sostituisce gli esercizi specifici)"
+                warnings += "volume ${group.name}: $direct serie dirette (sotto $MIN_DIRECT_SETS): " +
+                    "lo stimolo indiretto potrebbe non bastare per il lavoro specifico"
             }
         }
 
-        return Report(violations, effective, coveredGroups)
+        return Report(violations, effective, coveredGroups, warnings)
     }
 
     /** Compatibilita con attrezzatura, limitazioni, esclusioni e livello tecnico del soggetto. */
