@@ -417,6 +417,15 @@ completa (406 test). Il crash log e consultabile in Impostazioni > Diagnostica.
   `CustomPlanContent`, `CustomPlanUiState`, `ExercisePickerDialog`; tutte le funzioni
   (volume per muscolo, calendario, sonno, sessione extra, libreria) esistono in
   `ui/workout/WorkoutScreen.kt`.
+- Onboarding COLLEGATO: `FitCoachNavHost` sceglie `startDestination` leggendo il profilo
+  via `UserProfileEntryPoint` (Hilt `@EntryPoint`, perche' la destinazione iniziale va
+  decisa quando il grafo viene composto, non da un ViewModel). Nessun profilo o profilo
+  incompleto -> `Routes.ONBOARDING`, altrimenti `Routes.DASHBOARD`. La bottom bar non
+  compare in onboarding (`showBottomBar` dipende da `TopLevelDestination`).
+- `FitCoachApplication` e' `open` per permettere a `SeededProfileApplication` (test) di
+  seminare un utente in `onCreate`. I test che lanciano `MainActivity` devono usarla,
+  altrimenti atterrano sull'onboarding: senza seme verificherebbero un primo avvio che
+  salta l'onboarding, cioe' un percorso impossibile.
 - `excludedFoods` (esclusione DURA, usata da `FoodFilter.isAllowed` e
   `NutritionBuildTools`) era scrivibile SOLO da `OnboardingViewModel`, cioe' da una
   schermata irraggiungibile: nessun utente poteva dichiarare "non voglio il pesce" e

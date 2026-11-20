@@ -10,8 +10,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -34,6 +38,7 @@ import com.fitcoach.app.ui.settings.SettingsScreen
 import com.fitcoach.app.ui.shopping.ShoppingScreen
 import com.fitcoach.app.ui.workout.CustomWorkoutScreen
 import com.fitcoach.app.ui.workout.WorkoutScreen
+import dagger.hilt.android.EntryPointAccessors
 
 @Composable
 fun FitCoachNavHost(
@@ -43,6 +48,23 @@ fun FitCoachNavHost(
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+
+    val context = LocalContext.current
+    // null = profilo non ancora letto: il NavHost non va creato prima, altrimenti
+    // la destinazione iniziale sarebbe gia' stata fissata.
+    var startDestination by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) {
+        // Se la lettura fallisce si ripiega sulla Dashboard: un errore del
+        // database non deve lasciare l'app su una schermata vuota per sempre.
+        val profile = runCatching {
+            EntryPointAccessors.fromApplication(
+                context.applicationContext,
+                UserProfileEntryPoint::class.java
+            ).userRepository().get()
+        }.getOrNull()
+        startDestination =
+            if (profile == null || !profile.isComplete) Routes.ONBOARDING else Routes.DASHBOARD
+    }
 
     val showBottomBar = currentRoute in TopLevelDestination.entries.map { it.route }
 
@@ -63,9 +85,14 @@ fun FitCoachNavHost(
             }
         }
     ) { innerPadding ->
+        val start = startDestination
+        if (start == null) {
+            // Attesa della lettura del profilo: dura una query, nessun contenuto da mostrare.
+            return@Scaffold
+        }
         NavHost(
             navController = navController,
-            startDestination = Routes.DASHBOARD,
+            startDestination = start,
             modifier = Modifier.padding(innerPadding),
             enterTransition = { slideInHorizontally(tween(260)) { it / 6 } + fadeIn(tween(260)) },
             exitTransition = { fadeOut(tween(180)) },

@@ -40,7 +40,10 @@ import org.robolectric.annotation.GraphicsMode
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "w360dp-h800dp-xhdpi")
+@Config(
+    qualifiers = "w360dp-h800dp-xhdpi",
+    application = SeededProfileApplication::class
+)
 class DashboardRenderCollaudoTest {
 
     @get:Rule

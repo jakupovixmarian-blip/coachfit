@@ -17,7 +17,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltAndroidApp
-class FitCoachApplication : Application(), Configuration.Provider {
+// `open` per consentire alle Application di test di seminare uno stato iniziale.
+open class FitCoachApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
