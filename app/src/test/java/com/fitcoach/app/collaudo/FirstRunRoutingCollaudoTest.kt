@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import com.fitcoach.app.MainActivity
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
+import org.junit.rules.RuleChain
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -28,12 +29,22 @@ import org.robolectric.annotation.GraphicsMode
 @Config(qualifiers = "w360dp-h800dp-xhdpi")
 class FirstRunRoutingCollaudoTest {
 
+    private val composeRule = createAndroidComposeRule<MainActivity>()
+
+    // Il database sopravvive tra le classi di test nella stessa JVM: senza questa
+    // cancellazione il "primo avvio" trovava il profilo seminato da un altro test.
     @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val rules: RuleChain = RuleChain.outerRule(CleanDatabaseRule()).around(composeRule)
 
     @Test
     fun `al primo avvio senza profilo si apre l'onboarding`() {
-        composeRule.waitForIdle()
+        // La destinazione iniziale si decide dopo una lettura asincrona del
+        // profilo: `waitForIdle` non attende quella coroutine, quindi in suite
+        // (piu' carico) il test cadeva a intermittenza pur essendo corretto.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Configura il tuo profilo")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
         val onboarding = composeRule.onAllNodesWithText("Configura il tuo profilo")
             .fetchSemanticsNodes()
         assertThat(onboarding).isNotEmpty()
@@ -46,7 +57,10 @@ class FirstRunRoutingCollaudoTest {
 
     @Test
     fun `durante l'onboarding la barra di navigazione inferiore non e mostrata`() {
-        composeRule.waitForIdle()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Configura il tuo profilo")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
         // Le tab portano a schermate che presuppongono un profilo: mostrarle qui
         // permetterebbe di aggirare la configurazione iniziale.
         val homeTab = composeRule.onAllNodesWithText("Home").fetchSemanticsNodes()

@@ -179,6 +179,49 @@ class AiProgramGenerationFlowIntegrationTest {
     }
 
     @Test
+    fun `grammature sbagliate dall'AI vengono ricalcolate e il programma viene salvato`() = runTest {
+        // Riproduce la prova reale su OpenRouter: il modello sceglie alimenti
+        // sensati ma dimezza i grammi e calcola i macro a mente. Prima il piano
+        // veniva respinto dal validatore; ora il codice ricalcola i grammi.
+        val foods = FoodFilter.allowedFoods(foodRepository.getAll(), profile)
+        val exercises = exerciseRepository.getAll()
+        val correct = SimulatedAiPrograms.proposal(
+            profile, foods, exercises, WorkoutPlanBuilder.defaultTrainingDays(3)
+        )
+        val halved = correct.copy(
+            nutrition = correct.nutrition.copy(
+                days = correct.nutrition.days.map { day ->
+                    day.copy(
+                        meals = day.meals.map { meal ->
+                            meal.copy(
+                                entries = meal.entries.map { it.copy(grams = it.grams / 2.0) }
+                            )
+                        }
+                    )
+                }
+            )
+        )
+        val api = ScriptedApi(
+            mutableListOf(
+                toolCallResponse("submit_full_program", SimulatedAiPrograms.json(json, halved)),
+                textResponse("Programma generato.")
+            )
+        )
+
+        val result = service(api).generate(profile)
+
+        assertThat(result).isInstanceOf(AiProgramGenerationService.Result.Success::class.java)
+        val saved = nutritionRepository.getActivePlan()
+        assertThat(saved).isNotNull()
+
+        // Le grammature salvate non sono quelle dimezzate: sono state ricalcolate.
+        val savedGrams = saved!!.days.flatMap { it.meals }.flatMap { it.entries }.map { it.grams }
+        val submittedGrams = halved.nutrition.days.flatMap { it.meals }.flatMap { it.entries }.map { it.grams }
+        assertThat(savedGrams).isNotEqualTo(submittedGrams)
+        assertThat(savedGrams.all { it > 0.0 }).isTrue()
+    }
+
+    @Test
     fun `ambito nutrizione rigenera solo il piano alimentare`() = runTest {
         val api = ScriptedApi(
             mutableListOf(

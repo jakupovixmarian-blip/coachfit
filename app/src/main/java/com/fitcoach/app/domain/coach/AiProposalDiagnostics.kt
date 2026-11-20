@@ -3,11 +3,14 @@ package com.fitcoach.app.domain.coach
 import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.FoodItem
+import com.fitcoach.app.domain.model.ExerciseCategory
 import com.fitcoach.app.domain.model.MacroTotals
 import com.fitcoach.app.domain.model.MealSlot
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
+import com.fitcoach.app.domain.workout.CatalogBounds
+import com.fitcoach.app.domain.workout.VolumeGuidelines
 import java.util.Locale
 import kotlin.math.abs
 
@@ -83,8 +86,11 @@ object AiProposalDiagnostics {
                         "(attesi HIGH, MEDIUM o LOW)"
                     return@forEach
                 }
-                if (day.meals.isEmpty() || day.meals.size !in 3..6) {
-                    errors += "giorno ${day.dayIndex}: ${day.meals.size} pasti, attesi da 3 a 6"
+                // Il numero di pasti e' un dato del profilo, non una costante: il
+                // validatore accettava 3..6 ignorando la preferenza dichiarata.
+                if (day.meals.size != profile.mealsPerDay) {
+                    errors += "giorno ${day.dayIndex}: ${day.meals.size} pasti, " +
+                        "il profilo ne prevede ${profile.mealsPerDay}"
                 }
                 var actual = MacroTotals.ZERO
                 day.meals.forEach { meal ->
@@ -147,11 +153,21 @@ object AiProposalDiagnostics {
                 if (day.exercises.isEmpty()) {
                     errors += "giorno workout ${day.dayIndex}: nessun esercizio (seduta vuota)"
                 }
+                // Il tetto di seduta dipende dagli esercizi scelti: la somma dei
+                // massimi per categoria, non un numero universale valido anche per
+                // una seduta di soli multiarticolari.
                 val sessionSets = day.exercises.sumOf { it.sets }
-                if (sessionSets > 24) {
-                    errors += "giorno workout ${day.dayIndex}: $sessionSets serie, massimo sicuro 24"
-                } else if (sessionSets in 1..5) {
-                    errors += "giorno workout ${day.dayIndex}: $sessionSets serie, minimo 6 per seduta"
+                val sessionCeiling = VolumeGuidelines.sessionCeiling(
+                    day.exercises.map { item ->
+                        known[normalize(item.exerciseName)]?.category ?: ExerciseCategory.ISOLATION
+                    }
+                )
+                if (sessionSets > sessionCeiling) {
+                    errors += "giorno workout ${day.dayIndex}: $sessionSets serie, " +
+                        "massimo per questi esercizi $sessionCeiling"
+                } else if (sessionSets < VolumeGuidelines.MIN_SETS_PER_SESSION) {
+                    errors += "giorno workout ${day.dayIndex}: $sessionSets serie, " +
+                        "minimo ${VolumeGuidelines.MIN_SETS_PER_SESSION} per seduta"
                 }
                 day.exercises.forEach { item ->
                     val exercise = known[normalize(item.exerciseName)]
@@ -164,21 +180,29 @@ object AiProposalDiagnostics {
                                 "vietato o incompatibile con attrezzatura/limitazioni"
                         }
                     }
-                    if (item.sets !in 1..8 || item.minReps !in 1..30 || item.maxReps !in item.minReps..30) {
+                    // Serie, ripetizioni, recupero e RIR si verificano contro il
+                    // record del catalogo, non contro soglie fisse: Plank e' prescritto
+                    // a 30-60 s e un tetto fisso a 30 rendeva impossibile salvarlo.
+                    if (exercise != null) {
+                        errors += CatalogBounds.violations(
+                            exercise, item.sets, item.minReps, item.maxReps,
+                            item.restSeconds, item.targetRir
+                        )
+                    } else if (item.sets < 1 || item.minReps < 1 || item.maxReps < item.minReps) {
                         errors += "${item.exerciseName}: serie/ripetizioni non valide " +
                             "(${item.sets} serie, ${item.minReps}-${item.maxReps} rip.)"
                     }
-                    if (item.restSeconds !in 15..600) {
-                        errors += "${item.exerciseName}: recupero ${item.restSeconds}s, atteso da 15 a 600s"
-                    }
-                    if (item.targetRir !in 0..5) {
-                        errors += "${item.exerciseName}: RIR ${item.targetRir}, atteso da 0 a 5"
-                    }
                 }
             }
-            weeklySetsPerExercise.filterValues { it > 24 }.forEach { (exerciseId, sets) ->
-                val name = exercises.firstOrNull { it.id == exerciseId }?.name ?: "id=$exerciseId"
-                errors += "esercizio '$name': $sets serie settimanali, massimo sicuro 24"
+            weeklySetsPerExercise.forEach { (exerciseId, sets) ->
+                val exercise = exercises.firstOrNull { it.id == exerciseId } ?: return@forEach
+                val perExercise = VolumeGuidelines.maxSetsPerExercise(exercise.category)
+                val weeklyCeiling = perExercise * profile.trainingDaysPerWeek.coerceAtLeast(1)
+                if (sets > weeklyCeiling) {
+                    errors += "esercizio '${exercise.name}': $sets serie settimanali, " +
+                        "massimo $weeklyCeiling ($perExercise per seduta su " +
+                        "${profile.trainingDaysPerWeek} sedute)"
+                }
             }
         }
 

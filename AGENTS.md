@@ -100,6 +100,22 @@ L'ambiente si riavvia frequentemente (OOM): **committare spesso** su git.
   la migrazione ripara prima eventuali duplicati. La modifica workout crea una nuova versione
   del piano e lascia intatta la precedente. L'editor nutrizionale consente ora di modificare
   i grammi di una voce e ricalcola i macro dai valori del catalogo. Collaudo: 337 test verdi.
+- **Calcoli non aggirabili dall'AI**: il modello sceglie gli alimenti, il codice decide i
+  grammi. `PortionResolution` (`domain/nutrition/`) risolve le porzioni con
+  `MealPortionSolver` subito dopo il decode JSON e PRIMA della validazione, dentro
+  `SubmitFullProgramTool`: non e' un passaggio opzionale, quindi un modello che sbaglia i
+  grammi (o li calcola a mente) non puo' piu' far respingere il piano. Le note di
+  risoluzione tornano all'AI tra gli `avvisi`. Regressione coperta da
+  `integration/AiProgramGenerationFlowIntegrationTest` (grammature dimezzate -> salvate
+  ricalcolate) e `domain/nutrition/PortionResolutionTest`.
+- **Nessuna soglia inventata**: i limiti di programmazione si ricavano dai dati, non da
+  costanti scritte a mano. `CatalogBounds` (`domain/workout/`) deriva serie/ripetizioni/
+  recupero/RIR dai campi di `Exercise` (con margini proporzionali); `VolumeGuidelines`
+  deriva il volume settimanale per gruppo e lo modula su `TrainingExperience`. Il numero
+  di pasti si valida contro `profile.mealsPerDay`, non contro un 3..6 fisso. Se serve un
+  nuovo limite, aggiungerlo a queste fonti uniche: una costante nel validatore
+  contraddice i dati che l'app stessa pubblica (era il caso di Plank, 30-60s contro un
+  massimo di 30, che respingeva ogni scheda che lo includesse).
 - **Notifiche**: il posticipo usa `UserPreferences.deferMinutes` (5..120 minuti) e il valore
   viene propagato nell'intent dell'allarme, nell'azione di snooze e nella programmazione
   giornaliera/settimanale. Non reintrodurre un valore fisso nel `ReminderReceiver`. Le notifiche

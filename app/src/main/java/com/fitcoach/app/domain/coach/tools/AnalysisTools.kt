@@ -140,8 +140,9 @@ class ComputeWeeklyVolumeTool @Inject constructor(
     override val name = "compute_weekly_volume"
     override val description =
         "Calcola il volume settimanale effettivo per gruppo muscolare (serie dirette a peso 1.0 e " +
-            "indirette a peso ridotto) della scheda attiva. Confrontalo con i range raccomandati " +
-            "(circa 10-20 serie/gruppo) per valutare equilibrio e recuperabilita."
+            "indirette a peso ridotto) della scheda attiva. Restituisce anche il range " +
+            "raccomandato per ogni gruppo, modulato sull'esperienza dichiarata, per valutare " +
+            "equilibrio e recuperabilita."
 
     override val parameters: JsonObject = Schema.obj()
 
@@ -150,6 +151,7 @@ class ComputeWeeklyVolumeTool @Inject constructor(
             ?: return JsonOut.encode(JsonOut.obj("ok" to JsonOut.bool(true), "pianoPresente" to JsonOut.bool(false)))
         val volume = plan.weeklyVolumePerGroup
         val total = volume.values.sum()
+        val experience = userRepository.get()?.experience ?: com.fitcoach.app.domain.model.TrainingExperience.INTERMEDIATE
         return JsonOut.encode(
             JsonOut.obj(
                 "ok" to JsonOut.bool(true),
@@ -158,13 +160,32 @@ class ComputeWeeklyVolumeTool @Inject constructor(
                 "volumePerGruppo" to JsonOut.obj(
                     *volume.map { (k, v) -> k.name to JsonOut.num(v) }.toTypedArray()
                 ),
-                "rangeRaccomandato" to JsonOut.obj(
-                    "min" to JsonOut.num(10),
-                    "max" to JsonOut.num(20),
-                    "nota" to JsonOut.str("Serie settimanali per gruppo per ipertrofia (indicativo).")
+                // Gli intervalli arrivano da VolumeGuidelines, modulati sul gruppo
+                // e sull'esperienza: una soglia unica per schiena e bicipiti
+                // giudicava male entrambi.
+                "rangePerGruppo" to JsonOut.obj(
+                    *volume.map { (muscle, _) ->
+                        val range = com.fitcoach.app.domain.workout.VolumeGuidelines
+                            .forGroup(muscle, experience)
+                        muscle.name to JsonOut.obj(
+                            "min" to JsonOut.num(range.min),
+                            "max" to JsonOut.num(range.max),
+                            "mrv" to JsonOut.num(range.mrv)
+                        )
+                    }.toTypedArray()
                 ),
-                "sottoVolume" to JsonOut.strings(volume.filter { it.value < 8 }.map { it.key.name }),
-                "sopraVolume" to JsonOut.strings(volume.filter { it.value > 22 }.map { it.key.name })
+                "sottoVolume" to JsonOut.strings(
+                    volume.filter { (muscle, sets) ->
+                        sets < com.fitcoach.app.domain.workout.VolumeGuidelines
+                            .forGroup(muscle, experience).min
+                    }.map { it.key.name }
+                ),
+                "sopraVolume" to JsonOut.strings(
+                    volume.filter { (muscle, sets) ->
+                        sets > com.fitcoach.app.domain.workout.VolumeGuidelines
+                            .forGroup(muscle, experience).mrv
+                    }.map { it.key.name }
+                )
             )
         )
     }

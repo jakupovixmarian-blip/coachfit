@@ -18,6 +18,7 @@ import com.fitcoach.app.domain.model.WorkoutDay
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.MealPlanGenerator
+import com.fitcoach.app.domain.workout.CatalogBounds
 import com.fitcoach.app.domain.workout.EffectiveVolumeCalculator
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import kotlinx.serialization.Serializable
@@ -177,9 +178,12 @@ object ProgramGenerationEngine {
             val planned = aiDay.exercises.mapIndexed { order, aiExercise ->
                 val exercise = known[normalize(aiExercise.exerciseName)] ?: return null
                 if (!allowedExercise(exercise, profile)) return null
-                if (aiExercise.sets !in 1..8 || aiExercise.minReps !in 1..30 ||
-                    aiExercise.maxReps !in aiExercise.minReps..30 || aiExercise.restSeconds !in 15..600 ||
-                    aiExercise.targetRir !in 0..5
+                // Stessi limiti del catalogo usati dalla diagnostica: un'unica
+                // fonte, altrimenti validate e analyze rifiutano cose diverse.
+                if (CatalogBounds.violations(
+                        exercise, aiExercise.sets, aiExercise.minReps,
+                        aiExercise.maxReps, aiExercise.restSeconds, aiExercise.targetRir
+                    ).isNotEmpty()
                 ) return null
                 PlannedExercise(
                     exerciseId = exercise.id,

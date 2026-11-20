@@ -10,7 +10,10 @@ import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
 import com.fitcoach.app.domain.coach.AiProgramProposalJson
 import com.fitcoach.app.domain.coach.ProgramGenerationEngine
+import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
+import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.FoodFilter
+import com.fitcoach.app.domain.nutrition.PortionResolution
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import javax.inject.Inject
@@ -84,13 +87,29 @@ class SubmitFullProgramTool @Inject constructor(
                 (JsonArgs(arguments).string("scope") ?: "BOTH").trim().uppercase()
             )
         }.getOrDefault(ProgramGenerationEngine.Scope.BOTH)
-        val proposal = AiProgramProposalJson.decode(json, json.encodeToString(JsonObject.serializer(), arguments))
+        val decoded = AiProgramProposalJson.decode(json, json.encodeToString(JsonObject.serializer(), arguments))
             ?: return fail("Struttura non valida: invia un singolo oggetto conforme allo schema.")
 
         val foods = FoodFilter.allowedFoods(foodRepository.getAll(), profile)
         val exercises = exerciseRepository.getAll()
         if (foods.isEmpty()) return fail("Nessun alimento compatibile disponibile nel database.")
         if (exercises.isEmpty()) return fail("Database esercizi vuoto: impossibile validare la scheda.")
+
+        // Le grammature sono ricalcolate qui, non dall'AI: il modello sceglie gli
+        // alimenti, il solver decide i grammi. Rende il calcolo non aggirabile.
+        val (proposal, portionNotes) = if (scope == ProgramGenerationEngine.Scope.WORKOUT) {
+            decoded to emptyList()
+        } else {
+            EnergyCalculator.compute(profile)?.let { energy ->
+                val cycling = if (CarbCyclingEngine.shouldApplyCarbCycling(profile)) {
+                    CarbCyclingEngine.build(profile, energy)
+                } else {
+                    CarbCyclingEngine.buildUniform(profile, energy)
+                }
+                PortionResolution.resolve(decoded.nutrition, foods, cycling)
+                    .let { (nutrition, notes) -> decoded.copy(nutrition = nutrition) to notes }
+            } ?: (decoded to listOf("Energia non calcolabile: grammature non ricalcolate."))
+        }
 
         val validated = ProgramGenerationEngine.validate(profile, proposal, foods, exercises, scope)
             ?: return JsonOut.encode(
@@ -142,7 +161,7 @@ class SubmitFullProgramTool @Inject constructor(
                 "ambito" to JsonOut.str(scope.name),
                 "nutritionPlanId" to JsonOut.num(saved.first),
                 "workoutPlanId" to JsonOut.num(saved.second),
-                "avvisi" to JsonOut.strings(validated.warnings)
+                "avvisi" to JsonOut.strings(validated.warnings + portionNotes)
             )
         )
     }

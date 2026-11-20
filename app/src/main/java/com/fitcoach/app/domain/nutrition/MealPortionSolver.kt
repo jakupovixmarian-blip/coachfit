@@ -23,8 +23,9 @@ object MealPortionSolver {
     /** Tolleranza del solver: molto piu stretta di quella del validatore (20-30%). */
     private const val TARGET_TOLERANCE = 0.03
 
-    private const val MIN_GRAMS = 1.0
-    private const val MAX_GRAMS = 2_000.0
+    /** Grammatura minima pesabile e massima plausibile per una porzione. */
+    const val MIN_GRAMS = 1.0
+    const val MAX_GRAMS = 2_000.0
 
     /** Ruolo di un alimento, usato per decidere quale grammatura muovere. */
     enum class Role { PROTEIN, CARBS, FAT, MIXED }

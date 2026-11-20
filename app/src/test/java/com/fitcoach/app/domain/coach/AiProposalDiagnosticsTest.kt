@@ -108,7 +108,9 @@ class AiProposalDiagnosticsTest {
             profile, proposal, FoodSeedData.foods, ExerciseSeedData.exercises
         )
         assertThat(errors.any { it.contains("nessun esercizio") }).isTrue()
-        assertThat(errors.any { it.contains("massimo sicuro 24") }).isTrue()
+        // Il tetto e' la somma dei massimi per esercizio, non una costante:
+        // il messaggio deve dire quanto vale per gli esercizi di questa seduta.
+        assertThat(errors.any { it.contains("massimo per questi esercizi") }).isTrue()
     }
 
     @Test
@@ -149,8 +151,13 @@ class AiProposalDiagnosticsTest {
         val errors = AiProposalDiagnostics.analyze(
             profile.copy(trainingDaysPerWeek = 1), proposal, FoodSeedData.foods, ExerciseSeedData.exercises
         )
-        assertThat(errors.any { it.contains("recupero") && it.contains("600") }).isTrue()
-        assertThat(errors.any { it.contains("RIR") && it.contains("da 0 a 5") }).isTrue()
+        // I messaggi citano la prescrizione del catalogo per quell'esercizio,
+        // cosi l'AI sa a quale valore tornare invece di indovinare una soglia.
+        val prescribed = ExerciseSeedData.exercises.first()
+        assertThat(errors.any { it.contains("recupero") && it.contains("${prescribed.restSeconds}s") })
+            .isTrue()
+        assertThat(errors.any { it.contains("RIR") && it.contains("prescrive ${prescribed.targetRir}") })
+            .isTrue()
         assertThat(errors).doesNotContain(AiProposalDiagnostics.GENERIC_FALLBACK)
     }
 
