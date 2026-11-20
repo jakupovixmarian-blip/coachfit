@@ -218,7 +218,7 @@ class AiProgramGenerationService @Inject constructor(
         appendLine()
         appendLine(KnowledgeCorpus.promptBlock())
         appendLine()
-        appendLine(InvictusCorpus.promptBlock())
+        appendLine(InvictusCorpus.promptBlock(maxPerTopic = 5))
     }
 
     companion object {

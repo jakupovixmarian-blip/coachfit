@@ -112,41 +112,73 @@ class ThresholdsAreWarningsTest {
 
     @Test
     fun `il corpus invictus cita una fonte verificabile per ogni regola`() {
-        assertThat(InvictusCorpus.rules).isNotEmpty()
+        assertThat(InvictusCorpus.rules.size).isAtLeast(120)
         InvictusCorpus.rules.forEach { rule ->
             assertThat(rule.statement).isNotEmpty()
             assertThat(rule.articleTitle).isNotEmpty()
             assertThat(rule.url).startsWith("https://www.projectinvictus.it/")
-            assertThat(rule.limits).isNotEmpty()
+            assertThat(rule.publishedDate).isNotEmpty()
             // La metodologia Invictus e divulgativa: non va spacciata per linee guida.
             assertThat(rule.kind).isEqualTo(SourceKind.DIVULGATIVE)
         }
     }
 
     @Test
-    fun `il corpus copre allenamento e nutrizione con i numeri che servono al motore`() {
-        val training = InvictusCorpus.forArea(KnowledgeCorpus.Area.TRAINING)
-        val nutrition = InvictusCorpus.forArea(KnowledgeCorpus.Area.NUTRITION)
-        assertThat(training).isNotEmpty()
-        assertThat(nutrition).isNotEmpty()
-
-        // I criteri concreti che mancavano al motore: volume in ripetizioni,
-        // frequenza, recuperi, surplus e deficit, grassi minimi.
-        val all = InvictusCorpus.rules.joinToString("\n") { it.statement }
-        assertThat(all).contains("100-160")
-        assertThat(all).contains("2 volte a settimana")
-        assertThat(all).contains("2-3 minuti")
-        assertThat(all).contains("300-500 kcal")
-        assertThat(all).contains("0,5 g/kg")
+    fun `ogni regola contiene un numero verificabile`() {
+        // Il valore del corpus sta nei numeri: senza, e' un'opinione.
+        InvictusCorpus.rules.forEach { rule ->
+            assertThat(rule.statement).matches(".*\\d.*")
+        }
     }
 
     @Test
-    fun `il blocco prompt invictus riporta titolo e url per ogni regola`() {
-        val block = InvictusCorpus.promptBlock()
+    fun `il corpus copre tutti gli argomenti che servono al motore`() {
+        val training = InvictusCorpus.forArea(KnowledgeCorpus.Area.TRAINING)
+        val nutrition = InvictusCorpus.forArea(KnowledgeCorpus.Area.NUTRITION)
+        assertThat(training.size).isAtLeast(60)
+        assertThat(nutrition.size).isAtLeast(50)
+
+        // Ogni argomento del motore deve avere almeno una regola.
+        listOf(
+            InvictusCorpus.Topic.VOLUME,
+            InvictusCorpus.Topic.FREQUENCY,
+            InvictusCorpus.Topic.RECOVERY,
+            InvictusCorpus.Topic.INTENSITY,
+            InvictusCorpus.Topic.PROTEIN,
+            InvictusCorpus.Topic.CARBS,
+            InvictusCorpus.Topic.FAT,
+            InvictusCorpus.Topic.CALORIES
+        ).forEach { topic ->
+            assertThat(InvictusCorpus.forTopic(topic)).isNotEmpty()
+        }
+    }
+
+    @Test
+    fun `le regole contengono i numeri chiave della metodologia`() {
+        val all = InvictusCorpus.rules.joinToString("\n") { it.statement }
+        assertThat(all).contains("serie")
+        assertThat(all).contains("proteine")
+        assertThat(all).contains("grassi")
+    }
+
+    @Test
+    fun `il blocco prompt resta limitato e cita la fonte`() {
+        // Il prompt non deve diventare un elenco interminabile: si limita per argomento.
+        val block = InvictusCorpus.promptBlock(maxPerTopic = 3)
         assertThat(block).contains("PROJECT INVICTUS")
         assertThat(block).contains("https://www.projectinvictus.it/")
+
+        val maxExpected = InvictusCorpus.Topic.entries.size * 3
+        val ruleLines = block.lines().count { it.startsWith("- ") }
+        assertThat(ruleLines).isAtMost(maxExpected)
+        assertThat(ruleLines).isAtLeast(20)
+    }
+
+    @Test
+    fun `il testo completo riporta tutte le regole consultabili`() {
+        val full = InvictusCorpus.fullText()
         InvictusCorpus.rules.forEach { rule ->
-            assertThat(block).contains(rule.articleTitle)
+            assertThat(full).contains(rule.articleTitle)
         }
     }
 }

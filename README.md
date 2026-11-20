@@ -346,29 +346,33 @@ applicabilità**. La schermata Impostazioni → Fonti e versioni mostra le fonti
 
 Le soglie di volume non possono nascere da un motore di calcolo: 10 serie di polpacci
 per un avanzato non sono né giuste né sbagliate in assoluto, dipendono dalla metodologia.
-`InvictusCorpus` porta dentro l'app 12 regole estratte dagli articoli di
-projectinvictus.it, ognuna con titolo e URL della fonte, più i limiti di applicabilità.
-Entrano nel prompt di generazione, così il Coach AI programma citando un criterio invece
-di indovinare.
+`InvictusCorpus` porta dentro l'app **159 regole** estratte dagli articoli di
+projectinvictus.it, ognuna con titolo, URL e data della fonte.
 
-Regole chiave incluse: volume settimanale contato in **ripetizioni per gruppo** (grandi
-100-160, piccoli 90-140, specializzazione 180-230), frequenza **2x** sui grandi,
-recuperi **2-3 minuti** sui fondamentali, cedimento non obbligatorio, scarico,
-surplus **300-500 kcal** in massa, deficit **~500/300 kcal** in definizione, grassi mai
-sotto **0,5 g/kg**, proteine **20-40 g per pasto**, ricomposizione per fascia di BF%.
+Ogni regola è una frase prescrittiva con un numero verificabile (serie, ripetizioni,
+grammi, kcal, percentuali), filtrata dalle categorie metodologiche del sito. Sono
+classificate per argomento — volume, frequenza, recupero, intensità/RIR, periodizzazione,
+progressione, tecniche, esecuzione, proteine, carboidrati, grassi, calorie, timing,
+composizione corporea, sicurezza — così il prompt ne seleziona solo quelle utili.
+
+Esempi di ciò che il corpus porta al motore: ipertrofia tra **10 e 25 serie** allenanti a
+settimana, ricomposizione a **12-20**, quadricipiti almeno **8-10** per il mantenimento,
+proteine **1,4-2,2 g/kg**, grassi **15-25%** delle calorie con minimo **0,5 g/kg**,
+surplus **300-500 kcal**, frequenza **2x** sui grandi, recuperi **2-3 minuti**.
 
 Cosa questo corpus **non** è:
 
-- **Non è una copia degli articoli.** Il contenuto di projectinvictus.it è protetto da
-  copyright: si estraggono regole sintetizzate con attribuzione e link, non i testi.
+- **Non è una copia degli articoli.** Si estraggono le singole affermazioni con
+  attribuzione e link, non i testi: il contenuto del sito è protetto da copyright.
 - **Non è una fonte scientifica primaria.** È classificato `SourceKind.DIVULGATIVE`.
   Dove serve autorità si confronta con la letteratura indicizzata (PubMed, OpenAlex,
   Crossref — API pubbliche senza chiave) e con `ScientificSourceSeedData`.
 
-**Rigenerazione.** `tools/corpus/fetch_invictus.py` legge gli articoli via REST API
+**Rigenerazione.** `tools/corpus/fetch_invictus.py` legge i 1.357 articoli via REST API
 pubblica di WordPress (`/wp-json/wp/v2/posts`, `robots.txt` consente la lettura) e
-`tools/corpus/build_invictus_corpus.py` rigenera la tabella Kotlin. Ogni regola cita
-titolo e URL: si può verificare alla fonte in qualsiasi momento.
+`tools/corpus/build_invictus_corpus.py` filtra le affermazioni e riscrive la tabella
+Kotlin. Il filtro scarta tabelle, righe di scheda, frasi senza unità di misura e
+contenuti enciclopedici sugli alimenti.
 
 ## AI configurabile
 
