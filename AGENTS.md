@@ -369,3 +369,35 @@ diagnosticabile, non indovinare la causa.
 - Nota ambiente: su questo host non c'e `/dev/kvm`, quindi l'emulatore x86_64 non
   parte. La verifica runtime passa da Robolectric (Activity reale) e dalla build
   release R8, non dall'emulatore.
+
+## Crash all'avvio della generazione dei programmi (risolto)
+
+**Sintomo:** l'app si chiudeva appena partiva la generazione di piano
+alimentare o scheda.
+
+**Causa:** `ProgramGenerationCoordinator.generate()` era una `suspend fun`
+senza cambio di dispatcher, quindi l'intero lavoro girava sul thread
+principale chiamante (`viewModelScope` = `Dispatchers.Main`): costruzione del
+prompt con centinaia di alimenti ed esercizi, serializzazione di payload di
+migliaia di token e `MealPortionSolver` in ciclo iterativo. Il blocco della UI
+produce un ANR, che Android presenta all'utente come chiusura dell'app.
+
+**Correzioni (da non rimuovere):**
+1. `generate()` sposta il lavoro su `Dispatchers.IO` (`dispatcher`
+   parametrizzato per i test) e avvolge tutto in `try/catch` che restituisce
+   `ProgramGenerationResult.Error`. E' la rete di sicurezza unica per tutti i
+   chiamanti (schermate, chat, azioni del Coach).
+2. `AnamnesisViewModel.runAiGeneration()` (generazione automatica dopo la
+   conferma dell'anamnesi, il percorso realmente usato al primo avvio) gira su
+   IO con `try/catch` + `CrashLog.record`.
+3. `Nutrition/Workout/DashboardViewModel`: `try/catch` + `CrashLog.record` e
+   messaggio all'utente invece della chiusura del processo.
+4. `Converters`: i `TypeConverter` enum tollerano valori non piu validi con
+   fallback esplicito. Prima un solo valore rinominato faceva fallire la
+   lettura della riga (e quindi la generazione) su database esistenti.
+5. `CancellationException` viene rilanciata: non va mai inghiottita da un
+   `catch (Throwable)`.
+
+**Verifica:** `GenerationThreadingCollaudoTest` (generazione fuori dal thread
+chiamante, guasti trasformati in esito, profilo incompleto gestito) + suite
+completa (406 test). Il crash log e consultabile in Impostazioni > Diagnostica.
