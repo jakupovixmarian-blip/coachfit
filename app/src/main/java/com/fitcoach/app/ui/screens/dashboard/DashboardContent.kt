@@ -142,7 +142,11 @@ fun DashboardContent(
         when {
             state.isLoading -> DashboardSkeleton()
             state.errorMessage != null -> DashboardError(state.errorMessage, onRetry)
-            !state.hasPlan -> DashboardNoPlan(onGenerateProgram)
+            !state.hasPlan -> DashboardNoPlan(
+                needsAnamnesis = state.needsAnamnesis,
+                onOpenAnamnesis = onOpenAnamnesis,
+                onGenerateProgram = onGenerateProgram,
+            )
             else -> DashboardBody(
                 state = state,
                 motionEnabled = motionEnabled,
@@ -1007,21 +1011,40 @@ private fun DashboardError(message: String, onRetry: () -> Unit) {
     }
 }
 
+/**
+ * Senza anamnesi confermata la generazione risponde "Completa prima il profilo":
+ * il pulsante deve quindi portare all'anamnesi, non a una generazione che non
+ * puo' riuscire.
+ */
 @Composable
-private fun DashboardNoPlan(onGenerateProgram: () -> Unit) {
+private fun DashboardNoPlan(
+    needsAnamnesis: Boolean,
+    onOpenAnamnesis: () -> Unit,
+    onGenerateProgram: () -> Unit,
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(20.dp),
         contentAlignment = Alignment.Center,
     ) {
-        EmptyState(
-            title = "Nessun programma attivo",
-            message = "Completa l'anamnesi: il Coach AI genera nutrizione e " +
-                "allenamento sui tuoi dati reali.",
-            actionLabel = "Genera il programma",
-            onAction = onGenerateProgram,
-        )
+        if (needsAnamnesis) {
+            EmptyState(
+                title = "Completa l'anamnesi",
+                message = "Il Coach AI genera nutrizione e allenamento sui tuoi " +
+                    "dati reali: servono le risposte dell'anamnesi guidata.",
+                actionLabel = "Inizia l'anamnesi",
+                onAction = onOpenAnamnesis,
+            )
+        } else {
+            EmptyState(
+                title = "Nessun programma attivo",
+                message = "L'anamnesi e' confermata: genera il piano di nutrizione " +
+                    "e la scheda di allenamento.",
+                actionLabel = "Genera il programma",
+                onAction = onGenerateProgram,
+            )
+        }
     }
 }
 

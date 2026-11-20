@@ -417,6 +417,14 @@ completa (406 test). Il crash log e consultabile in Impostazioni > Diagnostica.
   `CustomPlanContent`, `CustomPlanUiState`, `ExercisePickerDialog`; tutte le funzioni
   (volume per muscolo, calendario, sonno, sessione extra, libreria) esistono in
   `ui/workout/WorkoutScreen.kt`.
+- Primo avvio: `needsAnamnesis` era `profile?.isComplete == true && !isAnamnesisReady`,
+  quindi con profilo ASSENTE valeva false e la card non compariva proprio a chi ne
+  aveva bisogno. Ora `needsAnamnesis(profile) = profile == null || !profile.isAnamnesisReady`
+  (funzione `internal` in `DashboardViewModel.kt`, testata da `DashboardFirstRunCollaudoTest`).
+- La card da sola non bastava: con `!hasPlan` la Dashboard mostra `DashboardNoPlan`, non
+  `DashboardBody`, e la CTA era "Genera il programma" -> `generateProgram()` -> "Completa
+  prima il profilo": vicolo cieco. Ora con `needsAnamnesis` la CTA e' "Inizia l'anamnesi"
+  e naviga all'anamnesi (label diverse da titolo e pulsante, altrimenti il test trova 2 nodi).
 - Resto di `ui/screens/*` rimosso (5174 righe, 25 file): anamnesis, coach, diary,
   knowledge, notifications, nutrition, onboarding, profile, progress, provider, settings,
   shopping. Ognuna aveva gia la sua schermata viva in `ui/<area>/` (o `ui/settings/`),

@@ -114,7 +114,7 @@ class DashboardViewModel @Inject constructor(
             errorMessage = null,
             hasPlan = plan != null || workoutPlan != null,
             goalLabel = profile?.goal?.label,
-            needsAnamnesis = profile?.isComplete == true && !profile.isAnamnesisReady,
+            needsAnamnesis = needsAnamnesis(profile),
             anamnesisSummary = profile?.anamnesisSummary?.takeIf { it.isNotBlank() },
             warnings = buildWarnings(profile, plan?.days),
             greeting = greeting(profile?.name),
@@ -269,6 +269,14 @@ class DashboardViewModel @Inject constructor(
         return next?.let { DashboardNotification(timeLabel = it.second.triggerTime, title = it.second.title) }
     }
 }
+
+/**
+ * L'invito a completare l'anamnesi deve comparire anche quando il profilo non
+ * esiste ancora: senza profilo la generazione risponde "Completa prima il
+ * profilo" e non c'e' nessun altro modo di arrivare all'anamnesi.
+ */
+internal fun needsAnamnesis(profile: UserProfile?): Boolean =
+    profile == null || !profile.isAnamnesisReady
 
 private fun WorkoutSession?.toWorkoutState(): WorkoutState = when (this?.status) {
     SessionStatus.COMPLETED -> WorkoutState.COMPLETED

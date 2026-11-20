@@ -114,6 +114,33 @@ class DashboardRenderCollaudoTest {
     }
 
     @Test
+    fun `primo avvio senza anamnesi la CTA porta all'anamnesi e non alla generazione`() {
+        val clicks = Clicks()
+        render(
+            DashboardUiState(isLoading = false, hasPlan = false, needsAnamnesis = true),
+            clicks,
+        )
+        composeRule.onNodeWithText("Completa l'anamnesi").assertExists()
+        composeRule.onNodeWithText("Inizia l'anamnesi").performClick()
+        // La generazione senza profilo risponde "Completa prima il profilo":
+        // il primo avvio non deve passare da li'.
+        assertThat(clicks.anamnesis).isEqualTo(1)
+        assertThat(clicks.generate).isEqualTo(0)
+    }
+
+    @Test
+    fun `anamnesi confermata senza piano la CTA genera il programma`() {
+        val clicks = Clicks()
+        render(
+            DashboardUiState(isLoading = false, hasPlan = false, needsAnamnesis = false),
+            clicks,
+        )
+        composeRule.onNodeWithText("Genera il programma").performClick()
+        assertThat(clicks.generate).isEqualTo(1)
+        assertThat(clicks.anamnesis).isEqualTo(0)
+    }
+
+    @Test
     fun `la dashboard resta disegnata con una sessione in corso`() {
         val clicks = Clicks()
         render(
