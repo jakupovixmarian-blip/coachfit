@@ -37,6 +37,26 @@ object CrashLog {
         runCatching { file(context).delete() }
     }
 
+    /**
+     * Registra un errore GIA catturato (per esempio dentro una coroutine), cosi
+     * resta consultabile dalle impostazioni anche quando l'app non chiude.
+     */
+    fun record(context: Context, throwable: Throwable, label: String? = null) {
+        runCatching {
+            val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ITALY).format(Date())
+            val body = buildString {
+                appendLine("FitCoach — errore gestito")
+                if (label != null) appendLine("Operazione: $label")
+                appendLine("Data: $timestamp")
+                appendLine("Dispositivo: ${Build.MANUFACTURER} ${Build.MODEL} " +
+                    "(Android ${Build.VERSION.RELEASE}, API ${Build.VERSION.SDK_INT})")
+                appendLine()
+                appendLine(Log.getStackTraceString(throwable))
+            }
+            file(context).writeText(body)
+        }
+    }
+
     private fun write(context: Context, thread: Thread, throwable: Throwable) {
         val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ITALY).format(Date())
         val body = buildString {

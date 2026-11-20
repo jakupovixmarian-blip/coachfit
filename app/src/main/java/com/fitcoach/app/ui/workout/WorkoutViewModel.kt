@@ -17,6 +17,8 @@ import com.fitcoach.app.domain.usecase.ProgramGenerationResult
 import com.fitcoach.app.domain.workout.ProgressiveOverloadEngine
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import com.fitcoach.app.diagnostics.CrashLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -103,7 +105,8 @@ class WorkoutViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
     private val generationCoordinator: ProgramGenerationCoordinator,
-    private val notificationScheduler: com.fitcoach.app.notifications.NotificationScheduler
+    private val notificationScheduler: com.fitcoach.app.notifications.NotificationScheduler,
+    @ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(WorkoutUiState())
@@ -429,19 +432,27 @@ class WorkoutViewModel @Inject constructor(
                 return@launch
             }
             _state.value = _state.value.copy(generating = true, message = null)
-            val result = generationCoordinator.generate(
-                profile = profile,
-                scope = ProgramGenerationCoordinator.Scope.WORKOUT
-            )
-            val message = when (result) {
-                is ProgramGenerationResult.Success -> "Scheda generata dal Coach AI."
-                is ProgramGenerationResult.MissingData -> "Dati mancanti: ${result.missing.joinToString()}."
-                is ProgramGenerationResult.AnamnesisNotConfirmed ->
-                    "Completa l'anamnesi guidata prima di generare."
-                is ProgramGenerationResult.Error -> result.message
+            // Un errore nella generazione non deve chiudere l'app: viene
+            // registrato e mostrato come messaggio.
+            val message = try {
+                when (val result = generationCoordinator.generate(
+                    profile = profile,
+                    scope = ProgramGenerationCoordinator.Scope.WORKOUT
+                )) {
+                    is ProgramGenerationResult.Success -> "Scheda generata dal Coach AI."
+                    is ProgramGenerationResult.MissingData -> "Dati mancanti: ${result.missing.joinToString()}."
+                    is ProgramGenerationResult.AnamnesisNotConfirmed ->
+                        "Completa l'anamnesi guidata prima di generare."
+                    is ProgramGenerationResult.Error -> result.message
+                }
+            } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+                CrashLog.record(context, t, "Generazione scheda allenamento")
+                "Generazione non riuscita: ${t.message ?: t::class.simpleName}. " +
+                    "Dettagli in Impostazioni > Diagnostica."
             }
             _state.value = _state.value.copy(generating = false, message = message)
-            load()
+            runCatching { load() }
         }
     }
 

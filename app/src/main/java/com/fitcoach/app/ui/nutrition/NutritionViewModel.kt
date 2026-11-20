@@ -1,7 +1,9 @@
 package com.fitcoach.app.ui.nutrition
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fitcoach.app.diagnostics.CrashLog
 import com.fitcoach.app.data.repository.FoodRepository
 import com.fitcoach.app.data.repository.FoodSearchRepository
 import com.fitcoach.app.data.repository.NutritionDiaryRepository
@@ -18,6 +20,7 @@ import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
 import com.fitcoach.app.domain.usecase.ProgramGenerationResult
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -77,7 +80,8 @@ class NutritionViewModel @Inject constructor(
     private val diaryRepository: NutritionDiaryRepository,
     private val substitutionRepository: SubstitutionRepository,
     private val foodSearchRepository: FoodSearchRepository,
-    private val generationCoordinator: ProgramGenerationCoordinator
+    private val generationCoordinator: ProgramGenerationCoordinator,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(NutritionUiState())
@@ -123,21 +127,30 @@ class NutritionViewModel @Inject constructor(
                 return@launch
             }
             _state.value = _state.value.copy(generating = true, message = null)
-            val result = generationCoordinator.generate(
-                profile = profile,
-                scope = ProgramGenerationCoordinator.Scope.NUTRITION
-            )
-            val message = when (result) {
-                is ProgramGenerationResult.Success -> "Piano alimentare generato dal Coach AI."
-                is ProgramGenerationResult.MissingData ->
-                    "Dati mancanti: ${result.missing.joinToString()}."
-                is ProgramGenerationResult.AnamnesisNotConfirmed ->
-                    "Completa l'anamnesi guidata prima di generare."
-                is ProgramGenerationResult.Error -> result.message
+            // La generazione tocca rete, database e motori matematici: un errore
+            // qui non deve chiudere l'app. Viene registrato e mostrato, cosi
+            // l'utente vede cosa e successo invece di un crash.
+            val message = try {
+                when (val result = generationCoordinator.generate(
+                    profile = profile,
+                    scope = ProgramGenerationCoordinator.Scope.NUTRITION
+                )) {
+                    is ProgramGenerationResult.Success -> "Piano alimentare generato dal Coach AI."
+                    is ProgramGenerationResult.MissingData ->
+                        "Dati mancanti: ${result.missing.joinToString()}."
+                    is ProgramGenerationResult.AnamnesisNotConfirmed ->
+                        "Completa l'anamnesi guidata prima di generare."
+                    is ProgramGenerationResult.Error -> result.message
+                }
+            } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+                CrashLog.record(context, t, "Generazione piano alimentare")
+                "Generazione non riuscita: ${t.message ?: t::class.simpleName}. " +
+                    "Dettagli in Impostazioni > Diagnostica."
             }
-            val plan = nutritionRepository.getActivePlan()
-            _state.value = _state.value.copy(generating = false, plan = plan, message = message)
-            refreshPlanList()
+            val plan = runCatching { nutritionRepository.getActivePlan() }.getOrNull()
+            _state.value = _state.value.copy(generating = false, plan = plan ?: _state.value.plan, message = message)
+            runCatching { refreshPlanList() }
         }
     }
 

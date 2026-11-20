@@ -120,6 +120,7 @@ class WorkoutSessionLifecycleCollaudoTest {
         exerciseRepository = exerciseRepository,
         generationCoordinator = coordinator(),
         notificationScheduler = scheduler,
+        context = context,
     )
 
     /** Pompa lo scheduler e attende (reale) che la condizione sia vera. */

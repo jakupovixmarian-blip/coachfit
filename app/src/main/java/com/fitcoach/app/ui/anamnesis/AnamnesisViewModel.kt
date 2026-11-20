@@ -7,6 +7,8 @@ import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.coach.AiProgramGenerationService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import com.fitcoach.app.diagnostics.CrashLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,7 +51,8 @@ data class AnamnesisUiState(
 @HiltViewModel
 class AnamnesisViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val aiProgramGeneration: AiProgramGenerationService
+    private val aiProgramGeneration: AiProgramGenerationService,
+    @ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AnamnesisUiState())
@@ -275,7 +278,23 @@ class AnamnesisViewModel @Inject constructor(
             generationMessage = "Anamnesi confermata. Il Coach AI sta generando il percorso...",
             generationWarnings = emptyList()
         )
-        when (val result = aiProgramGeneration.generate(profile)) {
+        // La generazione tocca rete, database e motori matematici: un errore qui
+        // non deve chiudere l'app. Viene registrato e mostrato come messaggio.
+        val result = try {
+            // Fuori dal main thread: la generazione costruisce prompt enormi e
+            // risolve le grammature, bloccando la UI porterebbe all'ANR.
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                aiProgramGeneration.generate(profile)
+            }
+        } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+            CrashLog.record(context, t, "Generazione percorso dopo anamnesi")
+            AiProgramGenerationService.Result.Failure(
+                "Generazione non riuscita: ${t.message ?: t::class.simpleName}. " +
+                    "Dettagli in Impostazioni > Diagnostica."
+            )
+        }
+        when (result) {
             is AiProgramGenerationService.Result.Success -> _state.value = _state.value.copy(
                 generatingPrograms = false,
                 generationFinished = true,

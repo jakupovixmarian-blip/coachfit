@@ -3,6 +3,9 @@ package com.fitcoach.app.domain.usecase
 import com.fitcoach.app.domain.coach.AiProgramGenerationService
 import com.fitcoach.app.domain.coach.ProgramGenerationEngine
 import com.fitcoach.app.domain.model.UserProfile
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -18,9 +21,33 @@ class ProgramGenerationCoordinator @Inject constructor(
 ) {
     enum class Scope { BOTH, NUTRITION, WORKOUT }
 
+    /**
+     * La generazione costruisce prompt molto grandi (catalogo alimenti ed
+     * esercizi), serializza payload di migliaia di token e risolve le
+     * grammature in un ciclo iterativo. Eseguirla sul dispatcher del chiamante
+     * (il main thread dei ViewModel) blocca la UI e porta all'ANR, che Android
+     * presenta all'utente come chiusura dell'app. Il lavoro viene quindi
+     * spostato su IO; i ViewModel possono chiamare da qualsiasi dispatcher.
+     */
     suspend fun generate(
         profile: UserProfile,
-        scope: Scope = Scope.BOTH
+        scope: Scope = Scope.BOTH,
+        dispatcher: CoroutineDispatcher = Dispatchers.IO
+    ): ProgramGenerationResult = try {
+        withContext(dispatcher) { generateBlocking(profile, scope) }
+    } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+        // Rete di sicurezza unica per ogni chiamante (schermate, chat, azioni
+        // del Coach): un guasto imprevisto diventa un esito leggibile invece di
+        // un'eccezione che chiude il processo.
+        ProgramGenerationResult.Error(
+            "Generazione non riuscita: ${t.message ?: t::class.simpleName}."
+        )
+    }
+
+    private suspend fun generateBlocking(
+        profile: UserProfile,
+        scope: Scope
     ): ProgramGenerationResult {
         if (!profile.isAnamnesisReady) {
             return ProgramGenerationResult.AnamnesisNotConfirmed(

@@ -30,6 +30,8 @@ import com.fitcoach.app.ui.screens.dashboard.DashboardWeight
 import com.fitcoach.app.ui.screens.dashboard.DashboardWorkout
 import com.fitcoach.app.ui.screens.dashboard.WorkoutState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import com.fitcoach.app.diagnostics.CrashLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,7 +54,8 @@ class DashboardViewModel @Inject constructor(
     private val progressRepository: ProgressRepository,
     private val notificationRepository: NotificationRepository,
     private val chatRepository: ChatRepository,
-    private val generationCoordinator: ProgramGenerationCoordinator
+    private val generationCoordinator: ProgramGenerationCoordinator,
+    @ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DashboardUiState(isLoading = true))
@@ -195,18 +198,27 @@ class DashboardViewModel @Inject constructor(
                 _events.value = "Completa prima il profilo."
                 return@launch
             }
-            _events.value = when (val result = generationCoordinator.generate(
-                profile = profile,
-                scope = ProgramGenerationCoordinator.Scope.BOTH
-            )) {
-                is ProgramGenerationResult.Success -> "Programma generato."
-                is ProgramGenerationResult.MissingData ->
-                    "Dati mancanti: ${result.missing.joinToString()}."
-                is ProgramGenerationResult.AnamnesisNotConfirmed ->
-                    "Completa l'anamnesi per generare il programma."
-                is ProgramGenerationResult.Error -> "Errore: ${result.message}"
+            // Un errore nella generazione non deve chiudere l'app: viene
+            // registrato e mostrato come messaggio.
+            _events.value = try {
+                when (val result = generationCoordinator.generate(
+                    profile = profile,
+                    scope = ProgramGenerationCoordinator.Scope.BOTH
+                )) {
+                    is ProgramGenerationResult.Success -> "Programma generato."
+                    is ProgramGenerationResult.MissingData ->
+                        "Dati mancanti: ${result.missing.joinToString()}."
+                    is ProgramGenerationResult.AnamnesisNotConfirmed ->
+                        "Completa l'anamnesi per generare il programma."
+                    is ProgramGenerationResult.Error -> "Errore: ${result.message}"
+                }
+            } catch (t: Throwable) {
+            if (t is kotlinx.coroutines.CancellationException) throw t
+                CrashLog.record(context, t, "Generazione programma completo")
+                "Generazione non riuscita: ${t.message ?: t::class.simpleName}. " +
+                    "Dettagli in Impostazioni > Diagnostica."
             }
-            refresh()
+            runCatching { refresh() }
         }
     }
 

@@ -36,13 +36,19 @@ import com.fitcoach.app.domain.model.WorkType
 class Converters {
 
     @TypeConverter fun sexToString(v: Sex): String = v.name
-    @TypeConverter fun stringToSex(v: String): Sex = Sex.valueOf(v)
+    // I convertitori tolleranti evitano che un singolo valore enum non piu
+    // valido (rinominato tra versioni) faccia fallire la lettura dell'intera riga
+    // e quindi la generazione del piano.
+    @TypeConverter fun stringToSex(v: String): Sex =
+        runCatching { Sex.valueOf(v) }.getOrDefault(Sex.entries.first())
 
     @TypeConverter fun goalToString(v: Goal): String = v.name
-    @TypeConverter fun stringToGoal(v: String): Goal = Goal.valueOf(v)
+    @TypeConverter fun stringToGoal(v: String): Goal =
+        runCatching { Goal.valueOf(v) }.getOrDefault(Goal.RECOMP)
 
     @TypeConverter fun experienceToString(v: TrainingExperience): String = v.name
-    @TypeConverter fun stringToExperience(v: String): TrainingExperience = TrainingExperience.valueOf(v)
+    @TypeConverter fun stringToExperience(v: String): TrainingExperience =
+        runCatching { TrainingExperience.valueOf(v) }.getOrDefault(TrainingExperience.BEGINNER)
 
     @TypeConverter fun trainingStatusToString(v: TrainingStatus?): String? = v?.name
     @TypeConverter fun stringToTrainingStatus(v: String?): TrainingStatus? =
@@ -69,41 +75,52 @@ class Converters {
         if (v.isBlank()) emptySet() else v.split(",").mapNotNull { runCatching { Goal.valueOf(it) }.getOrNull() }.toSet()
 
     @TypeConverter fun muscleToString(v: MuscleGroup): String = v.name
-    @TypeConverter fun stringToMuscle(v: String): MuscleGroup = MuscleGroup.valueOf(v)
+    @TypeConverter fun stringToMuscle(v: String): MuscleGroup =
+        runCatching { MuscleGroup.valueOf(v) }.getOrDefault(MuscleGroup.entries.first())
 
     @TypeConverter fun carbDayToString(v: CarbDayType): String = v.name
-    @TypeConverter fun stringToCarbDay(v: String): CarbDayType = CarbDayType.valueOf(v)
+    @TypeConverter fun stringToCarbDay(v: String): CarbDayType =
+        runCatching { CarbDayType.valueOf(v) }.getOrDefault(CarbDayType.MEDIUM)
 
     @TypeConverter fun budgetScopeToString(v: BudgetScope): String = v.name
     @TypeConverter fun stringToBudgetScope(v: String): BudgetScope =
         runCatching { BudgetScope.valueOf(v) }.getOrDefault(BudgetScope.PERSONAL_ONLY)
 
     @TypeConverter fun mealSlotToString(v: MealSlot): String = v.name
-    @TypeConverter fun stringToMealSlot(v: String): MealSlot = MealSlot.valueOf(v)
+    @TypeConverter fun stringToMealSlot(v: String): MealSlot =
+        runCatching { MealSlot.valueOf(v) }.getOrDefault(MealSlot.BREAKFAST)
 
     @TypeConverter fun foodUnitToString(v: FoodUnit): String = v.name
-    @TypeConverter fun stringToFoodUnit(v: String): FoodUnit = FoodUnit.valueOf(v)
+    @TypeConverter fun stringToFoodUnit(v: String): FoodUnit =
+        runCatching { FoodUnit.valueOf(v) }.getOrDefault(FoodUnit.RAW)
 
     @TypeConverter fun splitToString(v: SplitType): String = v.name
-    @TypeConverter fun stringToSplit(v: String): SplitType = SplitType.valueOf(v)
+    @TypeConverter fun stringToSplit(v: String): SplitType =
+        runCatching { SplitType.valueOf(v) }.getOrDefault(SplitType.FULL_BODY)
 
     @TypeConverter fun categoryToString(v: ExerciseCategory): String = v.name
-    @TypeConverter fun stringToCategory(v: String): ExerciseCategory = ExerciseCategory.valueOf(v)
+    @TypeConverter fun stringToCategory(v: String): ExerciseCategory =
+        runCatching { ExerciseCategory.valueOf(v) }.getOrDefault(ExerciseCategory.entries.first())
 
     @TypeConverter fun sessionStatusToString(v: SessionStatus): String = v.name
-    @TypeConverter fun stringToSessionStatus(v: String): SessionStatus = SessionStatus.valueOf(v)
+    @TypeConverter fun stringToSessionStatus(v: String): SessionStatus =
+        runCatching { SessionStatus.valueOf(v) }.getOrDefault(SessionStatus.entries.first())
 
     @TypeConverter fun changeStatusToString(v: ChangeStatus): String = v.name
-    @TypeConverter fun stringToChangeStatus(v: String): ChangeStatus = ChangeStatus.valueOf(v)
+    @TypeConverter fun stringToChangeStatus(v: String): ChangeStatus =
+        runCatching { ChangeStatus.valueOf(v) }.getOrDefault(ChangeStatus.entries.first())
 
     @TypeConverter fun changeDomainToString(v: ChangeDomain): String = v.name
-    @TypeConverter fun stringToChangeDomain(v: String): ChangeDomain = ChangeDomain.valueOf(v)
+    @TypeConverter fun stringToChangeDomain(v: String): ChangeDomain =
+        runCatching { ChangeDomain.valueOf(v) }.getOrDefault(ChangeDomain.entries.first())
 
     @TypeConverter fun chatRoleToString(v: ChatRole): String = v.name
-    @TypeConverter fun stringToChatRole(v: String): ChatRole = ChatRole.valueOf(v)
+    @TypeConverter fun stringToChatRole(v: String): ChatRole =
+        runCatching { ChatRole.valueOf(v) }.getOrDefault(ChatRole.USER)
 
     @TypeConverter fun providerToString(v: AiProvider): String = v.name
-    @TypeConverter fun stringToProvider(v: String): AiProvider = AiProvider.valueOf(v)
+    @TypeConverter fun stringToProvider(v: String): AiProvider =
+        runCatching { AiProvider.valueOf(v) }.getOrDefault(AiProvider.OPENAI)
 
     @TypeConverter fun workTypeToString(v: WorkType): String = v.name
     @TypeConverter fun stringToWorkType(v: String): WorkType = runCatching { WorkType.valueOf(v) }.getOrDefault(WorkType.SEDENTARY)
