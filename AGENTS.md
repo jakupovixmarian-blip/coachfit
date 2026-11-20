@@ -416,9 +416,15 @@ completa (406 test). Il crash log e consultabile in Impostazioni > Diagnostica.
   `ui/workout/`. Rimosso. Conteneva `WorkoutContent`, `WorkoutDialogs`, `WorkoutUiState`,
   `CustomPlanContent`, `CustomPlanUiState`, `ExercisePickerDialog`; tutte le funzioni
   (volume per muscolo, calendario, sonno, sessione extra, libreria) esistono in
-  `ui/workout/WorkoutScreen.kt`. NB: le altre directory `ui/screens/*` (nutrition, coach,
-  progress, onboarding, settings...) sono anch'esse non referenziate tranne `dashboard`:
-  restano da valutare, non sono state toccate.
+  `ui/workout/WorkoutScreen.kt`.
+- Resto di `ui/screens/*` rimosso (5174 righe, 25 file): anamnesis, coach, diary,
+  knowledge, notifications, nutrition, onboarding, profile, progress, provider, settings,
+  shopping. Ognuna aveva gia la sua schermata viva in `ui/<area>/` (o `ui/settings/`),
+  nessuna era importata da codice di produzione ne da test, nessuna aveva un produttore
+  di stato. I dialoghi (Substitution/AddFood/AddItem) esistono come `private fun` nelle
+  schermate vive. `ui/screens/dashboard` invece E VIVO: `DashboardContent` e le classi di
+  `DashboardUiState` sono importate da `ui/dashboard/` e dai test. Resta li per ora; se lo
+  si sposta in `ui/dashboard/` e solo un refactor di package, senza codice morto.
 - Dashboard: nei giorni di riposo la card Allenamento non aveva alcun pulsante, quindi la
   scheda non era raggiungibile da li. Aggiunto "Vedi la scheda".
 - NOTO, non corretto: `Routes.ONBOARDING` e registrata nel NavHost ma nessuna schermata
