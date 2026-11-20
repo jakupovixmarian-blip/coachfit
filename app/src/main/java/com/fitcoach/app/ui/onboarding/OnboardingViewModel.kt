@@ -107,10 +107,18 @@ class OnboardingViewModel @Inject constructor(
     private val _state = MutableStateFlow(OnboardingUiState())
     val state: StateFlow<OnboardingUiState> = _state.asStateFlow()
 
+    /**
+     * Provenienze gia registrate sul profilo salvato. Il form non le possiede:
+     * se le sovrascrivesse, riaprire l'onboarding cancellerebbe le risposte
+     * raccolte dall'anamnesi guidata.
+     */
+    private var existingAnswered: Set<String> = emptySet()
+
     init {
         viewModelScope.launch {
             val existing = userRepository.get()
             if (existing != null) {
+                existingAnswered = existing.answeredQuestionIds
                 _state.value = _state.value.copy(
                     loading = false,
                     name = existing.name,
@@ -262,7 +270,7 @@ class OnboardingViewModel @Inject constructor(
                 // Solo i campi che l'utente ha davvero compilato: i default del
                 // form (obiettivo RECOMP, lavoro SEDENTARY, 5 pasti) non sono
                 // dichiarazioni e non devono arrivare all'AI come dati reali.
-                answeredQuestionIds = answeredFrom(s, age, height, weight)
+                answeredQuestionIds = answeredFrom(s)
             )
 
             _state.value = s.copy(saving = true, error = null)
@@ -288,22 +296,33 @@ class OnboardingViewModel @Inject constructor(
      * Ogni id deve esistere in [AnamnesisEngine.questions]: un id inventato non
      * verrebbe mai letto e il dato risulterebbe comunque non dichiarato.
      */
-    private fun answeredFrom(s: OnboardingUiState, age: Int, height: Double, weight: Double): Set<String> =
-        buildSet {
-            addAll(s.touched)
-            add("age"); add("heightCm"); add("weightKg")
-            if (s.bodyFat.isNotBlank()) add("bodyFatPercent")
-            if (s.dailySteps.isNotBlank()) add("dailySteps")
-            if (s.sleepHours.isNotBlank()) add("sleepHours")
-            if (s.trainingYears.isNotBlank()) add("trainingYears")
-            if (s.maxSessionMinutes.isNotBlank()) add("maxSessionMinutes")
-            if (s.allergies.isNotBlank()) add("allergies")
-            if (s.likedFoods.isNotBlank()) add("likedFoods")
-            if (s.dislikedFoods.isNotBlank()) add("dislikedFoods")
-            if (s.monthlyBudgetEur.isNotBlank()) add("monthlyFoodBudgetEur")
-            if (s.preferredExercises.isNotBlank()) add("preferredExercises")
-            if (s.dislikedExercises.isNotBlank()) add("dislikedExercises")
-            if (s.physicalLimitations.isNotBlank()) add("physicalLimitations")
-            if (s.movementsToAvoid.isNotBlank()) add("movementsToAvoid")
-        }
+    private fun answeredFrom(s: OnboardingUiState): Set<String> = answeredFrom(s, existingAnswered)
+
+    companion object {
+        /**
+         * Id delle domande dichiarate da questo form, uniti a [alreadyDeclared].
+         *
+         * Estratto per essere verificabile: e l'unico punto in cui si decide
+         * quali dati del form contano come risposta dell'utente.
+         */
+        fun answeredFrom(s: OnboardingUiState, alreadyDeclared: Set<String> = emptySet()): Set<String> =
+            buildSet {
+                addAll(alreadyDeclared)
+                addAll(s.touched)
+                add("age"); add("heightCm"); add("weightKg")
+                if (s.bodyFat.isNotBlank()) add("bodyFatPercent")
+                if (s.dailySteps.isNotBlank()) add("dailySteps")
+                if (s.sleepHours.isNotBlank()) add("sleepHours")
+                if (s.trainingYears.isNotBlank()) add("trainingYears")
+                if (s.maxSessionMinutes.isNotBlank()) add("maxSessionMinutes")
+                if (s.allergies.isNotBlank()) add("allergies")
+                if (s.likedFoods.isNotBlank()) add("likedFoods")
+                if (s.dislikedFoods.isNotBlank()) add("dislikedFoods")
+                if (s.monthlyBudgetEur.isNotBlank()) add("monthlyFoodBudgetEur")
+                if (s.preferredExercises.isNotBlank()) add("preferredExercises")
+                if (s.dislikedExercises.isNotBlank()) add("dislikedExercises")
+                if (s.physicalLimitations.isNotBlank()) add("physicalLimitations")
+                if (s.movementsToAvoid.isNotBlank()) add("movementsToAvoid")
+            }
+    }
 }

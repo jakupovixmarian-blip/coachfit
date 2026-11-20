@@ -235,10 +235,32 @@ object AnamnesisEngine {
         )
     )
 
+    /**
+     * Domande con un default non nullable nel profilo: il valore esiste sempre,
+     * quindi [isAnswered] non basta a dire che l'utente l'ha scelta.
+     */
+    private val defaultedIds = setOf(
+        "goal", "workType", "transportMode", "workShift", "sleepQuality", "stressLevel",
+        "dailyEnergy", "recoveryCapacity", "mealsPerDay", "breakfastPreference",
+        "cookingTimeAvailable", "mealPrepPossible", "budgetScope", "budgetPersons",
+        "experience", "technicalLevel", "trainingDaysPerWeek"
+    )
+
+    /**
+     * La domanda va ancora posta: nessuna risposta, oppure risposta mai
+     * dichiarata dall'utente (solo default del profilo).
+     *
+     * Senza il secondo controllo l'intervista saltava obiettivo, esperienza,
+     * giorni di allenamento e tipo di lavoro: il programma veniva generato su
+     * valori che l'utente non aveva mai visto.
+     */
+    fun needsAnswer(profile: UserProfile, id: String): Boolean =
+        !isAnswered(profile, id) || (id in defaultedIds && id !in profile.answeredQuestionIds)
+
     /** La prossima domanda da porre (prima non risposta), o null se completata. */
     fun nextQuestion(profile: UserProfile, skipOptional: Boolean = false): Question? =
         questions.firstOrNull { q ->
-            isRelevant(profile, q) && !isAnswered(profile, q.id) && (q.required || !skipOptional)
+            isRelevant(profile, q) && needsAnswer(profile, q.id) && (q.required || !skipOptional)
         }
 
     /** Domande di una sezione, per l'editor a sezioni. */
@@ -335,7 +357,7 @@ object AnamnesisEngine {
     fun nextQuestionAfter(profile: UserProfile, afterId: String): Question? {
         val idx = questions.indexOfFirst { it.id == afterId }
         if (idx < 0) return nextQuestion(profile)
-        return questions.drop(idx + 1).firstOrNull { isRelevant(profile, it) && !isAnswered(profile, it.id) }
+        return questions.drop(idx + 1).firstOrNull { isRelevant(profile, it) && needsAnswer(profile, it.id) }
     }
 
     /** Domande obbligatorie ancora senza risposta. */

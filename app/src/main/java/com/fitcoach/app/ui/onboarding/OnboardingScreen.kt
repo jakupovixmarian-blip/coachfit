@@ -342,7 +342,7 @@ private fun StepNutrizione(state: OnboardingUiState, vm: OnboardingViewModel) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 FilterChip(
                     selected = state.mealPrepPossible,
-                    onClick = { vm.update { it.copy(mealPrepPossible = !it.mealPrepPossible) } },
+                    onClick = { vm.select("mealPrepPossible") { it.copy(mealPrepPossible = !it.mealPrepPossible) } },
                     label = { Text("Posso preparare i pasti in anticipo (meal prep)") }
                 )
             }
@@ -422,7 +422,7 @@ private fun StepStileVita(state: OnboardingUiState, vm: OnboardingViewModel) {
                 WorkShift.entries.forEach { ws ->
                     FilterChip(
                         selected = state.workShift == ws,
-                        onClick = { vm.update { it.copy(workShift = ws) } },
+                        onClick = { vm.select("workShift") { it.copy(workShift = ws) } },
                         label = { Text(ws.label) }
                     )
                 }

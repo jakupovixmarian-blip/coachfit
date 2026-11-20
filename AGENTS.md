@@ -401,3 +401,26 @@ produce un ANR, che Android presenta all'utente come chiusura dell'app.
 **Verifica:** `GenerationThreadingCollaudoTest` (generazione fuori dal thread
 chiamante, guasti trasformati in esito, profilo incompleto gestito) + suite
 completa (406 test). Il crash log e consultabile in Impostazioni > Diagnostica.
+- `OnboardingProvenanceCollaudoTest` — la provenienza delle risposte non si perde
+  risalvando l'onboarding (`OnboardingViewModel.answeredFrom` fonde le risposte gia
+  registrate). `mealPrepPossible` e `workShift` ora passano da `select(...)`, quindi
+  vengono marcati come dichiarati.
+- `AnamnesisProvenanceCollaudoTest` (esteso) — BUG: l'intervista guidata non poneva MAI
+  le 14 domande con default non nullable (obiettivo, esperienza, giorni di allenamento,
+  tipo di lavoro, pasti, qualita del sonno...). `isAnswered` rispondeva `true` perche il
+  valore esiste sempre nel profilo, e `nextQuestion` le saltava: il programma veniva
+  generato su dati che l'utente non aveva mai visto. Ora `AnamnesisEngine.needsAnswer`
+  chiede la domanda se manca la provenienza in `answeredQuestionIds`. L'intervista copre
+  42 domande su 43 (resta fuori solo `currentLoads`, non pertinente a chi non si allena).
+- `ui/screens/workout/` (2438 righe) era irraggiungibile: la navigazione usa
+  `ui/workout/`. Rimosso. Conteneva `WorkoutContent`, `WorkoutDialogs`, `WorkoutUiState`,
+  `CustomPlanContent`, `CustomPlanUiState`, `ExercisePickerDialog`; tutte le funzioni
+  (volume per muscolo, calendario, sonno, sessione extra, libreria) esistono in
+  `ui/workout/WorkoutScreen.kt`. NB: le altre directory `ui/screens/*` (nutrition, coach,
+  progress, onboarding, settings...) sono anch'esse non referenziate tranne `dashboard`:
+  restano da valutare, non sono state toccate.
+- Dashboard: nei giorni di riposo la card Allenamento non aveva alcun pulsante, quindi la
+  scheda non era raggiungibile da li. Aggiunto "Vedi la scheda".
+- NOTO, non corretto: `Routes.ONBOARDING` e registrata nel NavHost ma nessuna schermata
+  vi naviga. Il primo avvio entra in Dashboard e il setup passa dall'anamnesi. Da decidere
+  se collegare l'onboarding o rimuoverlo.

@@ -121,4 +121,72 @@ class AnamnesisProvenanceCollaudoTest {
         assertThat(AiProgramGenerationService.declaredHeader(UserProfile()))
             .doesNotContain("HYPERTROPHY")
     }
+
+    // --- L'intervista deve porre le domande che hanno un default ---------------
+
+    private fun answerFor(q: AnamnesisEngine.Question): String = when (q.kind) {
+        AnamnesisEngine.Kind.NUMBER, AnamnesisEngine.Kind.INT -> "1"
+        AnamnesisEngine.Kind.BOOL -> "true"
+        AnamnesisEngine.Kind.CHOICE, AnamnesisEngine.Kind.MULTI -> q.options.first()
+        AnamnesisEngine.Kind.TEXT -> "test"
+    }
+
+    /** Simula un'intervista completa, registrando ogni risposta come dichiarata. */
+    private fun interview(start: UserProfile = UserProfile()): List<String> {
+        var p = start
+        val asked = mutableListOf<String>()
+        while (true) {
+            val q = AnamnesisEngine.nextQuestion(p) ?: break
+            asked += q.id
+            p = AnamnesisEngine.applyAnswer(p, q.id, answerFor(q)).let {
+                it.copy(answeredQuestionIds = it.answeredQuestionIds + q.id)
+            }
+        }
+        return asked
+    }
+
+    @Test
+    fun `l'intervista chiede obiettivo esperienza e giorni di allenamento`() {
+        // Regressione: con `isAnswered` da solo queste domande risultavano
+        // gia risposte per via del default e non venivano MAI poste.
+        val asked = interview()
+        assertThat(asked).containsAtLeast("goal", "experience", "trainingDaysPerWeek", "workType")
+    }
+
+    @Test
+    fun `l'intervista copre tutte le domande tranne i carichi per chi non si allena`() {
+        val asked = interview().toSet()
+        val never = AnamnesisEngine.questions.map { it.id }.toSet() - asked
+        assertThat(never).containsExactly("currentLoads")
+    }
+
+    @Test
+    fun `una domanda con default gia dichiarata non viene riproposta`() {
+        val p = UserProfile(goal = Goal.HYPERTROPHY, answeredQuestionIds = setOf("goal"))
+        assertThat(AnamnesisEngine.needsAnswer(p, "goal")).isFalse()
+    }
+
+    @Test
+    fun `una domanda con default mai dichiarata va ancora posta`() {
+        val p = UserProfile(goal = Goal.HYPERTROPHY)
+        assertThat(AnamnesisEngine.needsAnswer(p, "goal")).isTrue()
+    }
+
+    @Test
+    fun `un profilo gia confermato non torna a chiedere le domande dichiarate`() {
+        // La migrazione 13->14 marca le obbligatorie: l'intervista non deve
+        // ricominciare da capo per chi ha gia completato l'anamnesi.
+        val mandatory = AnamnesisEngine.questions.filter { it.required }.map { it.id }.toSet()
+        val p = UserProfile(
+            ageYears = 30, sex = Sex.MALE, heightCm = 180.0, weightKg = 80.0,
+            sleepHours = 7.0, dietaryPreferences = setOf(com.fitcoach.app.domain.model.DietaryPreference.NONE),
+            trainingStatus = com.fitcoach.app.domain.model.TrainingStatus.CURRENTLY_TRAINING,
+            availableEquipment = setOf(com.fitcoach.app.domain.model.Equipment.BARBELL),
+            anamnesisCompleted = true,
+            answeredQuestionIds = mandatory
+        )
+        // Nessuna obbligatoria da riproporre: l'intervista non riparte.
+        assertThat(AnamnesisEngine.missingRequired(p)).isEmpty()
+        assertThat(AnamnesisEngine.nextQuestion(p, skipOptional = true)).isNull()
+    }
 }

@@ -575,6 +575,9 @@ private fun WorkoutCard(
                     style = FitTextStyles.caption,
                     color = TextSecondary,
                 )
+                Spacer(Modifier.height(14.dp))
+                // Anche a riposo la scheda deve restare raggiungibile.
+                PrimaryButton(text = "Vedi la scheda", onClick = onOpenWorkout)
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {

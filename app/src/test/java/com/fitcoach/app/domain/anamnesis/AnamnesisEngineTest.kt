@@ -41,10 +41,12 @@ class AnamnesisEngineTest {
     @Test
     fun `skipping an optional question advances monotonically and does not loop`() {
         // Profilo con le domande iniziali risposte fino a una facoltativa non risposta.
+        // Ogni risposta viene anche registrata come dichiarata: senza la
+        // provenienza una domanda con default tornerebbe a essere "da porre".
         val optional = AnamnesisEngine.questions.first { !it.required }
         val before = AnamnesisEngine.questions.takeWhile { it.id != optional.id }
         var p = filled()
-        before.forEach { p = AnamnesisEngine.applyAnswer(p, it.id, defaultAnswerFor(it)) }
+        before.forEach { p = answerDeclared(p, it) }
 
         // La domanda corrente e quella facoltativa.
         assertThat(AnamnesisEngine.nextQuestion(p)?.id).isEqualTo(optional.id)
@@ -55,15 +57,21 @@ class AnamnesisEngineTest {
         // E' la prima non risposta DOPO quella saltata.
         val expected = AnamnesisEngine.questions
             .dropWhile { it.id != optional.id }.drop(1)
-            .firstOrNull { !AnamnesisEngine.isAnswered(p, it.id) }
+            .firstOrNull { AnamnesisEngine.needsAnswer(p, it.id) }
         assertThat(after?.id).isEqualTo(expected?.id)
 
         // Se tutte le successive sono risposte, non c'e' una prossima domanda.
         var allAfter = p
         AnamnesisEngine.questions.dropWhile { it.id != optional.id }.drop(1)
-            .forEach { allAfter = AnamnesisEngine.applyAnswer(allAfter, it.id, defaultAnswerFor(it)) }
+            .forEach { allAfter = answerDeclared(allAfter, it) }
         assertThat(AnamnesisEngine.nextQuestionAfter(allAfter, optional.id)).isNull()
     }
+
+    /** Applica la risposta e la registra come dichiarata dall'utente. */
+    private fun answerDeclared(p: UserProfile, q: AnamnesisEngine.Question): UserProfile =
+        AnamnesisEngine.applyAnswer(p, q.id, defaultAnswerFor(q)).let {
+            it.copy(answeredQuestionIds = it.answeredQuestionIds + q.id)
+        }
 
     @Test
     fun `applyAnswer parses numbers and enums`() {
