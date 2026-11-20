@@ -268,6 +268,11 @@ class AnamnesisViewModel @Inject constructor(
             // un provider mancante solo dopo aver compilato tutta l'anamnesi, e
             // con il provider assente il turno restava appeso.
             _state.value = _state.value.copy(
+                // Il profilo confermato va riportato anche nello stato: senza
+                // questo il flag anamnesisCompleted restava false in memoria e
+                // "Genera piano alimentare e scheda" usciva in silenzio, perche'
+                // generateNow() richiede un profilo pronto.
+                profile = confirmed,
                 editing = false,
                 editSection = null,
                 resetDone = false,
@@ -284,15 +289,28 @@ class AnamnesisViewModel @Inject constructor(
 
     /** Permette di riprovare quando il provider era offline o ha restituito JSON invalido. */
     fun retryGeneration() {
-        val profile = _state.value.profile
-        if (!profile.isAnamnesisReady || _state.value.generatingPrograms) return
-        viewModelScope.launch { runAiGeneration(profile) }
+        if (_state.value.generatingPrograms) return
+        generateNow()
     }
 
     /** Generazione esplicita richiesta dall'utente dopo la conferma dell'anamnesi. */
     fun generateNow() {
         val profile = _state.value.profile
-        if (!profile.isAnamnesisReady || _state.value.generatingPrograms) return
+        if (_state.value.generatingPrograms) return
+        if (!profile.isAnamnesisReady) {
+            // Un pulsante che non reagisce e' indistinguibile da un'app rotta:
+            // se non si puo' generare, va detto e va detto cosa manca.
+            _state.value = _state.value.copy(
+                generatingPrograms = false,
+                generationFinished = false,
+                error = "Prima di generare, conferma l'anamnesi" +
+                    profile.missingEssentialData
+                        .takeIf { it.isNotEmpty() }
+                        ?.let { ": mancano " + it.joinToString(", ") }
+                        .orEmpty() + "."
+            )
+            return
+        }
         viewModelScope.launch {
             // Il provider va verificato prima del turno: senza chiave la
             // generazione non puo riuscire, e mostrare un'attesa infinita al
