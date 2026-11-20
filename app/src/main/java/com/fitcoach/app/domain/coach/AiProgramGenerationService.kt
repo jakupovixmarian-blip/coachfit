@@ -9,6 +9,7 @@ import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.FoodItem
 import com.fitcoach.app.domain.model.UserProfile
+import com.fitcoach.app.domain.knowledge.InvictusCorpus
 import com.fitcoach.app.domain.knowledge.KnowledgeCorpus
 import com.fitcoach.app.domain.nutrition.BreakfastConstraint
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
@@ -216,6 +217,8 @@ class AiProgramGenerationService @Inject constructor(
         appendLine("Consegnalo con lo strumento submit_full_program: la verifica e il salvataggio avvengono li.")
         appendLine()
         appendLine(KnowledgeCorpus.promptBlock())
+        appendLine()
+        appendLine(InvictusCorpus.promptBlock())
     }
 
     companion object {

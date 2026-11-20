@@ -1,5 +1,6 @@
 package com.fitcoach.app.collaudo
 
+import com.fitcoach.app.domain.knowledge.InvictusCorpus
 import com.fitcoach.app.domain.knowledge.KnowledgeCorpus
 import com.fitcoach.app.domain.model.Equipment
 import com.fitcoach.app.domain.model.Exercise
@@ -106,6 +107,46 @@ class ThresholdsAreWarningsTest {
         invictus.forEach { rule ->
             assertThat(rule.kind).isEqualTo(SourceKind.DIVULGATIVE)
             assertThat(rule.limits).contains("divulgativa")
+        }
+    }
+
+    @Test
+    fun `il corpus invictus cita una fonte verificabile per ogni regola`() {
+        assertThat(InvictusCorpus.rules).isNotEmpty()
+        InvictusCorpus.rules.forEach { rule ->
+            assertThat(rule.statement).isNotEmpty()
+            assertThat(rule.articleTitle).isNotEmpty()
+            assertThat(rule.url).startsWith("https://www.projectinvictus.it/")
+            assertThat(rule.limits).isNotEmpty()
+            // La metodologia Invictus e divulgativa: non va spacciata per linee guida.
+            assertThat(rule.kind).isEqualTo(SourceKind.DIVULGATIVE)
+        }
+    }
+
+    @Test
+    fun `il corpus copre allenamento e nutrizione con i numeri che servono al motore`() {
+        val training = InvictusCorpus.forArea(KnowledgeCorpus.Area.TRAINING)
+        val nutrition = InvictusCorpus.forArea(KnowledgeCorpus.Area.NUTRITION)
+        assertThat(training).isNotEmpty()
+        assertThat(nutrition).isNotEmpty()
+
+        // I criteri concreti che mancavano al motore: volume in ripetizioni,
+        // frequenza, recuperi, surplus e deficit, grassi minimi.
+        val all = InvictusCorpus.rules.joinToString("\n") { it.statement }
+        assertThat(all).contains("100-160")
+        assertThat(all).contains("2 volte a settimana")
+        assertThat(all).contains("2-3 minuti")
+        assertThat(all).contains("300-500 kcal")
+        assertThat(all).contains("0,5 g/kg")
+    }
+
+    @Test
+    fun `il blocco prompt invictus riporta titolo e url per ogni regola`() {
+        val block = InvictusCorpus.promptBlock()
+        assertThat(block).contains("PROJECT INVICTUS")
+        assertThat(block).contains("https://www.projectinvictus.it/")
+        InvictusCorpus.rules.forEach { rule ->
+            assertThat(block).contains(rule.articleTitle)
         }
     }
 }

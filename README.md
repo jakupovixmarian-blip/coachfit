@@ -342,6 +342,34 @@ titolo, autori, data, URL verificabile, evidenza, **regola derivata** e **limiti
 applicabilità**. La schermata Impostazioni → Fonti e versioni mostra le fonti e lo
 **storico delle versioni dei piani** (ogni rigenerazione salva uno snapshot immutabile).
 
+### Corpus Project InVictus (metodologia, `InvictusCorpus`)
+
+Le soglie di volume non possono nascere da un motore di calcolo: 10 serie di polpacci
+per un avanzato non sono né giuste né sbagliate in assoluto, dipendono dalla metodologia.
+`InvictusCorpus` porta dentro l'app 12 regole estratte dagli articoli di
+projectinvictus.it, ognuna con titolo e URL della fonte, più i limiti di applicabilità.
+Entrano nel prompt di generazione, così il Coach AI programma citando un criterio invece
+di indovinare.
+
+Regole chiave incluse: volume settimanale contato in **ripetizioni per gruppo** (grandi
+100-160, piccoli 90-140, specializzazione 180-230), frequenza **2x** sui grandi,
+recuperi **2-3 minuti** sui fondamentali, cedimento non obbligatorio, scarico,
+surplus **300-500 kcal** in massa, deficit **~500/300 kcal** in definizione, grassi mai
+sotto **0,5 g/kg**, proteine **20-40 g per pasto**, ricomposizione per fascia di BF%.
+
+Cosa questo corpus **non** è:
+
+- **Non è una copia degli articoli.** Il contenuto di projectinvictus.it è protetto da
+  copyright: si estraggono regole sintetizzate con attribuzione e link, non i testi.
+- **Non è una fonte scientifica primaria.** È classificato `SourceKind.DIVULGATIVE`.
+  Dove serve autorità si confronta con la letteratura indicizzata (PubMed, OpenAlex,
+  Crossref — API pubbliche senza chiave) e con `ScientificSourceSeedData`.
+
+**Rigenerazione.** `tools/corpus/fetch_invictus.py` legge gli articoli via REST API
+pubblica di WordPress (`/wp-json/wp/v2/posts`, `robots.txt` consente la lettura) e
+`tools/corpus/build_invictus_corpus.py` rigenera la tabella Kotlin. Ogni regola cita
+titolo e URL: si può verificare alla fonte in qualsiasi momento.
+
 ## AI configurabile
 
 Provider supportati: **OpenAI, Groq, OpenRouter, DeepSeek, custom OpenAI-compatible**
