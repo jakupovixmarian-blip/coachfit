@@ -471,6 +471,45 @@ completa (406 test). Il crash log e consultabile in Impostazioni > Diagnostica.
   si sposta in `ui/dashboard/` e solo un refactor di package, senza codice morto.
 - Dashboard: nei giorni di riposo la card Allenamento non aveva alcun pulsante, quindi la
   scheda non era raggiungibile da li. Aggiunto "Vedi la scheda".
-- NOTO, non corretto: `Routes.ONBOARDING` e registrata nel NavHost ma nessuna schermata
-  vi naviga. Il primo avvio entra in Dashboard e il setup passa dall'anamnesi. Da decidere
-  se collegare l'onboarding o rimuoverlo.
+- AGGIORNATO (sessione turno AI appeso): `Routes.ONBOARDING` E raggiungibile, non e codice
+  morto. `FitCoachNavHost` la usa come `startDestination` quando `profile == null ||
+  !profile.isComplete`, e `OnboardingScreen` naviga a `Routes.AI_SETUP`. La nota precedente
+  era sbagliata. Con profilo presente e completo l'avvio va in Dashboard, quindi l'onboarding
+  e il passo provider NON compaiono per chi ha gia un profilo: per questo la verifica del
+  provider vive anche in `ProgramGenerationCoordinator` (vale per tutte le schermate).
+
+## Turno del Coach AI che resta appeso (risolto)
+
+Sintomo: la schermata resta su "Generazione..." per decine di minuti, o la generazione
+parte senza che l'utente l'abbia chiesta. Tre cause distinte, tutte corrette:
+
+- OkHttp aveva connect/read/write timeout ma **nessun `callTimeout`**: una risposta che
+  arriva a goccia non fa mai scattare il `readTimeout`, perche ogni chunk lo azzera. Il
+  `callTimeout` e l'unico limite che vale sull'intera chiamata.
+- La deadline del turno era controllata **solo tra un'iterazione e l'altra**. Con
+  `maxIterations = 8` e retry il caso peggiore era ~36 minuti (8 x 270 s). Ora la scadenza
+  e applicata anche alla singola chiamata (`CoachOrchestrator.callWithBudget`, che usa
+  `withTimeoutOrNull`). Attenzione: `withTimeout` semplice non andava bene perche serve un
+  esito leggibile, non un'eccezione; `withTimeoutOrNull` restituisce null e il turno chiude
+  con un errore.
+- Confermare l'anamnesi avviava la generazione. Ora `confirm` salva soltanto; si genera dal
+  comando esplicito. `generationFinished` diventa true solo in caso di successo, cosi in
+  errore resta visibile "Riprova".
+
+Regola generale imparata qui: **ogni percorso che chiama la rete deve fallire in fretta e in
+modo leggibile**. Un `isProviderReady()` controllato prima di partire e' piu utile di
+qualunque timeout, perche l'utente riceve subito la causa vera.
+
+### Trappole nei test (verificate)
+
+- `AiProvidersViewModel.save()` lancia una coroutine: navigare subito dopo distrugge il
+  ViewModel della schermata uscente e **cancella la scrittura a meta**. Da qui la callback
+  `onSaved`. Vale per ogni "salva e vai avanti".
+- `CrashSweepTest` falliva a intermittenza: la barra inferiore compare solo dopo la lettura
+  del profilo (`startDestination == null` fino ad allora), quindi `waitForIdle` non basta.
+  Serve `waitUntil { onAllNodesWithText(label)...isNotEmpty() }`. Un test che passa da solo e
+  fallisce nella suite e quasi sempre una race di composizione, non una regressione.
+- Un test che asserisce su un testo che non esiste nella UI reale e rumore: prima di scrivere
+  l'asserzione si legge il composable. Il titolo vero e' "Anamnesi iniziale - Il tuo profilo".
+- Controprova obbligatoria per i fix di timeout: rimuovere il budget e vedere il test
+  fallire. Senza questo passaggio non si sa se il test guarda davvero il difetto.
