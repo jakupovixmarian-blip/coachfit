@@ -16,6 +16,11 @@ import kotlinx.coroutines.runBlocking
  * devono quindi rappresentare un utente ESISTENTE, altrimenti verificherebbero
  * un percorso impossibile (un primo avvio che salta l'onboarding).
  * Il seme viene scritto in `onCreate`, prima che l'Activity sia lanciata.
+ *
+ * Viene seminato anche il flag "setup AI gia' visto": un utente ESISTENTE che
+ * non ha ancora configurato il provider viene rimandato al setup all'avvio, ed
+ * e' il comportamento voluto. Questi test verificano la navigazione di un
+ * utente gia' operativo, quindi il setup va considerato alle spalle.
  */
 class SeededProfileApplication : FitCoachApplication() {
 
@@ -24,7 +29,11 @@ class SeededProfileApplication : FitCoachApplication() {
         val repository = EntryPointAccessors
             .fromApplication(this, UserProfileEntryPoint::class.java)
             .userRepository()
+        val setupStore = EntryPointAccessors
+            .fromApplication(this, UserProfileEntryPoint::class.java)
+            .setupStateStore()
         runBlocking {
+            setupStore.setAiSetupSkipped(true)
             repository.save(
                 UserProfile(
                     name = "Marjan",

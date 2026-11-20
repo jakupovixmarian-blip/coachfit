@@ -249,7 +249,15 @@ fun AiProvidersScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) { Text("Salva e continua") }
                             Spacer(Modifier.height(8.dp))
-                            TextButton(onClick = onSetupDone, modifier = Modifier.fillMaxWidth()) {
+                            TextButton(
+                                onClick = {
+                                    // Registra il rinvio PRIMA di uscire: altrimenti
+                                    // l'app riproporrebbe il setup a ogni avvio.
+                                    viewModel.skipSetup()
+                                    onSetupDone()
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
                                 Text("Configura più tardi")
                             }
                         }

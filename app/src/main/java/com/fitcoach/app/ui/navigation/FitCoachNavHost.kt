@@ -53,17 +53,38 @@ fun FitCoachNavHost(
     // null = profilo non ancora letto: il NavHost non va creato prima, altrimenti
     // la destinazione iniziale sarebbe gia' stata fissata.
     var startDestination by remember { mutableStateOf<String?>(null) }
+    // Deciso una volta sola insieme alla destinazione iniziale. Rileggerlo nel
+    // callback di fine setup richiederebbe una coroutine, e navigare da li' ha
+    // gia' fatto crashare il test ("setCurrentState must be called on the main
+    // thread"): la decisione presa all'avvio e' la stessa e non costa nulla.
+    var startNeedsOnboarding by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        // Se la lettura fallisce si ripiega sulla Dashboard: un errore del
+        // Se la lettura fallisce si ripiega sull'onboarding: un errore del
         // database non deve lasciare l'app su una schermata vuota per sempre.
-        val profile = runCatching {
-            EntryPointAccessors.fromApplication(
-                context.applicationContext,
-                UserProfileEntryPoint::class.java
-            ).userRepository().get()
-        }.getOrNull()
-        startDestination =
-            if (profile == null || !profile.isComplete) Routes.ONBOARDING else Routes.DASHBOARD
+        val entryPoint = EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            UserProfileEntryPoint::class.java
+        )
+        val profile = runCatching { entryPoint.userRepository().get() }.getOrNull()
+        val setupSkipped = runCatching { entryPoint.setupStateStore().isAiSetupSkipped() }
+            .getOrDefault(false)
+        // resolveConfigured(), non resolve(): quest'ultima restituisce sempre una
+        // configurazione (con chiave vuota) e farebbe risultare "pronto" un
+        // provider mai impostato.
+        val providerReady = runCatching {
+            entryPoint.aiConfigResolver().resolveConfigured() != null
+        }.getOrDefault(false)
+
+        startNeedsOnboarding = profile == null || !profile.isComplete
+        startDestination = when {
+            // Il provider viene PRIMA delle domande: senza di lui nessun piano si
+            // puo' generare, e chiederlo a valle significava raccogliere eta', peso
+            // e allergie per poi bloccare l'utente alla fine. Chi ha scelto
+            // "Configura piu' tardi" non se lo vede richiedere a ogni avvio.
+            !providerReady && !setupSkipped -> Routes.AI_SETUP
+            startNeedsOnboarding -> Routes.ONBOARDING
+            else -> Routes.DASHBOARD
+        }
     }
 
     val showBottomBar = currentRoute in TopLevelDestination.entries.map { it.route }
@@ -126,8 +147,13 @@ fun FitCoachNavHost(
                     navController = navController,
                     setupMode = true,
                     onSetupDone = {
-                        navController.navigate(Routes.ANAMNESIS) {
-                            popUpTo(Routes.ONBOARDING) { inclusive = true }
+                        // Primo avvio: dopo il provider si raccolgono i dati, perche'
+                        // senza profilo non c'e' nulla da mostrare. Utente gia'
+                        // esistente (rientro dal setup): torna alla Dashboard.
+                        val route = if (startNeedsOnboarding) Routes.ONBOARDING
+                        else Routes.DASHBOARD
+                        navController.navigate(route) {
+                            popUpTo(Routes.AI_SETUP) { inclusive = true }
                         }
                     }
                 )

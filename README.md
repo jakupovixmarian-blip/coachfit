@@ -409,6 +409,28 @@ Android rifiuta l'aggiornamento sopra la build gia' presente. Due file con lo st
 `versionCode` sono indistinguibili per il sistema anche se il codice interno e' diverso.
 Tenere un solo APK per cartella di download, per evitare di installare quello sbagliato.
 
+### Ordine del primo avvio (provider prima delle domande)
+
+Al primo avvio l'app mostra **prima** la configurazione del provider AI, poi le domande
+del profilo. La ragione: senza provider nessun piano puo' essere generato, e chiederlo in
+fondo significava raccogliere eta', peso e allergie per poi bloccare l'utente.
+
+Regole effettive, verificate da `FirstRunRoutingCollaudoTest`:
+
+| Stato all'avvio | Schermata |
+|---|---|
+| Provider non configurato e setup mai rimandato | Setup provider AI |
+| Setup rimandato, profilo incompleto | Onboarding |
+| Setup rimandato o provider pronto, profilo completo | Dashboard |
+
+"Configura piu' tardi" salva un flag persistente (`SetupStateStore`), quindi il setup non
+viene riproposto a ogni avvio e resta raggiungibile da Impostazioni. Senza quel flag l'app
+avrebbe intrappolato l'utente nel setup a ogni lancio.
+
+Il controllo usa `AiConfigResolver.resolveConfigured()`, non `resolve()`: quest'ultima
+restituisce sempre una configurazione (anche con chiave vuota) e farebbe risultare "pronto"
+un provider mai impostato.
+
 ### Firma release
 
 Crea `keystore.properties` nella root (non versionato):

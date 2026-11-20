@@ -538,3 +538,36 @@ Lezioni:
   l'asserzione si legge il composable. Il titolo vero e' "Anamnesi iniziale - Il tuo profilo".
 - Controprova obbligatoria per i fix di timeout: rimuovere il budget e vedere il test
   fallire. Senza questo passaggio non si sa se il test guarda davvero il difetto.
+
+## Ordine del primo avvio: il provider viene prima delle domande
+
+Sintomo riportato piu' volte: "l'installazione porta direttamente all'anamnesi", mai al
+setup del provider. La causa non era l'APK sbagliato: **l'onboarding era il flusso di
+raccolta dati** e il passo del provider stava in fondo, quindi al primo avvio si vedevano
+subito le domande.
+
+Decisione: `startDestination` in `FitCoachNavHost` segue questa precedenza.
+
+1. Provider non configurato e setup mai rimandato -> `AI_SETUP`.
+2. Profilo incompleto -> `ONBOARDING`.
+3. Altrimenti -> `DASHBOARD`.
+
+Vale anche per un profilo gia' esistente: un utente vecchio senza provider vede il setup.
+Se ha scelto "Configura piu' tardi" il flag `SetupStateStore` lo esclude, altrimenti l'app
+lo avrebbe bloccato nel setup a ogni avvio.
+
+### Trappole incontrate
+
+
+- `AiConfigResolver.resolve()` restituisce **sempre** una configurazione, anche senza chiave:
+  usarla come test di prontezza fa risultare configurato un provider mai impostato. Serve
+  `resolveConfigured()`.
+
+- Navigare da una coroutine non-main fa crashare il `NavController` con "setCurrentState
+  must be called on the main thread". La decisione di destinazione si prende una volta
+  sola in `LaunchedEffect` e si riusa nel callback, senza rileggere il database.
+
+- Nei test, `CleanDatabaseRule` deve azzerare anche i DataStore: il file sopravvive tra i
+  test e l'istanza e' un singleton in memoria, quindi il flag va riscritto via store.
+  `SeededProfileApplication` semina il flag "setup gia' visto", perche' rappresenta un
+  utente gia' operativo.

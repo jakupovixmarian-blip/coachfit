@@ -3,6 +3,7 @@ package com.fitcoach.app.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fitcoach.app.data.remote.SecureKeyStore
+import com.fitcoach.app.data.local.SetupStateStore
 import com.fitcoach.app.data.repository.ChatRepository
 import com.fitcoach.app.domain.model.AiProvider
 import com.fitcoach.app.domain.model.AiProviderSettings
@@ -37,8 +38,14 @@ class AiProvidersViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val secureKeyStore: SecureKeyStore,
     private val configResolver: AiConfigResolver,
-    private val capabilityProbe: AiCapabilityProbe
+    private val capabilityProbe: AiCapabilityProbe,
+    private val setupStateStore: SetupStateStore
 ) : ViewModel() {
+
+    /** L'utente rimanda la configurazione: non va richiesta a ogni avvio. */
+    fun skipSetup() {
+        viewModelScope.launch { setupStateStore.setAiSetupSkipped(true) }
+    }
 
     private val _state = MutableStateFlow(AiProvidersUiState())
     val state: StateFlow<AiProvidersUiState> = _state.asStateFlow()
