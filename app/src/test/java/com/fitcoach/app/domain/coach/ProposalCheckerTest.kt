@@ -16,7 +16,7 @@ import org.junit.Test
  * La diagnostica deve indicare il controllo fallito con valore atteso e valore
  * realmente restituito, invece del generico "vincoli non rispettati".
  */
-class AiProposalDiagnosticsTest {
+class ProposalCheckerTest {
 
     private val profile = UserProfile(
         ageYears = 30, sex = Sex.MALE, heightCm = 180.0, weightKg = 80.0,
@@ -50,7 +50,7 @@ class AiProposalDiagnosticsTest {
 
     @Test
     fun `reports exact training day mismatch with expected and received`() {
-        val errors = AiProposalDiagnostics.analyze(
+        val errors = analyze(
             profile, proposalWithDays(listOf(0, 2)), FoodSeedData.foods, ExerciseSeedData.exercises
         )
         assertThat(errors.any { it.contains("giorni allenamento") && it.contains("attesi 3") }).isTrue()
@@ -75,7 +75,7 @@ class AiProposalDiagnosticsTest {
             ),
             calendar = AiCalendarProposal(listOf(0, 1, 2), listOf(3, 4, 5, 6))
         )
-        val errors = AiProposalDiagnostics.analyze(
+        val errors = analyze(
             profile, proposal, FoodSeedData.foods, ExerciseSeedData.exercises
         )
         assertThat(errors.any { it.contains("non presente nel database") }).isTrue()
@@ -104,7 +104,7 @@ class AiProposalDiagnosticsTest {
             ),
             calendar = AiCalendarProposal(listOf(0, 1, 2), listOf(3, 4, 5, 6))
         )
-        val errors = AiProposalDiagnostics.analyze(
+        val errors = analyze(
             profile, proposal, FoodSeedData.foods, ExerciseSeedData.exercises
         )
         assertThat(errors.any { it.contains("nessun esercizio") }).isTrue()
@@ -116,7 +116,7 @@ class AiProposalDiagnosticsTest {
     @Test
     fun `reports exercise incompatible with equipment`() {
         val bodyweightOnly = profile.copy(availableEquipment = setOf(Equipment.BODYWEIGHT))
-        val errors = AiProposalDiagnostics.analyze(
+        val errors = analyze(
             bodyweightOnly, proposalWithDays(listOf(0, 1, 2)), FoodSeedData.foods, ExerciseSeedData.exercises
         )
         assertThat(errors.any { it.contains("incompatibile") }).isTrue()
@@ -124,7 +124,7 @@ class AiProposalDiagnosticsTest {
 
     @Test
     fun `diagnostics are never empty`() {
-        val errors = AiProposalDiagnostics.analyze(
+        val errors = analyze(
             profile, proposalWithDays(listOf(0, 2)), FoodSeedData.foods, ExerciseSeedData.exercises
         )
         assertThat(errors).isNotEmpty()
@@ -148,7 +148,7 @@ class AiProposalDiagnosticsTest {
             ),
             calendar = AiCalendarProposal(listOf(0), (1..6).toList())
         )
-        val errors = AiProposalDiagnostics.analyze(
+        val errors = analyze(
             profile.copy(trainingDaysPerWeek = 1), proposal, FoodSeedData.foods, ExerciseSeedData.exercises
         )
         // I messaggi citano la prescrizione del catalogo per quell'esercizio,
@@ -158,7 +158,7 @@ class AiProposalDiagnosticsTest {
             .isTrue()
         assertThat(errors.any { it.contains("RIR") && it.contains("prescrive ${prescribed.targetRir}") })
             .isTrue()
-        assertThat(errors).doesNotContain(AiProposalDiagnostics.GENERIC_FALLBACK)
+        assertThat(errors).doesNotContain(ProposalChecker.GENERIC_FALLBACK)
     }
 
     @Test
@@ -179,11 +179,11 @@ class AiProposalDiagnosticsTest {
             ),
             calendar = AiCalendarProposal(listOf(0), (1..6).toList())
         )
-        val errors = AiProposalDiagnostics.analyze(
+        val errors = analyze(
             profile.copy(trainingDaysPerWeek = 1), proposal, FoodSeedData.foods, ExerciseSeedData.exercises
         )
         assertThat(errors.any { it.contains("minimo 6 per seduta") }).isTrue()
-        assertThat(errors).doesNotContain(AiProposalDiagnostics.GENERIC_FALLBACK)
+        assertThat(errors).doesNotContain(ProposalChecker.GENERIC_FALLBACK)
     }
 
     @Test
@@ -200,11 +200,11 @@ class AiProposalDiagnosticsTest {
                 }
             )
         )
-        val errors = AiProposalDiagnostics.analyze(
+        val errors = analyze(
             fullProfile(), broken, FoodSeedData.foods, ExerciseSeedData.exercises
         )
         assertThat(errors.any { it.contains("slot pasto 'SPUNTINO' non valido") }).isTrue()
-        assertThat(errors).doesNotContain(AiProposalDiagnostics.GENERIC_FALLBACK)
+        assertThat(errors).doesNotContain(ProposalChecker.GENERIC_FALLBACK)
     }
 
     /**
@@ -268,10 +268,18 @@ class AiProposalDiagnosticsTest {
             if (rejected) {
                 val diagnosis = ProgramGenerationEngine.diagnose(p, candidate, foods, exercises)
                 assertThat(diagnosis).isNotEmpty()
-                assertThat("$label -> $diagnosis").doesNotContain(AiProposalDiagnostics.GENERIC_FALLBACK)
+                assertThat("$label -> $diagnosis").doesNotContain(ProposalChecker.GENERIC_FALLBACK)
             }
         }
     }
+
+    /** Le violazioni sono l'esito del cancello: un solo insieme di regole. */
+    private fun analyze(
+        profile: UserProfile,
+        proposal: AiProgramProposal,
+        foods: List<com.fitcoach.app.domain.model.FoodItem>,
+        exercises: List<com.fitcoach.app.domain.model.Exercise>
+    ): List<String> = ProposalChecker.check(profile, proposal, foods, exercises).violations
 
     private fun fullProfile() = UserProfile(
         id = 1L, name = "Test", ageYears = 30, sex = Sex.MALE,

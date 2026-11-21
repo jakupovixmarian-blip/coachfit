@@ -572,14 +572,23 @@ lo avrebbe bloccato nel setup a ogni avvio.
   `SeededProfileApplication` semina il flag "setup gia' visto", perche' rappresenta un
   utente gia' operativo.
 
-## Validazione della generazione AI: un cancello, non due
+## Validazione della generazione AI: una sola funzione, non due
 
-`ProgramGenerationEngine.validate` decide il salvataggio, `AiProposalDiagnostics.analyze`
-spiega al modello cosa correggere. Sono **due implementazioni della stessa regola** e
-tendono a divergere: il vincolo dolce/salato della colazione era solo nella diagnostica,
-quindi il piano veniva respinto e poi **salvato se il modello insisteva**. Quando si
-aggiunge un vincolo, va messo in entrambe, e `GateDiagnosticsAgreementTest` verifica il
-contratto: se `analyze` trova una violazione, `validate` deve rifiutare.
+C'e' **una sola funzione**: `ProposalChecker.check` in
+`domain/coach/ProposalChecker.kt`. Produce `Report(violations)`; `validate` accetta se
+`violations.isEmpty()`, `diagnose` restituisce le stesse violazioni. Prima erano due
+implementazioni della stessa regola e sono divergite: il vincolo dolce/salato della
+colazione era solo nella diagnostica, quindi il piano veniva respinto e poi **salvato se
+il modello insisteva**. Le soglie di volume erano `6..24` fisse nel cancello e dinamiche
+nella diagnostica.
+
+Regola: **una regola nuova va aggiunta solo in `ProposalChecker`.** Non reintrodurre
+controlli dentro `validate`, `buildNutrition` o `mapWorkout`: quei metodi mappano soltanto
+(tipo AI -> entita'). Un `return null` di policy in fase di mappatura e' un rifiuto senza
+diagnosi, cioe' esattamente la classe di bug che ha prodotto il caso della colazione.
+`GateDiagnosticsAgreementTest` verifica la proprieta' che rende la divergenza impossibile:
+*validate accetta se e solo se il checker non trova violazioni*. Se qualcuno aggiunge un
+controllo fuori dal checker, quel test cade.
 
 - Il **calendario** della proposta (`workoutDayIndices`/`restDayIndices`) era un duplicato
   di `workout.days`, confrontato solo con esso. Non portava informazione e poteva solo

@@ -17,22 +17,16 @@ import com.fitcoach.app.domain.model.Sex
 import com.fitcoach.app.domain.model.SplitType
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WorkoutDay
-import com.fitcoach.app.domain.nutrition.BreakfastConstraint
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.CatalogNameResolver
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.MealPlanGenerator
-import com.fitcoach.app.domain.nutrition.MealSlots
-import com.fitcoach.app.domain.workout.CatalogBounds
-import com.fitcoach.app.domain.workout.EquipmentFit
 import com.fitcoach.app.domain.workout.EffectiveVolumeCalculator
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.json.Json
-import java.util.Locale
-import kotlin.math.abs
 
 /**
  * Motore deterministico di validazione e mappatura del percorso generato dall'AI.
@@ -79,70 +73,55 @@ object ProgramGenerationEngine {
         exercises: List<Exercise>,
         scope: Scope = Scope.BOTH
     ): Validated? {
+        // Unico verdetto: se il checker boccia, validate boccia. Non esiste un
+        // secondo insieme di regole che possa accettare cio' che il checker
+        // condanna.
+        val report = ProposalChecker.check(profile, proposal, foods, exercises, scope)
+        if (!report.isValid) return null
+
         val energy = EnergyCalculator.compute(profile) ?: return null
         val includeNutrition = scope != Scope.WORKOUT
         val includeWorkout = scope != Scope.NUTRITION
         val trainingDays = proposal.workout.days.map { it.dayIndex }.distinct().sorted()
 
         val nutrition = if (includeNutrition) {
-            validateNutrition(profile, proposal, foods, energy, trainingDays) ?: return null
+            buildNutrition(profile, proposal, foods, energy, trainingDays) ?: return null
         } else null
         val workout = if (includeWorkout) {
             mapWorkout(profile, proposal, exercises) ?: return null
         } else null
-        if (workout != null) {
-            val plannedDays = workout.days.filterNot { it.isRestDay }
-            if (plannedDays.size != profile.trainingDaysPerWeek || plannedDays.any { it.exercises.isEmpty() }) return null
-            if (plannedDays.any { it.totalSets !in 6..24 }) return null
-            if (plannedDays.flatMap { it.exercises }.groupBy { it.exerciseId }
-                    .any { (_, items) -> items.sumOf { it.sets } > 24 }
-            ) return null
-        }
         val warnings = listOf("Strategia generata dal Coach AI; numeri e vincoli verificati offline.")
         return Validated(nutrition, workout, warnings)
     }
 
-    private fun validateNutrition(
+    /**
+     * Mappatura della nutrizione gia' approvata da [ProposalChecker].
+     *
+     * Non applica policy: calorie, macro, pasti, slot e colazione sono decisi dal
+     * checker. Qui restano solo le conversioni di tipo. Un null da questa
+     * funzione dopo un checker verde sarebbe un'incoerenza interna, e
+     * `GateDiagnosticsAgreementTest` la intercetta (diagnose cadrebbe nel
+     * messaggio generico).
+     */
+    private fun buildNutrition(
         profile: UserProfile,
         proposal: AiProgramProposal,
         foods: List<FoodItem>,
         energy: com.fitcoach.app.domain.model.EnergyResult,
         trainingDays: List<Int>
     ): ValidatedNutrition? {
-        if (trainingDays.size != profile.trainingDaysPerWeek || trainingDays.any { it !in 0..6 }) return null
-        if (proposal.nutrition.days.map { it.dayIndex }.toSet() != (0..6).toSet()) return null
-
         val cyclingApplied = CarbCyclingEngine.shouldApplyCarbCycling(profile)
         val cycling = if (cyclingApplied) CarbCyclingEngine.build(profile, energy)
         else CarbCyclingEngine.buildUniform(profile, energy)
-        val dayTypes = proposal.nutrition.days.sortedBy { it.dayIndex }.map { parseDayType(it.dayType) ?: return null }
+        val dayTypes = proposal.nutrition.days.sortedBy { it.dayIndex }
+            .map { parseDayType(it.dayType) ?: return null }
         val generatedDays = proposal.nutrition.days.map { aiDay ->
             val type = parseDayType(aiDay.dayType) ?: return null
             val target = cycling.targets[type] ?: return null
-            // Il numero di pasti e' un dato del profilo: qui si applica il cancello
-            // che decide il salvataggio. Accettare 3..6 lasciava passare piani con
-            // un pasto in meno rispetto a quanto l'utente ha dichiarato.
-            if (aiDay.meals.size != profile.mealsPerDay) return null
-            // Stesso elenco che il prompt impone al modello: numero E identita'
-            // degli slot, cosi un pasto sostituito da un altro non passa.
-            val expectedSlots = MealSlots.forMealsPerDay(profile.mealsPerDay).toSet()
             val meals = aiDay.meals.map { aiMeal ->
                 val slot = parseMealSlot(aiMeal.slot) ?: return null
-                if (slot !in expectedSlots) return null
-                if (aiMeal.entries.isEmpty()) return null
                 val entries = aiMeal.entries.map { aiEntry ->
-                    if (aiEntry.grams !in 1.0..2_000.0) return null
-                    // Stesso risolutore del validatore: se la diagnostica accetta
-                    // un nome tollerante, il salvataggio non deve rifiutarlo.
-                    val food = CatalogNameResolver.resolveFood(aiEntry.foodName, foods)
-                        ?: return null
-                    // Il vincolo dolce/salato era verificato solo dalla
-                    // diagnostica: il piano veniva salvato con albume a
-                    // colazione pur avendo scelto "dolce".
-                    if (BreakfastConstraint.violations(
-                            profile.breakfastPreference, slot, listOf(food)
-                        ).isNotEmpty()
-                    ) return null
+                    val food = CatalogNameResolver.resolveFood(aiEntry.foodName, foods) ?: return null
                     val factor = aiEntry.grams / 100.0
                     MealEntry(
                         foodItemId = food.id,
@@ -164,56 +143,44 @@ object ProgramGenerationEngine {
                 actual.carbs - target.carbs,
                 actual.fat - target.fat
             )
-            val coherent = close(actual.kcal, target.kcal, 0.20) &&
-                close(actual.protein, target.protein, 0.25) &&
-                close(actual.carbs, target.carbs, 0.30) &&
-                close(actual.fat, target.fat, 0.30)
-            if (!coherent) return null
             MealPlanGenerator.GeneratedDay(aiDay.dayIndex, type, target, meals, actual, deviations, true)
         }.sortedBy { it.dayIndex }
 
-        val weeklyKcal = generatedDays.sumOf { it.actual.kcal }
-        if (!close(weeklyKcal, cycling.weeklyKcal, 0.20)) return null
         return ValidatedNutrition(energy, cycling, generatedDays, dayTypes, trainingDays, cyclingApplied)
     }
 
-    /** Diagnosi leggibile dei vincoli violati (valore atteso vs ricevuto). */
+    /**
+     * Diagnosi leggibile dei vincoli violati (valore atteso vs ricevuto).
+     *
+     * E' la stessa funzione che decide il salvataggio: [ProposalChecker.check].
+     * Non esiste un secondo insieme di regole che possa divergere.
+     */
     fun diagnose(
         profile: UserProfile,
         proposal: AiProgramProposal,
         foods: List<FoodItem>,
         exercises: List<Exercise>,
         scope: Scope = Scope.BOTH
-    ): List<String> = AiProposalDiagnostics.analyze(profile, proposal, foods, exercises, scope)
+    ): List<String> {
+        val violations = ProposalChecker.check(profile, proposal, foods, exercises, scope).violations
+        return violations.ifEmpty { listOf(ProposalChecker.GENERIC_FALLBACK) }
+    }
 
     private fun mapWorkout(
         profile: UserProfile,
         proposal: AiProgramProposal,
         exercises: List<Exercise>
     ): WorkoutPlanBuilder.BuiltPlan? {
-        val known = exercises.associateBy { normalize(it.name) }
         val training = proposal.workout.days.associateBy { it.dayIndex }
         val days = (0..6).map { index ->
             val aiDay = training[index]
             if (aiDay == null) return@map WorkoutDay(dayIndex = index, title = "Riposo", isRestDay = true)
             if (aiDay.exercises.isEmpty()) return null
             val planned = aiDay.exercises.mapIndexed { order, aiExercise ->
-                // Un esercizio senza nome o senza prescrizione non e' un esercizio:
-                // salvarlo produrrebbe una scheda con righe vuote da 0 serie.
-                if (aiExercise.exerciseName.isBlank()) return null
-                if (aiExercise.sets < 1 || aiExercise.minReps < 1 ||
-                    aiExercise.maxReps < aiExercise.minReps
-                ) return null
+                // Nomi, serie, ripetizioni, recupero, RIR e compatibilita' sono
+                // gia' stati verificati da ProposalChecker: qui si mappa soltanto.
                 val exercise = CatalogNameResolver.resolveExercise(aiExercise.exerciseName, exercises)
                     ?: return null
-                if (!allowedExercise(exercise, profile)) return null
-                // Stessi limiti del catalogo usati dalla diagnostica: un'unica
-                // fonte, altrimenti validate e analyze rifiutano cose diverse.
-                if (CatalogBounds.violations(
-                        exercise, aiExercise.sets, aiExercise.minReps,
-                        aiExercise.maxReps, aiExercise.restSeconds, aiExercise.targetRir
-                    ).isNotEmpty()
-                ) return null
                 PlannedExercise(
                     exerciseId = exercise.id,
                     exerciseName = exercise.name,
@@ -253,18 +220,6 @@ object ProgramGenerationEngine {
         )
     }
 
-    private fun allowedExercise(exercise: Exercise, profile: UserProfile): Boolean {
-        val avoided = profile.movementsToAvoid.any {
-            exercise.name.contains(it, true) || exercise.primaryMuscle.label.contains(it, true)
-        }
-        return EquipmentFit.isAvailable(exercise, profile) &&
-            !avoided &&
-            exercise.name !in profile.dislikedExercises
-    }
-
-    private fun close(actual: Double, target: Double, tolerance: Double): Boolean =
-        target > 0 && abs(actual - target) / target <= tolerance
-
     private fun parseDayType(raw: String): CarbDayType? = runCatching {
         CarbDayType.valueOf(raw.trim().uppercase().replace(" ", "_"))
     }.getOrNull()
@@ -283,8 +238,6 @@ object ProgramGenerationEngine {
         IntensityTechnique.valueOf(raw.trim().uppercase().replace("-", "_"))
     }.getOrDefault(IntensityTechnique.NONE)
 
-    private fun normalize(raw: String): String = raw.lowercase(Locale.ROOT)
-        .replace(Regex("[^a-z0-9àèéìòù]+"), " ").trim()
 }
 
 /** Contratto JSON strutturato prodotto dall'AI (nutrizione + scheda + calendario). */

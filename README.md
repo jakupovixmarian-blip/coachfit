@@ -236,7 +236,7 @@ interno compatto* (USDA) **+** *API on-demand* (Open Food Facts/USDA) con **cach
 - `ProgramGenerationEngine` – **validatore** della proposta completa (nutrizione + scheda):
   verifica coerenza calorie/macro, bilancio settimanale, presenza degli alimenti/esercizi
   nel catalogo e vincoli del profilo; se non è valida la **blocca** e restituisce la
-  diagnosi (`AiProposalDiagnostics`) così l'AI può correggersi. Non genera alternative.
+  diagnosi (`ProposalChecker`) così l'AI può correggersi. Non genera alternative.
 - `ProgressiveOverloadEngine` – **double progression**: mantiene il carico e sale di
   ripetizioni fino al top del range, poi incrementa il carico. Non aumenta il carico in caso
   di dolore, tecnica scorretta o RIR insufficiente. Fornisce la raccomandazione all'utente.
@@ -310,14 +310,25 @@ precedenti vengono riattivati).
 
 ### Un solo cancello, una sola verita
 
-`ProgramGenerationEngine.validate` decide il salvataggio;
-`AiProposalDiagnostics.analyze` spiega al modello cosa correggere. Sono due
-implementazioni della stessa regola, e sono divergite: il vincolo dolce/salato
-della colazione esisteva solo nella diagnostica, quindi un piano con albume a
-colazione "dolce" veniva respinto e poi **salvato se il modello insisteva**.
-Ora `validate` applica lo stesso vincolo, e `GateDiagnosticsAgreementTest`
-blocca future divergenze: se la diagnostica trova una violazione, il cancello
-non puo' accettare.
+`validate` decideva il salvataggio, `AiProposalDiagnostics.analyze` spiegava al
+modello cosa correggere. Due implementazioni della stessa regola, e sono
+divergite: il vincolo dolce/salato della colazione esisteva solo nella
+diagnostica, quindi un piano con albume a colazione "dolce" veniva respinto e
+poi **salvato se il modello insisteva**. Le soglie di volume erano `6..24` fisse
+nel cancello e dinamiche nella diagnostica: due verdetti diversi sullo stesso
+piano.
+
+Ora c'e' **una sola funzione**, `ProposalChecker.check`, che produce sia l'esito
+sia i motivi. `validate` e' `violations.isEmpty()`; `diagnose` restituisce le
+stesse violazioni. Non possono divergere perche' non sono piu' due.
+
+`validate` e' sceso da 465 a ~250 righe: calorie, macro, pasti, slot, colazione,
+nomi del catalogo, serie/rep/RIR e compatibilita' sono decisi in un punto solo.
+`buildNutrition` e `mapWorkout` ora **mappano soltanto** (tipo AI → entita'), e
+i loro `return null` non applicano piu' policy: un rifiuto silenzioso senza
+diagnosi era la classe di bug che ha prodotto il caso della colazione.
+`GateDiagnosticsAgreementTest` verifica la proprieta' che rende la divergenza
+impossibile: *validate accetta se e solo se il checker non trova violazioni*.
 
 Il **calendario** (`workoutDayIndices` / `restDayIndices`) non era
 informazione: era un duplicato di `workout.days`, confrontato solo con esso.
