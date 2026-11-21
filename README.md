@@ -27,6 +27,9 @@ ricettario generico: propone ricette costruite sugli alimenti che il piano
 assegna davvero a ciascun pasto, filtrate per colazione, spuntino, pranzo e
 cena.
 
+- Il catalogo conta **161 ricette**: 31 colazioni, 27 spuntini mattutini,
+  23 spuntini pomeridiani, 40 pranzi e 40 cene, tutte costruite sui 173
+  alimenti del database CREA/USDA.
 - Le grammature sono quelle calcolate dal motore nutrizionale, non inventate.
 - Una ricetta compare solo se gli alimenti che le servono sono presenti in quel
   pasto: niente ingredienti fuori piano.

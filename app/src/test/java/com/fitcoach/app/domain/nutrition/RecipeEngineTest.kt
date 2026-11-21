@@ -1,7 +1,7 @@
 package com.fitcoach.app.domain.nutrition
 
+import com.fitcoach.app.domain.model.FoodItem
 import com.fitcoach.app.domain.model.FoodUnit
-import com.fitcoach.app.domain.nutrition.FoodSeedData
 import com.fitcoach.app.domain.model.Meal
 import com.fitcoach.app.domain.model.MealEntry
 import com.fitcoach.app.domain.model.MealSlot
@@ -25,6 +25,26 @@ class RecipeEngineTest {
     private fun meal(slot: MealSlot, vararg entries: MealEntry) =
         Meal(id = 1L, nutritionDayId = 1L, slot = slot, time = slot.defaultTime, entries = entries.toList())
 
+    /** Un pasto che contiene tutto il database: serve a contare il catalogo. */
+    private fun fullMeal(slot: MealSlot) = Meal(
+        id = 1L,
+        nutritionDayId = 1L,
+        slot = slot,
+        time = slot.defaultTime,
+        entries = FoodSeedData.foods.map {
+            MealEntry(
+                foodItemId = it.id,
+                foodName = it.name,
+                grams = 100.0,
+                unit = it.defaultUnit,
+                kcal = it.kcalPer100g,
+                protein = it.proteinPer100g,
+                carbs = it.carbsPer100g,
+                fat = it.fatPer100g
+            )
+        }
+    )
+
     @Test
     fun `la colazione propone solo ricette di colazione`() {
         val breakfast = meal(
@@ -40,7 +60,6 @@ class RecipeEngineTest {
 
     @Test
     fun `una ricetta non compare se gli ingredienti non sono nel pasto`() {
-        // Il pranzo contiene solo tonno: la ricetta "pollo e riso" non deve apparire.
         val lunch = meal(MealSlot.LUNCH, entry("Tonno in scatola al naturale"))
         val recipes = RecipeEngine.forMeal(lunch)
         assertThat(recipes.map { it.name }).doesNotContain("Pollo alla piastra con riso e verdure")
@@ -72,9 +91,12 @@ class RecipeEngineTest {
 
     @Test
     fun `una allergia esclude gli alimenti che la contengono`() {
-        // "latte" deve escludere anche "Latte parzialmente scremato".
-        assertThat(RecipeEngine.isExcluded("Latte parzialmente scremato", UserProfile(allergies = listOf("latte")))).isTrue()
-        assertThat(RecipeEngine.isExcluded("Fiocchi d'avena", UserProfile(allergies = listOf("latte")))).isFalse()
+        assertThat(
+            RecipeEngine.isExcluded("Latte parzialmente scremato", UserProfile(allergies = listOf("latte")))
+        ).isTrue()
+        assertThat(
+            RecipeEngine.isExcluded("Fiocchi d'avena", UserProfile(allergies = listOf("latte")))
+        ).isFalse()
     }
 
     @Test
@@ -109,7 +131,11 @@ class RecipeEngineTest {
 
     @Test
     fun `forDay raggruppa per slot e salta i pasti senza ricette`() {
-        val breakfast = meal(MealSlot.BREAKFAST, entry("Fiocchi d'avena"), entry("Proteine del siero (whey, polvere)"))
+        val breakfast = meal(
+            MealSlot.BREAKFAST,
+            entry("Fiocchi d'avena"),
+            entry("Proteine del siero (whey, polvere)")
+        )
         val lunch = meal(MealSlot.LUNCH, entry("Tonno in scatola al naturale"))
         val bySlot = RecipeEngine.forDay(listOf(breakfast, lunch))
         assertThat(bySlot.keys).contains(MealSlot.BREAKFAST)
@@ -123,41 +149,18 @@ class RecipeEngineTest {
      */
     @Test
     fun `ogni ingrediente delle ricette esiste nel database alimentare`() {
-        val known = FoodSeedData.foods.map { it.normalizedName }.toSet()
+        val known = FoodSeedData.foods.map { FoodItem.normalizeName(it.name) }.toSet()
         val missing = mutableSetOf<String>()
         MealSlot.entries.forEach { slot ->
-            // Un pasto che contiene tutti gli alimenti del database: se una
-            // ricetta resta fuori, il nome non corrisponde a nessun alimento.
-            val meal = Meal(
-                id = 1L,
-                nutritionDayId = 1L,
-                slot = slot,
-                time = slot.defaultTime,
-                entries = FoodSeedData.foods.map {
-                    MealEntry(
-                        foodItemId = it.id,
-                        foodName = it.name,
-                        grams = 100.0,
-                        unit = it.defaultUnit,
-                        kcal = it.kcalPer100g,
-                        protein = it.proteinPer100g,
-                        carbs = it.carbsPer100g,
-                        fat = it.fatPer100g
-                    )
-                }
-            )
-            RecipeEngine.forMeal(meal, null, FoodSeedData.foods)
+            RecipeEngine.forMeal(fullMeal(slot), null, FoodSeedData.foods)
                 .flatMap { it.ingredients }
-                .forEach { if (it.foodName.normalizedName() !in known) missing.add(it.foodName) }
+                .forEach {
+                    if (FoodItem.normalizeName(it.foodName) !in known) missing.add(it.foodName)
+                }
         }
         assertThat(missing).isEmpty()
     }
 
-    /**
-     * Ogni slot con almeno una ricetta deve produrne una quando il pasto
-     * contiene gli alimenti giusti: verifica che le ricette siano raggiungibili
-     * e non codice morto.
-     */
     @Test
     fun `ogni pasto principale ha almeno una ricetta proponibile`() {
         val cases = mapOf(
@@ -173,7 +176,39 @@ class RecipeEngineTest {
             assertThat(RecipeEngine.forMeal(meal)).isNotEmpty()
         }
     }
-}
 
-private fun String.normalizedName(): String =
-    com.fitcoach.app.domain.model.FoodItem.normalizeName(this)
+    /**
+     * Il catalogo deve essere ampio su ogni pasto: con poche ricette la sezione
+     * resta quasi sempre vuota, che e il problema che questo test previene.
+     */
+    @Test
+    fun `ogni pasto ha un catalogo ampio di ricette`() {
+        val minimum = mapOf(
+            MealSlot.BREAKFAST to 25,
+            MealSlot.MORNING_SNACK to 20,
+            MealSlot.AFTERNOON_SNACK to 20,
+            MealSlot.LUNCH to 35,
+            MealSlot.DINNER to 35
+        )
+        minimum.forEach { (slot, expected) ->
+            val count = RecipeEngine.forMeal(fullMeal(slot), null, FoodSeedData.foods).size
+            assertThat(count).isAtLeast(expected)
+        }
+    }
+
+    @Test
+    fun `le ricette con copertura piena vengono prima di quelle parziali`() {
+        val lunch = meal(
+            MealSlot.LUNCH,
+            entry("Petto di pollo"),
+            entry("Riso basmati (crudo)"),
+            entry("Zucchine")
+        )
+        val recipes = RecipeEngine.forMeal(lunch)
+        val firstPartial = recipes.indexOfFirst { it.coverage < 1.0 }
+        val lastFull = recipes.indexOfLast { it.coverage == 1.0 }
+        if (firstPartial >= 0 && lastFull >= 0) {
+            assertThat(lastFull).isLessThan(firstPartial)
+        }
+    }
+}
