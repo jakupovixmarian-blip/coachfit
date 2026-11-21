@@ -34,7 +34,15 @@ data class CoachUiState(
     val providerLabel: String = "",
     /** Ultimo messaggio dell'utente, per riprovare dopo un errore di rete. */
     val lastUserMessage: String? = null,
-    val canRetry: Boolean = false
+    val canRetry: Boolean = false,
+    /**
+     * Vero mentre una proposta viene applicata. L'applicazione puo includere una
+     * rigenerazione con chiamata al provider, quindi dura decine di secondi:
+     * senza questo stato il pulsante resta cliccabile e sembra bloccato.
+     */
+    val applying: Boolean = false,
+    /** Avanzamento leggibile dell'applicazione in corso. */
+    val applyingProgress: String? = null
 )
 
 @HiltViewModel
@@ -156,13 +164,36 @@ class CoachViewModel @Inject constructor(
 
     fun approvePending() {
         val change = _state.value.pendingChange ?: return
+        if (_state.value.applying) return
+        _state.value = _state.value.copy(
+            applying = true,
+            applyingProgress = "Applico la modifica...",
+            message = null
+        )
         viewModelScope.launch {
-            when (val result = actionExecutor.apply(change.id)) {
-                is ApplyResult.Applied -> _state.value = _state.value.copy(
-                    message = "Modifica applicata: ${result.message}", pendingChange = null
+            val result = try {
+                actionExecutor.apply(change.id)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                ApplyResult.Failed("Applicazione non riuscita: ${e.message ?: e::class.simpleName}")
+            }
+            _state.value = when (result) {
+                is ApplyResult.Applied -> _state.value.copy(
+                    applying = false,
+                    applyingProgress = null,
+                    message = "Modifica applicata: ${result.message}",
+                    pendingChange = null
                 )
-                is ApplyResult.Failed -> _state.value = _state.value.copy(message = result.message)
-                else -> Unit
+                is ApplyResult.Failed -> _state.value.copy(
+                    applying = false,
+                    applyingProgress = null,
+                    message = result.message
+                )
+                // Un esito non previsto non deve lasciare la schermata in attesa.
+                is ApplyResult.Reverted -> _state.value.copy(
+                    applying = false, applyingProgress = null
+                )
             }
             load()
         }

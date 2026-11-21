@@ -3,9 +3,11 @@ package com.fitcoach.app.domain.device
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
@@ -17,8 +19,10 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -42,11 +46,39 @@ class BleDeviceManager @Inject constructor(
         val WEIGHT_MEASUREMENT_CHAR: java.util.UUID =
             java.util.UUID.fromString("00002a9d-0000-1000-8000-00805f9b34fb")
 
+        /** Body Composition Service: bilance BIA che riportano massa grassa e muscolare. */
+        val BODY_COMPOSITION_SERVICE: java.util.UUID =
+            java.util.UUID.fromString("0000181b-0000-1000-8000-00805f9b34fb")
+        val BODY_COMPOSITION_CHAR: java.util.UUID =
+            java.util.UUID.fromString("00002a9c-0000-1000-8000-00805f9b34fb")
+
         /** Heart Rate Service e caratteristica Heart Rate Measurement. */
         val HEART_RATE_SERVICE: java.util.UUID =
             java.util.UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb")
         val HEART_RATE_MEASUREMENT_CHAR: java.util.UUID =
             java.util.UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb")
+
+        /** Generic Access: nome del dispositivo. Spesso leggibile solo dopo la connessione. */
+        val GENERIC_ACCESS_SERVICE: java.util.UUID =
+            java.util.UUID.fromString("00001800-0000-1000-8000-00805f9b34fb")
+        val GAP_DEVICE_NAME_CHAR: java.util.UUID =
+            java.util.UUID.fromString("00002a00-0000-1000-8000-00805f9b34fb")
+
+        /**
+         * Nome da mostrare. Molte bilance non mettono il nome nell'adv packet
+         * (e `device.name` resta null finche' non si connette): in quel caso si
+         * mostra il MAC con l'indicazione che il nome arrivera' dopo il
+         * collegamento, invece di un generico "Dispositivo sconosciuto".
+         */
+        internal fun displayName(address: String, advertised: String?): String =
+            advertised?.trim()?.takeIf { it.isNotEmpty() }
+                ?: "Dispositivo senza nome (${address.takeLast(5)})"
+
+        const val CONNECT_TIMEOUT_MS = 20_000L
+
+        /** Client Characteristic Configuration Descriptor: abilita notifiche/indications. */
+        val CLIENT_CONFIG_DESCRIPTOR: java.util.UUID =
+            java.util.UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
     }
 
     private val adapter: BluetoothAdapter?
@@ -85,14 +117,15 @@ class BleDeviceManager @Inject constructor(
         val found = linkedMapOf<String, DiscoveredDevice>()
         val callback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
-                val name = result.device.name ?: result.scanRecord?.deviceName ?: "Dispositivo sconosciuto"
+                val advertised = result.scanRecord?.deviceName ?: result.device.name
                 val services = result.scanRecord?.serviceUuids?.map { it.uuid } ?: emptyList()
                 val device = DiscoveredDevice(
                     address = result.device.address,
-                    name = name,
+                    name = displayName(result.device.address, advertised),
                     rssi = result.rssi,
-                    kind = classify(services, name),
+                    kind = classify(services, advertised),
                     hasWeightService = services.contains(WEIGHT_SCALE_SERVICE),
+                    hasBodyCompositionService = services.contains(BODY_COMPOSITION_SERVICE),
                     hasHeartRateService = services.contains(HEART_RATE_SERVICE)
                 )
                 found[result.device.address] = device
@@ -100,7 +133,7 @@ class BleDeviceManager @Inject constructor(
             }
 
             override fun onScanFailed(errorCode: Int) {
-                close()
+                close(ScanFailure(errorCode))
             }
         }
 
@@ -114,9 +147,11 @@ class BleDeviceManager @Inject constructor(
         }
     }
 
-    private fun classify(services: List<java.util.UUID>, name: String): DeviceKind = when {
+    private fun classify(services: List<java.util.UUID>, name: String?): DeviceKind = when {
+        services.contains(BODY_COMPOSITION_SERVICE) -> DeviceKind.SCALE
         services.contains(WEIGHT_SCALE_SERVICE) -> DeviceKind.SCALE
         services.contains(HEART_RATE_SERVICE) -> DeviceKind.HEART_RATE
+        name == null -> DeviceKind.UNKNOWN
         name.contains("scale", true) || name.contains("bilancia", true) -> DeviceKind.SCALE
         name.contains("hr", true) || name.contains("polar", true) ||
             name.contains("garmin", true) || name.contains("watch", true) -> DeviceKind.HEART_RATE
@@ -125,63 +160,182 @@ class BleDeviceManager @Inject constructor(
 
     /**
      * Si collega al dispositivo e legge una misurazione reale.
-     * Restituisce un [Measurement] con il valore letto dal GATT, oppure null se il
-     * servizio non e disponibile.
+     *
+     * Le bilance **notificano** il peso (indications su 0x2A9D) invece di
+     * rispondere a una lettura diretta: `readCharacteristic` fallisce con
+     * "GATT_READ_NOT_PERMITTED" su quasi tutti i modelli, ed era la ragione per
+     * cui il collegamento sembrava non funzionare. Qui si abilita prima la
+     * notifica e si aspetta il dato; la lettura diretta resta come ripiego per i
+     * dispositivi che la supportano.
+     *
+     * Emette [ConnectionEvent] per raccontare lo stato alla UI (connessione,
+     * nome letto, misurazione, errore) e chiude dopo il primo dato o allo
+     * scadere di [timeoutMs].
      */
     @SuppressLint("MissingPermission")
-    fun readMeasurement(address: String, kind: DeviceKind): Flow<Measurement?> = callbackFlow {
+    fun connect(address: String, kind: DeviceKind, timeoutMs: Long = CONNECT_TIMEOUT_MS):
+        Flow<ConnectionEvent> = callbackFlow {
         if (!isSupported() || !hasPermission()) {
-            trySend(null); close(); return@callbackFlow
+            trySend(ConnectionEvent.Failed("Bluetooth non disponibile o permessi mancanti."))
+            close()
+            return@callbackFlow
         }
-        val device = adapter?.getRemoteDevice(address)
+        val device = runCatching { adapter?.getRemoteDevice(address) }.getOrNull()
         if (device == null) {
-            trySend(null); close(); return@callbackFlow
+            trySend(ConnectionEvent.Failed("Indirizzo Bluetooth non valido."))
+            close()
+            return@callbackFlow
+        }
+
+        // Senza questo la UI resta su "Connessione..." per sempre quando il
+        // dispositivo non risponde (fuori portata, gia' connesso al telefono).
+        val watchdog = launch {
+            delay(timeoutMs)
+            trySend(ConnectionEvent.Failed("Timeout: il dispositivo non ha risposto."))
+            close()
         }
 
         val callback = object : BluetoothGattCallback() {
             override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-                if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    gatt.discoverServices()
-                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                if (status != BluetoothGatt.GATT_SUCCESS && newState != BluetoothProfile.STATE_CONNECTED) {
+                    trySend(ConnectionEvent.Failed("Connessione rifiutata (codice $status)."))
+                    watchdog.cancel()
                     close()
+                    return
+                }
+                when (newState) {
+                    BluetoothProfile.STATE_CONNECTED -> {
+                        trySend(ConnectionEvent.Connected)
+                        gatt.discoverServices()
+                    }
+                    BluetoothProfile.STATE_DISCONNECTED -> {
+                        watchdog.cancel()
+                        close()
+                    }
                 }
             }
 
             override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-                val serviceUuid = if (kind == DeviceKind.SCALE) WEIGHT_SCALE_SERVICE else HEART_RATE_SERVICE
-                val charUuid = if (kind == DeviceKind.SCALE) WEIGHT_MEASUREMENT_CHAR else HEART_RATE_MEASUREMENT_CHAR
-                val characteristic = gatt.getService(serviceUuid)?.getCharacteristic(charUuid)
-                if (characteristic == null) {
-                    close(); return
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    trySend(ConnectionEvent.Failed("Servizi non leggibili (codice $status)."))
+                    watchdog.cancel(); close(); return
                 }
-                gatt.readCharacteristic(characteristic)
+                readDeviceName(gatt)
+
+                val serviceUuid = if (kind == DeviceKind.HEART_RATE) HEART_RATE_SERVICE else WEIGHT_SCALE_SERVICE
+                val charUuid = if (kind == DeviceKind.HEART_RATE) HEART_RATE_MEASUREMENT_CHAR else WEIGHT_MEASUREMENT_CHAR
+                // La bilancia BIA espone la composizione corporea; se c'e', va letta
+                // quella: contiene peso e massa grassa in un solo payload.
+                val bodyComposition = gatt.getService(BODY_COMPOSITION_SERVICE)
+                    ?.getCharacteristic(BODY_COMPOSITION_CHAR)
+                val target = bodyComposition ?: gatt.getService(serviceUuid)?.getCharacteristic(charUuid)
+                if (target == null) {
+                    trySend(
+                        ConnectionEvent.Failed(
+                            "Il dispositivo non espone il servizio atteso. " +
+                                "Molte bilance usano un protocollo proprietario."
+                        )
+                    )
+                    watchdog.cancel(); close(); return
+                }
+                gatt.setCharacteristicNotification(target, true)
+                val descriptor = target.getDescriptor(CLIENT_CONFIG_DESCRIPTOR)
+                val enable = if (target.properties and BluetoothGattCharacteristic.PROPERTY_INDICATE != 0) {
+                    BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
+                } else {
+                    BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                }
+                descriptor?.value = enable
+                val writeStarted = descriptor != null && gatt.writeDescriptor(descriptor)
+                if (!writeStarted) {
+                    // Nessun CCCD (o scrittura rifiutata): proviamo la lettura diretta.
+                    requestRead(gatt, target)
+                }
+            }
+
+            // Da Android 13 la lettura consegna il valore come parametro.
+            override fun onCharacteristicChanged(
+                gatt: BluetoothGatt,
+                characteristic: BluetoothGattCharacteristic,
+                value: ByteArray
+            ) {
+                handle(gatt, characteristic, value)
+            }
+
+            @Suppress("DEPRECATION")
+            override fun onCharacteristicChanged(
+                gatt: BluetoothGatt,
+                characteristic: BluetoothGattCharacteristic
+            ) {
+                characteristic.value?.let { handle(gatt, characteristic, it) }
             }
 
             override fun onCharacteristicRead(
                 gatt: BluetoothGatt,
                 characteristic: BluetoothGattCharacteristic,
+                value: ByteArray,
                 status: Int
             ) {
-                val parsed = parse(characteristic, kind)
-                trySend(parsed)
-                gatt.disconnect()
-                close()
+                if (characteristic.uuid == GAP_DEVICE_NAME_CHAR) {
+                    val name = runCatching { String(value, Charsets.UTF_8).trim() }.getOrNull()
+                    if (!name.isNullOrBlank()) trySend(ConnectionEvent.DeviceName(name))
+                    return
+                }
+                handle(gatt, characteristic, value)
+            }
+
+            @Suppress("DEPRECATION")
+            override fun onCharacteristicRead(
+                gatt: BluetoothGatt,
+                characteristic: BluetoothGattCharacteristic,
+                status: Int
+            ) {
+                characteristic.value?.let { onCharacteristicRead(gatt, characteristic, it, status) }
+            }
+
+            private fun requestRead(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+                if (!gatt.readCharacteristic(characteristic)) {
+                    trySend(ConnectionEvent.Failed("Il dispositivo non consente la lettura del dato."))
+                    watchdog.cancel(); close()
+                }
+            }
+
+            private fun readDeviceName(gatt: BluetoothGatt) {
+                val nameChar = gatt.getService(GENERIC_ACCESS_SERVICE)?.getCharacteristic(GAP_DEVICE_NAME_CHAR)
+                if (nameChar != null) gatt.readCharacteristic(nameChar)
+            }
+
+            private fun handle(
+                gatt: BluetoothGatt,
+                characteristic: BluetoothGattCharacteristic,
+                value: ByteArray
+            ) {
+                if (characteristic.uuid == GAP_DEVICE_NAME_CHAR) return
+                val event = when (characteristic.uuid) {
+                    BODY_COMPOSITION_CHAR ->
+                        BleMeasurementParser.parseBodyComposition(value)?.let { ConnectionEvent.Body(it) }
+                    WEIGHT_MEASUREMENT_CHAR ->
+                        BleMeasurementParser.parseWeight(value)?.let { ConnectionEvent.Measured(it) }
+                    HEART_RATE_MEASUREMENT_CHAR ->
+                        BleMeasurementParser.parseHeartRate(value)?.let { ConnectionEvent.Measured(it) }
+                    else -> null
+                }
+                if (event != null) {
+                    trySend(event)
+                    watchdog.cancel()
+                    runCatching { gatt.disconnect() }
+                    close()
+                }
             }
         }
 
-        val gatt = device.connectGatt(context, false, callback)
-        awaitClose { runCatching { gatt.close() } }
-    }
-
-    private fun parse(characteristic: BluetoothGattCharacteristic, kind: DeviceKind): Measurement? {
-        val value = characteristic.value ?: return null
-        if (value.isEmpty()) return null
-        return when (kind) {
-            DeviceKind.SCALE -> BleMeasurementParser.parseWeight(value)
-            DeviceKind.HEART_RATE -> BleMeasurementParser.parseHeartRate(value)
-            DeviceKind.UNKNOWN -> null
+        val gatt = device.connectGatt(context, false, callback, BluetoothDevice.TRANSPORT_LE)
+        awaitClose {
+            watchdog.cancel()
+            runCatching { gatt.close() }
         }
     }
+
 }
 
 enum class DeviceKind(val label: String) {
@@ -196,11 +350,48 @@ data class DiscoveredDevice(
     val rssi: Int,
     val kind: DeviceKind,
     val hasWeightService: Boolean,
+    val hasBodyCompositionService: Boolean = false,
     val hasHeartRateService: Boolean
 )
+
+/**
+ * Stato del collegamento, emesso mentre la connessione procede: la UI puo cosi
+ * distinguere "connesso", "in attesa del dato" ed errore, invece di restare
+ * ferma su un indicatore indefinito.
+ */
+sealed interface ConnectionEvent {
+    data object Connected : ConnectionEvent
+    /** Nome letto dal dispositivo dopo la connessione (GAP 0x2A00). */
+    data class DeviceName(val name: String) : ConnectionEvent
+    data class Measured(val value: Measurement) : ConnectionEvent
+    data class Body(val composition: BodyComposition) : ConnectionEvent
+    data class Failed(val message: String) : ConnectionEvent
+}
+
+/** Errore di scansione, propagato alla UI invece di chiudere in silenzio. */
+class ScanFailure(val errorCode: Int) : Exception("Scansione BLE fallita (codice $errorCode)")
 
 data class Measurement(
     val kind: DeviceKind,
     val value: Double,
     val unit: String
+)
+
+/**
+ * Misurazione completa di composizione corporea (Body Composition Measurement
+ * 0x2A9C). Solo i campi realmente trasmessi dalla bilancia sono valorizzati:
+ * una bilancia che non misura la massa ossea lascia `boneMassKg` a null, e
+ * l'app non lo stima.
+ */
+data class BodyComposition(
+    val weightKg: Double,
+    val bmi: Double? = null,
+    val heightM: Double? = null,
+    val fatPercent: Double? = null,
+    val leanMassKg: Double? = null,
+    val muscleMassKg: Double? = null,
+    val boneMassKg: Double? = null,
+    val waterMassKg: Double? = null,
+    val impedanceOhm: Int? = null,
+    val measuredAt: java.time.LocalDateTime? = null
 )

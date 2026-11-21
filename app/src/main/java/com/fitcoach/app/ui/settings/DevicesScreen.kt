@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.fitcoach.app.domain.device.BodyComposition
 import com.fitcoach.app.domain.device.DeviceKind
 import com.fitcoach.app.ui.components.SectionCard
 import com.fitcoach.app.ui.components.SectionHeader
@@ -181,7 +182,7 @@ fun DevicesScreen(
                         }
                         Button(
                             onClick = { viewModel.connect(device) },
-                            enabled = !state.reading
+                            enabled = !state.connecting && !state.reading
                         ) { Text("Collega") }
                     }
                 }
@@ -193,12 +194,20 @@ fun DevicesScreen(
                         Column {
                             SectionHeader("Dispositivo collegato", device.name)
                             Spacer(Modifier.height(8.dp))
+                            if (state.connecting) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    CircularProgressIndicator(Modifier.height(20.dp), color = Emerald)
+                                    Spacer(Modifier.width(10.dp))
+                                    Text("Connessione in corso...", style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary)
+                                }
+                            }
                             if (state.reading) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     CircularProgressIndicator(Modifier.height(20.dp), color = Emerald)
                                     Spacer(Modifier.width(10.dp))
-                                    Text("Lettura in corso...", style = MaterialTheme.typography.bodySmall,
-                                        color = TextSecondary)
+                                    Text("Connesso. In attesa della misurazione...",
+                                        style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                                 }
                             }
                             state.lastMeasurement?.let { m ->
@@ -212,6 +221,10 @@ fun DevicesScreen(
                                     )
                                 }
                                 if (m.kind == DeviceKind.SCALE) {
+                                    state.lastComposition?.let { c ->
+                                        Spacer(Modifier.height(10.dp))
+                                        CompositionRows(c)
+                                    }
                                     Spacer(Modifier.height(10.dp))
                                     Button(onClick = { viewModel.saveWeight(m.value) }) {
                                         Text("Registra nei progressi")
@@ -225,5 +238,39 @@ fun DevicesScreen(
         }
 
         SnackbarHost(snackbar)
+    }
+}
+
+/**
+ * Valori di composizione corporea realmente trasmessi dalla bilancia. Le righe
+ * assenti non vengono mostrate: l'app non stima cio che il dispositivo non misura.
+ */
+@Composable
+private fun CompositionRows(c: BodyComposition) {
+    Column {
+        c.fatPercent?.let { MetricLine("Massa grassa", "%.1f %%".format(it)) }
+        c.muscleMassKg?.let { MetricLine("Massa muscolare", "%.1f kg".format(it)) }
+        c.leanMassKg?.let { MetricLine("Massa magra", "%.1f kg".format(it)) }
+        c.waterMassKg?.let { MetricLine("Acqua corporea", "%.1f kg".format(it)) }
+        c.boneMassKg?.let { MetricLine("Massa ossea", "%.1f kg".format(it)) }
+        c.bmi?.let { MetricLine("BMI", "%.1f".format(it)) }
+        c.impedanceOhm?.let { MetricLine("Impedenza", "$it ohm") }
+        c.measuredAt?.let {
+            MetricLine("Misurata il", "%02d/%02d/%d %02d:%02d".format(
+                it.dayOfMonth, it.monthValue, it.year, it.hour, it.minute
+            ))
+        }
+    }
+}
+
+@Composable
+private fun MetricLine(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+        Text(value, style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface)
     }
 }

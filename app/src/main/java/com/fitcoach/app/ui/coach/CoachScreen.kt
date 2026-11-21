@@ -136,7 +136,15 @@ fun CoachScreen(
             }
 
             state.pendingChange?.let { change ->
-                item { ProposalCard(change = change, onApprove = viewModel::approvePending, onReject = viewModel::rejectPending) }
+                item {
+                    ProposalCard(
+                        change = change,
+                        applying = state.applying,
+                        progress = state.applyingProgress,
+                        onApprove = viewModel::approvePending,
+                        onReject = viewModel::rejectPending
+                    )
+                }
             }
 
             if (state.appliedChanges.isNotEmpty()) {
@@ -252,6 +260,8 @@ private fun ChatBubble(content: String, isUser: Boolean, isError: Boolean) {
 @Composable
 private fun ProposalCard(
     change: ProgramChange,
+    applying: Boolean,
+    progress: String?,
     onApprove: () -> Unit,
     onReject: () -> Unit
 ) {
@@ -275,9 +285,28 @@ private fun ProposalCard(
             ProposalRow("Risultato atteso", change.expectedOutcome)
             ProposalRow("Controindicazioni", change.contraindications)
             Spacer(Modifier.height(12.dp))
+            if (applying) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(Modifier.height(18.dp), color = Emerald, strokeWidth = 2.dp)
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        progress ?: "Applico la modifica...",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                }
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "La rigenerazione del programma puo richiedere fino a qualche minuto: " +
+                        "puoi lasciare questa schermata, il lavoro continua.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary
+                )
+                Spacer(Modifier.height(10.dp))
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Button(onClick = onApprove) { Text("Approva e applica") }
-                TextButton(onClick = onReject) { Text("Rifiuta") }
+                Button(onClick = onApprove, enabled = !applying) { Text("Approva e applica") }
+                TextButton(onClick = onReject, enabled = !applying) { Text("Rifiuta") }
             }
         }
     }
