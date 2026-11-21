@@ -28,7 +28,14 @@ class CrashSmokeTest {
 
     @Test
     fun `app starts and dashboard renders`() {
-        composeRule.waitForIdle()
+        // La destinazione iniziale si risolve in un LaunchedEffect che legge il
+        // profilo da Room su un altro dispatcher: fino ad allora lo Scaffold non
+        // disegna nulla. `waitForIdle()` da solo non copre quella query, quindi
+        // la Dashboard va attesa esplicitamente invece di leggerla una volta.
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithContentDescription("Impostazioni")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
         val nodes = composeRule.onAllNodesWithContentDescription("Impostazioni")
             .fetchSemanticsNodes()
         assertThat(nodes).isNotEmpty()

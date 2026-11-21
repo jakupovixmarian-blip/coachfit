@@ -56,7 +56,13 @@ class AiProgramGenerationService @Inject constructor(
              * il modello ha consultato il corpus": senza questa traccia non c'e
              * modo di sapere se una fonte e stata letta o solo citata.
              */
-            val toolTrace: List<String> = emptyList()
+            val toolTrace: List<String> = emptyList(),
+            /**
+             * Output di ogni strumento, nell'ordine. Rende leggibile il PERCHE'
+             * di un secondo submit: senza, `[submit, submit]` e' indistinguibile
+             * da un doppio salvataggio.
+             */
+            val toolResults: List<CoachToolResult> = emptyList()
         ) : Result
 
         /**
@@ -103,6 +109,14 @@ class AiProgramGenerationService @Inject constructor(
                 "submit_full_program (scope=${scope.name}). Non fermarti prima: devi arrivare a ok=true.",
             maxIterations = GENERATION_MAX_ITERATIONS,
             requireTool = SUBMIT_TOOL,
+            requiredPrerequisites = listOf(
+                Prerequisite.consultations(
+                    toolName = CONSULT_TOOL,
+                    areas = listOf("allenamento", "nutrizione"),
+                    description = "split, volume, RIR e recuperi per la scheda; calorie, " +
+                        "proteine e carboidrati per il piano alimentare."
+                )
+            ),
             deadlineMs = GENERATION_TIMEOUT_MS,
             onProgress = onProgress
         )
@@ -114,10 +128,14 @@ class AiProgramGenerationService @Inject constructor(
                     "verifica il provider AI o prova un modello con il supporto agli strumenti."
             )
 
-        return interpretSubmission(submission.output, turn.toolTrace)
+        return interpretSubmission(submission.output, turn.toolTrace, turn.toolResults)
     }
 
-    private fun interpretSubmission(output: String, toolTrace: List<String> = emptyList()): Result {
+    private fun interpretSubmission(
+        output: String,
+        toolTrace: List<String> = emptyList(),
+        toolResults: List<CoachToolResult> = emptyList()
+    ): Result {
         val obj = runCatching { json.parseToJsonElement(output) as? JsonObject }.getOrNull()
             ?: return Result.Failure("Risposta dello strumento non leggibile. Riprova.")
         val ok = (obj["ok"] as? JsonPrimitive)?.booleanOrNull ?: false
@@ -139,7 +157,7 @@ class AiProgramGenerationService @Inject constructor(
         val warnings = (obj["avvisi"] as? JsonArray)
             ?.mapNotNull { (it as? JsonPrimitive)?.content }
             ?: emptyList()
-        return Result.Success(nutritionId, workoutId, warnings, toolTrace)
+        return Result.Success(nutritionId, workoutId, warnings, toolTrace, toolResults)
     }
 
     /**
@@ -221,6 +239,14 @@ class AiProgramGenerationService @Inject constructor(
             )
         }
         appendLine("Il risultato deve avere esattamente 7 giorni nutrizionali e ${profile.trainingDaysPerWeek} giorni di allenamento.")
+        appendLine(
+            "PRIMA di consegnare consulta la metodologia con consult_invictus: almeno una chiamata " +
+                "con area=allenamento e una con area=nutrizione, sugli argomenti che stai decidendo " +
+                "(split, volume, RIR, recuperi per la scheda; calorie, proteine, carboidrati per il piano). " +
+                "Non e' un consiglio: submit_full_program viene BLOCCATO dal codice finche' entrambe " +
+                "le aree non hanno restituito regole. Una chiamata con area giusta ma argomento di " +
+                "un'altra area non conta. I numeri del corpus non sono nel prompt: se non li leggi li stai inventando."
+        )
         appendLine("Consegnalo con lo strumento submit_full_program: la verifica e il salvataggio avvengono li.")
         appendLine()
         appendLine(KnowledgeCorpus.promptBlock())
@@ -269,6 +295,7 @@ class AiProgramGenerationService @Inject constructor(
 
         private const val SUBMIT_TOOL = "submit_full_program"
         private const val GENERATION_MAX_ITERATIONS = 8
+        private const val CONSULT_TOOL = "consult_invictus"
 
         /** Tetto complessivo del turno di generazione (include retry e piu iterazioni). */
         private const val GENERATION_TIMEOUT_MS = 6 * 60 * 1000L

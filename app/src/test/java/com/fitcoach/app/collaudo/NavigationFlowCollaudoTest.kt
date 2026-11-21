@@ -44,51 +44,69 @@ class NavigationFlowCollaudoTest {
         composeRule.onAllNodesWithContentDescription("Impostazioni")
             .fetchSemanticsNodes().isNotEmpty()
 
+    /**
+     * Attende che la Dashboard sia disegnata.
+     *
+     * `waitForIdle()` non basta: la destinazione iniziale si risolve in un
+     * `LaunchedEffect` che legge il profilo da Room su un altro dispatcher, e
+     * finche' `startDestination` e' null lo `Scaffold` non disegna nulla.
+     * Con la JVM fredda la query finisce prima del primo assert, con la JVM
+     * calda `waitForIdle` torna subito e il test legge una schermata ancora
+     * vuota: e' la ragione per cui questi test passavano da soli e fallivano
+     * nella suite.
+     */
+    private fun awaitDashboard() {
+        composeRule.waitUntil(timeoutMillis = 10_000) { dashboardVisible() }
+    }
+
+    /**
+     * Attende che la Dashboard sparisca.
+     *
+     * Senza attesa l'asserzione "non e' la Dashboard" sarebbe vera anche su una
+     * schermata ancora vuota: passerebbe senza verificare nulla.
+     */
+    private fun awaitLeftDashboard() {
+        composeRule.waitUntil(timeoutMillis = 10_000) { !dashboardVisible() }
+    }
+
     @Test
     fun `i tab della barra portano alla schermata giusta e mai solo al workout`() {
-        composeRule.waitForIdle()
-        assertThat(dashboardVisible()).isTrue()
+        awaitDashboard()
 
         // Tab Allenamento: si arriva ad Allenamento (l'ingranaggio della Dashboard sparisce).
         composeRule.onNodeWithText("Workout").performClick()
-        composeRule.waitForIdle()
-        assertThat(dashboardVisible()).isFalse()
+        awaitLeftDashboard()
 
         // Ritorno alla Dashboard: deve essere di nuovo la Dashboard, non una schermata vuota.
         composeRule.onNodeWithText("Home").performClick()
-        composeRule.waitForIdle()
-        assertThat(dashboardVisible()).isTrue()
+        awaitDashboard()
     }
 
     @Test
     fun `ogni tab apre la propria schermata`() {
-        composeRule.waitForIdle()
+        awaitDashboard()
 
-        val tabs = listOf("Piano", "Workout", "Progressi", "Coach")
+        val tabs = listOf("Piano", "Spesa", "Workout", "Progressi", "Coach")
         tabs.forEach { tab ->
             composeRule.onNodeWithText(tab).performClick()
-            composeRule.waitForIdle()
-            // Fuori dalla Dashboard l'ingranaggio non c'e.
-            assertThat(dashboardVisible()).isFalse()
+            awaitLeftDashboard()
             composeRule.onNodeWithText("Home").performClick()
-            composeRule.waitForIdle()
-            assertThat(dashboardVisible()).isTrue()
+            awaitDashboard()
         }
     }
 
     @Test
     fun `tornare alla dashboard dopo il workout non lascia la schermata vuota`() {
-        composeRule.waitForIdle()
+        awaitDashboard()
 
         composeRule.onNodeWithText("Workout").performClick()
-        composeRule.waitForIdle()
+        awaitLeftDashboard()
         composeRule.onNodeWithText("Progressi").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Home").performClick()
-        composeRule.waitForIdle()
+        awaitDashboard()
 
         // La Dashboard deve disegnare contenuto reale: l'ingranaggio + i tab.
-        assertThat(dashboardVisible()).isTrue()
         composeRule.onAllNodesWithText("Home").assertCountEquals(1)
     }
 }

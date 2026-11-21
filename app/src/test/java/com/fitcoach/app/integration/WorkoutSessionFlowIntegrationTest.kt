@@ -18,6 +18,7 @@ import com.fitcoach.app.domain.coach.AiProgramGenerationService
 import com.fitcoach.app.domain.coach.CoachOrchestrator
 import com.fitcoach.app.domain.coach.ProgramGenerationEngine
 import com.fitcoach.app.domain.coach.tools.CoachTool
+import com.fitcoach.app.domain.coach.tools.ConsultInvictusTool
 import com.fitcoach.app.domain.coach.tools.CoachToolRegistry
 import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
 import com.fitcoach.app.domain.model.AiProviderSettings
@@ -31,6 +32,7 @@ import com.fitcoach.app.domain.nutrition.FoodSeedData
 import com.fitcoach.app.domain.workout.ExerciseSeedData
 import com.fitcoach.app.domain.workout.ProgressiveOverloadEngine
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
+import com.fitcoach.app.support.GenerationScript
 import com.fitcoach.app.support.ScriptedApi
 import com.fitcoach.app.support.SimulatedAiPrograms
 import com.fitcoach.app.support.textResponse
@@ -113,7 +115,7 @@ class WorkoutSessionFlowIntegrationTest {
             WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek)
         )
         val api = ScriptedApi(
-            mutableListOf(
+            GenerationScript.consultationsThen(
                 toolCallResponse("submit_full_program", SimulatedAiPrograms.json(json, proposal, "WORKOUT")),
                 textResponse("Scheda generata.")
             )
@@ -123,7 +125,7 @@ class WorkoutSessionFlowIntegrationTest {
             nutritionRepository, workoutRepository, planVersionRepository, db, json
         )
         val service = AiProgramGenerationService(
-            CoachOrchestrator(AiClient(api, json), CoachToolRegistry(setOf(submitTool)), json),
+            CoachOrchestrator(AiClient(api, json), CoachToolRegistry(setOf(submitTool, ConsultInvictusTool())), json),
             chatRepository, SecureKeyStore(context), json, foodRepository, exerciseRepository
         )
         val result = service.generate(profile, ProgramGenerationEngine.Scope.WORKOUT)

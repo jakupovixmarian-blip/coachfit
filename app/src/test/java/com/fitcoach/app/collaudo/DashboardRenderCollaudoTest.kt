@@ -1,17 +1,15 @@
 package com.fitcoach.app.collaudo
 
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
-import com.fitcoach.app.MainActivity
 import com.fitcoach.app.ui.screens.dashboard.CarbDayType
 import com.fitcoach.app.ui.screens.dashboard.DashboardMeals
 import com.fitcoach.app.ui.screens.dashboard.DashboardUiState
@@ -46,8 +44,17 @@ import org.robolectric.annotation.GraphicsMode
 )
 class DashboardRenderCollaudoTest {
 
+    /**
+     * `createComposeRule()` e non `createAndroidComposeRule<MainActivity>()`.
+     *
+     * Questi test sostituiscono il contenuto per disegnare solo `DashboardContent`:
+     * con MainActivity come host, la NavHost reale partiva comunque e la sua
+     * lettura del profilo da Room correva contro la composizione del test. La
+     * Dashboard veniva quindi letta a volte prima che il contenuto di test fosse
+     * composto, e il test falliva nella suite ma non da solo.
+     */
     @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val composeRule = createComposeRule()
 
     private class Clicks {
         var nutrition = 0
@@ -95,7 +102,7 @@ class DashboardRenderCollaudoTest {
     )
 
     private fun render(state: DashboardUiState, clicks: Clicks) {
-        composeRule.activity.setContent {
+        composeRule.setContent {
             FitCoachTheme {
                 Surface(Modifier.fillMaxSize()) {
                     DashboardContent(

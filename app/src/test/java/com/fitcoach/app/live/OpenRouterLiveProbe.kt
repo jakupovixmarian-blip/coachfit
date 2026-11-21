@@ -181,6 +181,13 @@ class OpenRouterLiveProbe {
             (result as? AiProgramGenerationService.Result.Success)?.let {
                 println("=== STRUMENTI CHIAMATI (${it.toolTrace.size}): ${it.toolTrace}")
                 println("=== HA CONSULTATO INVICTUS: ${it.toolTrace.any { t -> t.contains("invictus") }}")
+                // Un secondo submit significa che il primo e' stato respinto dalla
+                // validazione: il motivo va letto, non dedotto dal conteggio.
+                it.toolResults.forEachIndexed { i, r ->
+                    val verdict = if (r.output.contains("\"ok\":true")) "OK" else "RESPINTO"
+                    println("--- tool[$i] ${r.name}: $verdict")
+                    if (verdict == "RESPINTO") println("    ${r.output.take(700)}")
+                }
             }
             val failure = (result as? AiProgramGenerationService.Result.Failure)?.message
             assertWithMessage("generazione reale fallita: $failure")

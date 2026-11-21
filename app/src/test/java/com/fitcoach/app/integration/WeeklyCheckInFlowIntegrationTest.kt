@@ -30,6 +30,7 @@ import com.fitcoach.app.domain.coach.tools.AnalyzeWeeklyCheckInTool
 import com.fitcoach.app.domain.coach.tools.AdjustCaloriesTool
 import com.fitcoach.app.domain.coach.tools.AdjustVolumeTool
 import com.fitcoach.app.domain.coach.tools.CoachTool
+import com.fitcoach.app.domain.coach.tools.ConsultInvictusTool
 import com.fitcoach.app.domain.coach.tools.CoachToolRegistry
 import com.fitcoach.app.domain.coach.tools.ProposeDeloadTool
 import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
@@ -153,7 +154,7 @@ class WeeklyCheckInFlowIntegrationTest {
             userRepository, foodRepository, exerciseRepository,
             nutritionRepository, workoutRepository, planVersionRepository, db, json
         )
-        val orchestrator = CoachOrchestrator(AiClient(api, json), CoachToolRegistry(setOf(submitTool)), json)
+        val orchestrator = CoachOrchestrator(AiClient(api, json), CoachToolRegistry(setOf(submitTool, ConsultInvictusTool())), json)
         val aiGeneration = AiProgramGenerationService(
             orchestrator, chatRepository, SecureKeyStore(context), json, foodRepository, exerciseRepository
         )

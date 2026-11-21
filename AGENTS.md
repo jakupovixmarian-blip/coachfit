@@ -631,6 +631,27 @@ Attenzione al parsing dei `.kt` generati: uno statement conteneva `"grassi):"` e
 parser che bilancia le parentesi senza ignorare le stringhe perde la regola in silenzio.
 Contare le regole prima e dopo ogni fusione, e confrontare gli statement, non solo i totali.
 
-Il corpus **non e' ancora la fonte dei parametri**: nella prova live
-`toolTrace=[submit_full_program]`, zero consultazioni. Il prompt lo suggerisce in prosa, e
-la prosa si ignora quando c'e' uno strumento obbligatorio in concorrenza.
+## Il corpus va consultato per codice, non chiesto in prosa
+
+Per tre prove live `toolTrace=[submit_full_program]`: zero consultazioni, con il prompt che
+lo chiedeva in prosa. La prosa perde contro uno strumento obbligatorio in concorrenza, quindi
+il prerequisito ora e' imposto dall'orchestratore (`Prerequisite.consultations`).
+
+Tre vincoli che il codice rispetta, e che e' facile rompere:
+
+- **Il blocco e' PRIMA dell'esecuzione.** `submit_full_program` salva quando risponde `ok`:
+  un controllo dopo la chiamata arriverebbe a database gia' scritto. Il rifiuto sostituisce
+  l'output e rimanda il modello al prerequisito.
+- **La forzatura e' del prerequisito, non del target.** `escalateForce` forzava `submit`
+  quando mancava la consegna: con un prerequisito inevaso il modello non poteva piu' chiamare
+  `consult_invictus` e il turno falliva. Si forza lo strumento mancante.
+- **"Chiamato" non basta.** `consult_invictus` risponde `ok=true` anche con zero risultati, e
+  `area=nutrizione&argomento=petto` passa il controllo dell'area senza restituire nulla sulla
+  nutrizione. Contano solo le chiamate con contenuto e argomento coerente all'area.
+
+I fixture dei test devono consultare come farebbe un modello reale: `GenerationScript.consultations()`
+esiste per questo. Un fixture che consegna subito viene bloccato, e il test fallisce per un
+difetto del fixture, non del codice.
+
+Effetto misurato sulla prova live: 4 consultazioni, `HA CONSULTATO INVICTUS: true`, 76-90s
+(prima 176s senza consultazioni: il modello non perdeva tempo a leggere).

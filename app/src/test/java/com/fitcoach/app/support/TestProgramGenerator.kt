@@ -17,6 +17,7 @@ import com.fitcoach.app.domain.coach.CoachOrchestrator
 import com.fitcoach.app.domain.coach.ProgramGenerationEngine
 import com.fitcoach.app.domain.coach.tools.CoachTool
 import com.fitcoach.app.domain.coach.tools.CoachToolRegistry
+import com.fitcoach.app.domain.coach.tools.ConsultInvictusTool
 import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.nutrition.FoodFilter
@@ -51,8 +52,13 @@ object TestProgramGenerator {
         val foods = FoodFilter.allowedFoods(foodRepository.getAll(), profile)
         val exercises = exerciseRepository.getAll()
         val proposal = SimulatedAiPrograms.proposal(profile, foods, exercises, trainingDays)
+        // Il fixture deve imitare il modello REALE: la generazione esige che la
+        // metodologia sia consultata prima della consegna (Prerequisite.consultations),
+        // quindi le due consultazioni fanno parte dello script, non sono un extra.
         val api = ScriptedApi(
             mutableListOf(
+                toolCallResponse("consult_invictus", """{"area":"allenamento"}"""),
+                toolCallResponse("consult_invictus", """{"area":"nutrizione"}"""),
                 toolCallResponse("submit_full_program", SimulatedAiPrograms.json(json, proposal, scope.name)),
                 textResponse("Programma generato e verificato.")
             )
@@ -62,7 +68,11 @@ object TestProgramGenerator {
             nutritionRepository, workoutRepository, planVersionRepository, db, json
         )
         val service = AiProgramGenerationService(
-            CoachOrchestrator(AiClient(api, json), CoachToolRegistry(setOf(submitTool)), json),
+            CoachOrchestrator(
+                AiClient(api, json),
+                CoachToolRegistry(setOf(submitTool, ConsultInvictusTool())),
+                json
+            ),
             chatRepository, SecureKeyStore(context), json, foodRepository, exerciseRepository
         )
         return service.generate(profile, scope)

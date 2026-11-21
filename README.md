@@ -415,6 +415,14 @@ L'interfaccia è lo strumento `consult_invictus`, sullo stesso modello di `list_
 `list_exercises`: il modello vede nome, descrizione e schema, e chiede solo la parte che
 gli serve, quando gli serve.
 
+La consultazione non è affidata alla buona volontà del modello: è un **prerequisito
+imposto dall'orchestratore**. Per tre prove live il modello ha consegnato senza consultare
+(`toolTrace=[submit_full_program]`), perché una richiesta in prosa perde contro uno
+strumento obbligatorio in concorrenza. `submit_full_program` viene ora bloccato — prima
+dell'esecuzione, non dopo, perché il salvataggio avviene dentro la chiamata — finché
+`consult_invictus` non ha restituito regole per **entrambe** le aree, `allenamento` e
+`nutrizione`. Una chiamata con l'area giusta ma un argomento di un'altra area non conta.
+
 Il corpus è **unico**: `InvictusKnowledge`. Il vecchio `InvictusCorpus` (159 regole, 15
 topic) è stato fuso dentro e la sua sorgente — `/tmp/claims_final.json` — non era più
 riproducibile, quindi le 55 regole che non esistevano altrove vivono in

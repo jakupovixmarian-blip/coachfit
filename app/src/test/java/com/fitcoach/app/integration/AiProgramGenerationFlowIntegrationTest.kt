@@ -19,6 +19,7 @@ import com.fitcoach.app.domain.coach.AiProgramGenerationService
 import com.fitcoach.app.domain.coach.ProgramGenerationEngine
 import com.fitcoach.app.domain.coach.CoachOrchestrator
 import com.fitcoach.app.domain.coach.tools.CoachTool
+import com.fitcoach.app.domain.coach.tools.ConsultInvictusTool
 import com.fitcoach.app.domain.coach.tools.CoachToolRegistry
 import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
 import com.fitcoach.app.domain.model.AiProvider
@@ -32,6 +33,7 @@ import com.fitcoach.app.domain.nutrition.FoodSeedData
 import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
 import com.fitcoach.app.domain.workout.ExerciseSeedData
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
+import com.fitcoach.app.support.GenerationScript
 import com.fitcoach.app.support.ScriptedApi
 import com.fitcoach.app.support.SimulatedAiPrograms
 import com.fitcoach.app.support.textResponse
@@ -112,7 +114,7 @@ class AiProgramGenerationFlowIntegrationTest {
             userRepository, foodRepository, exerciseRepository,
             nutritionRepository, workoutRepository, planVersionRepository, db, json
         )
-        val registry = CoachToolRegistry(setOf(submitTool))
+        val registry = CoachToolRegistry(setOf(submitTool, ConsultInvictusTool()))
         val orchestrator = CoachOrchestrator(AiClient(api, json), registry, json)
         return AiProgramGenerationService(
             orchestrator, chatRepository, SecureKeyStore(context), json, foodRepository, exerciseRepository
@@ -132,7 +134,7 @@ class AiProgramGenerationFlowIntegrationTest {
     @Test
     fun `generazione iniziale passa dal motore AI unico e persiste piano e scheda`() = runTest {
         val api = ScriptedApi(
-            mutableListOf(
+            GenerationScript.consultationsThen(
                 toolCallResponse("submit_full_program", proposal()),
                 textResponse("Programma generato e salvato.")
             )
@@ -167,7 +169,7 @@ class AiProgramGenerationFlowIntegrationTest {
             )
         )
         val api = ScriptedApi(
-            mutableListOf(
+            GenerationScript.consultationsThen(
                 toolCallResponse("submit_full_program", SimulatedAiPrograms.json(json, invalid)),
                 textResponse("Devo correggere il programma.")
             )
@@ -203,7 +205,7 @@ class AiProgramGenerationFlowIntegrationTest {
             )
         )
         val api = ScriptedApi(
-            mutableListOf(
+            GenerationScript.consultationsThen(
                 toolCallResponse("submit_full_program", SimulatedAiPrograms.json(json, halved)),
                 textResponse("Programma generato.")
             )
@@ -225,7 +227,7 @@ class AiProgramGenerationFlowIntegrationTest {
     @Test
     fun `ambito nutrizione rigenera solo il piano alimentare`() = runTest {
         val api = ScriptedApi(
-            mutableListOf(
+            GenerationScript.consultationsThen(
                 toolCallResponse("submit_full_program", proposal(scope = "NUTRITION")),
                 textResponse("Piano alimentare aggiornato.")
             )
@@ -240,7 +242,7 @@ class AiProgramGenerationFlowIntegrationTest {
     @Test
     fun `ambito allenamento rigenera solo la scheda`() = runTest {
         val api = ScriptedApi(
-            mutableListOf(
+            GenerationScript.consultationsThen(
                 toolCallResponse("submit_full_program", proposal(scope = "WORKOUT")),
                 textResponse("Scheda aggiornata.")
             )

@@ -19,6 +19,7 @@ import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
 import com.fitcoach.app.domain.coach.AiProgramGenerationService
 import com.fitcoach.app.domain.coach.CoachOrchestrator
 import com.fitcoach.app.domain.coach.tools.CoachTool
+import com.fitcoach.app.domain.coach.tools.ConsultInvictusTool
 import com.fitcoach.app.domain.coach.tools.CoachToolRegistry
 import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
 import com.fitcoach.app.domain.model.AiProvider
@@ -29,6 +30,7 @@ import com.fitcoach.app.domain.nutrition.FoodSeedData
 import com.fitcoach.app.domain.nutrition.MealSlots
 import com.fitcoach.app.domain.workout.ExerciseSeedData
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
+import com.fitcoach.app.support.GenerationScript
 import com.fitcoach.app.support.ScriptedApi
 import com.fitcoach.app.support.SimulatedAiPrograms
 import com.fitcoach.app.support.textResponse
@@ -130,7 +132,7 @@ class FullAnamnesisToProgramIntegrationTest {
             nutritionRepository, workoutRepository, planVersionRepository, db, json
         )
         val orchestrator = CoachOrchestrator(
-            AiClient(api, json), CoachToolRegistry(setOf(submitTool)), json
+            AiClient(api, json), CoachToolRegistry(setOf(submitTool, ConsultInvictusTool())), json
         )
         return AiProgramGenerationService(
             orchestrator, chatRepository, SecureKeyStore(context), json, foodRepository, exerciseRepository
@@ -153,7 +155,7 @@ class FullAnamnesisToProgramIntegrationTest {
         userRepository.save(profile)
 
         val api = ScriptedApi(
-            mutableListOf(
+            GenerationScript.consultationsThen(
                 toolCallResponse("submit_full_program", proposalFor(profile)),
                 textResponse("Programma generato.")
             )
@@ -232,7 +234,7 @@ class FullAnamnesisToProgramIntegrationTest {
             )
         )
         val api = ScriptedApi(
-            mutableListOf(
+            GenerationScript.consultationsThen(
                 toolCallResponse("submit_full_program", SimulatedAiPrograms.json(json, wrong)),
                 textResponse("Correggo il numero di pasti.")
             )

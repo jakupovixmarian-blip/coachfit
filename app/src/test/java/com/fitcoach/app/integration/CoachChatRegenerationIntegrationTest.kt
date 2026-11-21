@@ -26,6 +26,7 @@ import com.fitcoach.app.domain.coach.CoachOrchestrator
 import com.fitcoach.app.domain.coach.CoachService
 import com.fitcoach.app.domain.coach.ProgramGenerationEngine
 import com.fitcoach.app.domain.coach.tools.CoachTool
+import com.fitcoach.app.domain.coach.tools.ConsultInvictusTool
 import com.fitcoach.app.domain.coach.tools.CoachToolRegistry
 import com.fitcoach.app.domain.coach.tools.ProposeRegeneratePlanTool
 import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
@@ -40,6 +41,7 @@ import com.fitcoach.app.domain.nutrition.FoodSeedData
 import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
 import com.fitcoach.app.domain.workout.ExerciseSeedData
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
+import com.fitcoach.app.support.GenerationScript
 import com.fitcoach.app.support.ScriptedApi
 import com.fitcoach.app.support.SimulatedAiPrograms
 import com.fitcoach.app.support.textResponse
@@ -131,7 +133,7 @@ class CoachChatRegenerationIntegrationTest {
             userRepository, foodRepository, exerciseRepository,
             nutritionRepository, workoutRepository, planVersionRepository, db, json
         )
-        val registry = CoachToolRegistry(setOf(submitTool))
+        val registry = CoachToolRegistry(setOf(submitTool, ConsultInvictusTool()))
         val orchestrator = CoachOrchestrator(AiClient(api, json), registry, json)
         return AiProgramGenerationService(
             orchestrator, chatRepository, SecureKeyStore(context), json, foodRepository, exerciseRepository
@@ -223,7 +225,7 @@ class CoachChatRegenerationIntegrationTest {
 
     @Test
     fun `conferma rigenera solo la scheda quando l'ambito e WORKOUT`() = runTest {
-        assertThat(coordinator(ScriptedApi(mutableListOf(
+        assertThat(coordinator(ScriptedApi(GenerationScript.consultationsThen(
             toolCallResponse("submit_full_program", proposal("BOTH")),
             textResponse("Programma generato.")
         ))).generate(profile))
@@ -233,7 +235,7 @@ class CoachChatRegenerationIntegrationTest {
 
         val changeId = askCoachToRegenerate("WORKOUT")
         val exec = buildExecutor(
-            ScriptedApi(mutableListOf(
+            ScriptedApi(GenerationScript.consultationsThen(
                 toolCallResponse("submit_full_program", proposal("WORKOUT")),
                 textResponse("Scheda rigenerata.")
             ))
@@ -247,7 +249,7 @@ class CoachChatRegenerationIntegrationTest {
 
     @Test
     fun `conferma rigenera solo la nutrizione quando l'ambito e NUTRITION`() = runTest {
-        assertThat(coordinator(ScriptedApi(mutableListOf(
+        assertThat(coordinator(ScriptedApi(GenerationScript.consultationsThen(
             toolCallResponse("submit_full_program", proposal("BOTH")),
             textResponse("Programma generato.")
         ))).generate(profile))
@@ -257,7 +259,7 @@ class CoachChatRegenerationIntegrationTest {
 
         val changeId = askCoachToRegenerate("NUTRITION")
         val exec = buildExecutor(
-            ScriptedApi(mutableListOf(
+            ScriptedApi(GenerationScript.consultationsThen(
                 toolCallResponse("submit_full_program", proposal("NUTRITION")),
                 textResponse("Piano alimentare rigenerato.")
             ))
@@ -271,7 +273,7 @@ class CoachChatRegenerationIntegrationTest {
 
     @Test
     fun `ambito BOTH rigenera entrambe le parti`() = runTest {
-        coordinator(ScriptedApi(mutableListOf(
+        coordinator(ScriptedApi(GenerationScript.consultationsThen(
             toolCallResponse("submit_full_program", proposal("BOTH")),
             textResponse("Programma generato.")
         ))).generate(profile)
@@ -280,7 +282,7 @@ class CoachChatRegenerationIntegrationTest {
 
         val changeId = askCoachToRegenerate("BOTH")
         val exec = buildExecutor(
-            ScriptedApi(mutableListOf(
+            ScriptedApi(GenerationScript.consultationsThen(
                 toolCallResponse("submit_full_program", proposal("BOTH")),
                 textResponse("Programma rigenerato.")
             ))
@@ -293,7 +295,7 @@ class CoachChatRegenerationIntegrationTest {
 
     @Test
     fun `il rollback riattiva i piani precedenti dopo una rigenerazione`() = runTest {
-        coordinator(ScriptedApi(mutableListOf(
+        coordinator(ScriptedApi(GenerationScript.consultationsThen(
             toolCallResponse("submit_full_program", proposal("BOTH")),
             textResponse("Programma generato.")
         ))).generate(profile)
@@ -302,7 +304,7 @@ class CoachChatRegenerationIntegrationTest {
 
         val changeId = askCoachToRegenerate("BOTH")
         val exec = buildExecutor(
-            ScriptedApi(mutableListOf(
+            ScriptedApi(GenerationScript.consultationsThen(
                 toolCallResponse("submit_full_program", proposal("BOTH")),
                 textResponse("Programma rigenerato.")
             ))
@@ -320,7 +322,7 @@ class CoachChatRegenerationIntegrationTest {
 
     @Test
     fun `provider irraggiungibile non lascia piani incoerenti`() = runTest {
-        coordinator(ScriptedApi(mutableListOf(
+        coordinator(ScriptedApi(GenerationScript.consultationsThen(
             toolCallResponse("submit_full_program", proposal("BOTH")),
             textResponse("Programma generato.")
         ))).generate(profile)
@@ -340,7 +342,7 @@ class CoachChatRegenerationIntegrationTest {
 
     @Test
     fun `una proposta non valida dell'AI viene bloccata e non cambia il programma`() = runTest {
-        coordinator(ScriptedApi(mutableListOf(
+        coordinator(ScriptedApi(GenerationScript.consultationsThen(
             toolCallResponse("submit_full_program", proposal("BOTH")),
             textResponse("Programma generato.")
         ))).generate(profile)
@@ -364,7 +366,7 @@ class CoachChatRegenerationIntegrationTest {
 
         val changeId = askCoachToRegenerate("WORKOUT")
         val exec = buildExecutor(
-            ScriptedApi(mutableListOf(
+            ScriptedApi(GenerationScript.consultationsThen(
                 toolCallResponse("submit_full_program", SimulatedAiPrograms.json(json, invalid, "WORKOUT")),
                 textResponse("Devo correggere la scheda.")
             ))

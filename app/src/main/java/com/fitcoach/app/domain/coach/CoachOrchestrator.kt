@@ -12,6 +12,7 @@ import com.fitcoach.app.data.remote.toolResultMessage
 import com.fitcoach.app.domain.coach.tools.CoachToolRegistry
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,6 +29,56 @@ data class CoachTurnResult(
 
 /** Risultato grezzo dell'esecuzione di uno strumento durante il turno agentico. */
 data class CoachToolResult(val name: String, val output: String)
+
+/** Chiamata di prerequisito andata a buon fine, con i suoi argomenti. */
+data class SatisfiedPrerequisite(
+    val toolName: String,
+    val arguments: JsonObject?,
+    val output: String
+)
+
+/**
+ * Condizione che deve valere PRIMA che lo strumento obbligatorio venga eseguito.
+ *
+ * Non basta "lo strumento e' stato chiamato": `consult_invictus` senza argomento
+ * restituisce una regola per categoria e lascerebbe la scheda senza i numeri che
+ * servono. [isSatisfiedBy] decide sulla base delle chiamate realmente avvenute.
+ */
+class Prerequisite(
+    val toolName: String,
+    val description: String,
+    private val predicate: (List<SatisfiedPrerequisite>) -> Boolean
+) {
+    fun isSatisfiedBy(calls: List<SatisfiedPrerequisite>): Boolean = predicate(calls)
+
+    companion object {
+        /**
+         * Almeno una consultazione per OGNI area indicata, con un argomento che
+         * riguardi quell'area.
+         *
+         * La sola area non basta: chiedere `area=nutrizione&argomento=petto` passa
+         * il controllo dell'area ma non restituisce nulla di utile sulla
+         * nutrizione, e il modello costruirebbe i macro senza averli letti.
+         */
+        fun consultations(toolName: String, areas: List<String>, description: String): Prerequisite =
+            Prerequisite(toolName, description) { calls ->
+                areas.all { area ->
+                    calls.any { c ->
+                        c.toolName == toolName &&
+                            c.arguments?.let { argArea(it) } == area &&
+                            outputHasArea(c.output, area)
+                    }
+                }
+            }
+
+        private fun argArea(arguments: JsonObject): String? =
+            (arguments["area"] as? kotlinx.serialization.json.JsonPrimitive)
+                ?.content?.trim()?.lowercase()
+
+        private fun outputHasArea(output: String, area: String): Boolean =
+            output.contains("\"area\":\"$area\"") || output.contains("\"area\": \"$area\"")
+    }
+}
 
 /**
  * Orchestratore agentico del coach: l'AI e l'unica autorita decisionale.
@@ -77,6 +128,20 @@ class CoachOrchestrator @Inject constructor(
          */
         requireTool: String? = null,
         /**
+         * Strumenti che devono essere stati chiamati con successo PRIMA che
+         * [requireTool] venga eseguito, con la descrizione di cosa forniscono.
+         *
+         * Serve alla generazione: `submit_full_program` salva il programma quando
+         * risponde ok, quindi un controllo fatto dopo l'esecuzione arriverebbe
+         * troppo tardi. Se un prerequisito manca, la consegna non viene eseguita
+         * e il modello riceve l'istruzione di chiamare prima il prerequisito.
+         *
+         * La presenza nel prompt non basta: `consult_invictus` era citato in prosa
+         * e il modello lo ignorava in 3 prove live su 3, perche' uno strumento
+         * obbligatorio in concorrenza vince sempre su uno suggerito.
+         */
+        requiredPrerequisites: List<Prerequisite> = emptyList(),
+        /**
          * Limite complessivo del turno, in millisecondi. Il ciclo puo fare fino a
          * [maxIterations] richieste, ognuna con retry e readTimeout di 90s: senza
          * un tetto globale la schermata puo restare su "Generazione..." per
@@ -112,6 +177,8 @@ class CoachOrchestrator @Inject constructor(
         val toolResults = mutableListOf<CoachToolResult>()
         var lastText = ""
         var requiredToolDelivered = false
+        /** Chiamate di prerequisito andate a buon fine, con argomenti e output. */
+        val satisfiedCalls = mutableListOf<SatisfiedPrerequisite>()
         /** Quante volte il modello ha risposto in prosa senza consegnare lo strumento obbligatorio. */
         var proseMisses = 0
         /** Quante volte lo strumento obbligatorio e stato chiamato ma respinto dalla validazione. */
@@ -155,19 +222,47 @@ class CoachOrchestrator @Inject constructor(
                 content = result.content.takeIf { it.isNotBlank() }
             )
             result.toolCalls.forEach { call ->
-                val args = parseArgs(call.function.arguments)
-                // Argomenti non parsabili = chiamata troncata (finish_reason
-                // "length") o malformata. Eseguire lo strumento con un oggetto
-                // vuoto produrrebbe una diagnosi fuorviante ("giorno 0 kcal
-                // errata") su un payload che il modello non ha mai completato.
-                val output = if (args == null) {
-                    """{"ok":false,"error":"Argomenti della chiamata non validi o troncati. """ +
-                        """Riduci la dimensione del payload e richiama lo strumento."}"""
+                // Prerequisito non soddisfatto: la chiamata NON viene eseguita.
+                // submit_full_program salva quando risponde ok, quindi rifiutarla
+                // dopo l'esecuzione sarebbe troppo tardi: il programma sarebbe
+                // gia' sul database. Si devia il modello sullo strumento mancante.
+                val unmet = if (call.function.name == requireTool) {
+                    requiredPrerequisites.firstOrNull { !it.isSatisfiedBy(satisfiedCalls) }
                 } else {
-                    toolRegistry.execute(call.function.name, args)
+                    null
+                }
+                val output = if (unmet != null) {
+                    """{"ok":false,"error":"Prima di consegnare devi consultare la metodologia con """ +
+                        """'${unmet.toolName}': ${unmet.description} Chiama '${unmet.toolName}' adesso """ +
+                        """(una o piu' volte, per ogni area che ti serve), poi richiama """ +
+                        """${call.function.name} con l'oggetto completo."}"""
+                } else {
+                    val args = parseArgs(call.function.arguments)
+                    // Argomenti non parsabili = chiamata troncata (finish_reason
+                    // "length") o malformata. Eseguire lo strumento con un oggetto
+                    // vuoto produrrebbe una diagnosi fuorviante ("giorno 0 kcal
+                    // errata") su un payload che il modello non ha mai completato.
+                    if (args == null) {
+                        """{"ok":false,"error":"Argomenti della chiamata non validi o troncati. """ +
+                            """Riduci la dimensione del payload e richiama lo strumento."}"""
+                    } else {
+                        toolRegistry.execute(call.function.name, args)
+                    }
                 }
                 trace += call.function.name
                 toolResults += CoachToolResult(call.function.name, output)
+                // Un prerequisito conta come soddisfatto solo se ha restituito
+                // contenuto: un ok=true con zero risultati non e' una consultazione.
+                if (requiredPrerequisites.any { it.toolName == call.function.name } &&
+                    outputReportsOk(output) &&
+                    outputDeliversContent(output)
+                ) {
+                    satisfiedCalls += SatisfiedPrerequisite(
+                        toolName = call.function.name,
+                        arguments = parseArgs(call.function.arguments),
+                        output = output
+                    )
+                }
                 // Conta come consegnato SOLO se lo strumento obbligatorio ha accettato
                 // (ok=true). Se la proposta viene respinta (ok=false) la scelta forzata
                 // resta attiva e il modello riceve la diagnosi per correggersi.
@@ -210,12 +305,23 @@ class CoachOrchestrator @Inject constructor(
             // ragionamento in modo globale.
             val thinkingCapable = AiParameterPolicy.supportsThinkingMode(config.provider)
             val mustDeliver = requireTool != null && !requiredToolDelivered
+            val missingPrerequisite =
+                requiredPrerequisites.firstOrNull { !it.isSatisfiedBy(satisfiedCalls) }?.toolName
             // Oltre alla risposta in prosa, anche una consegna ripetutamente
             // respinta dalla validazione indica che il modello non riesce a
             // correggersi da solo: dopo due rifiuti si forza la chiamata.
             val escalateForce = mustDeliver &&
                 (!thinkingCapable || proseMisses >= 1 || rejectedDeliveries >= 2)
-            val forcedChoice = if (escalateForce) ToolChoice.force(requireTool) else ToolChoice.auto
+            // Se manca un prerequisito si forza QUELLO, non lo strumento finale:
+            // forzare `submit` quando il modello non ha ancora consultato lo
+            // rendeva impossibile soddisfare il prerequisito, e il turno finiva
+            // in fallimento senza che il modello avesse modo di correggersi.
+            val forcedChoice = when {
+                escalateForce && missingPrerequisite != null ->
+                    ToolChoice.force(missingPrerequisite)
+                escalateForce -> ToolChoice.force(requireTool)
+                else -> ToolChoice.auto
+            }
             // Il budget residuo limita la SINGOLA chiamata, non solo il ciclo:
             // senza questo un provider che non risponde mai lascia la schermata
             // su "Generazione..." per sempre, perche il controllo del deadline
@@ -353,6 +459,21 @@ class CoachOrchestrator @Inject constructor(
     private fun outputReportsOk(output: String): Boolean = runCatching {
         val obj = json.parseToJsonElement(output) as? JsonObject ?: return false
         (obj["ok"] as? kotlinx.serialization.json.JsonPrimitive)?.content == "true"
+    }.getOrDefault(false)
+
+    /**
+     * Vero se lo strumento ha restituito contenuto utile, non solo `ok=true`.
+     *
+     * `consult_invictus` risponde ok anche quando l'argomento non produce nulla:
+     * contare quella chiamata come consultazione permetterebbe al modello di
+     * soddisfare il prerequisito con una ricerca vuota.
+     */
+    private fun outputDeliversContent(output: String): Boolean = runCatching {
+        val obj = json.parseToJsonElement(output) as? JsonObject ?: return false
+        val counts = listOf("regole", "tecniche", "esercizi").mapNotNull { key ->
+            (obj[key] as? JsonArray)?.size
+        }
+        counts.isNotEmpty() && counts.any { it > 0 }
     }.getOrDefault(false)
 
     private fun extractChangeId(output: String): Long? =
