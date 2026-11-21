@@ -285,6 +285,15 @@ class AiProgramGenerationService @Inject constructor(
                list_exercises, compute_energy_targets, compute_carb_cycling, compute_weekly_volume,
                compute_portion, validate_nutrition_day, validate_workout_plan,
                get_nutrition_targets, solve_meal_portions).
+
+            1b. La metodologia di Project InVictus sta in consult_invictus, non nel tuo contesto.
+               Interrogalo PRIMA di decidere i parametri strutturali, non dopo: area
+               "allenamento" per split, frequenza, volume settimanale, RIR, recuperi,
+               progressione, periodizzazione, deload, tecniche; area "nutrizione" per
+               proteine, carboidrati, grassi, fibre, timing, ricariche, numero di pasti.
+               Ogni regola torna con un numero e la fonte: usa quei numeri invece di
+               stimarli. Cerca per parametro (argomento="volume", "proteine", "deload"),
+               non per parola generica.
             2. Costruisci 7 giorni nutrizionali con carb cycling (HIGH nei giorni piu intensi, MEDIUM,
                LOW nei giorni di riposo) e una scheda periodizzata con esattamente i giorni dichiarati.
             3. Per la nutrizione: consulta get_nutrition_targets, poi per OGNI giorno chiama

@@ -17,6 +17,7 @@ import com.fitcoach.app.domain.model.Sex
 import com.fitcoach.app.domain.model.SplitType
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.model.WorkoutDay
+import com.fitcoach.app.domain.nutrition.BreakfastConstraint
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.CatalogNameResolver
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
@@ -109,8 +110,6 @@ object ProgramGenerationEngine {
         trainingDays: List<Int>
     ): ValidatedNutrition? {
         if (trainingDays.size != profile.trainingDaysPerWeek || trainingDays.any { it !in 0..6 }) return null
-        if (proposal.calendar.workoutDayIndices.distinct().sorted() != trainingDays) return null
-        if (proposal.calendar.restDayIndices.distinct().sorted() != (0..6).filterNot { it in trainingDays }) return null
         if (proposal.nutrition.days.map { it.dayIndex }.toSet() != (0..6).toSet()) return null
 
         val cyclingApplied = CarbCyclingEngine.shouldApplyCarbCycling(profile)
@@ -137,6 +136,13 @@ object ProgramGenerationEngine {
                     // un nome tollerante, il salvataggio non deve rifiutarlo.
                     val food = CatalogNameResolver.resolveFood(aiEntry.foodName, foods)
                         ?: return null
+                    // Il vincolo dolce/salato era verificato solo dalla
+                    // diagnostica: il piano veniva salvato con albume a
+                    // colazione pur avendo scelto "dolce".
+                    if (BreakfastConstraint.violations(
+                            profile.breakfastPreference, slot, listOf(food)
+                        ).isNotEmpty()
+                    ) return null
                     val factor = aiEntry.grams / 100.0
                     MealEntry(
                         foodItemId = food.id,

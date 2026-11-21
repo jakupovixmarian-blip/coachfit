@@ -21,7 +21,33 @@ def wrap(s, ind="                ", width=88):
     if cur: lines.append(cur)
     return (" +\n" + ind).join(k(l + " ") for l in lines)
 
+def _primary_kind(rule):
+    """Meta-analisi, revisione sistematica o studio singolo, dal titolo."""
+    t = (rule.get("articleTitle") or "").lower()
+    if "meta-analysis" in t or "meta analysis" in t or "network meta" in t:
+        return "SYSTEMATIC_REVIEW"
+    if "systematic review" in t:
+        return "SYSTEMATIC_REVIEW"
+    return "INDIVIDUAL_STUDY"
+
+
 data = json.load(open("/tmp/rules_by_category.json"))
+
+# Le regole da letteratura primaria colmano i parametri che le fonti divulgative
+# coprono male: deload, progressione, volume. Restano distinguibili nel campo
+# kind: chi legge una regola deve poter vedere se il numero viene da una
+# meta-analisi o da un articolo divulgativo.
+try:
+    with open("/tmp/primary_rules.json") as f:
+        _primary = json.load(f)
+except FileNotFoundError:
+    _primary = {}
+for _code, _extra in _primary.items():
+    if _code not in data:
+        continue
+    for _r in _extra:
+        _r["kind"] = _primary_kind(_r)
+    data[_code].extend(_extra)
 
 enum_lines = []
 for code, (area, label) in taxonomy.ALL.items():
@@ -38,7 +64,8 @@ for code, (area, label) in taxonomy.ALL.items():
             f"            statement =\n                {wrap(r['statement'])},\n"
             f"            articleTitle = {k(r['articleTitle'])},\n"
             f"            url = {k(r['url'])},\n"
-            f"            publishedDate = {k(r['publishedDate'])}\n"
+            f"            publishedDate = {k(r['publishedDate'])},\n"
+            f"            kind = SourceKind.{r.get('kind', 'DIVULGATIVE')}\n"
             f"        )"
         )
 

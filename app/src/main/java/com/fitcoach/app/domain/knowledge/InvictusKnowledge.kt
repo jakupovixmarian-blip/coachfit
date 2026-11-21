@@ -93,7 +93,8 @@ object InvictusKnowledge {
                 "a settimana (18 serie). ",
             articleTitle = "Scheda pettorali in palestra",
             url = "https://www.projectinvictus.it/scheda-pettorali/",
-            publishedDate = "2026-07-07"
+            publishedDate = "2026-07-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SPLIT,
@@ -102,7 +103,8 @@ object InvictusKnowledge {
                 "– 3 mesi in monofrequenza, con l’obiettivo di cambiare gli stimoli allenanti. ",
             articleTitle = "Monofrequenza o multifrequenza?",
             url = "https://www.projectinvictus.it/monofrequenza-o-multifrequenza/",
-            publishedDate = "2026-02-26"
+            publishedDate = "2026-02-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SPLIT,
@@ -111,7 +113,8 @@ object InvictusKnowledge {
                 "settimana . ",
             articleTitle = "Monofrequenza o multifrequenza?",
             url = "https://www.projectinvictus.it/monofrequenza-o-multifrequenza/",
-            publishedDate = "2026-02-26"
+            publishedDate = "2026-02-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SPLIT,
@@ -120,7 +123,8 @@ object InvictusKnowledge {
                 "settimana , invece che una sola volta come succede se ti alleni in monofrequenza . ",
             articleTitle = "Allenamento in multifrequenza: 5 schede di allenamento",
             url = "https://www.projectinvictus.it/allenamento-in-multifrequenza/",
-            publishedDate = "2024-04-01"
+            publishedDate = "2024-04-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SPLIT,
@@ -129,7 +133,8 @@ object InvictusKnowledge {
                 "muscolare singolarmente, allenandosi 5 – 6 giorni a settimana. ",
             articleTitle = "Gruppi muscolari: quali sono e come allenarli in palestra",
             url = "https://www.projectinvictus.it/gruppi-muscolari/",
-            publishedDate = "2024-01-17"
+            publishedDate = "2024-01-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SPLIT,
@@ -139,7 +144,8 @@ object InvictusKnowledge {
                 "quanto ci saranno sempre persone cresciute con un modo o l’altro. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SPLIT,
@@ -148,7 +154,8 @@ object InvictusKnowledge {
                 "stessa settimana, più facilmente può sentire il bisogno di staccare la spina. ",
             articleTitle = "Programmare la fase di scarico",
             url = "https://www.projectinvictus.it/programmare-fase-scarico/",
-            publishedDate = "2017-02-16"
+            publishedDate = "2017-02-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -157,7 +164,8 @@ object InvictusKnowledge {
                 "a settimana (18 serie). ",
             articleTitle = "Scheda pettorali in palestra",
             url = "https://www.projectinvictus.it/scheda-pettorali/",
-            publishedDate = "2026-07-07"
+            publishedDate = "2026-07-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -166,7 +174,8 @@ object InvictusKnowledge {
                 "– 3 mesi in monofrequenza, con l’obiettivo di cambiare gli stimoli allenanti. ",
             articleTitle = "Monofrequenza o multifrequenza?",
             url = "https://www.projectinvictus.it/monofrequenza-o-multifrequenza/",
-            publishedDate = "2026-02-26"
+            publishedDate = "2026-02-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -175,7 +184,8 @@ object InvictusKnowledge {
                 "settimana . ",
             articleTitle = "Monofrequenza o multifrequenza?",
             url = "https://www.projectinvictus.it/monofrequenza-o-multifrequenza/",
-            publishedDate = "2026-02-26"
+            publishedDate = "2026-02-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -184,7 +194,8 @@ object InvictusKnowledge {
                 "comunque, questo ci porterebbe a dover sostenere sedute più pesanti. ",
             articleTitle = "Quante volte a settimana andare in palestra?",
             url = "https://www.projectinvictus.it/quante-volte-andare-in-palestra/",
-            publishedDate = "2026-02-20"
+            publishedDate = "2026-02-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -194,7 +205,8 @@ object InvictusKnowledge {
                 "volta a settimana. ",
             articleTitle = "Quante volte a settimana andare in palestra?",
             url = "https://www.projectinvictus.it/quante-volte-andare-in-palestra/",
-            publishedDate = "2026-02-20"
+            publishedDate = "2026-02-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -203,7 +215,8 @@ object InvictusKnowledge {
                 "settimana : questa frequenza ti permetterà di farlo crescere più rapidamente. ",
             articleTitle = "Pettorali scolpiti in poco tempo",
             url = "https://www.projectinvictus.it/pettorali-scolpiti/",
-            publishedDate = "2025-10-22"
+            publishedDate = "2025-10-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -212,7 +225,8 @@ object InvictusKnowledge {
                 "non ti stai allenando abbastanza intensamente e che stai facendo volume a vuoto. ",
             articleTitle = "Pettorali scolpiti in poco tempo",
             url = "https://www.projectinvictus.it/pettorali-scolpiti/",
-            publishedDate = "2025-10-22"
+            publishedDate = "2025-10-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -221,7 +235,8 @@ object InvictusKnowledge {
                 "settimana) alternando possibilmente tra le diverse varianti. ",
             articleTitle = "Step up: esecuzione, scheda e varianti",
             url = "https://www.projectinvictus.it/step-up-esecuzione-corretta/",
-            publishedDate = "2025-09-09"
+            publishedDate = "2025-09-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -231,7 +246,8 @@ object InvictusKnowledge {
                 "chilometri a passo moderato 2-3 volte a settimana. ",
             articleTitle = "Camminare fa dimagrire?",
             url = "https://www.projectinvictus.it/camminare-fa-dimagrire/",
-            publishedDate = "2025-08-25"
+            publishedDate = "2025-08-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -240,7 +256,8 @@ object InvictusKnowledge {
                 "aumentando di volume, intensità e molto spesso la densità. ",
             articleTitle = "Quale fisico puoi ottenere con il Calisthenics",
             url = "https://www.projectinvictus.it/fisico-calisthenics/",
-            publishedDate = "2025-06-03"
+            publishedDate = "2025-06-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -248,7 +265,8 @@ object InvictusKnowledge {
                 "I quadricipiti hanno una frequenza ideale di 1 fino a 3 volte a settimana. ",
             articleTitle = "I 10 migliori esercizi per allenare le gambe",
             url = "https://www.projectinvictus.it/allenamento-gambe-quadricipiti/",
-            publishedDate = "2025-03-04"
+            publishedDate = "2025-03-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -257,7 +275,8 @@ object InvictusKnowledge {
                 "a settimana . ",
             articleTitle = "I 10 migliori esercizi per allenare le gambe",
             url = "https://www.projectinvictus.it/allenamento-gambe-quadricipiti/",
-            publishedDate = "2025-03-04"
+            publishedDate = "2025-03-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -266,7 +285,8 @@ object InvictusKnowledge {
                 "efficace ma non sempre è la soluzione ideale. ",
             articleTitle = "I 10 migliori esercizi per allenare le gambe",
             url = "https://www.projectinvictus.it/allenamento-gambe-quadricipiti/",
-            publishedDate = "2025-03-04"
+            publishedDate = "2025-03-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -277,7 +297,8 @@ object InvictusKnowledge {
                 "parallele. ",
             articleTitle = "Diamond push up (o Piegamenti a diamante): esecuzione e muscoli coinvolti",
             url = "https://www.projectinvictus.it/piegamenti-a-diamante/",
-            publishedDate = "2024-08-01"
+            publishedDate = "2024-08-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -286,7 +307,8 @@ object InvictusKnowledge {
                 "con costanza e con una buona frequenza, come 3 volte a settimana . ",
             articleTitle = "Allenamento panca piana nella home gym Lacertosus",
             url = "https://www.projectinvictus.it/allenamento-panca-piana-nella-home-gym-lacertosus/",
-            publishedDate = "2024-05-29"
+            publishedDate = "2024-05-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -295,7 +317,8 @@ object InvictusKnowledge {
                 "una progressione su 4 settimane. ",
             articleTitle = "Allenamento panca piana nella home gym Lacertosus",
             url = "https://www.projectinvictus.it/allenamento-panca-piana-nella-home-gym-lacertosus/",
-            publishedDate = "2024-05-29"
+            publishedDate = "2024-05-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -304,7 +327,8 @@ object InvictusKnowledge {
                 "settimana , invece che una sola volta come succede se ti alleni in monofrequenza . ",
             articleTitle = "Allenamento in multifrequenza: 5 schede di allenamento",
             url = "https://www.projectinvictus.it/allenamento-in-multifrequenza/",
-            publishedDate = "2024-04-01"
+            publishedDate = "2024-04-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -313,7 +337,8 @@ object InvictusKnowledge {
                 "ripetendo il programma. ",
             articleTitle = "Come iniziare a correre senza farsi male",
             url = "https://www.projectinvictus.it/come-iniziare-a-correre/",
-            publishedDate = "2024-03-27"
+            publishedDate = "2024-03-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -322,7 +347,8 @@ object InvictusKnowledge {
                 "ripetendo il programma. ",
             articleTitle = "Come iniziare a correre senza farsi male",
             url = "https://www.projectinvictus.it/come-iniziare-a-correre/",
-            publishedDate = "2024-03-27"
+            publishedDate = "2024-03-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -331,7 +357,8 @@ object InvictusKnowledge {
                 "1 allenamento A e due allenamenti B. ",
             articleTitle = "Come iniziare a correre senza farsi male",
             url = "https://www.projectinvictus.it/come-iniziare-a-correre/",
-            publishedDate = "2024-03-27"
+            publishedDate = "2024-03-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -340,7 +367,8 @@ object InvictusKnowledge {
                 "consigliato allenarli da 1 a 3 volte a settimana . ",
             articleTitle = "Esercizi pettorali alti per aumentare la massa muscolare",
             url = "https://www.projectinvictus.it/pettorali-alti/",
-            publishedDate = "2024-01-26"
+            publishedDate = "2024-01-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -350,7 +378,8 @@ object InvictusKnowledge {
                 "settimana per i pettorali distribuite in 2 allenamenti da 9 serie l’una. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -359,7 +388,8 @@ object InvictusKnowledge {
                 "mediamente valida. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -369,7 +399,8 @@ object InvictusKnowledge {
                 "quanto ci saranno sempre persone cresciute con un modo o l’altro. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -377,7 +408,8 @@ object InvictusKnowledge {
                 "Il consiglio per un atleta principiante è di allenarsi almeno 3 volte a settimana. ",
             articleTitle = "Street workout: cos’è, come iniziare e allenamento",
             url = "https://www.projectinvictus.it/street-workout/",
-            publishedDate = "2023-03-09"
+            publishedDate = "2023-03-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -387,7 +419,8 @@ object InvictusKnowledge {
                 "acquistando un bilanciere e qualche disco. ",
             articleTitle = "Street workout: cos’è, come iniziare e allenamento",
             url = "https://www.projectinvictus.it/street-workout/",
-            publishedDate = "2023-03-09"
+            publishedDate = "2023-03-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -396,7 +429,8 @@ object InvictusKnowledge {
                 "iniziato da 1 mese) e voglio migliorare la mia composizione corporea . ",
             articleTitle = "Parametri allenanti: quali sono e come impostarli",
             url = "https://www.projectinvictus.it/parametri-allenanti/",
-            publishedDate = "2022-10-29"
+            publishedDate = "2022-10-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -405,7 +439,8 @@ object InvictusKnowledge {
                 "alleni da anni) e vuoi migliorare il tuo fisico e anche le tue prestazioni. ",
             articleTitle = "Parametri allenanti: quali sono e come impostarli",
             url = "https://www.projectinvictus.it/parametri-allenanti/",
-            publishedDate = "2022-10-29"
+            publishedDate = "2022-10-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -414,7 +449,8 @@ object InvictusKnowledge {
                 "moderato 1 – 2 volte a settimana . ",
             articleTitle = "Come diventare grossi in poco tempo",
             url = "https://www.projectinvictus.it/come-diventare-grossi/",
-            publishedDate = "2022-07-26"
+            publishedDate = "2022-07-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -424,7 +460,8 @@ object InvictusKnowledge {
                 "(Brayner). ",
             articleTitle = "Tabata training: come funziona",
             url = "https://www.projectinvictus.it/tabata-training-come-funziona/",
-            publishedDate = "2022-07-17"
+            publishedDate = "2022-07-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -432,7 +469,8 @@ object InvictusKnowledge {
                 "Generalmente un Powerlifter si può allenare dalle 3 alle 5 volte a settimana . ",
             articleTitle = "Powerlifting: metodo di allenamento, esercizi e scheda",
             url = "https://www.projectinvictus.it/powerlifting-allenamento-scheda/",
-            publishedDate = "2022-07-12"
+            publishedDate = "2022-07-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -441,7 +479,8 @@ object InvictusKnowledge {
                 "settimanali. ",
             articleTitle = "Glutei: anatomia, esercizi, allenamento",
             url = "https://www.projectinvictus.it/glutei/",
-            publishedDate = "2022-05-16"
+            publishedDate = "2022-05-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -451,7 +490,8 @@ object InvictusKnowledge {
                 "perdurare anche 48 ore. ",
             articleTitle = "Nutrient timing dei pasti per la palestra e il bodybuilding",
             url = "https://www.projectinvictus.it/nutrient-timing/",
-            publishedDate = "2021-11-02"
+            publishedDate = "2021-11-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -461,7 +501,8 @@ object InvictusKnowledge {
                 "paragrafo precedente. ",
             articleTitle = "Box Squat: come si esegue",
             url = "https://www.projectinvictus.it/box-squat/",
-            publishedDate = "2021-04-16"
+            publishedDate = "2021-04-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -472,7 +513,8 @@ object InvictusKnowledge {
                 "allenanti e di recupero soggettivi. ",
             articleTitle = "Come allargare le spalle? Esercizi efficaci",
             url = "https://www.projectinvictus.it/come-allargare-spalle/",
-            publishedDate = "2021-03-01"
+            publishedDate = "2021-03-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -481,7 +523,8 @@ object InvictusKnowledge {
                 "sessioni settimanali per un minimo di 3 serie in ogni sessione . ",
             articleTitle = "Tirate al petto: come si eseguono",
             url = "https://www.projectinvictus.it/tirate-al-petto/",
-            publishedDate = "2021-02-13"
+            publishedDate = "2021-02-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -491,7 +534,8 @@ object InvictusKnowledge {
                 "volte settimanali in alcuni periodi e atleti. ",
             articleTitle = "Tirate al petto: come si eseguono",
             url = "https://www.projectinvictus.it/tirate-al-petto/",
-            publishedDate = "2021-02-13"
+            publishedDate = "2021-02-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -501,7 +545,8 @@ object InvictusKnowledge {
                 "bene. ",
             articleTitle = "Miochine: che cosa sono e che funzione svolgono?",
             url = "https://www.projectinvictus.it/miochine/",
-            publishedDate = "2019-12-18"
+            publishedDate = "2019-12-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -512,7 +557,8 @@ object InvictusKnowledge {
                 "anaerobica). ",
             articleTitle = "HIIT: High Intensity Interval Training – Che cos’è? Esempi pratici",
             url = "https://www.projectinvictus.it/hiit-high-intensity-interval-training-aspetti-scientifici-e-pratici/",
-            publishedDate = "2019-11-05"
+            publishedDate = "2019-11-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -522,7 +568,8 @@ object InvictusKnowledge {
                 "totale settimanale di soli 21 minuti! ",
             articleTitle = "HIIT: High Intensity Interval Training – Che cos’è? Esempi pratici",
             url = "https://www.projectinvictus.it/hiit-high-intensity-interval-training-aspetti-scientifici-e-pratici/",
-            publishedDate = "2019-11-05"
+            publishedDate = "2019-11-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -532,7 +579,8 @@ object InvictusKnowledge {
                 "volte a settimana se si svolge anche un’ altra attività). ",
             articleTitle = "HIIT: High Intensity Interval Training – Che cos’è? Esempi pratici",
             url = "https://www.projectinvictus.it/hiit-high-intensity-interval-training-aspetti-scientifici-e-pratici/",
-            publishedDate = "2019-11-05"
+            publishedDate = "2019-11-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -542,7 +590,8 @@ object InvictusKnowledge {
                 "risultato dello sprint test. ",
             articleTitle = "Spartan Ultra Race: come prepararla",
             url = "https://www.projectinvictus.it/spartan-ultra-race-preparazione/",
-            publishedDate = "2019-03-12"
+            publishedDate = "2019-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -552,7 +601,8 @@ object InvictusKnowledge {
                 "l’obiettivo. ",
             articleTitle = "Dieta dimagrante: come farla in modo efficace",
             url = "https://www.projectinvictus.it/dieta-dimagrante/",
-            publishedDate = "2018-10-02"
+            publishedDate = "2018-10-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -561,7 +611,8 @@ object InvictusKnowledge {
                 "volume mi ritrovo a fargli fare sedute da 40-50 set allenanti 6 volte a settimana. ",
             articleTitle = "Cedimento Muscolare | Sempre e comunque utile?",
             url = "https://www.projectinvictus.it/cedimento-muscolare-sempre-e-comunque-utile/",
-            publishedDate = "2018-03-25"
+            publishedDate = "2018-03-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -569,7 +620,8 @@ object InvictusKnowledge {
                 "Si consiglia anche qui di eseguire 10 ripetizioni due volte al giorno. ",
             articleTitle = "Esercizi per la cervicale",
             url = "https://www.projectinvictus.it/esercizi-cervicale/",
-            publishedDate = "2018-03-24"
+            publishedDate = "2018-03-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -578,7 +630,8 @@ object InvictusKnowledge {
                 "3 o 4 volte a settimana per un periodo dalle 4 alle 8 settimana. ",
             articleTitle = "La periodizzazione nel bodybuilding",
             url = "https://www.projectinvictus.it/periodizzazione-nel-bodybuilding/",
-            publishedDate = "2018-03-19"
+            publishedDate = "2018-03-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -587,7 +640,8 @@ object InvictusKnowledge {
                 "stessa settimana, più facilmente può sentire il bisogno di staccare la spina. ",
             articleTitle = "Programmare la fase di scarico",
             url = "https://www.projectinvictus.it/programmare-fase-scarico/",
-            publishedDate = "2017-02-16"
+            publishedDate = "2017-02-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -596,7 +650,8 @@ object InvictusKnowledge {
                 "crescere. ",
             articleTitle = "Ipertrofia e forza: le logiche che li correlano",
             url = "https://www.projectinvictus.it/ipertrofia-forza/",
-            publishedDate = "2016-12-07"
+            publishedDate = "2016-12-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FREQUENCY,
@@ -605,7 +660,32 @@ object InvictusKnowledge {
                 "settimana. ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.FREQUENCY,
+            statement =
+                "CONCLUSIONS: When comparing studies that investigated training muscle groups between 1 " +
+                "to 3 days per week on a volume-equated basis, the current body of evidence indicates " +
+                "that frequencies of training twice a week promote superior hypertrophic outcomes to once " +
+                "a week. ",
+            articleTitle = "Effects of Resistance Training Frequency on Measures of Muscle Hypertrophy: A Systematic Review and Meta-Analysis",
+            url = "https://pubmed.ncbi.nlm.nih.gov/27102172/",
+            publishedDate = "2016",
+            kind = SourceKind.SYSTEMATIC_REVIEW
+        ),
+        Rule(
+            category = Category.FREQUENCY,
+            statement =
+                "POPULATION: healthy adults of any sex and age; Intervention: supervised concurrent " +
+                "aerobic and strength training for at least 4 weeks; Comparison: identical strength " +
+                "training prescription, with no aerobic training; Outcome: maximal strength, explosive " +
+                "strength, and muscle hypertrophy. ",
+            articleTitle = "Compatibility of Concurrent Aerobic and Strength Training for Skeletal Muscle Size and Function: An Updated Systematic Review and Meta-Analysis",
+            url = "https://pubmed.ncbi.nlm.nih.gov/34757594/",
+            publishedDate = "2022",
+            kind = SourceKind.SYSTEMATIC_REVIEW
         ),
         Rule(
             category = Category.EXERCISE_SELECT,
@@ -615,7 +695,8 @@ object InvictusKnowledge {
                 "eseguono 2-3 serie con un range di ripetizioni tra 8-12. ",
             articleTitle = "Glutei uomini: esercizi per allenarli",
             url = "https://www.projectinvictus.it/esercizi-glutei-uomo/",
-            publishedDate = "2025-04-15"
+            publishedDate = "2025-04-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.EXERCISE_SELECT,
@@ -626,7 +707,8 @@ object InvictusKnowledge {
                 "scelto. ",
             articleTitle = "Tonificazione muscolare: come si fa ed esercizi",
             url = "https://www.projectinvictus.it/tonificazione/",
-            publishedDate = "2024-04-22"
+            publishedDate = "2024-04-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.EXERCISE_SELECT,
@@ -637,7 +719,8 @@ object InvictusKnowledge {
                 "tricipiti. ",
             articleTitle = "Tonificazione muscolare: come si fa ed esercizi",
             url = "https://www.projectinvictus.it/tonificazione/",
-            publishedDate = "2024-04-22"
+            publishedDate = "2024-04-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.EXERCISE_SELECT,
@@ -647,7 +730,8 @@ object InvictusKnowledge {
                 "massimale. ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -656,7 +740,8 @@ object InvictusKnowledge {
                 "intorno alle 12 – 20 serie a settimana . ",
             articleTitle = "Ricomposizione corporea: la guida completa",
             url = "https://www.projectinvictus.it/ricomposizione-corporea/",
-            publishedDate = "2026-08-18"
+            publishedDate = "2026-08-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -665,7 +750,8 @@ object InvictusKnowledge {
                 "aumentando di volume, intensità e molto spesso la densità. ",
             articleTitle = "Quale fisico puoi ottenere con il Calisthenics",
             url = "https://www.projectinvictus.it/fisico-calisthenics/",
-            publishedDate = "2025-06-03"
+            publishedDate = "2025-06-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -675,7 +761,8 @@ object InvictusKnowledge {
                 "l’attenzione sul volume. ",
             articleTitle = "Pulley basso: tutorial ed esecuzione corretta",
             url = "https://www.projectinvictus.it/pulley-basso/",
-            publishedDate = "2025-04-09"
+            publishedDate = "2025-04-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -684,7 +771,8 @@ object InvictusKnowledge {
                 "settimanali . ",
             articleTitle = "I 10 migliori esercizi per allenare le gambe",
             url = "https://www.projectinvictus.it/allenamento-gambe-quadricipiti/",
-            publishedDate = "2025-03-04"
+            publishedDate = "2025-03-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -695,7 +783,8 @@ object InvictusKnowledge {
                 "3. ",
             articleTitle = "Calisthenic Workout: schede e programmi per il calisthenics",
             url = "https://www.projectinvictus.it/calisthenic-workout-programmi/",
-            publishedDate = "2024-10-06"
+            publishedDate = "2024-10-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -704,7 +793,8 @@ object InvictusKnowledge {
                 "consigliato allenarli da 1 a 3 volte a settimana . ",
             articleTitle = "Esercizi pettorali alti per aumentare la massa muscolare",
             url = "https://www.projectinvictus.it/pettorali-alti/",
-            publishedDate = "2024-01-26"
+            publishedDate = "2024-01-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -714,7 +804,8 @@ object InvictusKnowledge {
                 "nel range che va dalle 6 alle 12 ripetizioni. ",
             articleTitle = "Come aumentare la massa muscolare?",
             url = "https://www.projectinvictus.it/aumentare-massa-muscolare/",
-            publishedDate = "2023-12-21"
+            publishedDate = "2023-12-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -724,7 +815,8 @@ object InvictusKnowledge {
                 "settimana per i pettorali distribuite in 2 allenamenti da 9 serie l’una. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -734,7 +826,8 @@ object InvictusKnowledge {
                 "concentrazione, forza e rischiare di generare volume a vuoto. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -744,7 +837,8 @@ object InvictusKnowledge {
                 "ripetizioni a parità di serie o numero di serie totali. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -754,7 +848,8 @@ object InvictusKnowledge {
                 "flesso e vedi come rispondi. ",
             articleTitle = "I migliori esercizi per i polpacci",
             url = "https://www.projectinvictus.it/esercizi-polpacci/",
-            publishedDate = "2023-06-24"
+            publishedDate = "2023-06-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -764,7 +859,8 @@ object InvictusKnowledge {
                 "serie o rimanere in questo range fino ai primi stalli. ",
             articleTitle = "I migliori esercizi per i polpacci",
             url = "https://www.projectinvictus.it/esercizi-polpacci/",
-            publishedDate = "2023-06-24"
+            publishedDate = "2023-06-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -775,7 +871,8 @@ object InvictusKnowledge {
                 "fatica accumulata. ",
             articleTitle = "I migliori esercizi per i polpacci",
             url = "https://www.projectinvictus.it/esercizi-polpacci/",
-            publishedDate = "2023-06-24"
+            publishedDate = "2023-06-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -784,7 +881,8 @@ object InvictusKnowledge {
                 "Settimana 3 ad eseguire 5 serie da 10 ripetizioni (50 ripetizioni in totale). ",
             articleTitle = "Pendlay row: esecuzione e muscoli coinvolti",
             url = "https://www.projectinvictus.it/pendlay-row/",
-            publishedDate = "2023-02-04"
+            publishedDate = "2023-02-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -793,7 +891,8 @@ object InvictusKnowledge {
                 "ore in palestra. ",
             articleTitle = "Parametri allenanti: quali sono e come impostarli",
             url = "https://www.projectinvictus.it/parametri-allenanti/",
-            publishedDate = "2022-10-29"
+            publishedDate = "2022-10-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -802,7 +901,8 @@ object InvictusKnowledge {
                 "serie di 1 ogni settimana, arrivando quindi ad eseguire 6 serie su tutti gli esercizi. ",
             articleTitle = "Come ingrossare le gambe",
             url = "https://www.projectinvictus.it/come-ingrossare-le-gambe/",
-            publishedDate = "2022-09-28"
+            publishedDate = "2022-09-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -811,7 +911,8 @@ object InvictusKnowledge {
                 "allenanti per bicipiti ed altrettante per i tricipiti. ",
             articleTitle = "Come ingrossare le braccia",
             url = "https://www.projectinvictus.it/come-ingrossare-le-braccia/",
-            publishedDate = "2022-09-21"
+            publishedDate = "2022-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -821,7 +922,8 @@ object InvictusKnowledge {
                 "4 settimane dei risultati (quantomeno aumenterà la ritenzione sulle braccia). ",
             articleTitle = "Come ingrossare le braccia",
             url = "https://www.projectinvictus.it/come-ingrossare-le-braccia/",
-            publishedDate = "2022-09-21"
+            publishedDate = "2022-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -830,7 +932,8 @@ object InvictusKnowledge {
                 "sopportare molto volume settimanale. ",
             articleTitle = "Flessioni per allenare i pettorali",
             url = "https://www.projectinvictus.it/flessioni-pettorali/",
-            publishedDate = "2022-03-12"
+            publishedDate = "2022-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -839,7 +942,8 @@ object InvictusKnowledge {
                 "1RM) con un recupero alto (>180”) . ",
             articleTitle = "Pettorali nella donna per tonificare il seno",
             url = "https://www.projectinvictus.it/esercizi-pettorali-donne-aumentare-seno/",
-            publishedDate = "2021-03-20"
+            publishedDate = "2021-03-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -850,7 +954,8 @@ object InvictusKnowledge {
                 "soggettivi. ",
             articleTitle = "Come allargare le spalle? Esercizi efficaci",
             url = "https://www.projectinvictus.it/come-allargare-spalle/",
-            publishedDate = "2021-03-01"
+            publishedDate = "2021-03-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -861,7 +966,8 @@ object InvictusKnowledge {
                 "superare le 3. ",
             articleTitle = "Calisthenic Workout: schede e programmi per il calisthenics",
             url = "https://www.projectinvictus.it/calisthenic-workout-schede-e-programmi-per-il-calisthenics/",
-            publishedDate = "2020-01-03"
+            publishedDate = "2020-01-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -871,7 +977,8 @@ object InvictusKnowledge {
                 "dall’ultima sessione allenante. ",
             articleTitle = "Allenamento aerobico",
             url = "https://www.projectinvictus.it/allenamento-aerobico/",
-            publishedDate = "2018-08-21"
+            publishedDate = "2018-08-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -881,7 +988,8 @@ object InvictusKnowledge {
                 "capilarizzazione muscolare, la densità mitocondriale, il volume plasmatico. ",
             articleTitle = "Allenamento aerobico",
             url = "https://www.projectinvictus.it/allenamento-aerobico/",
-            publishedDate = "2018-08-21"
+            publishedDate = "2018-08-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -890,7 +998,8 @@ object InvictusKnowledge {
                 "base all’intensita di lavoro scelta. ",
             articleTitle = "Metodo Set x Rep + 1xmax nel calisthenics",
             url = "https://www.projectinvictus.it/programma-set-x-rep-1xmax-calisthenics/",
-            publishedDate = "2018-04-06"
+            publishedDate = "2018-04-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -899,7 +1008,8 @@ object InvictusKnowledge {
                 "volume mi ritrovo a fargli fare sedute da 40-50 set allenanti 6 volte a settimana. ",
             articleTitle = "Cedimento Muscolare | Sempre e comunque utile?",
             url = "https://www.projectinvictus.it/cedimento-muscolare-sempre-e-comunque-utile/",
-            publishedDate = "2018-03-25"
+            publishedDate = "2018-03-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -908,7 +1018,8 @@ object InvictusKnowledge {
                 "settimane, a seconda di quanto siete stati fermi. ",
             articleTitle = "Riprendere ad allenarsi dopo una pausa, come fare",
             url = "https://www.projectinvictus.it/riprendere-allenarsi/",
-            publishedDate = "2017-09-27"
+            publishedDate = "2017-09-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -917,7 +1028,8 @@ object InvictusKnowledge {
                 "utilizzati nell’ultima scheda. ",
             articleTitle = "Riprendere ad allenarsi dopo una pausa, come fare",
             url = "https://www.projectinvictus.it/riprendere-allenarsi/",
-            publishedDate = "2017-09-27"
+            publishedDate = "2017-09-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.VOLUME,
@@ -927,7 +1039,93 @@ object InvictusKnowledge {
                 "non raggiungo nuovamente l’RPE target della giornata. ",
             articleTitle = "L’autoregolazione nell’allenamento della forza",
             url = "https://www.projectinvictus.it/autoregolazione-allenamento-della-forza/",
-            publishedDate = "2017-01-13"
+            publishedDate = "2017-01-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "The posterior probability of the marginal slope exceeding zero for the effect of volume " +
+                "on both hypertrophy and strength was 100%, indicating that gains in muscle size and " +
+                "strength increase as volume increases. ",
+            articleTitle = "The Resistance Training Dose Response: Meta-Regressions Exploring the Effects of Weekly Volume and Frequency on Muscle Hypertrophy and Strength Gains",
+            url = "https://pubmed.ncbi.nlm.nih.gov/41343037/",
+            publishedDate = "2026",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "The posterior probability of the marginal slope exceeding zero for frequency's effect on " +
+                "hypertrophy was less than 100%, indicating compatibility with negligible effects. ",
+            articleTitle = "The Resistance Training Dose Response: Meta-Regressions Exploring the Effects of Weekly Volume and Frequency on Muscle Hypertrophy and Strength Gains",
+            url = "https://pubmed.ncbi.nlm.nih.gov/41343037/",
+            publishedDate = "2026",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "In contrast, the posterior probability for strength was 100%, suggesting strength gains " +
+                "increase with increasing frequency, albeit with diminishing returns. ",
+            articleTitle = "The Resistance Training Dose Response: Meta-Regressions Exploring the Effects of Weekly Volume and Frequency on Muscle Hypertrophy and Strength Gains",
+            url = "https://pubmed.ncbi.nlm.nih.gov/41343037/",
+            publishedDate = "2026",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "Full-body RT elicited greater losses compared to split-body in whole-body fat mass " +
+                "(-0.775 ± 1.120 kg vs. ",
+            articleTitle = "Full-body resistance training promotes greater fat mass loss than a split-body routine in well-trained males: A randomized trial",
+            url = "https://pubmed.ncbi.nlm.nih.gov/38874955/",
+            publishedDate = "2024",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "This study investigated the effects of increasing previous resistance training (RT) " +
+                "weekly set volume by 30% (G30) and 60% (G60) on muscle hypertrophy and strength. ",
+            articleTitle = "Training volume increases or maintenance based on previous volume: the effects on muscular adaptations in trained males",
+            url = "https://pubmed.ncbi.nlm.nih.gov/39665246/",
+            publishedDate = "2025",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "We assessed pre- and poststudy thigh region-of-interest fat-free mass (ROI-FFM), " +
+                "anterior thigh muscle thickness (MT) at two sites: proximal (PMT) and distal (DMT) and " +
+                "their sum (ΣMT), one-repetition maximum (1RM), and strength-endurance via repetitions to " +
+                "failure (RTF) at 70% of 1RM. ",
+            articleTitle = "Training volume increases or maintenance based on previous volume: the effects on muscular adaptations in trained males",
+            url = "https://pubmed.ncbi.nlm.nih.gov/39665246/",
+            publishedDate = "2025",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "Each additional set was associated with an increase in effect size (ES) of 0.023 " +
+                "corresponding to an increase in the percentage gain by 0.37%. ",
+            articleTitle = "Dose-response relationship between weekly resistance training volume and increases in muscle mass: A systematic review and meta-analysis",
+            url = "https://pubmed.ncbi.nlm.nih.gov/27433992/",
+            publishedDate = "2017",
+            kind = SourceKind.SYSTEMATIC_REVIEW
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "Eighty-five older individuals [41M/44F, age = 68 ± 4 yr; body mass index (BMI) = 26.4 ± " +
+                "3.7 kg/m2] had one leg randomly allocated to a single (1)-set and the contralateral leg " +
+                "allocated to four sets of unilateral knee-extension RT at 8-15 repetition maximum (RM) " +
+                "for 10-wk 2 days/wk. ",
+            articleTitle = "Higher resistance training volume offsets muscle hypertrophy nonresponsiveness in older individuals",
+            url = "https://pubmed.ncbi.nlm.nih.gov/38174375/",
+            publishedDate = "2024",
+            kind = SourceKind.INDIVIDUAL_STUDY
         ),
         Rule(
             category = Category.INTENSITY,
@@ -936,7 +1134,8 @@ object InvictusKnowledge {
                 "cedimento). ",
             articleTitle = "RPE: cos’è, misura, utilizzo",
             url = "https://www.projectinvictus.it/rpe-palestra/",
-            publishedDate = "2026-09-16"
+            publishedDate = "2026-09-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -946,7 +1145,8 @@ object InvictusKnowledge {
                 "caso, meglio preferire esercizi ad alta intensità di una certa durata (30-60 minuti) . ",
             articleTitle = "Il migliore allenamento per dimagrire",
             url = "https://www.projectinvictus.it/allenamento-per-dimagrire/",
-            publishedDate = "2026-05-15"
+            publishedDate = "2026-05-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -955,7 +1155,8 @@ object InvictusKnowledge {
                 "aumentando di volume, intensità e molto spesso la densità. ",
             articleTitle = "Quale fisico puoi ottenere con il Calisthenics",
             url = "https://www.projectinvictus.it/fisico-calisthenics/",
-            publishedDate = "2025-06-03"
+            publishedDate = "2025-06-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -964,7 +1165,8 @@ object InvictusKnowledge {
                 "il 75% del massimale . ",
             articleTitle = "Allenamento PHA: cos’è, benefici, come impostarlo",
             url = "https://www.projectinvictus.it/allenamento-pha/",
-            publishedDate = "2025-03-11"
+            publishedDate = "2025-03-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -975,7 +1177,8 @@ object InvictusKnowledge {
                 "30 ripetizioni . ",
             articleTitle = "Leg press in palestra e nel bodybuilding: esecuzione corretta",
             url = "https://www.projectinvictus.it/leg-press-bodybuilding/",
-            publishedDate = "2024-06-11"
+            publishedDate = "2024-06-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -984,7 +1187,8 @@ object InvictusKnowledge {
                 "facendo dalle 4 alle 10 ripetizioni per “n” serie. ",
             articleTitle = "Stacchi rumeni: esecuzione, tecnica corretta e muscoli coinvolti",
             url = "https://www.projectinvictus.it/stacchi-rumeni/",
-            publishedDate = "2023-11-29"
+            publishedDate = "2023-11-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -994,7 +1198,8 @@ object InvictusKnowledge {
                 "più lavoro di qualità. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1005,7 +1210,8 @@ object InvictusKnowledge {
                 "fatica accumulata. ",
             articleTitle = "I migliori esercizi per i polpacci",
             url = "https://www.projectinvictus.it/esercizi-polpacci/",
-            publishedDate = "2023-06-24"
+            publishedDate = "2023-06-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1014,7 +1220,8 @@ object InvictusKnowledge {
                 "uno spettro di intensità davvero ampio ( 6 – 15 ripetizioni ). ",
             articleTitle = "Stacchi a gambe tese per glutei di marmo",
             url = "https://www.projectinvictus.it/stacchi-gambe-tese/",
-            publishedDate = "2023-01-24"
+            publishedDate = "2023-01-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1024,7 +1231,8 @@ object InvictusKnowledge {
                 "e continuerai ad eseguire gli affondi fino al cedimento. ",
             articleTitle = "Affondi: esecuzione e muscoli coinvolti",
             url = "https://www.projectinvictus.it/affondi/",
-            publishedDate = "2023-01-16"
+            publishedDate = "2023-01-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1034,7 +1242,8 @@ object InvictusKnowledge {
                 "70-75% del VO2 max . ",
             articleTitle = "Catecolamine: sintesi, funzione, come abbassarle",
             url = "https://www.projectinvictus.it/catecolamine/",
-            publishedDate = "2022-09-29"
+            publishedDate = "2022-09-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1045,7 +1254,8 @@ object InvictusKnowledge {
                 "un minuto di recupero. ",
             articleTitle = "EPOC: cos’è e come aumentarlo",
             url = "https://www.projectinvictus.it/epoc-calorie-metabolismo-studi/",
-            publishedDate = "2022-08-21"
+            publishedDate = "2022-08-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1056,7 +1266,8 @@ object InvictusKnowledge {
                 "intensità e volume è forse il metodo ideale). ",
             articleTitle = "Tabata training: come funziona",
             url = "https://www.projectinvictus.it/tabata-training-come-funziona/",
-            publishedDate = "2022-07-17"
+            publishedDate = "2022-07-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1065,7 +1276,8 @@ object InvictusKnowledge {
                 "l’intensità era compresa tra il 90 e il 95% della FC max. ",
             articleTitle = "Sindrome da ovaio policistico: dieta ed allenamento",
             url = "https://www.projectinvictus.it/sindrome-ovaio-policistico-dieta-allenamento/",
-            publishedDate = "2020-08-06"
+            publishedDate = "2020-08-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1074,7 +1286,8 @@ object InvictusKnowledge {
                 "base all’intensita di lavoro scelta. ",
             articleTitle = "Metodo Set x Rep + 1xmax nel calisthenics",
             url = "https://www.projectinvictus.it/programma-set-x-rep-1xmax-calisthenics/",
-            publishedDate = "2018-04-06"
+            publishedDate = "2018-04-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1083,7 +1296,8 @@ object InvictusKnowledge {
                 "ripetizioni prefissato. ",
             articleTitle = "La periodizzazione nel bodybuilding",
             url = "https://www.projectinvictus.it/periodizzazione-nel-bodybuilding/",
-            publishedDate = "2018-03-19"
+            publishedDate = "2018-03-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1092,7 +1306,8 @@ object InvictusKnowledge {
                 "cedimento. ",
             articleTitle = "La periodizzazione nel bodybuilding",
             url = "https://www.projectinvictus.it/periodizzazione-nel-bodybuilding/",
-            publishedDate = "2018-03-19"
+            publishedDate = "2018-03-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1102,7 +1317,8 @@ object InvictusKnowledge {
                 "non raggiungo nuovamente l’RPE target della giornata. ",
             articleTitle = "L’autoregolazione nell’allenamento della forza",
             url = "https://www.projectinvictus.it/autoregolazione-allenamento-della-forza/",
-            publishedDate = "2017-01-13"
+            publishedDate = "2017-01-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1113,7 +1329,8 @@ object InvictusKnowledge {
                 "riscaldamento!), cui seguirà il riscaldamento specifico. ",
             articleTitle = "Come effettuare il riscaldamento per l’allenamento?",
             url = "https://www.projectinvictus.it/come-effettuare-il-riscaldamento/",
-            publishedDate = "2016-05-31"
+            publishedDate = "2016-05-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1124,7 +1341,8 @@ object InvictusKnowledge {
                 "di cose avrete meno fiato. ",
             articleTitle = "Elevation Training Mask: serve o non serve?",
             url = "https://www.projectinvictus.it/elevation-training-mask-serve-o-non-serve/",
-            publishedDate = "2015-03-09"
+            publishedDate = "2015-03-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1134,7 +1352,8 @@ object InvictusKnowledge {
                 "diverso, anche se l’intensità del carico è identica. ",
             articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 3)",
             url = "https://www.projectinvictus.it/chiarimenti-incomprensioni-sullintensita-nellesercizio-i-pesi-parte-3/",
-            publishedDate = "2014-10-16"
+            publishedDate = "2014-10-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.INTENSITY,
@@ -1143,7 +1362,19 @@ object InvictusKnowledge {
                 "sollevato per un numero di ripetizioni molto sub-massimale. ",
             articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 3)",
             url = "https://www.projectinvictus.it/chiarimenti-incomprensioni-sullintensita-nellesercizio-i-pesi-parte-3/",
-            publishedDate = "2014-10-16"
+            publishedDate = "2014-10-16",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.INTENSITY,
+            statement =
+                "In general, studies have demonstrated increases in strength and muscle size after short " +
+                "term (1-3 weeks), high-frequency low-intensity BFR training, non-failure, but not after " +
+                "control conditions (non-BFR; equalized training volume). ",
+            articleTitle = "Physiological adaptations and myocellular stress in short-term, high-frequency blood flow restriction training: A scoping review",
+            url = "https://pubmed.ncbi.nlm.nih.gov/36584157/",
+            publishedDate = "2022",
+            kind = SourceKind.INDIVIDUAL_STUDY
         ),
         Rule(
             category = Category.REPS,
@@ -1152,7 +1383,8 @@ object InvictusKnowledge {
                 "maggiori (8-12 ripetizioni) con carichi più bassi. ",
             articleTitle = "Panca per allenare pettorali",
             url = "https://www.projectinvictus.it/panca-pettorali/",
-            publishedDate = "2026-08-17"
+            publishedDate = "2026-08-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1160,7 +1392,8 @@ object InvictusKnowledge {
                 "Fai 3-4 serie x 12-15 ripetizioni lente e controllate 2. ",
             articleTitle = "I 10 migliori esercizi per gli addominali",
             url = "https://www.projectinvictus.it/esercizi-addominali/",
-            publishedDate = "2026-06-18"
+            publishedDate = "2026-06-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1169,7 +1402,8 @@ object InvictusKnowledge {
                 "allenante è quello di utilizzare delle zavorre . ",
             articleTitle = "Piegamenti sulle braccia: esecuzione e muscoli coinvolti",
             url = "https://www.projectinvictus.it/piegamenti-sulle-braccia-esecuzione-e-muscoli-coinvolti/",
-            publishedDate = "2026-06-11"
+            publishedDate = "2026-06-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1178,7 +1412,8 @@ object InvictusKnowledge {
                 "difficoltà dell’esercizio. ",
             articleTitle = "Piegamenti sulle braccia: esecuzione e muscoli coinvolti",
             url = "https://www.projectinvictus.it/piegamenti-sulle-braccia-esecuzione-e-muscoli-coinvolti/",
-            publishedDate = "2026-06-11"
+            publishedDate = "2026-06-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1188,7 +1423,8 @@ object InvictusKnowledge {
                 "petto, isocinetiche, discese o salite lente ecc..). ",
             articleTitle = "Piegamenti sulle braccia: esecuzione e muscoli coinvolti",
             url = "https://www.projectinvictus.it/piegamenti-sulle-braccia-esecuzione-e-muscoli-coinvolti/",
-            publishedDate = "2026-06-11"
+            publishedDate = "2026-06-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1196,7 +1432,8 @@ object InvictusKnowledge {
                 "Crunch Per il Crunch fai 3-4 serie per 12-15 ripetizioni 3. ",
             articleTitle = "Addominali scolpiti: come ottenerli",
             url = "https://www.projectinvictus.it/addominali-scolpiti/",
-            publishedDate = "2025-09-10"
+            publishedDate = "2025-09-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1204,7 +1441,8 @@ object InvictusKnowledge {
                 "Crunch inverso Per allenare il Crunch inverso fai 2-3 serie per 8-12 ripetizioni 4. ",
             articleTitle = "Addominali scolpiti: come ottenerli",
             url = "https://www.projectinvictus.it/addominali-scolpiti/",
-            publishedDate = "2025-09-10"
+            publishedDate = "2025-09-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1212,7 +1450,8 @@ object InvictusKnowledge {
                 "Leg raise Per il Leg raise , fai 3-4 serie per 6-10 ripetizioni. ",
             articleTitle = "Addominali scolpiti: come ottenerli",
             url = "https://www.projectinvictus.it/addominali-scolpiti/",
-            publishedDate = "2025-09-10"
+            publishedDate = "2025-09-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1222,7 +1461,8 @@ object InvictusKnowledge {
                 "la cosa migliore da fare. ",
             articleTitle = "Addominali scolpiti: come ottenerli",
             url = "https://www.projectinvictus.it/addominali-scolpiti/",
-            publishedDate = "2025-09-10"
+            publishedDate = "2025-09-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1231,7 +1471,8 @@ object InvictusKnowledge {
                 "pesi importanti e fare dalle 4-6 serie per 4-8 ripetizioni. ",
             articleTitle = "Glutei uomini: esercizi per allenarli",
             url = "https://www.projectinvictus.it/esercizi-glutei-uomo/",
-            publishedDate = "2025-04-15"
+            publishedDate = "2025-04-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1241,7 +1482,8 @@ object InvictusKnowledge {
                 "eseguono 2-3 serie con un range di ripetizioni tra 8-12. ",
             articleTitle = "Glutei uomini: esercizi per allenarli",
             url = "https://www.projectinvictus.it/esercizi-glutei-uomo/",
-            publishedDate = "2025-04-15"
+            publishedDate = "2025-04-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1249,7 +1491,8 @@ object InvictusKnowledge {
                 "Si eseguono 0-2 serie ad alte o altissime ripetizioni (più di 12 – 15 ripetizioni). ",
             articleTitle = "Glutei uomini: esercizi per allenarli",
             url = "https://www.projectinvictus.it/esercizi-glutei-uomo/",
-            publishedDate = "2025-04-15"
+            publishedDate = "2025-04-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1259,7 +1502,8 @@ object InvictusKnowledge {
                 ", il cosiddetto “range ipertrofico” sulle 8-15 ripetizioni. ",
             articleTitle = "Pulley basso: tutorial ed esecuzione corretta",
             url = "https://www.projectinvictus.it/pulley-basso/",
-            publishedDate = "2025-04-09"
+            publishedDate = "2025-04-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1270,7 +1514,8 @@ object InvictusKnowledge {
                 "scelto. ",
             articleTitle = "Tonificazione muscolare: come si fa ed esercizi",
             url = "https://www.projectinvictus.it/tonificazione/",
-            publishedDate = "2024-04-22"
+            publishedDate = "2024-04-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1280,7 +1525,8 @@ object InvictusKnowledge {
                 "esercizio fai 3-4 serie per 8-10 ripetizioni. ",
             articleTitle = "Tonificazione muscolare: come si fa ed esercizi",
             url = "https://www.projectinvictus.it/tonificazione/",
-            publishedDate = "2024-04-22"
+            publishedDate = "2024-04-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1291,7 +1537,8 @@ object InvictusKnowledge {
                 "tricipiti. ",
             articleTitle = "Tonificazione muscolare: come si fa ed esercizi",
             url = "https://www.projectinvictus.it/tonificazione/",
-            publishedDate = "2024-04-22"
+            publishedDate = "2024-04-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1302,7 +1549,8 @@ object InvictusKnowledge {
                 "gli addominali . ",
             articleTitle = "Tonificazione muscolare: come si fa ed esercizi",
             url = "https://www.projectinvictus.it/tonificazione/",
-            publishedDate = "2024-04-22"
+            publishedDate = "2024-04-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1312,7 +1560,8 @@ object InvictusKnowledge {
                 "quale tempo sotto tensione decidi di eseguire ogni ripetizione. ",
             articleTitle = "Esercizi pettorali alti per aumentare la massa muscolare",
             url = "https://www.projectinvictus.it/pettorali-alti/",
-            publishedDate = "2024-01-26"
+            publishedDate = "2024-01-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1322,7 +1571,8 @@ object InvictusKnowledge {
                 "alle 15-20 ripetizioni. ",
             articleTitle = "Esercizi pettorali alti per aumentare la massa muscolare",
             url = "https://www.projectinvictus.it/pettorali-alti/",
-            publishedDate = "2024-01-26"
+            publishedDate = "2024-01-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1330,7 +1580,8 @@ object InvictusKnowledge {
                 "Concentrati maggiormente sul rep range che va dalle 5 alle 15 ripetizioni . ",
             articleTitle = "Come aumentare la massa muscolare?",
             url = "https://www.projectinvictus.it/aumentare-massa-muscolare/",
-            publishedDate = "2023-12-21"
+            publishedDate = "2023-12-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1340,7 +1591,8 @@ object InvictusKnowledge {
                 "nel range che va dalle 6 alle 12 ripetizioni. ",
             articleTitle = "Come aumentare la massa muscolare?",
             url = "https://www.projectinvictus.it/aumentare-massa-muscolare/",
-            publishedDate = "2023-12-21"
+            publishedDate = "2023-12-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1348,7 +1600,8 @@ object InvictusKnowledge {
                 "15-25% del lavoro nel range dalle 3 alle 5 ripetizioni. ",
             articleTitle = "Come aumentare la massa muscolare?",
             url = "https://www.projectinvictus.it/aumentare-massa-muscolare/",
-            publishedDate = "2023-12-21"
+            publishedDate = "2023-12-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1358,7 +1611,8 @@ object InvictusKnowledge {
                 "alternato. ",
             articleTitle = "Come aumentare la massa muscolare?",
             url = "https://www.projectinvictus.it/aumentare-massa-muscolare/",
-            publishedDate = "2023-12-21"
+            publishedDate = "2023-12-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1367,7 +1621,8 @@ object InvictusKnowledge {
                 "facendo dalle 4 alle 10 ripetizioni per “n” serie. ",
             articleTitle = "Stacchi rumeni: esecuzione, tecnica corretta e muscoli coinvolti",
             url = "https://www.projectinvictus.it/stacchi-rumeni/",
-            publishedDate = "2023-11-29"
+            publishedDate = "2023-11-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1376,7 +1631,8 @@ object InvictusKnowledge {
                 "circa l’80% (6-8 ripetizioni massimali) vengono reclutate tutte le fibre muscolari. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1384,7 +1640,8 @@ object InvictusKnowledge {
                 "In pratica è ciò che sostanzialmente avviene quando sposti un peso per 6-15 ripetizioni. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1395,7 +1652,8 @@ object InvictusKnowledge {
                 "fatica accumulata. ",
             articleTitle = "I migliori esercizi per i polpacci",
             url = "https://www.projectinvictus.it/esercizi-polpacci/",
-            publishedDate = "2023-06-24"
+            publishedDate = "2023-06-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1404,7 +1662,8 @@ object InvictusKnowledge {
                 "che va dalle 8 alle 12 ripetizioni . ",
             articleTitle = "I migliori esercizi per i polpacci",
             url = "https://www.projectinvictus.it/esercizi-polpacci/",
-            publishedDate = "2023-06-24"
+            publishedDate = "2023-06-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1413,7 +1672,8 @@ object InvictusKnowledge {
                 "rep range indicativo dalle 8 alle 15 ripetizioni. ",
             articleTitle = "Stacchi a gambe tese per glutei di marmo",
             url = "https://www.projectinvictus.it/stacchi-gambe-tese/",
-            publishedDate = "2023-01-24"
+            publishedDate = "2023-01-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1422,7 +1682,8 @@ object InvictusKnowledge {
                 "uno spettro di intensità davvero ampio ( 6 – 15 ripetizioni ). ",
             articleTitle = "Stacchi a gambe tese per glutei di marmo",
             url = "https://www.projectinvictus.it/stacchi-gambe-tese/",
-            publishedDate = "2023-01-24"
+            publishedDate = "2023-01-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1431,7 +1692,8 @@ object InvictusKnowledge {
                 "tra 1 e 10/12 ripetizioni , piuttosto che dalle 15 ripetizioni in su. ",
             articleTitle = "Fibre rosse e bianche",
             url = "https://www.projectinvictus.it/fibre-rosse-bianche/",
-            publishedDate = "2022-11-17"
+            publishedDate = "2022-11-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1439,7 +1701,8 @@ object InvictusKnowledge {
                 "Diventa più forte sulle 6-8 ripetizioni ed hai risolto il 90% dei problemi. ",
             articleTitle = "Come ingrossare le braccia",
             url = "https://www.projectinvictus.it/come-ingrossare-le-braccia/",
-            publishedDate = "2022-09-21"
+            publishedDate = "2022-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1447,7 +1710,8 @@ object InvictusKnowledge {
                 "Puoi fare 4-6 serie da 6-8 ripetizioni con un recupero di 2′. ",
             articleTitle = "Come ingrossare le braccia",
             url = "https://www.projectinvictus.it/come-ingrossare-le-braccia/",
-            publishedDate = "2022-09-21"
+            publishedDate = "2022-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1455,7 +1719,8 @@ object InvictusKnowledge {
                 "Esegui 4-6 serie da 6-8 ripetizioni con un recupero di 2′. ",
             articleTitle = "Come ingrossare le braccia",
             url = "https://www.projectinvictus.it/come-ingrossare-le-braccia/",
-            publishedDate = "2022-09-21"
+            publishedDate = "2022-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1464,7 +1729,8 @@ object InvictusKnowledge {
                 "stessa tecnica e velocità). ",
             articleTitle = "Come ingrossare le braccia",
             url = "https://www.projectinvictus.it/come-ingrossare-le-braccia/",
-            publishedDate = "2022-09-21"
+            publishedDate = "2022-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1473,7 +1739,8 @@ object InvictusKnowledge {
                 ", addominali per gli obliqui ) hai già fatto un terzo del lavoro. ",
             articleTitle = "Esercizi addome uomo",
             url = "https://www.projectinvictus.it/esercizi-addominali-uomo/",
-            publishedDate = "2022-09-16"
+            publishedDate = "2022-09-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1482,7 +1749,8 @@ object InvictusKnowledge {
                 "e hai un livello avanzato, può essere messo anche come primo esercizio. ",
             articleTitle = "Esercizi addome uomo",
             url = "https://www.projectinvictus.it/esercizi-addominali-uomo/",
-            publishedDate = "2022-09-16"
+            publishedDate = "2022-09-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1493,7 +1761,8 @@ object InvictusKnowledge {
                 "un minuto di recupero. ",
             articleTitle = "EPOC: cos’è e come aumentarlo",
             url = "https://www.projectinvictus.it/epoc-calorie-metabolismo-studi/",
-            publishedDate = "2022-08-21"
+            publishedDate = "2022-08-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1502,7 +1771,8 @@ object InvictusKnowledge {
                 "abbondanti e completi. ",
             articleTitle = "P.H.A.T. Power Hypertrophy Adaptive Training",
             url = "https://www.projectinvictus.it/phat-power-hypertrophy-adaptive-training/",
-            publishedDate = "2022-07-04"
+            publishedDate = "2022-07-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1512,7 +1782,8 @@ object InvictusKnowledge {
                 "accorciamento (es. ",
             articleTitle = "Glutei: anatomia, esercizi, allenamento",
             url = "https://www.projectinvictus.it/glutei/",
-            publishedDate = "2022-05-16"
+            publishedDate = "2022-05-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1521,7 +1792,8 @@ object InvictusKnowledge {
                 "serie: un range che può andare dalle 8 alle 10 ripetizioni . ",
             articleTitle = "Box Squat: come si esegue",
             url = "https://www.projectinvictus.it/box-squat/",
-            publishedDate = "2021-04-16"
+            publishedDate = "2021-04-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1531,7 +1803,8 @@ object InvictusKnowledge {
                 "alle 12/15 ripetizioni. ",
             articleTitle = "Come allargare le spalle? Esercizi efficaci",
             url = "https://www.projectinvictus.it/come-allargare-spalle/",
-            publishedDate = "2021-03-01"
+            publishedDate = "2021-03-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1540,7 +1813,8 @@ object InvictusKnowledge {
                 "ripetizioni. ",
             articleTitle = "Come allargare le spalle? Esercizi efficaci",
             url = "https://www.projectinvictus.it/come-allargare-spalle/",
-            publishedDate = "2021-03-01"
+            publishedDate = "2021-03-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1548,7 +1822,8 @@ object InvictusKnowledge {
                 "REP RANGE : 5-6 4 serie: ESERCIZIO DI ISOLAMENTO MULTIARTICOLARE. ",
             articleTitle = "Come allargare le spalle? Esercizi efficaci",
             url = "https://www.projectinvictus.it/come-allargare-spalle/",
-            publishedDate = "2021-03-01"
+            publishedDate = "2021-03-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1556,7 +1831,8 @@ object InvictusKnowledge {
                 "REP RANGE : 7-9 3-4 serie : ESERCIZIO DI ISOLAMENTO MONOARTICOLARE. ",
             articleTitle = "Come allargare le spalle? Esercizi efficaci",
             url = "https://www.projectinvictus.it/come-allargare-spalle/",
-            publishedDate = "2021-03-01"
+            publishedDate = "2021-03-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1565,7 +1841,8 @@ object InvictusKnowledge {
                 "nuca per 10-15 secondi per 2-3 serie da 6 ripetizioni. ",
             articleTitle = "Vacuum addominale: esecuzione corretta",
             url = "https://www.projectinvictus.it/vacuum-addominale/",
-            publishedDate = "2021-01-30"
+            publishedDate = "2021-01-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1574,7 +1851,8 @@ object InvictusKnowledge {
                 "per i polpacci con un completo stretching statico di circa 1 minuto. ",
             articleTitle = "Polpacci Carenti: mito o realtà?",
             url = "https://www.projectinvictus.it/polpacci-carenti/",
-            publishedDate = "2020-09-07"
+            publishedDate = "2020-09-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1584,7 +1862,8 @@ object InvictusKnowledge {
                 "Scalate del 10% e ricominciate a salire. ",
             articleTitle = "Come imparare a fare la prima trazione alla sbarra",
             url = "https://www.projectinvictus.it/come-imparare-a-fare-la-prima-trazione-alla-sbarra/",
-            publishedDate = "2019-01-14"
+            publishedDate = "2019-01-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1593,7 +1872,8 @@ object InvictusKnowledge {
                 "le serie. ",
             articleTitle = "Lo squat pesante dopo i 40 anni: quando l’età non conta, anche se conta.",
             url = "https://www.projectinvictus.it/lo-squat-pesante-dopo-i-40-anni/",
-            publishedDate = "2018-07-13"
+            publishedDate = "2018-07-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1602,7 +1882,8 @@ object InvictusKnowledge {
                 "le serie. ",
             articleTitle = "Lo squat pesante dopo i 40 anni: quando l’età non conta, anche se conta.",
             url = "https://www.projectinvictus.it/lo-squat-pesante-dopo-i-40-anni/",
-            publishedDate = "2018-07-13"
+            publishedDate = "2018-07-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1611,7 +1892,8 @@ object InvictusKnowledge {
                 "la settimana prima + 5% Pausa 4-5 minuti fra le serie. ",
             articleTitle = "Lo squat pesante dopo i 40 anni: quando l’età non conta, anche se conta.",
             url = "https://www.projectinvictus.it/lo-squat-pesante-dopo-i-40-anni/",
-            publishedDate = "2018-07-13"
+            publishedDate = "2018-07-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1620,7 +1902,8 @@ object InvictusKnowledge {
                 "terza da 6 ripetizioni fino al massimo unbroken e poi torniamo indietro. ",
             articleTitle = "Metodo ad incremento",
             url = "https://www.projectinvictus.it/metodo-ad-incremento/",
-            publishedDate = "2018-04-20"
+            publishedDate = "2018-04-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1629,7 +1912,8 @@ object InvictusKnowledge {
                 "voluminoso . ",
             articleTitle = "Il Metodo Ripetizioni Totali nel Calisthenics",
             url = "https://www.projectinvictus.it/il-metodo-ripetizioni-totali-nel-calisthenics/",
-            publishedDate = "2018-03-23"
+            publishedDate = "2018-03-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1637,7 +1921,8 @@ object InvictusKnowledge {
                 "Ovviamente se uno ha un massimale anche solo di 7-10 ripetizioni non è il top. ",
             articleTitle = "Il Metodo Ripetizioni Totali nel Calisthenics",
             url = "https://www.projectinvictus.it/il-metodo-ripetizioni-totali-nel-calisthenics/",
-            publishedDate = "2018-03-23"
+            publishedDate = "2018-03-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1646,7 +1931,8 @@ object InvictusKnowledge {
                 "carichi che vi permettano di fare da 8 a 12 ripetizioni . ",
             articleTitle = "Ipertrofia e forza: le logiche che li correlano",
             url = "https://www.projectinvictus.it/ipertrofia-forza/",
-            publishedDate = "2016-12-07"
+            publishedDate = "2016-12-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1656,7 +1942,8 @@ object InvictusKnowledge {
                 "divaricate. ",
             articleTitle = "Verticale d’impostazione: guida e tutorial",
             url = "https://www.projectinvictus.it/verticale-dimpostazione-guida-e-tutorial/",
-            publishedDate = "2016-09-14"
+            publishedDate = "2016-09-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1665,7 +1952,8 @@ object InvictusKnowledge {
                 "fino a raggiungere le 4 serie da 10 ripetizioni, per poi proseguire con la propedeutica. ",
             articleTitle = "Verticale d’impostazione: guida e tutorial",
             url = "https://www.projectinvictus.it/verticale-dimpostazione-guida-e-tutorial/",
-            publishedDate = "2016-09-14"
+            publishedDate = "2016-09-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1674,7 +1962,8 @@ object InvictusKnowledge {
                 "progredire fino a terra. ",
             articleTitle = "Verticale d’impostazione: guida e tutorial",
             url = "https://www.projectinvictus.it/verticale-dimpostazione-guida-e-tutorial/",
-            publishedDate = "2016-09-14"
+            publishedDate = "2016-09-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1683,7 +1972,8 @@ object InvictusKnowledge {
                 "completare 5 serie da 15 ripetizioni con 1-1,30′ di recupero tra le serie. ",
             articleTitle = "Trazioni senza sovraccarico: alternativa alle zavorre",
             url = "https://www.projectinvictus.it/trazioni-alternativa-alle-zavorre/",
-            publishedDate = "2016-03-15"
+            publishedDate = "2016-03-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1692,7 +1982,8 @@ object InvictusKnowledge {
                 "recupero. ",
             articleTitle = "Trazioni senza sovraccarico: alternativa alle zavorre",
             url = "https://www.projectinvictus.it/trazioni-alternativa-alle-zavorre/",
-            publishedDate = "2016-03-15"
+            publishedDate = "2016-03-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1702,7 +1993,8 @@ object InvictusKnowledge {
                 "minuto e mezzo di riposo tra le serie. ",
             articleTitle = "Trazioni con l’asciugamano. Binomio perfetto",
             url = "https://www.projectinvictus.it/trazioni-con-lasciugamano-binomio-perfetto/",
-            publishedDate = "2015-11-16"
+            publishedDate = "2015-11-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1712,7 +2004,8 @@ object InvictusKnowledge {
                 "o 30”. ",
             articleTitle = "Trazioni con l’asciugamano. Binomio perfetto",
             url = "https://www.projectinvictus.it/trazioni-con-lasciugamano-binomio-perfetto/",
-            publishedDate = "2015-11-16"
+            publishedDate = "2015-11-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1720,7 +2013,8 @@ object InvictusKnowledge {
                 "Nella prima settimana andremo ad eseguire 5 serie da 3 ripetizioni per braccio. ",
             articleTitle = "Trazioni con l’asciugamano. Binomio perfetto",
             url = "https://www.projectinvictus.it/trazioni-con-lasciugamano-binomio-perfetto/",
-            publishedDate = "2015-11-16"
+            publishedDate = "2015-11-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1729,7 +2023,8 @@ object InvictusKnowledge {
                 "giorno per almeno la prima settimana. ",
             articleTitle = "Riabilitazione e prevenzione della spalla: impingement sub-acromiale",
             url = "https://www.projectinvictus.it/riabilitazione-e-prevenzione-della-spalla-impingement-sub-acromiale/",
-            publishedDate = "2015-01-26"
+            publishedDate = "2015-01-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1738,7 +2033,8 @@ object InvictusKnowledge {
                 "respirazione diaframmatica (inspirazione durante la rotazione) . ",
             articleTitle = "Riabilitazione e prevenzione della spalla: impingement sub-acromiale",
             url = "https://www.projectinvictus.it/riabilitazione-e-prevenzione-della-spalla-impingement-sub-acromiale/",
-            publishedDate = "2015-01-26"
+            publishedDate = "2015-01-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1746,7 +2042,8 @@ object InvictusKnowledge {
                 "Eseguire 3-4 serie da 10 ripetizioni per ogni movimento articolare. ",
             articleTitle = "Riabilitazione e prevenzione della spalla: impingement sub-acromiale",
             url = "https://www.projectinvictus.it/riabilitazione-e-prevenzione-della-spalla-impingement-sub-acromiale/",
-            publishedDate = "2015-01-26"
+            publishedDate = "2015-01-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1755,7 +2052,8 @@ object InvictusKnowledge {
                 "del massimo allungamento raggiunto. ",
             articleTitle = "Riabilitazione e prevenzione della spalla: impingement sub-acromiale",
             url = "https://www.projectinvictus.it/riabilitazione-e-prevenzione-della-spalla-impingement-sub-acromiale/",
-            publishedDate = "2015-01-26"
+            publishedDate = "2015-01-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1763,7 +2061,8 @@ object InvictusKnowledge {
                 "8-12 ripetizioni x 4-5 serie Sit ups Sit ups, in questo caso alla spalliera. ",
             articleTitle = "10 Esercizi base per gli Addominali nella Ginnastica",
             url = "https://www.projectinvictus.it/10-esercizi-base-per-gli-addominali-nella-ginnastica/",
-            publishedDate = "2014-06-19"
+            publishedDate = "2014-06-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1771,7 +2070,8 @@ object InvictusKnowledge {
                 "10-15 ripetizioni x 3-4 serie Sit ups completi Versione avanzata dei sit ups . ",
             articleTitle = "10 Esercizi base per gli Addominali nella Ginnastica",
             url = "https://www.projectinvictus.it/10-esercizi-base-per-gli-addominali-nella-ginnastica/",
-            publishedDate = "2014-06-19"
+            publishedDate = "2014-06-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1781,7 +2081,8 @@ object InvictusKnowledge {
                 "braccio a terra. ",
             articleTitle = "10 Esercizi base per gli Addominali nella Ginnastica",
             url = "https://www.projectinvictus.it/10-esercizi-base-per-gli-addominali-nella-ginnastica/",
-            publishedDate = "2014-06-19"
+            publishedDate = "2014-06-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1790,7 +2091,8 @@ object InvictusKnowledge {
                 "gambe tese, le alziamo flettendole ripetutamente. ",
             articleTitle = "10 Esercizi base per gli Addominali nella Ginnastica",
             url = "https://www.projectinvictus.it/10-esercizi-base-per-gli-addominali-nella-ginnastica/",
-            publishedDate = "2014-06-19"
+            publishedDate = "2014-06-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -1800,7 +2102,40 @@ object InvictusKnowledge {
                 "range di forza”, e il massimo sviluppo della forza viene penalizzato. ",
             articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 2)",
             url = "https://www.projectinvictus.it/chiarimenti-e-incomprensioni-sullintensita-nellesercizio-con-i-pesi-parte-2/",
-            publishedDate = "2014-06-12"
+            publishedDate = "2014-06-12",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.REPS,
+            statement =
+                "When training at a specific RM load, it is recommended that 2-10% increase in load be " +
+                "applied when the individual can perform the current workload for one to two repetitions " +
+                "over the desired number. ",
+            articleTitle = "American College of Sports Medicine position stand. Progression models in resistance training for healthy adults",
+            url = "https://pubmed.ncbi.nlm.nih.gov/19204579/",
+            publishedDate = "2009",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.REPS,
+            statement =
+                "Subjects were tested pre- and post-study for: 1 repetition maximum (RM) strength in the " +
+                "bench press and squat, upper body muscle endurance, and muscle thickness of the elbow " +
+                "flexors, elbow extensors, and lateral thigh. ",
+            articleTitle = "Differential Effects of Heavy Versus Moderate Loads on Measures of Strength and Hypertrophy in Resistance-Trained Men",
+            url = "https://pubmed.ncbi.nlm.nih.gov/27928218/",
+            publishedDate = "2016",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.REPS,
+            statement =
+                "Higher-load (>80% of single repetition maximum) prescriptions maximised strength gains, " +
+                "and all prescriptions comparably promoted muscle hypertrophy. ",
+            articleTitle = "Resistance training prescription for muscle strength and hypertrophy in healthy adults: a systematic review and Bayesian network meta-analysis",
+            url = "https://pubmed.ncbi.nlm.nih.gov/37414459/",
+            publishedDate = "2023",
+            kind = SourceKind.SYSTEMATIC_REVIEW
         ),
         Rule(
             category = Category.REST,
@@ -1810,7 +2145,8 @@ object InvictusKnowledge {
                 "cioccolato, contribuendo al recupero post-esercizio. ",
             articleTitle = "I 10 migliori alimenti per la massa muscolare",
             url = "https://www.projectinvictus.it/alimenti-per-la-massa-muscolare/",
-            publishedDate = "2025-07-18"
+            publishedDate = "2025-07-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1820,7 +2156,8 @@ object InvictusKnowledge {
                 "di allenamento. ",
             articleTitle = "Epicondilite (gomito del tennista): cause, rimedi ed esercizi efficaci",
             url = "https://www.projectinvictus.it/epicondilite-rimedi-esercizi-palestra/",
-            publishedDate = "2025-02-19"
+            publishedDate = "2025-02-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1829,7 +2166,8 @@ object InvictusKnowledge {
                 "tra le serie, per poi diminuire le reps appena cominci ad avvertire molta fatica. ",
             articleTitle = "Calisthenic Workout: schede e programmi per il calisthenics",
             url = "https://www.projectinvictus.it/calisthenic-workout-programmi/",
-            publishedDate = "2024-10-06"
+            publishedDate = "2024-10-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1838,7 +2176,8 @@ object InvictusKnowledge {
                 "30″ . ",
             articleTitle = "Plank: la guida completa",
             url = "https://www.projectinvictus.it/plank-addominali/",
-            publishedDate = "2024-09-24"
+            publishedDate = "2024-09-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1849,7 +2188,8 @@ object InvictusKnowledge {
                 "ore! ",
             articleTitle = "Plank: la guida completa",
             url = "https://www.projectinvictus.it/plank-addominali/",
-            publishedDate = "2024-09-24"
+            publishedDate = "2024-09-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1859,7 +2199,8 @@ object InvictusKnowledge {
                 "sistemi: Muscoli: in genere recuperano in 48-72 ore circa. ",
             articleTitle = "Come aumentare la massa muscolare?",
             url = "https://www.projectinvictus.it/aumentare-massa-muscolare/",
-            publishedDate = "2023-12-21"
+            publishedDate = "2023-12-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1867,7 +2208,8 @@ object InvictusKnowledge {
                 "Puoi fare 4-6 serie da 6-8 ripetizioni con un recupero di 2′. ",
             articleTitle = "Come ingrossare le braccia",
             url = "https://www.projectinvictus.it/come-ingrossare-le-braccia/",
-            publishedDate = "2022-09-21"
+            publishedDate = "2022-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1875,7 +2217,8 @@ object InvictusKnowledge {
                 "Esegui 4-6 serie da 6-8 ripetizioni con un recupero di 2′. ",
             articleTitle = "Come ingrossare le braccia",
             url = "https://www.projectinvictus.it/come-ingrossare-le-braccia/",
-            publishedDate = "2022-09-21"
+            publishedDate = "2022-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1883,7 +2226,8 @@ object InvictusKnowledge {
                 "Esegui 0-2 serie da > 12 ripetizioni con un recupero di 1’30. ",
             articleTitle = "Come ingrossare le braccia",
             url = "https://www.projectinvictus.it/come-ingrossare-le-braccia/",
-            publishedDate = "2022-09-21"
+            publishedDate = "2022-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1894,7 +2238,8 @@ object InvictusKnowledge {
                 "un minuto di recupero. ",
             articleTitle = "EPOC: cos’è e come aumentarlo",
             url = "https://www.projectinvictus.it/epoc-calorie-metabolismo-studi/",
-            publishedDate = "2022-08-21"
+            publishedDate = "2022-08-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1903,7 +2248,8 @@ object InvictusKnowledge {
                 "RM considerato il recupero incompleto. ",
             articleTitle = "FST-7 : cos’è e funziona veramente?",
             url = "https://www.projectinvictus.it/fst-7-cose-e-funziona-veramente/",
-            publishedDate = "2022-07-28"
+            publishedDate = "2022-07-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1912,7 +2258,8 @@ object InvictusKnowledge {
                 "abbondanti e completi. ",
             articleTitle = "P.H.A.T. Power Hypertrophy Adaptive Training",
             url = "https://www.projectinvictus.it/phat-power-hypertrophy-adaptive-training/",
-            publishedDate = "2022-07-04"
+            publishedDate = "2022-07-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1921,7 +2268,8 @@ object InvictusKnowledge {
                 "fase per almeno 3-6 mesi . ",
             articleTitle = "Conflitto subacromiale della spalla: cause e rimedi",
             url = "https://www.projectinvictus.it/conflitto-spalla-cause-rimedi/",
-            publishedDate = "2021-09-14"
+            publishedDate = "2021-09-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1931,7 +2279,8 @@ object InvictusKnowledge {
                 "inferiore alle soglie minime ottimali per chi si allena con i pesi (1,7). ",
             articleTitle = "BCAA – aminoacidi ramificati: cosa sono e quali scegliere?",
             url = "https://www.projectinvictus.it/aminoacidi-ramificati-bcaa/",
-            publishedDate = "2021-03-23"
+            publishedDate = "2021-03-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1940,7 +2289,8 @@ object InvictusKnowledge {
                 "1RM) con un recupero alto (>180”) . ",
             articleTitle = "Pettorali nella donna per tonificare il seno",
             url = "https://www.projectinvictus.it/esercizi-pettorali-donne-aumentare-seno/",
-            publishedDate = "2021-03-20"
+            publishedDate = "2021-03-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1951,7 +2301,8 @@ object InvictusKnowledge {
                 "soggettivi. ",
             articleTitle = "Come allargare le spalle? Esercizi efficaci",
             url = "https://www.projectinvictus.it/come-allargare-spalle/",
-            publishedDate = "2021-03-01"
+            publishedDate = "2021-03-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1962,7 +2313,8 @@ object InvictusKnowledge {
                 "allenanti e di recupero soggettivi. ",
             articleTitle = "Come allargare le spalle? Esercizi efficaci",
             url = "https://www.projectinvictus.it/come-allargare-spalle/",
-            publishedDate = "2021-03-01"
+            publishedDate = "2021-03-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1972,7 +2324,8 @@ object InvictusKnowledge {
                 "fatica. ",
             articleTitle = "Calisthenic Workout: schede e programmi per il calisthenics",
             url = "https://www.projectinvictus.it/calisthenic-workout-schede-e-programmi-per-il-calisthenics/",
-            publishedDate = "2020-01-03"
+            publishedDate = "2020-01-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1981,7 +2334,8 @@ object InvictusKnowledge {
                 "serie / ripetizioni. ",
             articleTitle = "Spartan Ultra Race: come prepararla",
             url = "https://www.projectinvictus.it/spartan-ultra-race-preparazione/",
-            publishedDate = "2019-03-12"
+            publishedDate = "2019-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1991,7 +2345,8 @@ object InvictusKnowledge {
                 "risultato dello sprint test. ",
             articleTitle = "Spartan Ultra Race: come prepararla",
             url = "https://www.projectinvictus.it/spartan-ultra-race-preparazione/",
-            publishedDate = "2019-03-12"
+            publishedDate = "2019-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -1999,7 +2354,8 @@ object InvictusKnowledge {
                 "Scarico Ogni 5-6 settimane di allenamento fatene una di recupero attivo. ",
             articleTitle = "Spartan Ultra Race: come prepararla",
             url = "https://www.projectinvictus.it/spartan-ultra-race-preparazione/",
-            publishedDate = "2019-03-12"
+            publishedDate = "2019-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -2008,7 +2364,8 @@ object InvictusKnowledge {
                 "3) e poi ripartiamo. ",
             articleTitle = "Allenare la Planche con l’elastico",
             url = "https://www.projectinvictus.it/planche-con-elastico/",
-            publishedDate = "2018-06-13"
+            publishedDate = "2018-06-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -2018,7 +2375,8 @@ object InvictusKnowledge {
                 "mantenendo però tempi di recupero incompleti (circa 1-2 minuti). ",
             articleTitle = "L’importanza della tecnica e di non scappare dai punti difficili",
             url = "https://www.projectinvictus.it/importanza-tecnica/",
-            publishedDate = "2017-01-23"
+            publishedDate = "2017-01-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -2028,7 +2386,8 @@ object InvictusKnowledge {
                 "ripetizioni con 1′- 1,30′ di recupero tra le serie. ",
             articleTitle = "Trazioni senza sovraccarico: alternativa alle zavorre",
             url = "https://www.projectinvictus.it/trazioni-alternativa-alle-zavorre/",
-            publishedDate = "2016-03-15"
+            publishedDate = "2016-03-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -2037,7 +2396,8 @@ object InvictusKnowledge {
                 "completare 5 serie da 15 ripetizioni con 1-1,30′ di recupero tra le serie. ",
             articleTitle = "Trazioni senza sovraccarico: alternativa alle zavorre",
             url = "https://www.projectinvictus.it/trazioni-alternativa-alle-zavorre/",
-            publishedDate = "2016-03-15"
+            publishedDate = "2016-03-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -2046,7 +2406,8 @@ object InvictusKnowledge {
                 "recupero. ",
             articleTitle = "Trazioni senza sovraccarico: alternativa alle zavorre",
             url = "https://www.projectinvictus.it/trazioni-alternativa-alle-zavorre/",
-            publishedDate = "2016-03-15"
+            publishedDate = "2016-03-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -2054,7 +2415,8 @@ object InvictusKnowledge {
                 "In questo caso i tempi di recupero ammontano a 2 minuti tra le serie. ",
             articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 4)",
             url = "https://www.projectinvictus.it/chiarimenti-incomprensioni-sullintensita-nellesercizio-i-pesi-parte-4/",
-            publishedDate = "2014-11-17"
+            publishedDate = "2014-11-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -2063,7 +2425,8 @@ object InvictusKnowledge {
                 "risultato che la densità di allenamento è molto aumentata rispetto alla precedente. ",
             articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 4)",
             url = "https://www.projectinvictus.it/chiarimenti-incomprensioni-sullintensita-nellesercizio-i-pesi-parte-4/",
-            publishedDate = "2014-11-17"
+            publishedDate = "2014-11-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -2073,7 +2436,8 @@ object InvictusKnowledge {
                 "numero di ripetizioni massime cala ad ogni serie. ",
             articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 2)",
             url = "https://www.projectinvictus.it/chiarimenti-e-incomprensioni-sullintensita-nellesercizio-con-i-pesi-parte-2/",
-            publishedDate = "2014-06-12"
+            publishedDate = "2014-06-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REST,
@@ -2083,7 +2447,92 @@ object InvictusKnowledge {
                 "maggiore recupero e mantenimento della forza[45]. ",
             articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 2)",
             url = "https://www.projectinvictus.it/chiarimenti-e-incomprensioni-sullintensita-nellesercizio-con-i-pesi-parte-2/",
-            publishedDate = "2014-06-12"
+            publishedDate = "2014-06-12",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.REST,
+            statement =
+                "However, it seems that longer duration RIs (> 2 min) are required to maximize strength " +
+                "gains in resistance-trained individuals. ",
+            articleTitle = "Effects of Rest Interval Duration in Resistance Training on Measures of Muscular Strength: A Systematic Review",
+            url = "https://pubmed.ncbi.nlm.nih.gov/28933024/",
+            publishedDate = "2018",
+            kind = SourceKind.SYSTEMATIC_REVIEW
+        ),
+        Rule(
+            category = Category.REST,
+            statement =
+                "J Strength Cond Res 36(1): 22-30, 2022-This study investigated the effects of different " +
+                "volumes of resistance training (RT) (8 weeks of 16, 24, and 32 weekly sets per muscle " +
+                "group) on muscular strength and hypertrophy. ",
+            articleTitle = "High Resistance-Training Volume Enhances Muscle Thickness in Resistance-Trained Men",
+            url = "https://pubmed.ncbi.nlm.nih.gov/31868813/",
+            publishedDate = "2022",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.REST,
+            statement =
+                "The magnitude of increase in 1RM and MT of the lower body when training with 32 weekly " +
+                "sets per muscle group was higher than for 16 weekly sets per muscle group. ",
+            articleTitle = "High Resistance-Training Volume Enhances Muscle Thickness in Resistance-Trained Men",
+            url = "https://pubmed.ncbi.nlm.nih.gov/31868813/",
+            publishedDate = "2022",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.REST,
+            statement =
+                "The magnitude of the increase in MTTB was higher when training with 32 weekly sets than " +
+                "for 16 weekly sets. ",
+            articleTitle = "High Resistance-Training Volume Enhances Muscle Thickness in Resistance-Trained Men",
+            url = "https://pubmed.ncbi.nlm.nih.gov/31868813/",
+            publishedDate = "2022",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.REST,
+            statement =
+                "Overall, the reported improvement in sprint performance (sprint ES = -0.87, mean sprint " +
+                "improvement = 3.11 %) resulting from resistance training is of practical relevance for " +
+                "coaches and athletes in sport activities requiring high levels of speed. ",
+            articleTitle = "Increases in lower-body strength transfer positively to sprint performance: a systematic review with meta-analysis",
+            url = "https://pubmed.ncbi.nlm.nih.gov/25059334/",
+            publishedDate = "2014",
+            kind = SourceKind.SYSTEMATIC_REVIEW
+        ),
+        Rule(
+            category = Category.REST,
+            statement =
+                "CONCLUSIONS: The use of 2 minutes of rest between sets allowed the performance of a high " +
+                "volume-load and density of the session in young women. ",
+            articleTitle = "Does rest interval between sets affect resistance training volume, density, and rating of perceived exertion when adopting the crescent pyramid system in young women?",
+            url = "https://pubmed.ncbi.nlm.nih.gov/32597616/",
+            publishedDate = "2020",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.REST,
+            statement =
+                "Seventeen young men were randomly assigned to either a hypertrophy-type resistance " +
+                "training group that performed 3 sets of 10 repetition maximum (RM) with 90 seconds rest " +
+                "or a strength-type resistance training (ST) group that performed 7 sets of 3RM with a " +
+                "3-minute rest interval. ",
+            articleTitle = "Effects of different volume-equated resistance training loading strategies on muscular adaptations in well-trained men",
+            url = "https://pubmed.ncbi.nlm.nih.gov/24714538/",
+            publishedDate = "2014",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.REST,
+            statement =
+                "After 8 weeks, no significant differences were noted in muscle thickness of the biceps " +
+                "brachii. ",
+            articleTitle = "Effects of different volume-equated resistance training loading strategies on muscular adaptations in well-trained men",
+            url = "https://pubmed.ncbi.nlm.nih.gov/24714538/",
+            publishedDate = "2014",
+            kind = SourceKind.INDIVIDUAL_STUDY
         ),
         Rule(
             category = Category.PROGRESSION,
@@ -2092,7 +2541,8 @@ object InvictusKnowledge {
                 "adattamenti metabolici ed ormonali necessari per poter progredire nel tempo. ",
             articleTitle = "Il mio percorso bodybuilding (Nicolò Liani)",
             url = "https://www.projectinvictus.it/percorso-nicolo-liani/",
-            publishedDate = "2018-09-13"
+            publishedDate = "2018-09-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROGRESSION,
@@ -2102,7 +2552,8 @@ object InvictusKnowledge {
                 "verranno ripetuti 3 volte alla settimana. ",
             articleTitle = "5×5: di Bill Starr, Reg Park, Stronglift",
             url = "https://www.projectinvictus.it/5x5/",
-            publishedDate = "2018-08-23"
+            publishedDate = "2018-08-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROGRESSION,
@@ -2111,7 +2562,8 @@ object InvictusKnowledge {
                 "provare ad aumentare il carico. ",
             articleTitle = "5×5: di Bill Starr, Reg Park, Stronglift",
             url = "https://www.projectinvictus.it/5x5/",
-            publishedDate = "2018-08-23"
+            publishedDate = "2018-08-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROGRESSION,
@@ -2121,7 +2573,8 @@ object InvictusKnowledge {
                 "x max tecnico ) o decidere di stabilizzare le serie e le ripetizioni. ",
             articleTitle = "Metodo Set x Rep + 1xmax nel calisthenics",
             url = "https://www.projectinvictus.it/programma-set-x-rep-1xmax-calisthenics/",
-            publishedDate = "2018-04-06"
+            publishedDate = "2018-04-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROGRESSION,
@@ -2131,7 +2584,8 @@ object InvictusKnowledge {
                 "affronterete il programma. ",
             articleTitle = "Metodo Set x Rep + 1xmax nel calisthenics",
             url = "https://www.projectinvictus.it/programma-set-x-rep-1xmax-calisthenics/",
-            publishedDate = "2018-04-06"
+            publishedDate = "2018-04-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROGRESSION,
@@ -2141,7 +2595,116 @@ object InvictusKnowledge {
                 "panca, con i piedi appoggiati a terra. ",
             articleTitle = "Scrollate inverse per il riequilibrio scapolare",
             url = "https://www.projectinvictus.it/scrollate-inverse-per-riequilibrio-scapolare/",
-            publishedDate = "2014-11-06"
+            publishedDate = "2014-11-06",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.PROGRESSION,
+            statement =
+                "Both protocols increased 1RM values from pre (LOADprog: 52.90±16.32 kg; REPSprog: " +
+                "51.67±15.84 kg) to post (LOADprog: 69.05±18.55 kg, REPSprog: 66.82±17.95 kg), with no " +
+                "difference between them (P+>+0.05). ",
+            articleTitle = "Effects of Resistance Training Overload Progression Protocols on Strength and Muscle Mass",
+            url = "https://pubmed.ncbi.nlm.nih.gov/38286426/",
+            publishedDate = "2024",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.PROGRESSION,
+            statement =
+                "Alternatively, dynamic strength increases slightly favored LOAD (2.0 kg [-2.4, 7.8]), " +
+                "with differences of questionable practical significance. ",
+            articleTitle = "Progressive overload without progressing load? The effects of load or repetition progression on muscular adaptations",
+            url = "https://pubmed.ncbi.nlm.nih.gov/36199287/",
+            publishedDate = "2022",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.PROGRESSION,
+            statement =
+                "No other notable between-group differences were found across outcomes (muscle " +
+                "thicknesses, <1 mm; endurance, <1%; countermovement jump, 0.1 cm; body fat, <1%; leg " +
+                "segmental lean mass, 0.1 kg), with narrow CIs for most outcomes. ",
+            articleTitle = "Progressive overload without progressing load? The effects of load or repetition progression on muscular adaptations",
+            url = "https://pubmed.ncbi.nlm.nih.gov/36199287/",
+            publishedDate = "2022",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.PROGRESSION,
+            statement =
+                "Triceps brachii (TB) muscle thickness was assessed using ultrasonography at 60% (TB60) " +
+                "and 70% (TB70) of the upper arm length, and the sum of both sites was calculated (∑TB). ",
+            articleTitle = "Progressive Overload Affects the Magnitude of Muscle Hypertrophy",
+            url = "https://pubmed.ncbi.nlm.nih.gov/41718594/",
+            publishedDate = "2026",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.PROGRESSION,
+            statement =
+                "Daily insulin dose reductions were observed within the Diactive-1 group (mean difference " +
+                "[MD] -0.10 units/kg, 95% CI -0.18 to -0.01) and when compared with usual care (MD -0.17 " +
+                "units/kg, 95% CI -0.26 to -0.07). ",
+            articleTitle = "Effect of Diactive-1 mHealth-Supported Progressive Resistance Training on Insulin Requirements, Glycemic Stability, and Muscular Strength in Children and Adolescents With Type 1 Diabetes: A Parallel-G",
+            url = "https://pubmed.ncbi.nlm.nih.gov/40802196/",
+            publishedDate = "2025",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.PROGRESSION,
+            statement =
+                "Finally, handgrip strength (MD 2.90 kg, 95% CI 1.57-4.22), one-repetition maximum " +
+                "strength (MD 1.34, 95% CI 0.21-2.46), and muscular power (MD 0.97, 95% CI 0.01-1.93) " +
+                "increased. ",
+            articleTitle = "Effect of Diactive-1 mHealth-Supported Progressive Resistance Training on Insulin Requirements, Glycemic Stability, and Muscular Strength in Children and Adolescents With Type 1 Diabetes: A Parallel-G",
+            url = "https://pubmed.ncbi.nlm.nih.gov/40802196/",
+            publishedDate = "2025",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.PROGRESSION,
+            statement =
+                "Similarly, there were similar effects found for the interventions with progressive " +
+                "increase in load (RR = 0.53; 95%CI = 0.37-0.74) and the interventions with constant " +
+                "loads (RR = 0.46; 95%CI = 0.36-0.58). ",
+            articleTitle = "Exercise interventions to prevent hamstring injuries in athletes: A systematic review and meta-analysis",
+            url = "https://pubmed.ncbi.nlm.nih.gov/31680644/",
+            publishedDate = "2020",
+            kind = SourceKind.SYSTEMATIC_REVIEW
+        ),
+        Rule(
+            category = Category.PROGRESSION,
+            statement =
+                "Objective To compare the effects of strength training with load progression after 4 " +
+                "weeks on sleep parameters and mental health in college students. ",
+            articleTitle = "Examining the Effects of Strength Training with Load Progression on Sleep Parameters and Mental Health in College Students",
+            url = "https://pubmed.ncbi.nlm.nih.gov/38846591/",
+            publishedDate = "2024",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.PROGRESSION,
+            statement =
+                "Discussion Short-term strength training for 4 weeks was effective for improving mental " +
+                "health, helping achieve characteristics of a positive mood profile, that is, low values " +
+                "for negative factors and a high value for the positive factor. ",
+            articleTitle = "Examining the Effects of Strength Training with Load Progression on Sleep Parameters and Mental Health in College Students",
+            url = "https://pubmed.ncbi.nlm.nih.gov/38846591/",
+            publishedDate = "2024",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.PROGRESSION,
+            statement =
+                "CASE PRESENTATION: Two female recreational athletes (Case A: 27 years old; Case B: 28 " +
+                "years old) with subacromial pain were treated with BFRT (50% occlusion) during 3 " +
+                "isotonic strengthening exercises of the upper extremity against 20% of the maximal " +
+                "isometric strength. ",
+            articleTitle = "Blood Flow Restriction Training for Subacromial Pain: Two Case Reports",
+            url = "https://pubmed.ncbi.nlm.nih.gov/36582265/",
+            publishedDate = "2022",
+            kind = SourceKind.INDIVIDUAL_STUDY
         ),
         Rule(
             category = Category.PERIODIZATION,
@@ -2151,7 +2714,8 @@ object InvictusKnowledge {
                 "fase di definizione o di massa. ",
             articleTitle = "Quanti grassi assumere?",
             url = "https://www.projectinvictus.it/quanti-grassi-al-giorno/",
-            publishedDate = "2026-08-25"
+            publishedDate = "2026-08-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PERIODIZATION,
@@ -2160,7 +2724,8 @@ object InvictusKnowledge {
                 "rialzati, sempre stando nel range 20-35% o alzando al massimo al 40%. ",
             articleTitle = "Quanti grassi assumere?",
             url = "https://www.projectinvictus.it/quanti-grassi-al-giorno/",
-            publishedDate = "2026-08-25"
+            publishedDate = "2026-08-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PERIODIZATION,
@@ -2171,7 +2736,8 @@ object InvictusKnowledge {
                 "instaurare una fase anabolica. ",
             articleTitle = "Dieta per la massa muscolare: la guida completa",
             url = "https://www.projectinvictus.it/dieta-per-la-massa-muscolare/",
-            publishedDate = "2025-03-12"
+            publishedDate = "2025-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PERIODIZATION,
@@ -2181,7 +2747,8 @@ object InvictusKnowledge {
                 "massa grassa superiore a circa l’11% per gli uomini e 16% per le donne . ",
             articleTitle = "Dieta per la massa muscolare: la guida completa",
             url = "https://www.projectinvictus.it/dieta-per-la-massa-muscolare/",
-            publishedDate = "2025-03-12"
+            publishedDate = "2025-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PERIODIZATION,
@@ -2191,7 +2758,8 @@ object InvictusKnowledge {
                 "fase di “grassa” e non di “massa”. ",
             articleTitle = "Dieta donna nel bodybuilding e in palestra",
             url = "https://www.projectinvictus.it/dieta-donne-bodybuilding/",
-            publishedDate = "2024-07-31"
+            publishedDate = "2024-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PERIODIZATION,
@@ -2200,7 +2768,8 @@ object InvictusKnowledge {
                 "mantenimento per 2-3 settimane e poi continua con la fase di massa . ",
             articleTitle = "Definizione in palestra: come definire i muscoli",
             url = "https://www.projectinvictus.it/definizione-palestra/",
-            publishedDate = "2024-01-15"
+            publishedDate = "2024-01-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PERIODIZATION,
@@ -2210,7 +2779,8 @@ object InvictusKnowledge {
                 "mantenimento. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PERIODIZATION,
@@ -2221,7 +2791,8 @@ object InvictusKnowledge {
                 "mantenimento. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PERIODIZATION,
@@ -2231,7 +2802,8 @@ object InvictusKnowledge {
                 "il test . ",
             articleTitle = "Forza massimale: cos’è, calcolo e come allenarla",
             url = "https://www.projectinvictus.it/forza-massimale/",
-            publishedDate = "2022-10-28"
+            publishedDate = "2022-10-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PERIODIZATION,
@@ -2240,7 +2812,8 @@ object InvictusKnowledge {
                 "di 0,5 g/kg per assicurare la corretta funzionalità dell’organismo. ",
             articleTitle = "Macronutrienti per la definizione muscolare",
             url = "https://www.projectinvictus.it/macronutrienti-definizione-muscolare/",
-            publishedDate = "2022-02-03"
+            publishedDate = "2022-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PERIODIZATION,
@@ -2251,7 +2824,8 @@ object InvictusKnowledge {
                 "quasi la metà . ",
             articleTitle = "Creatina: assunzione e dosi giornaliere",
             url = "https://www.projectinvictus.it/come-assumere-creatina/",
-            publishedDate = "2021-12-08"
+            publishedDate = "2021-12-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PERIODIZATION,
@@ -2260,7 +2834,40 @@ object InvictusKnowledge {
                 "durata media di 1-3 settimane. ",
             articleTitle = "Mal di schiena: cause, sintomi e rimedi efficaci",
             url = "https://www.projectinvictus.it/mal-di-schiena-cause-sintomi-e-rimedi-efficaci/",
-            publishedDate = "2021-01-20"
+            publishedDate = "2021-01-20",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.PERIODIZATION,
+            statement =
+                "However, voluntary strength was enhanced by lifting heavier loads (≥80% one-repetition " +
+                "maximum), through a complete range of motion, for 2-3 sets, at the beginning of training " +
+                "sessions, and ≥2 sessions/wk. ",
+            articleTitle = "American College of Sports Medicine Position Stand. Resistance Training Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults: An Overview of Reviews",
+            url = "https://pubmed.ncbi.nlm.nih.gov/41843416/",
+            publishedDate = "2026",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.PERIODIZATION,
+            statement =
+                "Muscle hypertrophy was enhanced by higher volumes (≥10 sets/wk) and eccentric overload. ",
+            articleTitle = "American College of Sports Medicine Position Stand. Resistance Training Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults: An Overview of Reviews",
+            url = "https://pubmed.ncbi.nlm.nih.gov/41843416/",
+            publishedDate = "2026",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.PERIODIZATION,
+            statement =
+                "Existing literature shows that exercise performance towards 2-3 sets of 1-2 exercises " +
+                "per major muscle group, performing 5-8 repetitions or achieving intensities of 50-80% of " +
+                "1RM, 2-3 times per week should be recommended, followed by training principles such as " +
+                "periodization and progression. ",
+            articleTitle = "A Review on Aging, Sarcopenia, Falls, and Resistance Training in Community-Dwelling Older Adults",
+            url = "https://pubmed.ncbi.nlm.nih.gov/35055695/",
+            publishedDate = "2022",
+            kind = SourceKind.INDIVIDUAL_STUDY
         ),
         Rule(
             category = Category.DELOAD,
@@ -2269,7 +2876,8 @@ object InvictusKnowledge {
                 "allenamento. ",
             articleTitle = "Programmare la fase di scarico",
             url = "https://www.projectinvictus.it/programmare-fase-scarico/",
-            publishedDate = "2017-02-16"
+            publishedDate = "2017-02-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.DELOAD,
@@ -2279,7 +2887,82 @@ object InvictusKnowledge {
                 "varia generalmente da 2 a 6 settimane , mediamente 4. ",
             articleTitle = "Mesocicli e settimana di scarico: facciamo chiarezza",
             url = "https://www.projectinvictus.it/mesocicli-di-scarico-perche-farli/",
-            publishedDate = "2015-02-09"
+            publishedDate = "2015-02-09",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.DELOAD,
+            statement =
+                "Most coaches reported decreasing volume during all deloading periods (taper: 89.1% " +
+                "[163/183 respondents], competitive season: 70.4% [133/189], tournament: 84.1% [74/88], " +
+                "travel: 74.6% [88/118]), with the most common reduction in RT volume reported as 0-25%. ",
+            articleTitle = "Resistance Training Prescription During Planned Deloading Periods: A Survey of Strength and Conditioning Coaches Across Varying Sporting Codes",
+            url = "https://pubmed.ncbi.nlm.nih.gov/39446750/",
+            publishedDate = "2024",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.DELOAD,
+            statement =
+                "Most coaches also decreased intensity during a taper (52.9% [82/155]), tournament (54.8% " +
+                "[40/73]), and travel (53.6% [52/97]), with a 0-25% reduction the most common. ",
+            articleTitle = "Resistance Training Prescription During Planned Deloading Periods: A Survey of Strength and Conditioning Coaches Across Varying Sporting Codes",
+            url = "https://pubmed.ncbi.nlm.nih.gov/39446750/",
+            publishedDate = "2024",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.DELOAD,
+            statement =
+                "In addition, analysis of the relative importance of each week in predicting changes in " +
+                "CMJ height indicated that the VLs during deload or taper weeks were the best predictors " +
+                "(10%-17%) of changes in CMJ performance. ",
+            articleTitle = "Use of Machine Learning to Model Volume Load Effects on Changes in Jump Performance",
+            url = "https://pubmed.ncbi.nlm.nih.gov/31094253/",
+            publishedDate = "2020",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.DELOAD,
+            statement =
+                "This study assessed the effect of unilateral strength training at 80% one repetition " +
+                "maximum and of detraining on bone mineral density (BMD, g/cm-2) and bone mineral content " +
+                "(sigma BMC, g) in young women. ",
+            articleTitle = "Effects of unilateral strength training and detraining on bone mineral density and content in young women: a study of mechanical loading and deloading on human bones",
+            url = "https://pubmed.ncbi.nlm.nih.gov/7922791/",
+            publishedDate = "1994",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.DELOAD,
+            statement =
+                "Major programming challenges identified were managing fatigue (72%), optimizing training " +
+                "stimuli (53%), specificity (50%), and adherence (47%). ",
+            articleTitle = "Current Periodization, Testing, and Monitoring Practices of Strength and Conditioning Coaches",
+            url = "https://pubmed.ncbi.nlm.nih.gov/40681169/",
+            publishedDate = "2025",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.DELOAD,
+            statement =
+                "Physical performance changes were primarily identified from testing (90%) but also from " +
+                "athlete/coach feedback (76%), monitoring (71%), training data (67%), and performance " +
+                "data/statistics (62%). ",
+            articleTitle = "Current Periodization, Testing, and Monitoring Practices of Strength and Conditioning Coaches",
+            url = "https://pubmed.ncbi.nlm.nih.gov/40681169/",
+            publishedDate = "2025",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.DELOAD,
+            statement =
+                "Pretraining readiness was monitored via conversations (71%), wellness tools (46%), and " +
+                "performance devices (31%). ",
+            articleTitle = "Current Periodization, Testing, and Monitoring Practices of Strength and Conditioning Coaches",
+            url = "https://pubmed.ncbi.nlm.nih.gov/40681169/",
+            publishedDate = "2025",
+            kind = SourceKind.INDIVIDUAL_STUDY
         ),
         Rule(
             category = Category.FATIGUE,
@@ -2289,7 +2972,8 @@ object InvictusKnowledge {
                 "si verifica uno stallo. ",
             articleTitle = "Dieta per la massa muscolare: la guida completa",
             url = "https://www.projectinvictus.it/dieta-per-la-massa-muscolare/",
-            publishedDate = "2025-03-12"
+            publishedDate = "2025-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FATIGUE,
@@ -2298,7 +2982,8 @@ object InvictusKnowledge {
                 "non sei in sovrallenamento . ",
             articleTitle = "Sovrallenamento: cos’è, sintomi e rimedi",
             url = "https://www.projectinvictus.it/sovrallenamento/",
-            publishedDate = "2024-11-19"
+            publishedDate = "2024-11-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FATIGUE,
@@ -2308,7 +2993,8 @@ object InvictusKnowledge {
                 "percepita come un peso quasi massimale. ",
             articleTitle = "Record panca piana: ecco come migliorarlo",
             url = "https://www.projectinvictus.it/record-panca-piana-ecco-come-migliorarlo/",
-            publishedDate = "2017-10-13"
+            publishedDate = "2017-10-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FATIGUE,
@@ -2318,7 +3004,8 @@ object InvictusKnowledge {
                 "peso corporeo, e impostare pause di 30 secondi tra le serie multiple. ",
             articleTitle = "Scrollate inverse per il riequilibrio scapolare",
             url = "https://www.projectinvictus.it/scrollate-inverse-per-riequilibrio-scapolare/",
-            publishedDate = "2014-11-06"
+            publishedDate = "2014-11-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FATIGUE,
@@ -2327,7 +3014,8 @@ object InvictusKnowledge {
                 "compiere 5 ripetizioni, anche se alla fine sarà piuttosto affaticato. ",
             articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 3)",
             url = "https://www.projectinvictus.it/chiarimenti-incomprensioni-sullintensita-nellesercizio-i-pesi-parte-3/",
-            publishedDate = "2014-10-16"
+            publishedDate = "2014-10-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FATIGUE,
@@ -2337,7 +3025,8 @@ object InvictusKnowledge {
                 "variazioni della forma fisica o dello stato di affaticamento [4]. ",
             articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 3)",
             url = "https://www.projectinvictus.it/chiarimenti-incomprensioni-sullintensita-nellesercizio-i-pesi-parte-3/",
-            publishedDate = "2014-10-16"
+            publishedDate = "2014-10-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TECHNIQUE,
@@ -2348,7 +3037,8 @@ object InvictusKnowledge {
                 "numero di volte prefissate (almeno 3). ",
             articleTitle = "Tecniche intensità nel bodybuilding",
             url = "https://www.projectinvictus.it/tecniche-intensita-bodybuilding/",
-            publishedDate = "2025-08-27"
+            publishedDate = "2025-08-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TECHNIQUE,
@@ -2358,7 +3048,8 @@ object InvictusKnowledge {
                 "enfatizzare il massimo accorciamento e lo stretch muscolare. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TECHNIQUE,
@@ -2368,7 +3059,8 @@ object InvictusKnowledge {
                 "dovuto ad una scalata di carico. ",
             articleTitle = "Allenamento piramidale",
             url = "https://www.projectinvictus.it/allenamento-piramidale/",
-            publishedDate = "2023-03-27"
+            publishedDate = "2023-03-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TECHNIQUE,
@@ -2376,7 +3068,8 @@ object InvictusKnowledge {
                 "Il doppio drop set prevede un ulteriore calo del 20 % del carico dal primo drop set. ",
             articleTitle = "Pullover manubrio: esecuzione, muscoli coinvolti, scheda",
             url = "https://www.projectinvictus.it/pullover-manubrio/",
-            publishedDate = "2023-03-19"
+            publishedDate = "2023-03-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TECHNIQUE,
@@ -2386,7 +3079,8 @@ object InvictusKnowledge {
                 "esempio di 5”. ",
             articleTitle = "Esercizi e allenamento adduttori",
             url = "https://www.projectinvictus.it/esercizi-adduttori/",
-            publishedDate = "2023-03-16"
+            publishedDate = "2023-03-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TECHNIQUE,
@@ -2396,7 +3090,8 @@ object InvictusKnowledge {
                 "e continuerai ad eseguire gli affondi fino al cedimento. ",
             articleTitle = "Affondi: esecuzione e muscoli coinvolti",
             url = "https://www.projectinvictus.it/affondi/",
-            publishedDate = "2023-01-16"
+            publishedDate = "2023-01-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TECHNIQUE,
@@ -2406,7 +3101,8 @@ object InvictusKnowledge {
                 "triplo Drop Set . ",
             articleTitle = "Drop set bodybuilding: cos’è e come si fa",
             url = "https://www.projectinvictus.it/drop-set-bodybuilding/",
-            publishedDate = "2022-11-16"
+            publishedDate = "2022-11-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TECHNIQUE,
@@ -2415,7 +3111,8 @@ object InvictusKnowledge {
                 "passare alla versione successiva. ",
             articleTitle = "Dragon flag",
             url = "https://www.projectinvictus.it/dragon-flag/",
-            publishedDate = "2022-11-02"
+            publishedDate = "2022-11-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TECHNIQUE,
@@ -2423,7 +3120,8 @@ object InvictusKnowledge {
                 "Si consiglia di raggiungere almeno 6 ripetizioni dinamiche e almeno 20” di isometria. ",
             articleTitle = "Dragon flag",
             url = "https://www.projectinvictus.it/dragon-flag/",
-            publishedDate = "2022-11-02"
+            publishedDate = "2022-11-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TECHNIQUE,
@@ -2433,7 +3131,8 @@ object InvictusKnowledge {
                 "rimanendo sotto del 50 % per ottenere da natural i migliori benefici. ",
             articleTitle = "Heavy Duty: principi e scheda di allenamento",
             url = "https://www.projectinvictus.it/heavy-duty-allenamento/",
-            publishedDate = "2022-07-31"
+            publishedDate = "2022-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TECHNIQUE,
@@ -2442,7 +3141,8 @@ object InvictusKnowledge {
                 "cedimento. ",
             articleTitle = "La periodizzazione nel bodybuilding",
             url = "https://www.projectinvictus.it/periodizzazione-nel-bodybuilding/",
-            publishedDate = "2018-03-19"
+            publishedDate = "2018-03-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.EXECUTION,
@@ -2452,7 +3152,8 @@ object InvictusKnowledge {
                 "l’attenzione sul volume. ",
             articleTitle = "Pulley basso: tutorial ed esecuzione corretta",
             url = "https://www.projectinvictus.it/pulley-basso/",
-            publishedDate = "2025-04-09"
+            publishedDate = "2025-04-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.EXECUTION,
@@ -2463,7 +3164,8 @@ object InvictusKnowledge {
                 "30 ripetizioni . ",
             articleTitle = "Leg press in palestra e nel bodybuilding: esecuzione corretta",
             url = "https://www.projectinvictus.it/leg-press-bodybuilding/",
-            publishedDate = "2024-06-11"
+            publishedDate = "2024-06-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.EXECUTION,
@@ -2473,7 +3175,8 @@ object InvictusKnowledge {
                 "enfatizzare il massimo accorciamento e lo stretch muscolare. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.EXECUTION,
@@ -2483,7 +3186,8 @@ object InvictusKnowledge {
                 "arrivare ad un box. ",
             articleTitle = "V-push up: esecuzione e muscoli coinvolti",
             url = "https://www.projectinvictus.it/v-push-up/",
-            publishedDate = "2022-12-01"
+            publishedDate = "2022-12-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.EXECUTION,
@@ -2493,7 +3197,8 @@ object InvictusKnowledge {
                 "pensare di mettere il dito indice sugli 81 cm. ",
             articleTitle = "Panca piana: come eseguirla",
             url = "https://www.projectinvictus.it/la-panca-piana-nel-bodybuilding/",
-            publishedDate = "2022-11-29"
+            publishedDate = "2022-11-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.EXECUTION,
@@ -2503,7 +3208,8 @@ object InvictusKnowledge {
                 "rep range medio-alto, tra le 10 e le 15 ripetizioni . ",
             articleTitle = "Drop set bodybuilding: cos’è e come si fa",
             url = "https://www.projectinvictus.it/drop-set-bodybuilding/",
-            publishedDate = "2022-11-16"
+            publishedDate = "2022-11-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.EXECUTION,
@@ -2513,7 +3219,8 @@ object InvictusKnowledge {
                 "riuscirai ad eseguire con quel nuovo carico. ",
             articleTitle = "Drop set bodybuilding: cos’è e come si fa",
             url = "https://www.projectinvictus.it/drop-set-bodybuilding/",
-            publishedDate = "2022-11-16"
+            publishedDate = "2022-11-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.EXECUTION,
@@ -2522,7 +3229,8 @@ object InvictusKnowledge {
                 "versioni a pancia a muro per poi passare alle versioni full rom. ",
             articleTitle = "Planche: esecuzione, propedeutiche e muscoli coinvolti",
             url = "https://www.projectinvictus.it/planche-tutorial-ed-esecuzione/",
-            publishedDate = "2022-03-21"
+            publishedDate = "2022-03-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.EXECUTION,
@@ -2531,7 +3239,8 @@ object InvictusKnowledge {
                 "ESERCIZIO spinta verticale ROM PARZIALE con manubri /bilanciere. ",
             articleTitle = "Come allargare le spalle? Esercizi efficaci",
             url = "https://www.projectinvictus.it/come-allargare-spalle/",
-            publishedDate = "2021-03-01"
+            publishedDate = "2021-03-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.EXECUTION,
@@ -2541,7 +3250,8 @@ object InvictusKnowledge {
                 "range di forza”, e il massimo sviluppo della forza viene penalizzato. ",
             articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 2)",
             url = "https://www.projectinvictus.it/chiarimenti-e-incomprensioni-sullintensita-nellesercizio-con-i-pesi-parte-2/",
-            publishedDate = "2014-06-12"
+            publishedDate = "2014-06-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WARMUP,
@@ -2550,7 +3260,8 @@ object InvictusKnowledge {
                 "ripetizioni a margine 2 dal cedimento. ",
             articleTitle = "Military Press: esecuzione corretta e muscoli coinvolti",
             url = "https://www.projectinvictus.it/military-press/",
-            publishedDate = "2026-04-29"
+            publishedDate = "2026-04-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WARMUP,
@@ -2560,7 +3271,8 @@ object InvictusKnowledge {
                 "svolgere 5 ripetizioni, il nostro 5RM. ",
             articleTitle = "5×5: di Bill Starr, Reg Park, Stronglift",
             url = "https://www.projectinvictus.it/5x5/",
-            publishedDate = "2018-08-23"
+            publishedDate = "2018-08-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WARMUP,
@@ -2571,7 +3283,8 @@ object InvictusKnowledge {
                 "riscaldamento!), cui seguirà il riscaldamento specifico. ",
             articleTitle = "Come effettuare il riscaldamento per l’allenamento?",
             url = "https://www.projectinvictus.it/come-effettuare-il-riscaldamento/",
-            publishedDate = "2016-05-31"
+            publishedDate = "2016-05-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARDIO,
@@ -2581,7 +3294,8 @@ object InvictusKnowledge {
                 "caso, meglio preferire esercizi ad alta intensità di una certa durata (30-60 minuti) . ",
             articleTitle = "Il migliore allenamento per dimagrire",
             url = "https://www.projectinvictus.it/allenamento-per-dimagrire/",
-            publishedDate = "2026-05-15"
+            publishedDate = "2026-05-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARDIO,
@@ -2591,7 +3305,8 @@ object InvictusKnowledge {
                 "influenza e non l’unico (uno tra i più importante e non modificabile, la genetica ). ",
             articleTitle = "Superfood: quali sono e a cosa servono",
             url = "https://www.projectinvictus.it/superfood/",
-            publishedDate = "2024-12-02"
+            publishedDate = "2024-12-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARDIO,
@@ -2600,7 +3315,8 @@ object InvictusKnowledge {
                 "più calorie rispetto ad un’attività moderata. ",
             articleTitle = "Attività cardio per dimagrire: schede ed esercizi",
             url = "https://www.projectinvictus.it/cardio-per-dimagrire/",
-            publishedDate = "2024-03-24"
+            publishedDate = "2024-03-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARDIO,
@@ -2608,7 +3324,8 @@ object InvictusKnowledge {
                 "1-2 ore per 2-3 volte settimane) puoi optare anche per cardio LISS o MISS. ",
             articleTitle = "Attività cardio per dimagrire: schede ed esercizi",
             url = "https://www.projectinvictus.it/cardio-per-dimagrire/",
-            publishedDate = "2024-03-24"
+            publishedDate = "2024-03-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARDIO,
@@ -2618,7 +3335,8 @@ object InvictusKnowledge {
                 "intensa . ",
             articleTitle = "Attività cardio per dimagrire: schede ed esercizi",
             url = "https://www.projectinvictus.it/cardio-per-dimagrire/",
-            publishedDate = "2024-03-24"
+            publishedDate = "2024-03-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARDIO,
@@ -2627,7 +3345,8 @@ object InvictusKnowledge {
                 "stesso allenamento, anche facendo circuiti HIIT . ",
             articleTitle = "Dimagrire in palestra: cosa fare",
             url = "https://www.projectinvictus.it/dimagrire-in-palestra/",
-            publishedDate = "2023-02-09"
+            publishedDate = "2023-02-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARDIO,
@@ -2637,7 +3356,8 @@ object InvictusKnowledge {
                 "rischio di cardiopatie, migliorare la qualità del sonno e il generale benessere mentale. ",
             articleTitle = "Le migliori App Fitness",
             url = "https://www.projectinvictus.it/app-fitness-le-10-migliori/",
-            publishedDate = "2022-02-15"
+            publishedDate = "2022-02-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARDIO,
@@ -2647,7 +3367,8 @@ object InvictusKnowledge {
                 "viscerale e totale del corpo, aumentare la VO2 max e ridurre l’ insulino-resistenza. ",
             articleTitle = "Sindrome da ovaio policistico: dieta ed allenamento",
             url = "https://www.projectinvictus.it/sindrome-ovaio-policistico-dieta-allenamento/",
-            publishedDate = "2020-08-06"
+            publishedDate = "2020-08-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARDIO,
@@ -2656,7 +3377,8 @@ object InvictusKnowledge {
                 "durata variabile tra 4 e 30 minuti . ",
             articleTitle = "HIIT: High Intensity Interval Training – Che cos’è? Esempi pratici",
             url = "https://www.projectinvictus.it/hiit-high-intensity-interval-training-aspetti-scientifici-e-pratici/",
-            publishedDate = "2019-11-05"
+            publishedDate = "2019-11-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARDIO,
@@ -2667,7 +3389,8 @@ object InvictusKnowledge {
                 "anaerobica). ",
             articleTitle = "HIIT: High Intensity Interval Training – Che cos’è? Esempi pratici",
             url = "https://www.projectinvictus.it/hiit-high-intensity-interval-training-aspetti-scientifici-e-pratici/",
-            publishedDate = "2019-11-05"
+            publishedDate = "2019-11-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARDIO,
@@ -2677,7 +3400,8 @@ object InvictusKnowledge {
                 "volte a settimana se si svolge anche un’ altra attività). ",
             articleTitle = "HIIT: High Intensity Interval Training – Che cos’è? Esempi pratici",
             url = "https://www.projectinvictus.it/hiit-high-intensity-interval-training-aspetti-scientifici-e-pratici/",
-            publishedDate = "2019-11-05"
+            publishedDate = "2019-11-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARDIO,
@@ -2687,7 +3411,8 @@ object InvictusKnowledge {
                 "capilarizzazione muscolare, la densità mitocondriale, il volume plasmatico. ",
             articleTitle = "Allenamento aerobico",
             url = "https://www.projectinvictus.it/allenamento-aerobico/",
-            publishedDate = "2018-08-21"
+            publishedDate = "2018-08-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARDIO,
@@ -2696,7 +3421,8 @@ object InvictusKnowledge {
                 "cardiovascolare, se siamo sedentari ma facciamo palestra (pesi) 3 volte a settimana . ",
             articleTitle = "Camminare/ benefici e se serve per dimagrire",
             url = "https://www.projectinvictus.it/camminare/",
-            publishedDate = "2018-07-10"
+            publishedDate = "2018-07-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.LEVEL,
@@ -2704,7 +3430,8 @@ object InvictusKnowledge {
                 "Il consiglio per un atleta principiante è di allenarsi almeno 3 volte a settimana. ",
             articleTitle = "Street workout: cos’è, come iniziare e allenamento",
             url = "https://www.projectinvictus.it/street-workout/",
-            publishedDate = "2023-03-09"
+            publishedDate = "2023-03-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.LEVEL,
@@ -2713,7 +3440,8 @@ object InvictusKnowledge {
                 "iniziato da 1 mese) e voglio migliorare la mia composizione corporea . ",
             articleTitle = "Parametri allenanti: quali sono e come impostarli",
             url = "https://www.projectinvictus.it/parametri-allenanti/",
-            publishedDate = "2022-10-29"
+            publishedDate = "2022-10-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.LEVEL,
@@ -2722,7 +3450,8 @@ object InvictusKnowledge {
                 "alleni da anni) e vuoi migliorare il tuo fisico e anche le tue prestazioni. ",
             articleTitle = "Parametri allenanti: quali sono e come impostarli",
             url = "https://www.projectinvictus.it/parametri-allenanti/",
-            publishedDate = "2022-10-29"
+            publishedDate = "2022-10-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.LEVEL,
@@ -2733,7 +3462,8 @@ object InvictusKnowledge {
                 "dalle 5-6 alle 8 ripetizioni . ",
             articleTitle = "Box Squat: come si esegue",
             url = "https://www.projectinvictus.it/box-squat/",
-            publishedDate = "2021-04-16"
+            publishedDate = "2021-04-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.LEVEL,
@@ -2742,7 +3472,8 @@ object InvictusKnowledge {
                 "nuca per 10-15 secondi per 2-3 serie da 6 ripetizioni. ",
             articleTitle = "Vacuum addominale: esecuzione corretta",
             url = "https://www.projectinvictus.it/vacuum-addominale/",
-            publishedDate = "2021-01-30"
+            publishedDate = "2021-01-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.LEVEL,
@@ -2750,7 +3481,8 @@ object InvictusKnowledge {
                 "Il soggetto intermedio può considerare le 100-200 kcal/die. ",
             articleTitle = "Macronutrienti: cosa sono e in quali alimenti si trovano?",
             url = "https://www.projectinvictus.it/macronutrienti-nella-dieta-cosa-dobbiamo-sapere/",
-            publishedDate = "2021-01-17"
+            publishedDate = "2021-01-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.LEVEL,
@@ -2761,7 +3493,8 @@ object InvictusKnowledge {
                 "paralleli al pavimento. ",
             articleTitle = "Esercizi per il mal di schiena",
             url = "https://www.projectinvictus.it/esercizi-mal-di-schiena/",
-            publishedDate = "2018-03-24"
+            publishedDate = "2018-03-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.LEVEL,
@@ -2771,7 +3504,8 @@ object InvictusKnowledge {
                 "anche 4-5 (dipende da quel’è la vostra alzata target). ",
             articleTitle = "Migliora le tue trazioni col giro della morte",
             url = "https://www.projectinvictus.it/migliora-tue-trazioni-col-giro-morte/",
-            publishedDate = "2014-09-12"
+            publishedDate = "2014-09-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.LEVEL,
@@ -2781,7 +3515,8 @@ object InvictusKnowledge {
                 "giorni d’allenamento a settimana a quell’esercizio specifico. ",
             articleTitle = "Impariamo a programmare alcuni allenamenti da palestra (1xMax)",
             url = "https://www.projectinvictus.it/impariamo-a-programmare-part-1-1xmax/",
-            publishedDate = "2013-10-08"
+            publishedDate = "2013-10-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2790,7 +3525,8 @@ object InvictusKnowledge {
                 "allenanti a settimana . ",
             articleTitle = "RPE: cos’è, misura, utilizzo",
             url = "https://www.projectinvictus.it/rpe-palestra/",
-            publishedDate = "2026-09-16"
+            publishedDate = "2026-09-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2800,7 +3536,8 @@ object InvictusKnowledge {
                 "fase di definizione o di massa. ",
             articleTitle = "Quanti grassi assumere?",
             url = "https://www.projectinvictus.it/quanti-grassi-al-giorno/",
-            publishedDate = "2026-08-25"
+            publishedDate = "2026-08-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2809,7 +3546,8 @@ object InvictusKnowledge {
                 "intorno alle 12 – 20 serie a settimana . ",
             articleTitle = "Ricomposizione corporea: la guida completa",
             url = "https://www.projectinvictus.it/ricomposizione-corporea/",
-            publishedDate = "2026-08-18"
+            publishedDate = "2026-08-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2818,7 +3556,8 @@ object InvictusKnowledge {
                 "g/kg. ",
             articleTitle = "Fabbisogno glucidico: come calcolarlo?",
             url = "https://www.projectinvictus.it/fabbisogno-glucidico-carboidrati/",
-            publishedDate = "2026-07-13"
+            publishedDate = "2026-07-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2829,7 +3568,8 @@ object InvictusKnowledge {
                 "la massa muscolare. ",
             articleTitle = "La dieta flessibile",
             url = "https://www.projectinvictus.it/dieta-flessibile/",
-            publishedDate = "2026-07-09"
+            publishedDate = "2026-07-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2839,7 +3579,8 @@ object InvictusKnowledge {
                 "tra 3 e 7 g/kg. ",
             articleTitle = "La dieta flessibile",
             url = "https://www.projectinvictus.it/dieta-flessibile/",
-            publishedDate = "2026-07-09"
+            publishedDate = "2026-07-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2850,7 +3591,8 @@ object InvictusKnowledge {
                 "instaurare una fase anabolica. ",
             articleTitle = "Dieta per la massa muscolare: la guida completa",
             url = "https://www.projectinvictus.it/dieta-per-la-massa-muscolare/",
-            publishedDate = "2025-03-12"
+            publishedDate = "2025-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2860,7 +3602,8 @@ object InvictusKnowledge {
                 "massa grassa superiore a circa l’11% per gli uomini e 16% per le donne . ",
             articleTitle = "Dieta per la massa muscolare: la guida completa",
             url = "https://www.projectinvictus.it/dieta-per-la-massa-muscolare/",
-            publishedDate = "2025-03-12"
+            publishedDate = "2025-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2869,7 +3612,8 @@ object InvictusKnowledge {
                 "di 8/10 serie allenanti settimanali per un mantenimento della massa muscolare. ",
             articleTitle = "I 10 migliori esercizi per allenare le gambe",
             url = "https://www.projectinvictus.it/allenamento-gambe-quadricipiti/",
-            publishedDate = "2025-03-04"
+            publishedDate = "2025-03-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2879,7 +3623,8 @@ object InvictusKnowledge {
                 "prevalentemente tra il 60 e l’80% del massimale. ",
             articleTitle = "I migliori esercizi per le spalle",
             url = "https://www.projectinvictus.it/esercizi-spalle-la-guida-completa/",
-            publishedDate = "2025-01-21"
+            publishedDate = "2025-01-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2887,7 +3632,8 @@ object InvictusKnowledge {
                 "Il r ange di ripetizioni più comodo per l’ipertrofia è tra le 8 e le 20 ripetizioni. ",
             articleTitle = "I migliori esercizi per le spalle",
             url = "https://www.projectinvictus.it/esercizi-spalle-la-guida-completa/",
-            publishedDate = "2025-01-21"
+            publishedDate = "2025-01-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2896,7 +3642,8 @@ object InvictusKnowledge {
                 "settimane a seconda del soggetto. ",
             articleTitle = "Mini cut: cos’è e come impostarlo in fase di massa",
             url = "https://www.projectinvictus.it/mini-cut/",
-            publishedDate = "2024-11-16"
+            publishedDate = "2024-11-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2906,7 +3653,8 @@ object InvictusKnowledge {
                 "minore presenza di minerali. ",
             articleTitle = "Le 6 migliori proteine in polvere",
             url = "https://www.projectinvictus.it/migliori-proteine-in-polvere/",
-            publishedDate = "2024-11-03"
+            publishedDate = "2024-11-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2917,7 +3665,8 @@ object InvictusKnowledge {
                 "catabolico. ",
             articleTitle = "Le 6 migliori proteine in polvere",
             url = "https://www.projectinvictus.it/migliori-proteine-in-polvere/",
-            publishedDate = "2024-11-03"
+            publishedDate = "2024-11-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2927,7 +3676,8 @@ object InvictusKnowledge {
                 "considerando il range prima consigliato di 0.5-1 kg a settimana. ",
             articleTitle = "Fisico asciutto: come ottenerlo",
             url = "https://www.projectinvictus.it/dieta-asciugare-fisico/",
-            publishedDate = "2024-04-07"
+            publishedDate = "2024-04-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2936,7 +3686,8 @@ object InvictusKnowledge {
                 "mantenimento per 2-3 settimane e poi continua con la fase di massa . ",
             articleTitle = "Definizione in palestra: come definire i muscoli",
             url = "https://www.projectinvictus.it/definizione-palestra/",
-            publishedDate = "2024-01-15"
+            publishedDate = "2024-01-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2946,7 +3697,8 @@ object InvictusKnowledge {
                 "mantenimento. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2957,7 +3709,8 @@ object InvictusKnowledge {
                 "mantenimento. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2966,7 +3719,8 @@ object InvictusKnowledge {
                 "nostre calorie giornaliere. ",
             articleTitle = "Il culturismo: cos’è, dieta e allenamento",
             url = "https://www.projectinvictus.it/culturismo/",
-            publishedDate = "2022-12-03"
+            publishedDate = "2022-12-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2976,7 +3730,8 @@ object InvictusKnowledge {
                 "massa muscolare . ",
             articleTitle = "Catabolismo muscolare: cos’è, cause e rimedi",
             url = "https://www.projectinvictus.it/catabolismo-muscolare/",
-            publishedDate = "2022-09-08"
+            publishedDate = "2022-09-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2985,7 +3740,8 @@ object InvictusKnowledge {
                 "all’anno. ",
             articleTitle = "Massa magra: cos’è, valori ottimali, calcolo",
             url = "https://www.projectinvictus.it/massa-magra/",
-            publishedDate = "2022-08-06"
+            publishedDate = "2022-08-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -2993,7 +3749,8 @@ object InvictusKnowledge {
                 "La quota ottimale di proteine per la massa muscolare è di 1,4 – 2,2 g / kg al giorno . ",
             articleTitle = "Come diventare grossi in poco tempo",
             url = "https://www.projectinvictus.it/come-diventare-grossi/",
-            publishedDate = "2022-07-26"
+            publishedDate = "2022-07-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3003,7 +3760,8 @@ object InvictusKnowledge {
                 "superiore a 300 – 500 kcal rispetto al fabbisogno calorico giornaliero . ",
             articleTitle = "Somatotipo: endomorfo, mesomorfo, ectomorfo",
             url = "https://www.projectinvictus.it/somatotipo/",
-            publishedDate = "2022-06-30"
+            publishedDate = "2022-06-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3012,7 +3770,8 @@ object InvictusKnowledge {
                 "di 750 mg / die ; dosi più basse invece, non hanno mostrato benefici significativi. ",
             articleTitle = "Acido fosfatidico: cos’è, a cosa serve e quando assumerlo?",
             url = "https://www.projectinvictus.it/acido-fosfatidico-integratore-bodybuilding/",
-            publishedDate = "2022-02-15"
+            publishedDate = "2022-02-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3021,7 +3780,8 @@ object InvictusKnowledge {
                 "guadagnare fino a 0,5-1,0 kg di massa muscolare in 3-6 settimane di allenamento . ",
             articleTitle = "HMB integratore: cos’è, a cosa serve, funziona?",
             url = "https://www.projectinvictus.it/hmb-integratore/",
-            publishedDate = "2022-01-31"
+            publishedDate = "2022-01-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3031,7 +3791,8 @@ object InvictusKnowledge {
                 "integrazione) sia dopo. ",
             articleTitle = "Post workout: cosa assumere dopo l’allenamento in palestra?",
             url = "https://www.projectinvictus.it/post-workout-palestra-cosa-mangiare/",
-            publishedDate = "2021-08-03"
+            publishedDate = "2021-08-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3042,7 +3803,8 @@ object InvictusKnowledge {
                 "alle altre sostanze presenti nel latte. ",
             articleTitle = "Proteine isolate: benefici e controindicazioni",
             url = "https://www.projectinvictus.it/proteine-isolate/",
-            publishedDate = "2021-04-20"
+            publishedDate = "2021-04-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3051,7 +3813,8 @@ object InvictusKnowledge {
                 "la massima sintesi proteica al fine di mantenere o incrementare la massa muscolare. ",
             articleTitle = "Proteine isolate: benefici e controindicazioni",
             url = "https://www.projectinvictus.it/proteine-isolate/",
-            publishedDate = "2021-04-20"
+            publishedDate = "2021-04-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3061,7 +3824,8 @@ object InvictusKnowledge {
                 "g/kg) per preservare o aumentare la massa muscolare. ",
             articleTitle = "Insulino resistenza, sintomi e rimedi: cos’è e come ridurla?",
             url = "https://www.projectinvictus.it/insulino-resistenza-sintomi-e-rimedi/",
-            publishedDate = "2019-10-04"
+            publishedDate = "2019-10-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3071,7 +3835,8 @@ object InvictusKnowledge {
                 "resistente e poi forza massimale). ",
             articleTitle = "Fibrocellula muscolare ed allenamento",
             url = "https://www.projectinvictus.it/fibrocellula-muscolare/",
-            publishedDate = "2018-04-24"
+            publishedDate = "2018-04-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3081,7 +3846,8 @@ object InvictusKnowledge {
                 "deve essere protratto fino a cedimento muscolare ). ",
             articleTitle = "Fibrocellula muscolare ed allenamento",
             url = "https://www.projectinvictus.it/fibrocellula-muscolare/",
-            publishedDate = "2018-04-24"
+            publishedDate = "2018-04-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3091,7 +3857,8 @@ object InvictusKnowledge {
                 "su questa questione. ",
             articleTitle = "Ipertrofia e forza: le logiche che li correlano",
             url = "https://www.projectinvictus.it/ipertrofia-forza/",
-            publishedDate = "2016-12-07"
+            publishedDate = "2016-12-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3100,7 +3867,8 @@ object InvictusKnowledge {
                 "carichi che vi permettano di fare da 8 a 12 ripetizioni . ",
             articleTitle = "Ipertrofia e forza: le logiche che li correlano",
             url = "https://www.projectinvictus.it/ipertrofia-forza/",
-            publishedDate = "2016-12-07"
+            publishedDate = "2016-12-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3110,7 +3878,8 @@ object InvictusKnowledge {
                 "numero di ripetizioni massime cala ad ogni serie. ",
             articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 2)",
             url = "https://www.projectinvictus.it/chiarimenti-e-incomprensioni-sullintensita-nellesercizio-con-i-pesi-parte-2/",
-            publishedDate = "2014-06-12"
+            publishedDate = "2014-06-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3120,7 +3889,8 @@ object InvictusKnowledge {
                 "maggiore recupero e mantenimento della forza[45]. ",
             articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 2)",
             url = "https://www.projectinvictus.it/chiarimenti-e-incomprensioni-sullintensita-nellesercizio-con-i-pesi-parte-2/",
-            publishedDate = "2014-06-12"
+            publishedDate = "2014-06-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.GOAL_TRAIN,
@@ -3129,7 +3899,8 @@ object InvictusKnowledge {
                 "durante gli allenamenti (30-40 g) tende a ridurre significativamente il DOMS. ",
             articleTitle = "BCAA sempre e comunque utili?",
             url = "https://www.projectinvictus.it/bcaa-sempre-e-comunque-utili/",
-            publishedDate = "2014-03-13"
+            publishedDate = "2014-03-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_TRAIN,
@@ -3140,7 +3911,8 @@ object InvictusKnowledge {
                 "sintomatologia. ",
             articleTitle = "Brachioradiale: anatomia, esercizi, dolori",
             url = "https://www.projectinvictus.it/brachioradiale/",
-            publishedDate = "2025-02-22"
+            publishedDate = "2025-02-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_TRAIN,
@@ -3150,7 +3922,8 @@ object InvictusKnowledge {
                 "persone accusano una sensazione di debolezza durante i giorni della DMD. ",
             articleTitle = "Dieta Mima Digiuno: come funziona, benefici e cosa mangiare",
             url = "https://www.projectinvictus.it/dieta-mima-digiuno/",
-            publishedDate = "2024-07-30"
+            publishedDate = "2024-07-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_TRAIN,
@@ -3159,7 +3932,8 @@ object InvictusKnowledge {
                 "tuo primo muscle up agli anelli. ",
             articleTitle = "Muscle up agli anelli: esecuzione e muscoli coinvolti",
             url = "https://www.projectinvictus.it/tutorial-muscle-up-agli-anelli/",
-            publishedDate = "2022-03-25"
+            publishedDate = "2022-03-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_TRAIN,
@@ -3168,7 +3942,8 @@ object InvictusKnowledge {
                 "sull’articolazione della spalla pari a 80-90% del peso corporeo. ",
             articleTitle = "Muscolo infraspinato: anatomia e funzioni",
             url = "https://www.projectinvictus.it/infraspinato-anatomia-e-funzioni/",
-            publishedDate = "2021-03-05"
+            publishedDate = "2021-03-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_TRAIN,
@@ -3177,7 +3952,8 @@ object InvictusKnowledge {
                 "con una completa risoluzione dei sintomi. ",
             articleTitle = "Mal di schiena: cause, sintomi e rimedi efficaci",
             url = "https://www.projectinvictus.it/mal-di-schiena-cause-sintomi-e-rimedi-efficaci/",
-            publishedDate = "2021-01-20"
+            publishedDate = "2021-01-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_TRAIN,
@@ -3186,7 +3962,8 @@ object InvictusKnowledge {
                 "quale recuperare non sarà poi così semplice e veloce, sempre per colpa degli anni. ",
             articleTitle = "Lo squat pesante dopo i 40 anni: quando l’età non conta, anche se conta.",
             url = "https://www.projectinvictus.it/lo-squat-pesante-dopo-i-40-anni/",
-            publishedDate = "2018-07-13"
+            publishedDate = "2018-07-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_TRAIN,
@@ -3196,7 +3973,8 @@ object InvictusKnowledge {
                 "tenuta di Cross Body Stretch e Sleeper’s Stretch ( solo se questo non evoca dolore ). ",
             articleTitle = "Riabilitazione e prevenzione della spalla: impingement sub-acromiale",
             url = "https://www.projectinvictus.it/riabilitazione-e-prevenzione-della-spalla-impingement-sub-acromiale/",
-            publishedDate = "2015-01-26"
+            publishedDate = "2015-01-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_TRAIN,
@@ -3206,7 +3984,8 @@ object InvictusKnowledge {
                 "poi). ",
             articleTitle = "Riabilitazione e prevenzione della spalla: impingement sub-acromiale",
             url = "https://www.projectinvictus.it/riabilitazione-e-prevenzione-della-spalla-impingement-sub-acromiale/",
-            publishedDate = "2015-01-26"
+            publishedDate = "2015-01-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3216,7 +3995,8 @@ object InvictusKnowledge {
                 "totale. ",
             articleTitle = "Quanti grassi assumere?",
             url = "https://www.projectinvictus.it/quanti-grassi-al-giorno/",
-            publishedDate = "2026-08-25"
+            publishedDate = "2026-08-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3225,7 +4005,8 @@ object InvictusKnowledge {
                 "rialzati, sempre stando nel range 20-35% o alzando al massimo al 40%. ",
             articleTitle = "Quanti grassi assumere?",
             url = "https://www.projectinvictus.it/quanti-grassi-al-giorno/",
-            publishedDate = "2026-08-25"
+            publishedDate = "2026-08-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3233,7 +4014,8 @@ object InvictusKnowledge {
                 "Indicando un range più ampio, tra le 150 e le 500 kcal . ",
             articleTitle = "Calorie bruciate in palestra facendo pesi e bodybuilding",
             url = "https://www.projectinvictus.it/calorie-palestra-bodybuilding/",
-            publishedDate = "2026-08-10"
+            publishedDate = "2026-08-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3242,7 +4024,8 @@ object InvictusKnowledge {
                 "(4,5 g/kg per il soggetto in questione). ",
             articleTitle = "Fabbisogno glucidico: come calcolarlo?",
             url = "https://www.projectinvictus.it/fabbisogno-glucidico-carboidrati/",
-            publishedDate = "2026-07-13"
+            publishedDate = "2026-07-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3253,7 +4036,8 @@ object InvictusKnowledge {
                 "la massa muscolare. ",
             articleTitle = "La dieta flessibile",
             url = "https://www.projectinvictus.it/dieta-flessibile/",
-            publishedDate = "2026-07-09"
+            publishedDate = "2026-07-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3264,7 +4048,8 @@ object InvictusKnowledge {
                 "kcal. ",
             articleTitle = "Il migliore allenamento per dimagrire",
             url = "https://www.projectinvictus.it/allenamento-per-dimagrire/",
-            publishedDate = "2026-05-15"
+            publishedDate = "2026-05-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3274,7 +4059,8 @@ object InvictusKnowledge {
                 "introdotta nel corso della giornata. ",
             articleTitle = "Quanta acqua bere al giorno",
             url = "https://www.projectinvictus.it/quanta-acqua-bere-al-giorno/",
-            publishedDate = "2026-02-06"
+            publishedDate = "2026-02-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3284,7 +4070,8 @@ object InvictusKnowledge {
                 "ingrassare in entrambi i casi. ",
             articleTitle = "Colazione per dimagrire: cosa mangiare ed esempi",
             url = "https://www.projectinvictus.it/colazione-per-dimagrire/",
-            publishedDate = "2025-10-28"
+            publishedDate = "2025-10-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3293,7 +4080,8 @@ object InvictusKnowledge {
                 "zuccheri liberi a meno del 10% delle calorie totali giornaliere . ",
             articleTitle = "Il fruttosio fa male?",
             url = "https://www.projectinvictus.it/fruttosio-fa-male/",
-            publishedDate = "2025-10-16"
+            publishedDate = "2025-10-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3302,7 +4090,8 @@ object InvictusKnowledge {
                 "nei maschi e di 350 kcal nelle femmine. ",
             articleTitle = "Addominali scolpiti: come ottenerli",
             url = "https://www.projectinvictus.it/addominali-scolpiti/",
-            publishedDate = "2025-09-10"
+            publishedDate = "2025-09-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3312,7 +4101,8 @@ object InvictusKnowledge {
                 "prescindere dall’alimento e che facciano bene o male alla salute. ",
             articleTitle = "Dieta per avere gli addominali",
             url = "https://www.projectinvictus.it/dieta-per-addominali/",
-            publishedDate = "2025-08-08"
+            publishedDate = "2025-08-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3322,7 +4112,8 @@ object InvictusKnowledge {
                 "essere sostenibile nel tempo e perdere grasso piuttosto che massa magra. ",
             articleTitle = "Non riesco a dimagrire: rimedi",
             url = "https://www.projectinvictus.it/non-riesco-a-dimagrire/",
-            publishedDate = "2025-06-03"
+            publishedDate = "2025-06-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3331,7 +4122,8 @@ object InvictusKnowledge {
                 "sia per la salute sia per la perdita di peso. ",
             articleTitle = "Non riesco a dimagrire: rimedi",
             url = "https://www.projectinvictus.it/non-riesco-a-dimagrire/",
-            publishedDate = "2025-06-03"
+            publishedDate = "2025-06-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3340,7 +4132,8 @@ object InvictusKnowledge {
                 "il quoziente respiratorio . ",
             articleTitle = "Corsa brucia grassi per dimagrire",
             url = "https://www.projectinvictus.it/corsa-brucia-grassi/",
-            publishedDate = "2025-06-01"
+            publishedDate = "2025-06-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3349,7 +4142,8 @@ object InvictusKnowledge {
                 "e otteniamo quindi 17 g di grasso consumati ogni 10 km. ",
             articleTitle = "Corsa brucia grassi per dimagrire",
             url = "https://www.projectinvictus.it/corsa-brucia-grassi/",
-            publishedDate = "2025-06-01"
+            publishedDate = "2025-06-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3359,7 +4153,8 @@ object InvictusKnowledge {
                 "di calorie. ",
             articleTitle = "Dieta ferrea per dimagrire",
             url = "https://www.projectinvictus.it/dieta-ferrea/",
-            publishedDate = "2025-05-29"
+            publishedDate = "2025-05-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3368,7 +4163,8 @@ object InvictusKnowledge {
                 "acqua ogni 1000 kcal . ",
             articleTitle = "Bere tanta acqua per dimagrire",
             url = "https://www.projectinvictus.it/bere-acqua-fa-dimagrire/",
-            publishedDate = "2025-05-16"
+            publishedDate = "2025-05-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3377,7 +4173,8 @@ object InvictusKnowledge {
                 "totale giornaliera (200 – 300 kcal). ",
             articleTitle = "10 spuntini sani se sei a dieta (o meno)",
             url = "https://www.projectinvictus.it/spuntini-sani/",
-            publishedDate = "2025-04-26"
+            publishedDate = "2025-04-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3388,7 +4185,8 @@ object InvictusKnowledge {
                 "instaurare una fase anabolica. ",
             articleTitle = "Dieta per la massa muscolare: la guida completa",
             url = "https://www.projectinvictus.it/dieta-per-la-massa-muscolare/",
-            publishedDate = "2025-03-12"
+            publishedDate = "2025-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3398,7 +4196,8 @@ object InvictusKnowledge {
                 "si verifica uno stallo. ",
             articleTitle = "Dieta per la massa muscolare: la guida completa",
             url = "https://www.projectinvictus.it/dieta-per-la-massa-muscolare/",
-            publishedDate = "2025-03-12"
+            publishedDate = "2025-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3407,7 +4206,8 @@ object InvictusKnowledge {
                 "10 burpees. ",
             articleTitle = "10 esercizi per dimagrire",
             url = "https://www.projectinvictus.it/esercizi-per-dimagrire/",
-            publishedDate = "2025-03-10"
+            publishedDate = "2025-03-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3415,7 +4215,8 @@ object InvictusKnowledge {
                 "Per perdere 5 kg serve un deficit complessivo di 35000 kcal . ",
             articleTitle = "Deficit calorico: cos’è e come calcolarlo",
             url = "https://www.projectinvictus.it/deficit-calorico-calcolo/",
-            publishedDate = "2025-01-15"
+            publishedDate = "2025-01-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3424,7 +4225,8 @@ object InvictusKnowledge {
                 "vuoi dimagrire più rapidamente devi mangiare di meno e/o muoverti di più. ",
             articleTitle = "Dieta ipocalorica per dimagrire: la guida completa",
             url = "https://www.projectinvictus.it/dieta-ipocalorica/",
-            publishedDate = "2025-01-13"
+            publishedDate = "2025-01-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3434,7 +4236,8 @@ object InvictusKnowledge {
                 "dal momento della giornata in cui li mangi (anche la sera!). ",
             articleTitle = "Il pane fa ingrassare?",
             url = "https://www.projectinvictus.it/il-pane-fa-ingrassare/",
-            publishedDate = "2024-10-18"
+            publishedDate = "2024-10-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3443,7 +4246,8 @@ object InvictusKnowledge {
                 "kcal/kg massa magra) è meglio non scendere. ",
             articleTitle = "Mangio poco ma non dimagrisco",
             url = "https://www.projectinvictus.it/perche-non-dimagrisco-quando-il-metabolismo-si-blocca/",
-            publishedDate = "2024-10-14"
+            publishedDate = "2024-10-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3453,7 +4257,8 @@ object InvictusKnowledge {
                 "processo di dimagrimento. ",
             articleTitle = "Tapis roulant per dimagrire",
             url = "https://www.projectinvictus.it/tapis-roulant-per-dimagrire/",
-            publishedDate = "2024-10-13"
+            publishedDate = "2024-10-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3462,7 +4267,8 @@ object InvictusKnowledge {
                 "possono arrivare anche fino a 150-200 kcal per porzione ! ",
             articleTitle = "Centrifugati dimagranti: quanto peso fanno perdere?",
             url = "https://www.projectinvictus.it/centrifugati-dimagranti/",
-            publishedDate = "2024-09-11"
+            publishedDate = "2024-09-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3471,7 +4277,8 @@ object InvictusKnowledge {
                 "carboidrati) noi diventiamo dipendenti da essi. ",
             articleTitle = "Saltare la colazione sì o no? Fa bene o fa male?",
             url = "https://www.projectinvictus.it/saltare-la-colazione/",
-            publishedDate = "2024-08-10"
+            publishedDate = "2024-08-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3480,7 +4287,8 @@ object InvictusKnowledge {
                 "assumere dalle 100 Kcal alle 400 Kcal. ",
             articleTitle = "Colazione ideale: la guida completa",
             url = "https://www.projectinvictus.it/colazione-ideale/",
-            publishedDate = "2024-08-10"
+            publishedDate = "2024-08-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3489,7 +4297,8 @@ object InvictusKnowledge {
                 "attraverso l’allenamento. ",
             articleTitle = "Dieta donna nel bodybuilding e in palestra",
             url = "https://www.projectinvictus.it/dieta-donne-bodybuilding/",
-            publishedDate = "2024-07-31"
+            publishedDate = "2024-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3498,7 +4307,8 @@ object InvictusKnowledge {
                 "onde evitare di ingrassare troppo. ",
             articleTitle = "Dieta donna nel bodybuilding e in palestra",
             url = "https://www.projectinvictus.it/dieta-donne-bodybuilding/",
-            publishedDate = "2024-07-31"
+            publishedDate = "2024-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3508,7 +4318,8 @@ object InvictusKnowledge {
                 "un digiuno-semidigiuno fino a 800 kcal/die per 3-5 giorni. ",
             articleTitle = "Dieta Mima Digiuno: come funziona, benefici e cosa mangiare",
             url = "https://www.projectinvictus.it/dieta-mima-digiuno/",
-            publishedDate = "2024-07-30"
+            publishedDate = "2024-07-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3518,7 +4329,8 @@ object InvictusKnowledge {
                 "assimilazione al contrario è la più lunga). ",
             articleTitle = "Cosa sono le calorie?",
             url = "https://www.projectinvictus.it/caloria/",
-            publishedDate = "2024-07-14"
+            publishedDate = "2024-07-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3527,7 +4339,8 @@ object InvictusKnowledge {
                 "più calorie rispetto ad un’attività moderata. ",
             articleTitle = "Attività cardio per dimagrire: schede ed esercizi",
             url = "https://www.projectinvictus.it/cardio-per-dimagrire/",
-            publishedDate = "2024-03-24"
+            publishedDate = "2024-03-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3536,7 +4349,8 @@ object InvictusKnowledge {
                 "fabbisogno calorico. ",
             articleTitle = "Dieta della frutta per dimagrire",
             url = "https://www.projectinvictus.it/dieta-della-frutta/",
-            publishedDate = "2024-03-19"
+            publishedDate = "2024-03-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3545,7 +4359,8 @@ object InvictusKnowledge {
                 "proprio tutto quello che mangi per 3-4 settimane. ",
             articleTitle = "3 diete efficaci che funzionano",
             url = "https://www.projectinvictus.it/3-diete-efficaci/",
-            publishedDate = "2024-03-14"
+            publishedDate = "2024-03-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3554,7 +4369,8 @@ object InvictusKnowledge {
                 "dovrebbero occupare il 45-60% del tuo fabbisogno calorico giornaliero. ",
             articleTitle = "Paleo dieta: come funziona e cosa mangiare",
             url = "https://www.projectinvictus.it/la-paleo-dieta/",
-            publishedDate = "2024-02-20"
+            publishedDate = "2024-02-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3563,7 +4379,8 @@ object InvictusKnowledge {
                 "(circa -0,5 kg/settimana), in un mese puoi perdere circa 2 kg . ",
             articleTitle = "Perdere massa grassa in modo efficace",
             url = "https://www.projectinvictus.it/perdere-massa-grassa/",
-            publishedDate = "2024-02-12"
+            publishedDate = "2024-02-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3573,7 +4390,8 @@ object InvictusKnowledge {
                 "muscolare, in quanto la sintesi proteica è comunque limitata. ",
             articleTitle = "Dieta ipercalorica per prendere peso e aumentare la massa magra",
             url = "https://www.projectinvictus.it/dieta-ipercalorica/",
-            publishedDate = "2024-01-31"
+            publishedDate = "2024-01-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3584,7 +4402,8 @@ object InvictusKnowledge {
                 "motivazione. ",
             articleTitle = "Dieta Sirt: come funziona e quali cibi mangiare",
             url = "https://www.projectinvictus.it/dieta-sirt/",
-            publishedDate = "2024-01-30"
+            publishedDate = "2024-01-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3593,7 +4412,8 @@ object InvictusKnowledge {
                 "calorie ti ritroverai non solo più grosso ma anche più grasso . ",
             articleTitle = "Le proteine fanno ingrassare?",
             url = "https://www.projectinvictus.it/le-proteine-fanno-ingrassare/",
-            publishedDate = "2024-01-21"
+            publishedDate = "2024-01-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3604,7 +4424,8 @@ object InvictusKnowledge {
                 "carboidrati e grassi, che devono essere presenti. ",
             articleTitle = "Definizione in palestra: come definire i muscoli",
             url = "https://www.projectinvictus.it/definizione-palestra/",
-            publishedDate = "2024-01-15"
+            publishedDate = "2024-01-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3613,7 +4434,8 @@ object InvictusKnowledge {
                 "macronutrienti. ",
             articleTitle = "Bodybuilding: la guida completa",
             url = "https://www.projectinvictus.it/bodybuilding/",
-            publishedDate = "2024-01-05"
+            publishedDate = "2024-01-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3622,7 +4444,8 @@ object InvictusKnowledge {
                 "alimentari) e otteniamo, quindi, 17 g di grasso consumati ogni 10 km . ",
             articleTitle = "Correre per dimagrire: quanto peso perdi?",
             url = "https://www.projectinvictus.it/correre-per-dimagrire/",
-            publishedDate = "2023-12-12"
+            publishedDate = "2023-12-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3630,7 +4453,8 @@ object InvictusKnowledge {
                 "Il consiglio è quello di aumentare di circa il 10-15% le calorie in entrata. ",
             articleTitle = "Cosa mangiare per aumentare la massa muscolare",
             url = "https://www.projectinvictus.it/cosa-mangiare-per-aumentare-la-massa-muscolare/",
-            publishedDate = "2023-10-09"
+            publishedDate = "2023-10-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3640,7 +4464,8 @@ object InvictusKnowledge {
                 "(con i pesi), deficit calorico graduale e non eccessivo (- 300-500 kcal al giorno). ",
             articleTitle = "Proteine in polvere per dimagrire donne",
             url = "https://www.projectinvictus.it/proteine-in-polvere-per-dimagrire-donne/",
-            publishedDate = "2023-09-27"
+            publishedDate = "2023-09-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3651,7 +4476,8 @@ object InvictusKnowledge {
                 "(farro, orzo, riso), frutta, verdura. ",
             articleTitle = "Come dimagrire le gambe: esercizi, dieta, consigli",
             url = "https://www.projectinvictus.it/come-dimagrire-le-gambe/",
-            publishedDate = "2023-09-14"
+            publishedDate = "2023-09-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3661,7 +4487,8 @@ object InvictusKnowledge {
                 "mantenimento. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3672,7 +4499,8 @@ object InvictusKnowledge {
                 "mantenimento. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3682,7 +4510,8 @@ object InvictusKnowledge {
                 ". ",
             articleTitle = "Cosa mangiare per ingrassare in modo sano",
             url = "https://www.projectinvictus.it/cosa-mangiare-per-ingrassare/",
-            publishedDate = "2023-07-27"
+            publishedDate = "2023-07-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3692,7 +4521,8 @@ object InvictusKnowledge {
                 "abituare l’organismo. ",
             articleTitle = "Come sbloccare il metabolismo e riattivarlo?",
             url = "https://www.projectinvictus.it/come-sbloccare-il-metabolismo/",
-            publishedDate = "2023-07-18"
+            publishedDate = "2023-07-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3701,7 +4531,8 @@ object InvictusKnowledge {
                 "nostre calorie giornaliere. ",
             articleTitle = "Il culturismo: cos’è, dieta e allenamento",
             url = "https://www.projectinvictus.it/culturismo/",
-            publishedDate = "2022-12-03"
+            publishedDate = "2022-12-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3711,7 +4542,8 @@ object InvictusKnowledge {
                 "deficit medio intorno alle 500 – 350 kcal (uomo-donna). ",
             articleTitle = "Il CrossFit fa dimagrire?",
             url = "https://www.projectinvictus.it/crossfit-fa-dimagrire/",
-            publishedDate = "2022-11-20"
+            publishedDate = "2022-11-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3720,7 +4552,8 @@ object InvictusKnowledge {
                 "superare il 10% delle calorie giornaliere. ",
             articleTitle = "Come diventare grossi in poco tempo",
             url = "https://www.projectinvictus.it/come-diventare-grossi/",
-            publishedDate = "2022-07-26"
+            publishedDate = "2022-07-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3730,7 +4563,8 @@ object InvictusKnowledge {
                 "superiore a 300 – 500 kcal rispetto al fabbisogno calorico giornaliero . ",
             articleTitle = "Somatotipo: endomorfo, mesomorfo, ectomorfo",
             url = "https://www.projectinvictus.it/somatotipo/",
-            publishedDate = "2022-06-30"
+            publishedDate = "2022-06-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3740,7 +4574,8 @@ object InvictusKnowledge {
                 "polinsaturi. ",
             articleTitle = "Mountain Dog Diet: cos’è e come farla",
             url = "https://www.projectinvictus.it/dieta-mountain-dog/",
-            publishedDate = "2022-05-21"
+            publishedDate = "2022-05-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3749,7 +4584,8 @@ object InvictusKnowledge {
                 "gli alimenti, è consigliabile ricorrere al supplemento nutrizionale. ",
             articleTitle = "Integratore di magnesio: qual è il migliore e a cosa serve",
             url = "https://www.projectinvictus.it/magnesio-integratore/",
-            publishedDate = "2022-03-29"
+            publishedDate = "2022-03-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3759,7 +4595,8 @@ object InvictusKnowledge {
                 "ristabilire naturalmente il proprio equilibrio ormonale. ",
             articleTitle = "Amenorrea e aumento di peso",
             url = "https://www.projectinvictus.it/amenorrea-aumento-di-peso/",
-            publishedDate = "2022-03-03"
+            publishedDate = "2022-03-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3769,7 +4606,8 @@ object InvictusKnowledge {
                 "10% della vostra normocalorica (270 kcal). ",
             articleTitle = "Come andare in surplus calorico per la massa muscolare",
             url = "https://www.projectinvictus.it/surplus-calorico-massa-muscolare/",
-            publishedDate = "2022-02-10"
+            publishedDate = "2022-02-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3778,7 +4616,8 @@ object InvictusKnowledge {
                 "di 0,5 g/kg per assicurare la corretta funzionalità dell’organismo. ",
             articleTitle = "Macronutrienti per la definizione muscolare",
             url = "https://www.projectinvictus.it/macronutrienti-definizione-muscolare/",
-            publishedDate = "2022-02-03"
+            publishedDate = "2022-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3788,7 +4627,8 @@ object InvictusKnowledge {
                 "spendibile e facilmente comprensibile. ",
             articleTitle = "Le calorie fanno ingrassare veramente?",
             url = "https://www.projectinvictus.it/una-calorie-e-un-caloria-vediamo-di-fare-chiarezza/",
-            publishedDate = "2021-11-01"
+            publishedDate = "2021-11-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3797,7 +4637,8 @@ object InvictusKnowledge {
                 "calorico si aggira intorno alle 50 kcal/100g. ",
             articleTitle = "Calorie frutta: tabella",
             url = "https://www.projectinvictus.it/calorie-frutta-tabella/",
-            publishedDate = "2021-10-20"
+            publishedDate = "2021-10-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3807,7 +4648,8 @@ object InvictusKnowledge {
                 "semplici. ",
             articleTitle = "Fruttosio o zucchero? Qual è il migliore?",
             url = "https://www.projectinvictus.it/fruttosio-o-zucchero-qual-e-il-migliore/",
-            publishedDate = "2021-10-08"
+            publishedDate = "2021-10-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3816,7 +4658,8 @@ object InvictusKnowledge {
                 "avessero le canoniche 4 kcal/g. ",
             articleTitle = "Fruttosio o zucchero? Qual è il migliore?",
             url = "https://www.projectinvictus.it/fruttosio-o-zucchero-qual-e-il-migliore/",
-            publishedDate = "2021-10-08"
+            publishedDate = "2021-10-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3824,7 +4667,8 @@ object InvictusKnowledge {
                 "Per i grassi si consiglia un range intorno al 25-30% delle calorie giornaliere. ",
             articleTitle = "Nutrienti: quali sono e cosa sono?",
             url = "https://www.projectinvictus.it/nutrienti/",
-            publishedDate = "2021-10-07"
+            publishedDate = "2021-10-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3832,7 +4676,8 @@ object InvictusKnowledge {
                 "Si consiglia di non superare il 10% delle calorie dai grassi saturi. ",
             articleTitle = "Nutrienti: quali sono e cosa sono?",
             url = "https://www.projectinvictus.it/nutrienti/",
-            publishedDate = "2021-10-07"
+            publishedDate = "2021-10-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3841,7 +4686,8 @@ object InvictusKnowledge {
                 "una quota che va dal 45-60% delle calorie giornaliere. ",
             articleTitle = "Nutrienti: quali sono e cosa sono?",
             url = "https://www.projectinvictus.it/nutrienti/",
-            publishedDate = "2021-10-07"
+            publishedDate = "2021-10-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3851,7 +4697,8 @@ object InvictusKnowledge {
                 "nutrienti . ",
             articleTitle = "Sostanze nutritive: cosa sono e quali sono?",
             url = "https://www.projectinvictus.it/sostanze-nutritive/",
-            publishedDate = "2021-09-30"
+            publishedDate = "2021-09-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3861,7 +4708,8 @@ object InvictusKnowledge {
                 "si preferisca i primi o i secondi: possiamo considerare sempre valide le 4 kcal/g. ",
             articleTitle = "Calorie macronutrienti",
             url = "https://www.projectinvictus.it/calorie-macronutrienti/",
-            publishedDate = "2021-09-13"
+            publishedDate = "2021-09-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3871,7 +4719,8 @@ object InvictusKnowledge {
                 "delle calorie giornaliere introdotte. ",
             articleTitle = "Carboidrati complessi: funzioni, benefici ed esempi",
             url = "https://www.projectinvictus.it/carboidrati-complessi/",
-            publishedDate = "2021-09-01"
+            publishedDate = "2021-09-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3882,7 +4731,8 @@ object InvictusKnowledge {
                 "zuccheri e calorie. ",
             articleTitle = "Dolcificanti artificiali: fanno male e fanno ingrassare?",
             url = "https://www.projectinvictus.it/dolcificanti-fanno-male-fanno-ingrassare/",
-            publishedDate = "2021-08-30"
+            publishedDate = "2021-08-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3890,7 +4740,8 @@ object InvictusKnowledge {
                 "Il corpo impiega il 5% delle calorie degli zuccheri per digerirle ed assimilarle. ",
             articleTitle = "Carboidrati semplici: funzioni, benefici ed esempi",
             url = "https://www.projectinvictus.it/carboidrati-semplici/",
-            publishedDate = "2021-08-26"
+            publishedDate = "2021-08-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3899,7 +4750,8 @@ object InvictusKnowledge {
                 "calorie provenienti dagli zuccheri semplici aggiunti (25-50 g). ",
             articleTitle = "Carboidrati semplici: funzioni, benefici ed esempi",
             url = "https://www.projectinvictus.it/carboidrati-semplici/",
-            publishedDate = "2021-08-26"
+            publishedDate = "2021-08-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3908,7 +4760,8 @@ object InvictusKnowledge {
                 "(25-50 g al giorno). ",
             articleTitle = "Carboidrati semplici: funzioni, benefici ed esempi",
             url = "https://www.projectinvictus.it/carboidrati-semplici/",
-            publishedDate = "2021-08-26"
+            publishedDate = "2021-08-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3918,7 +4771,8 @@ object InvictusKnowledge {
                 "dimagrante . ",
             articleTitle = "Mirtillo rosso: proprietà, benefici e controindicazioni",
             url = "https://www.projectinvictus.it/mirtillo-rosso-proprieta-benefici/",
-            publishedDate = "2021-07-24"
+            publishedDate = "2021-07-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3927,7 +4781,8 @@ object InvictusKnowledge {
                 "assunti nella dieta e sono molto calorici: apportano 9 kcal per grammo . ",
             articleTitle = "Grassi monoinsaturi: fanno male o fanno bene? I benefici",
             url = "https://www.projectinvictus.it/grassi-monoinsaturi/",
-            publishedDate = "2021-07-08"
+            publishedDate = "2021-07-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3938,7 +4793,8 @@ object InvictusKnowledge {
                 "energetico, i polinsaturi il 5-10%. ",
             articleTitle = "Grassi monoinsaturi: fanno male o fanno bene? I benefici",
             url = "https://www.projectinvictus.it/grassi-monoinsaturi/",
-            publishedDate = "2021-07-08"
+            publishedDate = "2021-07-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3948,7 +4804,8 @@ object InvictusKnowledge {
                 "invece il 30% . ",
             articleTitle = "Grassi: cosa sono, quali sono e che funzione hanno?",
             url = "https://www.projectinvictus.it/grassi/",
-            publishedDate = "2021-06-25"
+            publishedDate = "2021-06-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3957,7 +4814,8 @@ object InvictusKnowledge {
                 "trans, non dovrebbe superare il 10% delle calorie totali nella dieta. ",
             articleTitle = "Grassi: cosa sono, quali sono e che funzione hanno?",
             url = "https://www.projectinvictus.it/grassi/",
-            publishedDate = "2021-06-25"
+            publishedDate = "2021-06-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3967,7 +4825,8 @@ object InvictusKnowledge {
                 "di 2 kcal/g e ha molti benefici sulla salute. ",
             articleTitle = "Frutti proteici: la frutta più proteica",
             url = "https://www.projectinvictus.it/frutta-proteica/",
-            publishedDate = "2021-06-03"
+            publishedDate = "2021-06-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3977,7 +4836,8 @@ object InvictusKnowledge {
                 "magnesio. ",
             articleTitle = "Cocco: benefici, proprietà e calorie",
             url = "https://www.projectinvictus.it/cocco-proprieta-benefici/",
-            publishedDate = "2021-05-31"
+            publishedDate = "2021-05-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3986,7 +4846,8 @@ object InvictusKnowledge {
                 "possibile (10-12% delle calorie totali). ",
             articleTitle = "Dieta Equilibrata: le Basi di un’Alimentazione Sana e Bilanciata",
             url = "https://www.projectinvictus.it/dieta-equilibrata-alimentazione-bilanciata/",
-            publishedDate = "2021-05-23"
+            publishedDate = "2021-05-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -3994,7 +4855,8 @@ object InvictusKnowledge {
                 "Colazione Costituisce, di solito, circa il 15% delle calorie giornaliere. ",
             articleTitle = "Dieta Equilibrata: le Basi di un’Alimentazione Sana e Bilanciata",
             url = "https://www.projectinvictus.it/dieta-equilibrata-alimentazione-bilanciata/",
-            publishedDate = "2021-05-23"
+            publishedDate = "2021-05-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4003,7 +4865,8 @@ object InvictusKnowledge {
                 "giornaliere. ",
             articleTitle = "Dieta Equilibrata: le Basi di un’Alimentazione Sana e Bilanciata",
             url = "https://www.projectinvictus.it/dieta-equilibrata-alimentazione-bilanciata/",
-            publishedDate = "2021-05-23"
+            publishedDate = "2021-05-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4011,7 +4874,8 @@ object InvictusKnowledge {
                 "Pranzo Dovrebbe essere il pasto più abbondante, con circa il 40% delle calorie. ",
             articleTitle = "Dieta Equilibrata: le Basi di un’Alimentazione Sana e Bilanciata",
             url = "https://www.projectinvictus.it/dieta-equilibrata-alimentazione-bilanciata/",
-            publishedDate = "2021-05-23"
+            publishedDate = "2021-05-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4021,7 +4885,8 @@ object InvictusKnowledge {
                 "scendono. ",
             articleTitle = "Proteine: cosa sono e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-cosa-sono-a-cosa-servono/",
-            publishedDate = "2021-04-14"
+            publishedDate = "2021-04-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4032,7 +4897,8 @@ object InvictusKnowledge {
                 "sostenibilità che di risultati. ",
             articleTitle = "Come aumentare o diminuire l’appetito?",
             url = "https://www.projectinvictus.it/appetito/",
-            publishedDate = "2021-03-26"
+            publishedDate = "2021-03-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4042,7 +4908,8 @@ object InvictusKnowledge {
                 "grassi a 9 kcal . ",
             articleTitle = "IIFYM: che cos’è e come funziona?",
             url = "https://www.projectinvictus.it/iifym/",
-            publishedDate = "2021-01-27"
+            publishedDate = "2021-01-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4050,7 +4917,8 @@ object InvictusKnowledge {
                 "Il soggetto intermedio può considerare le 100-200 kcal/die. ",
             articleTitle = "Macronutrienti: cosa sono e in quali alimenti si trovano?",
             url = "https://www.projectinvictus.it/macronutrienti-nella-dieta-cosa-dobbiamo-sapere/",
-            publishedDate = "2021-01-17"
+            publishedDate = "2021-01-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4060,7 +4928,8 @@ object InvictusKnowledge {
                 "peso corporeo a settimana, passa allo 0.5%. ",
             articleTitle = "Macronutrienti: cosa sono e in quali alimenti si trovano?",
             url = "https://www.projectinvictus.it/macronutrienti-nella-dieta-cosa-dobbiamo-sapere/",
-            publishedDate = "2021-01-17"
+            publishedDate = "2021-01-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4070,7 +4939,8 @@ object InvictusKnowledge {
                 "mangiare ad libitum nei restanti giorni. ",
             articleTitle = "Intermittent fasting: come farlo in pratica?",
             url = "https://www.projectinvictus.it/intermittent-fasting/",
-            publishedDate = "2020-12-11"
+            publishedDate = "2020-12-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4080,7 +4950,8 @@ object InvictusKnowledge {
                 "pasta. ",
             articleTitle = "I carboidrati sono meglio a pranzo o a cena?",
             url = "https://www.projectinvictus.it/carboidrati-giorno-sera/",
-            publishedDate = "2020-11-10"
+            publishedDate = "2020-11-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4090,7 +4961,8 @@ object InvictusKnowledge {
                 "di riaddormentarsi, mangia almeno il 25% delle calorie dopo cena e durante la notte. ",
             articleTitle = "Abbuffate di dolci e cibo: ingrasso tanto?",
             url = "https://www.projectinvictus.it/abbuffate-dolci-natalizie-sopravvivere/",
-            publishedDate = "2020-09-10"
+            publishedDate = "2020-09-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4099,7 +4971,8 @@ object InvictusKnowledge {
                 "addirittura ad un intero fabbisogno calorico di una giornata. ",
             articleTitle = "Abbuffate di dolci e cibo: ingrasso tanto?",
             url = "https://www.projectinvictus.it/abbuffate-dolci-natalizie-sopravvivere/",
-            publishedDate = "2020-09-10"
+            publishedDate = "2020-09-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4108,7 +4981,8 @@ object InvictusKnowledge {
                 "pesi 70 kg, quindi per smaltire quelle calorie dovresti camminare per 42 km e qualcosa. ",
             articleTitle = "Abbuffate di dolci e cibo: ingrasso tanto?",
             url = "https://www.projectinvictus.it/abbuffate-dolci-natalizie-sopravvivere/",
-            publishedDate = "2020-09-10"
+            publishedDate = "2020-09-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4117,7 +4991,8 @@ object InvictusKnowledge {
                 "buona massa magra puoi mescolare glucidi e lipidi senza il timore di ingrassare. ",
             articleTitle = "Grassi e carboidrati nello stesso pasto fanno ingrassare?",
             url = "https://www.projectinvictus.it/grassi-ed-carboidrati-vanno-mangiati-assieme/",
-            publishedDate = "2020-08-31"
+            publishedDate = "2020-08-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4127,7 +5002,8 @@ object InvictusKnowledge {
                 "nient’altro e sei al di sotto del tuo fabbisogno energetico non ingrasserai! ",
             articleTitle = "Grassi e carboidrati nello stesso pasto fanno ingrassare?",
             url = "https://www.projectinvictus.it/grassi-ed-carboidrati-vanno-mangiati-assieme/",
-            publishedDate = "2020-08-31"
+            publishedDate = "2020-08-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4137,7 +5013,8 @@ object InvictusKnowledge {
                 "della giornata. ",
             articleTitle = "Bufale alimentari: le più diffuse",
             url = "https://www.projectinvictus.it/bufale-alimentari/",
-            publishedDate = "2020-08-22"
+            publishedDate = "2020-08-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4147,7 +5024,8 @@ object InvictusKnowledge {
                 "pizze (e basta) in una settimana e dimagriresti – perché sei in deficit calorico! ",
             articleTitle = "Sgarro nella dieta: come gestirlo?",
             url = "https://www.projectinvictus.it/sgarro-dieta-bodybuilding/",
-            publishedDate = "2020-08-13"
+            publishedDate = "2020-08-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4156,7 +5034,8 @@ object InvictusKnowledge {
                 "dagli zuccheri aggiunti, stiamo parlando di 25g ovvero 6 cucchiaini da cucina. ",
             articleTitle = "Il glucosio: cos’è e dove si trova",
             url = "https://www.projectinvictus.it/glucosio/",
-            publishedDate = "2020-05-17"
+            publishedDate = "2020-05-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4166,7 +5045,8 @@ object InvictusKnowledge {
                 "carboidrati corrispondono a 4 kcal). ",
             articleTitle = "Quanti carboidrati per dimagrire?",
             url = "https://www.projectinvictus.it/quanti-carboidrati-al-giorno-per-dimagrire/",
-            publishedDate = "2020-04-02"
+            publishedDate = "2020-04-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4175,7 +5055,8 @@ object InvictusKnowledge {
                 "classificato come glucide . ",
             articleTitle = "Destrosio in palestra: che cos’è e a cosa serve",
             url = "https://www.projectinvictus.it/destrosio-bodybuilding-palestra/",
-            publishedDate = "2020-03-25"
+            publishedDate = "2020-03-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4185,7 +5066,8 @@ object InvictusKnowledge {
                 "riferimento). ",
             articleTitle = "Dieta per ingrassare velocemente",
             url = "https://www.projectinvictus.it/dieta-per-ingrassare/",
-            publishedDate = "2020-02-28"
+            publishedDate = "2020-02-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4194,7 +5076,8 @@ object InvictusKnowledge {
                 "mentre per le proteine il valore consigliato è 1.4 – 2 g/kg di peso corporeo . ",
             articleTitle = "Dieta per ingrassare velocemente",
             url = "https://www.projectinvictus.it/dieta-per-ingrassare/",
-            publishedDate = "2020-02-28"
+            publishedDate = "2020-02-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4205,7 +5088,8 @@ object InvictusKnowledge {
                 "presenti in etichetta per 3). ",
             articleTitle = "Legumi: quanti sono e quali sono i migliori?",
             url = "https://www.projectinvictus.it/legumi/",
-            publishedDate = "2020-02-12"
+            publishedDate = "2020-02-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4215,7 +5099,8 @@ object InvictusKnowledge {
                 "ma bisogna saper paragonare l’effetto saziante con il contenuto calorico. ",
             articleTitle = "Frutta secca migliore: benefici a dieta e in palestra",
             url = "https://www.projectinvictus.it/frutta-secca-quale-quanta-e-perche/",
-            publishedDate = "2020-02-10"
+            publishedDate = "2020-02-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4224,7 +5109,8 @@ object InvictusKnowledge {
                 "a trovare la quota calorica che le permetterà di non variare di peso nella settimana. ",
             articleTitle = "Dieta dimagrante: come farla in modo efficace",
             url = "https://www.projectinvictus.it/dieta-dimagrante/",
-            publishedDate = "2018-10-02"
+            publishedDate = "2018-10-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4234,7 +5120,8 @@ object InvictusKnowledge {
                 "l’obiettivo. ",
             articleTitle = "Dieta dimagrante: come farla in modo efficace",
             url = "https://www.projectinvictus.it/dieta-dimagrante/",
-            publishedDate = "2018-10-02"
+            publishedDate = "2018-10-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4245,7 +5132,8 @@ object InvictusKnowledge {
                 "ritenevo più accettabile e proficua. ",
             articleTitle = "Il mio percorso bodybuilding (Nicolò Liani)",
             url = "https://www.projectinvictus.it/percorso-nicolo-liani/",
-            publishedDate = "2018-09-13"
+            publishedDate = "2018-09-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4255,7 +5143,8 @@ object InvictusKnowledge {
                 "proprio fabbisogno calorico giornaliero. ",
             articleTitle = "Il mio percorso bodybuilding (Nicolò Liani)",
             url = "https://www.projectinvictus.it/percorso-nicolo-liani/",
-            publishedDate = "2018-09-13"
+            publishedDate = "2018-09-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4264,7 +5153,8 @@ object InvictusKnowledge {
                 "la massa magra durante il catabolismo indotto dal deficit energetico. ",
             articleTitle = "Esercizi per dimagrire/ quali sono?",
             url = "https://www.projectinvictus.it/esercizi-per-dimagrire-esistono/",
-            publishedDate = "2017-04-28"
+            publishedDate = "2017-04-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4273,7 +5163,8 @@ object InvictusKnowledge {
                 "necessario, ma se lo si fa è tutto molto più facile. ",
             articleTitle = "Calorie: perchè contano",
             url = "https://www.projectinvictus.it/calorie-perche-contano/",
-            publishedDate = "2017-03-06"
+            publishedDate = "2017-03-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4283,7 +5174,8 @@ object InvictusKnowledge {
                 "apporto di mantenimento. ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4294,7 +5186,8 @@ object InvictusKnowledge {
                 "dei grassi a 30 g. ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4305,7 +5198,8 @@ object InvictusKnowledge {
                 "settimane. ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4314,7 +5208,8 @@ object InvictusKnowledge {
                 "di 500kcal. ",
             articleTitle = "Calorie per dimagrire: capiamo Ormoni, macronutrienti e calorie",
             url = "https://www.projectinvictus.it/ormoni-macronutrienti-e-calorie/",
-            publishedDate = "2016-03-10"
+            publishedDate = "2016-03-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4324,7 +5219,8 @@ object InvictusKnowledge {
                 "prossimità degli allenamenti. ",
             articleTitle = "BCAA sempre e comunque utili?",
             url = "https://www.projectinvictus.it/bcaa-sempre-e-comunque-utili/",
-            publishedDate = "2014-03-13"
+            publishedDate = "2014-03-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4333,7 +5229,8 @@ object InvictusKnowledge {
                 "proteine, portando il loro valore effettivo da 5,65 a 4kcal. ",
             articleTitle = "Le proteine fanno male? Impariamo a conoscerle!",
             url = "https://www.projectinvictus.it/proteine-fanno-male/",
-            publishedDate = "2013-03-29"
+            publishedDate = "2013-03-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4342,7 +5239,8 @@ object InvictusKnowledge {
                 "0,75g per kg di peso corporeo, in media il 13,5% delle calorie introdotte. ",
             articleTitle = "Le proteine fanno male? Impariamo a conoscerle!",
             url = "https://www.projectinvictus.it/proteine-fanno-male/",
-            publishedDate = "2013-03-29"
+            publishedDate = "2013-03-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CALORIES,
@@ -4351,7 +5249,8 @@ object InvictusKnowledge {
                 "giornaliere. ",
             articleTitle = "Le proteine fanno male? Impariamo a conoscerle!",
             url = "https://www.projectinvictus.it/proteine-fanno-male/",
-            publishedDate = "2013-03-29"
+            publishedDate = "2013-03-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.METABOLISM,
@@ -4361,7 +5260,8 @@ object InvictusKnowledge {
                 "di calorie. ",
             articleTitle = "Dieta ferrea per dimagrire",
             url = "https://www.projectinvictus.it/dieta-ferrea/",
-            publishedDate = "2025-05-29"
+            publishedDate = "2025-05-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.METABOLISM,
@@ -4370,7 +5270,8 @@ object InvictusKnowledge {
                 "puoi immaginare di perdere circa lo 0,5 – 1% del peso corporeo a settimana . ",
             articleTitle = "Grasso addominale: cos’è, come eliminarlo, rischi",
             url = "https://www.projectinvictus.it/grasso-addominale/",
-            publishedDate = "2025-04-29"
+            publishedDate = "2025-04-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.METABOLISM,
@@ -4379,7 +5280,8 @@ object InvictusKnowledge {
                 "(Termogenesi Indotta dalla Dieta ). ",
             articleTitle = "Calcolo metabolismo basale",
             url = "https://www.projectinvictus.it/metabolismo-basale/",
-            publishedDate = "2025-01-17"
+            publishedDate = "2025-01-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.METABOLISM,
@@ -4390,7 +5292,8 @@ object InvictusKnowledge {
                 "calcolo. ",
             articleTitle = "Calcolo metabolismo basale",
             url = "https://www.projectinvictus.it/metabolismo-basale/",
-            publishedDate = "2025-01-17"
+            publishedDate = "2025-01-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.METABOLISM,
@@ -4400,7 +5303,8 @@ object InvictusKnowledge {
                 "tuo TDEE (il fabbisogno energetico giornaliero) e “interrompi” il regime ipocalorico. ",
             articleTitle = "Dieta ipocalorica per dimagrire: la guida completa",
             url = "https://www.projectinvictus.it/dieta-ipocalorica/",
-            publishedDate = "2025-01-13"
+            publishedDate = "2025-01-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.METABOLISM,
@@ -4409,7 +5313,8 @@ object InvictusKnowledge {
                 "proprio tutto quello che mangi per 3-4 settimane. ",
             articleTitle = "3 diete efficaci che funzionano",
             url = "https://www.projectinvictus.it/3-diete-efficaci/",
-            publishedDate = "2024-03-14"
+            publishedDate = "2024-03-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.METABOLISM,
@@ -4419,7 +5324,8 @@ object InvictusKnowledge {
                 "deficit medio intorno alle 500 – 350 kcal (uomo-donna). ",
             articleTitle = "Il CrossFit fa dimagrire?",
             url = "https://www.projectinvictus.it/crossfit-fa-dimagrire/",
-            publishedDate = "2022-11-20"
+            publishedDate = "2022-11-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.METABOLISM,
@@ -4429,7 +5335,8 @@ object InvictusKnowledge {
                 "superiore a 300 – 500 kcal rispetto al fabbisogno calorico giornaliero . ",
             articleTitle = "Somatotipo: endomorfo, mesomorfo, ectomorfo",
             url = "https://www.projectinvictus.it/somatotipo/",
-            publishedDate = "2022-06-30"
+            publishedDate = "2022-06-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.METABOLISM,
@@ -4439,7 +5346,8 @@ object InvictusKnowledge {
                 "a mantenere più aderenza alla dieta. ",
             articleTitle = "Ogni quanto mangiare per dimagrire?",
             url = "https://www.projectinvictus.it/frequenza-dei-pasti/",
-            publishedDate = "2020-07-13"
+            publishedDate = "2020-07-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.METABOLISM,
@@ -4448,7 +5356,8 @@ object InvictusKnowledge {
                 "a trovare la quota calorica che le permetterà di non variare di peso nella settimana. ",
             articleTitle = "Dieta dimagrante: come farla in modo efficace",
             url = "https://www.projectinvictus.it/dieta-dimagrante/",
-            publishedDate = "2018-10-02"
+            publishedDate = "2018-10-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.METABOLISM,
@@ -4457,7 +5366,8 @@ object InvictusKnowledge {
                 "40% del peso corporeo ed è per questo il più esteso organo di cui disponiamo. ",
             articleTitle = "Cosa succede quando il muscolo incontra il grasso?",
             url = "https://www.projectinvictus.it/muscolo-incontra-grasso/",
-            publishedDate = "2017-03-09"
+            publishedDate = "2017-03-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.METABOLISM,
@@ -4466,7 +5376,8 @@ object InvictusKnowledge {
                 "metabolismo dopo 3-5 settimane, sprofondare per terra e bloccare il dimagrimento. ",
             articleTitle = "Calorie per dimagrire: capiamo Ormoni, macronutrienti e calorie",
             url = "https://www.projectinvictus.it/ormoni-macronutrienti-e-calorie/",
-            publishedDate = "2016-03-10"
+            publishedDate = "2016-03-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.METABOLISM,
@@ -4475,7 +5386,8 @@ object InvictusKnowledge {
                 "in una dieta bilanciata si fa una media del 10% del nostro dispendio giornaliero. ",
             articleTitle = "Calorie per dimagrire: capiamo Ormoni, macronutrienti e calorie",
             url = "https://www.projectinvictus.it/ormoni-macronutrienti-e-calorie/",
-            publishedDate = "2016-03-10"
+            publishedDate = "2016-03-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4484,7 +5396,8 @@ object InvictusKnowledge {
                 "rispetto agli uomini (minimo 0,8 g/kg). ",
             articleTitle = "Dieta low-fat per dimagrire",
             url = "https://www.projectinvictus.it/dieta-low-fat/",
-            publishedDate = "2026-07-14"
+            publishedDate = "2026-07-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4493,7 +5406,8 @@ object InvictusKnowledge {
                 "g/kg. ",
             articleTitle = "Fabbisogno glucidico: come calcolarlo?",
             url = "https://www.projectinvictus.it/fabbisogno-glucidico-carboidrati/",
-            publishedDate = "2026-07-13"
+            publishedDate = "2026-07-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4502,7 +5416,8 @@ object InvictusKnowledge {
                 "(4,5 g/kg per il soggetto in questione). ",
             articleTitle = "Fabbisogno glucidico: come calcolarlo?",
             url = "https://www.projectinvictus.it/fabbisogno-glucidico-carboidrati/",
-            publishedDate = "2026-07-13"
+            publishedDate = "2026-07-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4513,7 +5428,8 @@ object InvictusKnowledge {
                 "la massa muscolare. ",
             articleTitle = "La dieta flessibile",
             url = "https://www.projectinvictus.it/dieta-flessibile/",
-            publishedDate = "2026-07-09"
+            publishedDate = "2026-07-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4523,7 +5439,8 @@ object InvictusKnowledge {
                 "tra 3 e 7 g/kg. ",
             articleTitle = "La dieta flessibile",
             url = "https://www.projectinvictus.it/dieta-flessibile/",
-            publishedDate = "2026-07-09"
+            publishedDate = "2026-07-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4532,7 +5449,8 @@ object InvictusKnowledge {
                 "aumentare il peso: 2 – 2,6 g/kg . ",
             articleTitle = "Quante proteine assumere?",
             url = "https://www.projectinvictus.it/quante-proteine-assumere/",
-            publishedDate = "2025-07-31"
+            publishedDate = "2025-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4542,7 +5460,8 @@ object InvictusKnowledge {
                 "coincidere con i normali pasti che fai nell’arco della giornata. ",
             articleTitle = "Quante proteine assumere?",
             url = "https://www.projectinvictus.it/quante-proteine-assumere/",
-            publishedDate = "2025-07-31"
+            publishedDate = "2025-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4551,7 +5470,8 @@ object InvictusKnowledge {
                 "che contenga almeno 20 g di proteine. ",
             articleTitle = "Quante proteine assumere?",
             url = "https://www.projectinvictus.it/quante-proteine-assumere/",
-            publishedDate = "2025-07-31"
+            publishedDate = "2025-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4561,7 +5481,8 @@ object InvictusKnowledge {
                 "raggiunge con questo quantitativo. ",
             articleTitle = "Quante proteine assumere?",
             url = "https://www.projectinvictus.it/quante-proteine-assumere/",
-            publishedDate = "2025-07-31"
+            publishedDate = "2025-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4570,7 +5491,8 @@ object InvictusKnowledge {
                 "se cerchi un elevato apporto proteico con un ridotto contenuto di grassi. ",
             articleTitle = "I 10 migliori alimenti per la massa muscolare",
             url = "https://www.projectinvictus.it/alimenti-per-la-massa-muscolare/",
-            publishedDate = "2025-07-18"
+            publishedDate = "2025-07-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4580,7 +5502,8 @@ object InvictusKnowledge {
                 "seconda dell’animale da cui deriva. ",
             articleTitle = "Proteine animali e vegetali: quali sono le migliori",
             url = "https://www.projectinvictus.it/proteine-animali-e-vegetali-a-confronto/",
-            publishedDate = "2025-05-15"
+            publishedDate = "2025-05-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4591,7 +5514,8 @@ object InvictusKnowledge {
                 "di altri alimenti. ",
             articleTitle = "Proteine animali e vegetali: quali sono le migliori",
             url = "https://www.projectinvictus.it/proteine-animali-e-vegetali-a-confronto/",
-            publishedDate = "2025-05-15"
+            publishedDate = "2025-05-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4600,7 +5524,8 @@ object InvictusKnowledge {
                 "sufficiente per ricoprire il fabbisogno proteico giornaliero . ",
             articleTitle = "Dieta proteica: la guida completa",
             url = "https://www.projectinvictus.it/dieta-proteica/",
-            publishedDate = "2025-05-13"
+            publishedDate = "2025-05-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4609,7 +5534,8 @@ object InvictusKnowledge {
                 "giorno . ",
             articleTitle = "Dieta proteica: la guida completa",
             url = "https://www.projectinvictus.it/dieta-proteica/",
-            publishedDate = "2025-05-13"
+            publishedDate = "2025-05-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4619,7 +5545,8 @@ object InvictusKnowledge {
                 "proteine/kg peso corporeo . ",
             articleTitle = "La dieta iperproteica per il dimagrimento",
             url = "https://www.projectinvictus.it/dieta-iperproteica-dimagrimento/",
-            publishedDate = "2025-05-08"
+            publishedDate = "2025-05-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4628,7 +5555,8 @@ object InvictusKnowledge {
                 "contengono circa 11 g di proteine e non ha tracce di carboidrati e grassi. ",
             articleTitle = "Colazione proteica: cosa mangiare ed esempi",
             url = "https://www.projectinvictus.it/colazione-proteica/",
-            publishedDate = "2025-04-08"
+            publishedDate = "2025-04-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4637,7 +5565,8 @@ object InvictusKnowledge {
                 "anzi: le proteine costituiscono solamente il 20% del tessuto muscolare . ",
             articleTitle = "Proteine per aumentare la massa muscolare",
             url = "https://www.projectinvictus.it/proteine-per-massa-muscolare/",
-            publishedDate = "2025-02-17"
+            publishedDate = "2025-02-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4647,7 +5576,8 @@ object InvictusKnowledge {
                 "costituisce il 60-70% delle proteine dell’albume . ",
             articleTitle = "Quante proteine contiene un uovo?",
             url = "https://www.projectinvictus.it/quante-proteine-contiene-un-uovo/",
-            publishedDate = "2024-11-11"
+            publishedDate = "2024-11-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4656,7 +5586,8 @@ object InvictusKnowledge {
                 "litro di latte. ",
             articleTitle = "Quali sono le proteine del latte?",
             url = "https://www.projectinvictus.it/proteine-del-latte/",
-            publishedDate = "2024-11-08"
+            publishedDate = "2024-11-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4666,7 +5597,8 @@ object InvictusKnowledge {
                 "proteine del latte, le caseine . ",
             articleTitle = "Le 6 migliori proteine in polvere",
             url = "https://www.projectinvictus.it/migliori-proteine-in-polvere/",
-            publishedDate = "2024-11-03"
+            publishedDate = "2024-11-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4675,7 +5607,8 @@ object InvictusKnowledge {
                 "rappresentandone circa l’80% contro il 20% delle proteine del siero del latte. ",
             articleTitle = "Le 6 migliori proteine in polvere",
             url = "https://www.projectinvictus.it/migliori-proteine-in-polvere/",
-            publishedDate = "2024-11-03"
+            publishedDate = "2024-11-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4686,7 +5619,8 @@ object InvictusKnowledge {
                 "catabolico. ",
             articleTitle = "Le 6 migliori proteine in polvere",
             url = "https://www.projectinvictus.it/migliori-proteine-in-polvere/",
-            publishedDate = "2024-11-03"
+            publishedDate = "2024-11-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4697,7 +5631,8 @@ object InvictusKnowledge {
                 "perdita di capacità funzionale dei reni. ",
             articleTitle = "Dieta chetogenica: pro e contro",
             url = "https://www.projectinvictus.it/dieta-chetogenica-fa-male/",
-            publishedDate = "2024-05-13"
+            publishedDate = "2024-05-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4707,7 +5642,8 @@ object InvictusKnowledge {
                 "proteine, grassi) nel corso delle 24 ore . ",
             articleTitle = "Carboidrati dopo l’allenamento in palestra",
             url = "https://www.projectinvictus.it/carboidrati-post-workout-palestra/",
-            publishedDate = "2024-03-26"
+            publishedDate = "2024-03-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4716,7 +5652,8 @@ object InvictusKnowledge {
                 "creare un ambiente anabolico favorevole (in un contesto energetico opportuno). ",
             articleTitle = "Finestra anabolica: cos’è e cosa mangiare",
             url = "https://www.projectinvictus.it/finestra-anabolica/",
-            publishedDate = "2024-03-13"
+            publishedDate = "2024-03-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4725,7 +5662,8 @@ object InvictusKnowledge {
                 "blocchetto di grassi ( rapporto 1:1:1 tra i blocchetti ). ",
             articleTitle = "Dieta a zona: come funziona e menù",
             url = "https://www.projectinvictus.it/dieta-a-zona/",
-            publishedDate = "2024-02-28"
+            publishedDate = "2024-02-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4735,7 +5673,8 @@ object InvictusKnowledge {
                 "assumere il giusto quantitativo di fibre alimentari. ",
             articleTitle = "Dieta metabolica: come funziona",
             url = "https://www.projectinvictus.it/dieta-metabolica/",
-            publishedDate = "2024-02-03"
+            publishedDate = "2024-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4746,7 +5685,8 @@ object InvictusKnowledge {
                 "squilibri ormonali). ",
             articleTitle = "Aumentare la massa muscolare nelle donne: come fare",
             url = "https://www.projectinvictus.it/aumentare-massa-muscolare-donne/",
-            publishedDate = "2024-01-29"
+            publishedDate = "2024-01-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4755,7 +5695,8 @@ object InvictusKnowledge {
                 "0.25 g proteine/kg peso corporeo. ",
             articleTitle = "Proteine prima di dormire per la massa muscolare",
             url = "https://www.projectinvictus.it/proteine-prima-di-dormire/",
-            publishedDate = "2024-01-22"
+            publishedDate = "2024-01-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4765,7 +5706,8 @@ object InvictusKnowledge {
                 "“pre-digerito”. ",
             articleTitle = "Proteine prima di dormire per la massa muscolare",
             url = "https://www.projectinvictus.it/proteine-prima-di-dormire/",
-            publishedDate = "2024-01-22"
+            publishedDate = "2024-01-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4773,7 +5715,8 @@ object InvictusKnowledge {
                 "Le proteine isolate , invece, richiedono più tempo: 30-60 minuti . ",
             articleTitle = "Proteine prima di dormire per la massa muscolare",
             url = "https://www.projectinvictus.it/proteine-prima-di-dormire/",
-            publishedDate = "2024-01-22"
+            publishedDate = "2024-01-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4782,7 +5725,8 @@ object InvictusKnowledge {
                 "calorie ti ritroverai non solo più grosso ma anche più grasso . ",
             articleTitle = "Le proteine fanno ingrassare?",
             url = "https://www.projectinvictus.it/le-proteine-fanno-ingrassare/",
-            publishedDate = "2024-01-21"
+            publishedDate = "2024-01-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4792,7 +5736,8 @@ object InvictusKnowledge {
                 "massa magra, sia per sopportare meglio la fame. ",
             articleTitle = "Le proteine fanno ingrassare?",
             url = "https://www.projectinvictus.it/le-proteine-fanno-ingrassare/",
-            publishedDate = "2024-01-21"
+            publishedDate = "2024-01-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4802,7 +5747,8 @@ object InvictusKnowledge {
                 "(con i pesi), deficit calorico graduale e non eccessivo (- 300-500 kcal al giorno). ",
             articleTitle = "Proteine in polvere per dimagrire donne",
             url = "https://www.projectinvictus.it/proteine-in-polvere-per-dimagrire-donne/",
-            publishedDate = "2023-09-27"
+            publishedDate = "2023-09-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4812,7 +5758,8 @@ object InvictusKnowledge {
                 "allenamenti a digiuno. ",
             articleTitle = "Quando assumere proteine: prima o dopo allenamento?",
             url = "https://www.projectinvictus.it/proteine-prima-o-dopo-allenamento/",
-            publishedDate = "2023-09-24"
+            publishedDate = "2023-09-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4822,7 +5769,8 @@ object InvictusKnowledge {
                 "di tessuto muscolare. ",
             articleTitle = "Proteine palestra: quali prendere e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-palestra/",
-            publishedDate = "2023-09-21"
+            publishedDate = "2023-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4833,7 +5781,8 @@ object InvictusKnowledge {
                 "efficace, ma la loro assunzione nella giornata. ",
             articleTitle = "Proteine palestra: quali prendere e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-palestra/",
-            publishedDate = "2023-09-21"
+            publishedDate = "2023-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4843,7 +5792,8 @@ object InvictusKnowledge {
                 "magnesio, zinco e ferro. ",
             articleTitle = "Dieta flexitariana: cos’è, cosa mangiare, menù",
             url = "https://www.projectinvictus.it/flexitariana/",
-            publishedDate = "2023-06-16"
+            publishedDate = "2023-06-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4854,7 +5804,8 @@ object InvictusKnowledge {
                 "settimana . ",
             articleTitle = "Dieta delle uova",
             url = "https://www.projectinvictus.it/dieta-delle-uova/",
-            publishedDate = "2023-01-28"
+            publishedDate = "2023-01-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4863,7 +5814,8 @@ object InvictusKnowledge {
                 "7-10% di proteine rispetto al 15% di una dieta bilanciata. ",
             articleTitle = "Dieta ipoproteica: cosa mangiare, menù e consigli",
             url = "https://www.projectinvictus.it/dieta-ipoproteica/",
-            publishedDate = "2023-01-18"
+            publishedDate = "2023-01-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4873,7 +5825,8 @@ object InvictusKnowledge {
                 "parametri clinici e antropometrici. ",
             articleTitle = "Dieta ipoproteica: cosa mangiare, menù e consigli",
             url = "https://www.projectinvictus.it/dieta-ipoproteica/",
-            publishedDate = "2023-01-18"
+            publishedDate = "2023-01-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4883,7 +5836,8 @@ object InvictusKnowledge {
                 "privi di proteine. ",
             articleTitle = "Dieta ipoproteica: cosa mangiare, menù e consigli",
             url = "https://www.projectinvictus.it/dieta-ipoproteica/",
-            publishedDate = "2023-01-18"
+            publishedDate = "2023-01-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4894,7 +5848,8 @@ object InvictusKnowledge {
                 "famiglia dei carboidrati). ",
             articleTitle = "Aminoacidi: cosa sono e che funzione svolgono?",
             url = "https://www.projectinvictus.it/cosa-sono-gli-aminoacidi/",
-            publishedDate = "2022-12-25"
+            publishedDate = "2022-12-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4903,7 +5858,8 @@ object InvictusKnowledge {
                 ": gli atleti natural hanno benefici nel tenere alta la quota di carboidrati. ",
             articleTitle = "Il culturismo: cos’è, dieta e allenamento",
             url = "https://www.projectinvictus.it/culturismo/",
-            publishedDate = "2022-12-03"
+            publishedDate = "2022-12-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4913,7 +5869,8 @@ object InvictusKnowledge {
                 "macronutrienti, con un apporto proteico di 2,3-3,1g/kg di peso corporeo. ",
             articleTitle = "Catabolismo",
             url = "https://www.projectinvictus.it/catabolismo/",
-            publishedDate = "2022-09-18"
+            publishedDate = "2022-09-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4923,7 +5880,8 @@ object InvictusKnowledge {
                 "massa muscolare . ",
             articleTitle = "Catabolismo muscolare: cos’è, cause e rimedi",
             url = "https://www.projectinvictus.it/catabolismo-muscolare/",
-            publishedDate = "2022-09-08"
+            publishedDate = "2022-09-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4931,7 +5889,8 @@ object InvictusKnowledge {
                 "La quota ottimale di proteine per la massa muscolare è di 1,4 – 2,2 g / kg al giorno . ",
             articleTitle = "Come diventare grossi in poco tempo",
             url = "https://www.projectinvictus.it/come-diventare-grossi/",
-            publishedDate = "2022-07-26"
+            publishedDate = "2022-07-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4941,7 +5900,8 @@ object InvictusKnowledge {
                 "assunte rispetto alle linee guida consigliate per gli onnivori. ",
             articleTitle = "Dieta vegana bodybuilding: come funziona ed esempio",
             url = "https://www.projectinvictus.it/dieta-vegana-e-bodybuilding/",
-            publishedDate = "2022-05-24"
+            publishedDate = "2022-05-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4950,7 +5910,8 @@ object InvictusKnowledge {
                 "proteico è pari a 2,3-3,1 g proteine/kg peso corporeo . ",
             articleTitle = "Macronutrienti per la definizione muscolare",
             url = "https://www.projectinvictus.it/macronutrienti-definizione-muscolare/",
-            publishedDate = "2022-02-03"
+            publishedDate = "2022-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4959,7 +5920,8 @@ object InvictusKnowledge {
                 "quantità di proteine può avvicinarsi al valore massimo del range proposto (3,1 g/kg). ",
             articleTitle = "Macronutrienti per la definizione muscolare",
             url = "https://www.projectinvictus.it/macronutrienti-definizione-muscolare/",
-            publishedDate = "2022-02-03"
+            publishedDate = "2022-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4968,7 +5930,8 @@ object InvictusKnowledge {
                 "di 0,5 g/kg per assicurare la corretta funzionalità dell’organismo. ",
             articleTitle = "Macronutrienti per la definizione muscolare",
             url = "https://www.projectinvictus.it/macronutrienti-definizione-muscolare/",
-            publishedDate = "2022-02-03"
+            publishedDate = "2022-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4978,7 +5941,8 @@ object InvictusKnowledge {
                 "nel post-workout . ",
             articleTitle = "HMB integratore: cos’è, a cosa serve, funziona?",
             url = "https://www.projectinvictus.it/hmb-integratore/",
-            publishedDate = "2022-01-31"
+            publishedDate = "2022-01-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4987,7 +5951,8 @@ object InvictusKnowledge {
                 "2,7 g / 100 ml ). ",
             articleTitle = "Caseina ed effetti collaterali",
             url = "https://www.projectinvictus.it/caseina-fa-male/",
-            publishedDate = "2022-01-18"
+            publishedDate = "2022-01-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -4998,7 +5963,8 @@ object InvictusKnowledge {
                 "rispetto all’onnivoro. ",
             articleTitle = "Aminoacidi essenziali (EAA): come e quando prenderli? Prima o dopo l’allenamento?",
             url = "https://www.projectinvictus.it/fabbisogno-aminoacidi-essenziali/",
-            publishedDate = "2022-01-08"
+            publishedDate = "2022-01-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5008,7 +5974,8 @@ object InvictusKnowledge {
                 "complete di tutti gli aminoacidi e soprattutto che contengono quelli essenziali. ",
             articleTitle = "Nutrient timing dei pasti per la palestra e il bodybuilding",
             url = "https://www.projectinvictus.it/nutrient-timing/",
-            publishedDate = "2021-11-02"
+            publishedDate = "2021-11-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5018,7 +5985,8 @@ object InvictusKnowledge {
                 "e la performance. ",
             articleTitle = "Nutrient timing dei pasti per la palestra e il bodybuilding",
             url = "https://www.projectinvictus.it/nutrient-timing/",
-            publishedDate = "2021-11-02"
+            publishedDate = "2021-11-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5027,7 +5995,8 @@ object InvictusKnowledge {
                 "sportivi) . ",
             articleTitle = "Nutrienti: quali sono e cosa sono?",
             url = "https://www.projectinvictus.it/nutrienti/",
-            publishedDate = "2021-10-07"
+            publishedDate = "2021-10-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5037,7 +6006,8 @@ object InvictusKnowledge {
                 "avranno un apporto proteico maggiore. ",
             articleTitle = "Calorie macronutrienti",
             url = "https://www.projectinvictus.it/calorie-macronutrienti/",
-            publishedDate = "2021-09-13"
+            publishedDate = "2021-09-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5047,7 +6017,8 @@ object InvictusKnowledge {
                 "energetica, al proprio obbiettivo e stile di vita. ",
             articleTitle = "Carboidrati semplici e complessi: qual è la differenza?",
             url = "https://www.projectinvictus.it/quali-sono-i-carboidrati/",
-            publishedDate = "2021-09-06"
+            publishedDate = "2021-09-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5058,7 +6029,8 @@ object InvictusKnowledge {
                 "principale fattore da tenere in considerazione. ",
             articleTitle = "Post workout: cosa assumere dopo l’allenamento in palestra?",
             url = "https://www.projectinvictus.it/post-workout-palestra-cosa-mangiare/",
-            publishedDate = "2021-08-03"
+            publishedDate = "2021-08-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5068,7 +6040,8 @@ object InvictusKnowledge {
                 "aminoacidi essenziali di cui 0.7-3 g di leucina. ",
             articleTitle = "Post workout: cosa assumere dopo l’allenamento in palestra?",
             url = "https://www.projectinvictus.it/post-workout-palestra-cosa-mangiare/",
-            publishedDate = "2021-08-03"
+            publishedDate = "2021-08-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5079,7 +6052,8 @@ object InvictusKnowledge {
                 "proteica. ",
             articleTitle = "Post workout: cosa assumere dopo l’allenamento in palestra?",
             url = "https://www.projectinvictus.it/post-workout-palestra-cosa-mangiare/",
-            publishedDate = "2021-08-03"
+            publishedDate = "2021-08-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5089,7 +6063,8 @@ object InvictusKnowledge {
                 "integrazione) sia dopo. ",
             articleTitle = "Post workout: cosa assumere dopo l’allenamento in palestra?",
             url = "https://www.projectinvictus.it/post-workout-palestra-cosa-mangiare/",
-            publishedDate = "2021-08-03"
+            publishedDate = "2021-08-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5099,7 +6074,8 @@ object InvictusKnowledge {
                 "giorni di allenamento, prima dell’allenamento). ",
             articleTitle = "Caffeina, allenamento e palestra: effetti e dosaggi",
             url = "https://www.projectinvictus.it/caffeina-effetti-e-dosaggi/",
-            publishedDate = "2021-07-28"
+            publishedDate = "2021-07-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5109,7 +6085,8 @@ object InvictusKnowledge {
                 "scendere verso valori inferiori. ",
             articleTitle = "Grassi buoni: quali sono e a cosa servono?",
             url = "https://www.projectinvictus.it/grassi-buoni/",
-            publishedDate = "2021-06-23"
+            publishedDate = "2021-06-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5119,7 +6096,8 @@ object InvictusKnowledge {
                 "assumere meno calorie a parità di introito. ",
             articleTitle = "Proteine vegane: come assumerle?",
             url = "https://www.projectinvictus.it/proteine-vegane/",
-            publishedDate = "2021-06-22"
+            publishedDate = "2021-06-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5128,7 +6106,8 @@ object InvictusKnowledge {
                 "proteica è di 25 g. ",
             articleTitle = "Proteine vegane: come assumerle?",
             url = "https://www.projectinvictus.it/proteine-vegane/",
-            publishedDate = "2021-06-22"
+            publishedDate = "2021-06-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5138,7 +6117,8 @@ object InvictusKnowledge {
                 "proteine isolate ) 30 minuti. ",
             articleTitle = "Proteine a lento rilascio: quali sono?",
             url = "https://www.projectinvictus.it/proteine-lento-rilascio/",
-            publishedDate = "2021-06-18"
+            publishedDate = "2021-06-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5147,7 +6127,8 @@ object InvictusKnowledge {
                 "alimento : sono un’ottima fonte di aminoacidi. ",
             articleTitle = "Le carni proteiche con più proteine",
             url = "https://www.projectinvictus.it/carni-piu-proteiche/",
-            publishedDate = "2021-06-17"
+            publishedDate = "2021-06-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5156,7 +6137,8 @@ object InvictusKnowledge {
                 "che è sufficiente a massimizzare la proteosintesi. ",
             articleTitle = "Aminoacidi e proteine: che differenza c’è?",
             url = "https://www.projectinvictus.it/aminoacidi-o-proteine/",
-            publishedDate = "2021-06-14"
+            publishedDate = "2021-06-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5166,7 +6148,8 @@ object InvictusKnowledge {
                 "tessuto che è importante da mantenere per un dimagrimento efficace. ",
             articleTitle = "Proteine magre: quali sono i cibi proteici con pochi grassi?",
             url = "https://www.projectinvictus.it/proteine-magre/",
-            publishedDate = "2021-06-05"
+            publishedDate = "2021-06-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5175,7 +6158,8 @@ object InvictusKnowledge {
                 "0,5-1,5 g/kg . ",
             articleTitle = "Dieta Equilibrata: le Basi di un’Alimentazione Sana e Bilanciata",
             url = "https://www.projectinvictus.it/dieta-equilibrata-alimentazione-bilanciata/",
-            publishedDate = "2021-05-23"
+            publishedDate = "2021-05-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5185,7 +6169,8 @@ object InvictusKnowledge {
                 "normocalorica. ",
             articleTitle = "Dieta Equilibrata: le Basi di un’Alimentazione Sana e Bilanciata",
             url = "https://www.projectinvictus.it/dieta-equilibrata-alimentazione-bilanciata/",
-            publishedDate = "2021-05-23"
+            publishedDate = "2021-05-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5194,7 +6179,8 @@ object InvictusKnowledge {
                 "hanno la caratteristica di avere una buona composizione aminoacidica. ",
             articleTitle = "Proteine del siero del latte: cosa sono e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-del-siero-del-latte/",
-            publishedDate = "2021-05-20"
+            publishedDate = "2021-05-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5204,7 +6190,8 @@ object InvictusKnowledge {
                 "assenti. ",
             articleTitle = "Proteine del siero del latte: cosa sono e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-del-siero-del-latte/",
-            publishedDate = "2021-05-20"
+            publishedDate = "2021-05-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5214,7 +6201,8 @@ object InvictusKnowledge {
                 "vegetali. ",
             articleTitle = "Proteine animali sono dannose?",
             url = "https://www.projectinvictus.it/proteine-animali/",
-            publishedDate = "2021-04-28"
+            publishedDate = "2021-04-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5224,7 +6212,8 @@ object InvictusKnowledge {
                 "pool ematico aminoacidico e soddisfare il fabbisogno proteico giornaliero. ",
             articleTitle = "Proteine idrolizzate: benefici e controindicazioni",
             url = "https://www.projectinvictus.it/proteine-idrolizzate/",
-            publishedDate = "2021-04-22"
+            publishedDate = "2021-04-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5235,7 +6224,8 @@ object InvictusKnowledge {
                 "alle altre sostanze presenti nel latte. ",
             articleTitle = "Proteine isolate: benefici e controindicazioni",
             url = "https://www.projectinvictus.it/proteine-isolate/",
-            publishedDate = "2021-04-20"
+            publishedDate = "2021-04-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5246,7 +6236,8 @@ object InvictusKnowledge {
                 "inadeguata. ",
             articleTitle = "Proteine isolate: benefici e controindicazioni",
             url = "https://www.projectinvictus.it/proteine-isolate/",
-            publishedDate = "2021-04-20"
+            publishedDate = "2021-04-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5255,7 +6246,8 @@ object InvictusKnowledge {
                 "mammaria – contenente proteine ad alto valore biologico – per almeno 6 mesi. ",
             articleTitle = "Proteine: cosa sono e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-cosa-sono-a-cosa-servono/",
-            publishedDate = "2021-04-14"
+            publishedDate = "2021-04-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5265,7 +6257,8 @@ object InvictusKnowledge {
                 "scendono. ",
             articleTitle = "Proteine: cosa sono e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-cosa-sono-a-cosa-servono/",
-            publishedDate = "2021-04-14"
+            publishedDate = "2021-04-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5274,7 +6267,8 @@ object InvictusKnowledge {
                 "sono meno digeribili rispetto a quelle animali (60-80% VS 90%) . ",
             articleTitle = "Proteine: cosa sono e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-cosa-sono-a-cosa-servono/",
-            publishedDate = "2021-04-14"
+            publishedDate = "2021-04-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5283,7 +6277,8 @@ object InvictusKnowledge {
                 "superato. ",
             articleTitle = "Proteine: cosa sono e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-cosa-sono-a-cosa-servono/",
-            publishedDate = "2021-04-14"
+            publishedDate = "2021-04-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5293,7 +6288,8 @@ object InvictusKnowledge {
                 "sostanze endogene. ",
             articleTitle = "Proteine nobili: significato e alimenti ricchi di proteine nobili",
             url = "https://www.projectinvictus.it/proteine-nobili/",
-            publishedDate = "2021-04-12"
+            publishedDate = "2021-04-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5303,7 +6299,8 @@ object InvictusKnowledge {
                 "delle proteine dell’albume. ",
             articleTitle = "Proteine nobili: significato e alimenti ricchi di proteine nobili",
             url = "https://www.projectinvictus.it/proteine-nobili/",
-            publishedDate = "2021-04-12"
+            publishedDate = "2021-04-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5312,7 +6309,8 @@ object InvictusKnowledge {
                 "proteico molto variabile (8-20%) e non contengono tutti gli aminoacidi essenziali . ",
             articleTitle = "Proteine nobili: significato e alimenti ricchi di proteine nobili",
             url = "https://www.projectinvictus.it/proteine-nobili/",
-            publishedDate = "2021-04-12"
+            publishedDate = "2021-04-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5322,7 +6320,8 @@ object InvictusKnowledge {
                 "contenuto proteico più elevato (circa il 20% del suo peso). ",
             articleTitle = "Proteine nobili: significato e alimenti ricchi di proteine nobili",
             url = "https://www.projectinvictus.it/proteine-nobili/",
-            publishedDate = "2021-04-12"
+            publishedDate = "2021-04-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5332,7 +6331,8 @@ object InvictusKnowledge {
                 "muscolo e che sono la fonte primaria per la sintesi di glutammina e alanina. ",
             articleTitle = "BCAA fanno male?",
             url = "https://www.projectinvictus.it/bcaa-aminoacidi-ramificati-fanno-male/",
-            publishedDate = "2021-04-01"
+            publishedDate = "2021-04-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5342,7 +6342,8 @@ object InvictusKnowledge {
                 "inferiore alle soglie minime ottimali per chi si allena con i pesi (1,7). ",
             articleTitle = "BCAA – aminoacidi ramificati: cosa sono e quali scegliere?",
             url = "https://www.projectinvictus.it/aminoacidi-ramificati-bcaa/",
-            publishedDate = "2021-03-23"
+            publishedDate = "2021-03-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5353,7 +6354,8 @@ object InvictusKnowledge {
                 "queste proteine è rappresentato da BCAA (5). ",
             articleTitle = "BCAA – aminoacidi ramificati: cosa sono e quali scegliere?",
             url = "https://www.projectinvictus.it/aminoacidi-ramificati-bcaa/",
-            publishedDate = "2021-03-23"
+            publishedDate = "2021-03-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5363,7 +6365,8 @@ object InvictusKnowledge {
                 "non è più disponibile (11). ",
             articleTitle = "BCAA – aminoacidi ramificati: cosa sono e quali scegliere?",
             url = "https://www.projectinvictus.it/aminoacidi-ramificati-bcaa/",
-            publishedDate = "2021-03-23"
+            publishedDate = "2021-03-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5372,7 +6375,8 @@ object InvictusKnowledge {
                 "costituiscono ben il 40% delle proteine muscolari. ",
             articleTitle = "Aminoacidi per dimagrire: cosa sono? Funzionano veramente?",
             url = "https://www.projectinvictus.it/aminoacidi-per-dimagrire/",
-            publishedDate = "2021-02-11"
+            publishedDate = "2021-02-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5382,7 +6386,8 @@ object InvictusKnowledge {
                 "grassi a 9 kcal . ",
             articleTitle = "IIFYM: che cos’è e come funziona?",
             url = "https://www.projectinvictus.it/iifym/",
-            publishedDate = "2021-01-27"
+            publishedDate = "2021-01-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5392,7 +6397,8 @@ object InvictusKnowledge {
                 "origine animale come carne (18%) e latticini (10%). ",
             articleTitle = "Alimentazione in gravidanza: cosa mangiare?",
             url = "https://www.projectinvictus.it/alimentazione-in-gravidanza/",
-            publishedDate = "2020-11-07"
+            publishedDate = "2020-11-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5403,7 +6409,8 @@ object InvictusKnowledge {
                 "momento del parto e morte neonatale. ",
             articleTitle = "Alimentazione in gravidanza: cosa mangiare?",
             url = "https://www.projectinvictus.it/alimentazione-in-gravidanza/",
-            publishedDate = "2020-11-07"
+            publishedDate = "2020-11-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5413,7 +6420,8 @@ object InvictusKnowledge {
                 "contengono proteine per il 10-15% del totale. ",
             articleTitle = "Proteine vegetali per la palestra",
             url = "https://www.projectinvictus.it/proteine-vegetali/",
-            publishedDate = "2020-07-24"
+            publishedDate = "2020-07-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5422,7 +6430,8 @@ object InvictusKnowledge {
                 "20-35% di digeribilità in meno (è una stima ovviamente). ",
             articleTitle = "Proteine vegetali per la palestra",
             url = "https://www.projectinvictus.it/proteine-vegetali/",
-            publishedDate = "2020-07-24"
+            publishedDate = "2020-07-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5432,7 +6441,8 @@ object InvictusKnowledge {
                 "proteine a pasto). ",
             articleTitle = "Ogni quanto mangiare per dimagrire?",
             url = "https://www.projectinvictus.it/frequenza-dei-pasti/",
-            publishedDate = "2020-07-13"
+            publishedDate = "2020-07-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5441,7 +6451,8 @@ object InvictusKnowledge {
                 "da ogni medico, corrispondono sempre a circa 0.8 g/kg peso corporeo. ",
             articleTitle = "Fabbisogno proteico: come calcolarlo?",
             url = "https://www.projectinvictus.it/fabbisogno-proteico/",
-            publishedDate = "2020-03-03"
+            publishedDate = "2020-03-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5451,7 +6462,8 @@ object InvictusKnowledge {
                 "corporeo, sia per gli uomini che per le donne. ",
             articleTitle = "Fabbisogno proteico: come calcolarlo?",
             url = "https://www.projectinvictus.it/fabbisogno-proteico/",
-            publishedDate = "2020-03-03"
+            publishedDate = "2020-03-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5460,7 +6472,8 @@ object InvictusKnowledge {
                 "0.70 g/kg peso corporeo passiamo a una dose consigliata maggiore di 0.84 g di proteine. ",
             articleTitle = "Fabbisogno proteico: come calcolarlo?",
             url = "https://www.projectinvictus.it/fabbisogno-proteico/",
-            publishedDate = "2020-03-03"
+            publishedDate = "2020-03-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5469,7 +6482,8 @@ object InvictusKnowledge {
                 "corporeo). ",
             articleTitle = "Fabbisogno proteico: come calcolarlo?",
             url = "https://www.projectinvictus.it/fabbisogno-proteico/",
-            publishedDate = "2020-03-03"
+            publishedDate = "2020-03-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5478,7 +6492,8 @@ object InvictusKnowledge {
                 "mentre per le proteine il valore consigliato è 1.4 – 2 g/kg di peso corporeo . ",
             articleTitle = "Dieta per ingrassare velocemente",
             url = "https://www.projectinvictus.it/dieta-per-ingrassare/",
-            publishedDate = "2020-02-28"
+            publishedDate = "2020-02-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5486,7 +6501,8 @@ object InvictusKnowledge {
                 "Più del 60% del peso a secco è rappresentato da proteine . ",
             articleTitle = "Spirulina proprietà: cosa sapere su questa alga",
             url = "https://www.projectinvictus.it/spirulina-proprieta/",
-            publishedDate = "2020-02-26"
+            publishedDate = "2020-02-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5495,7 +6511,8 @@ object InvictusKnowledge {
                 "grammi di proteine per 100 g di prodotto. ",
             articleTitle = "Frutta secca migliore: benefici a dieta e in palestra",
             url = "https://www.projectinvictus.it/frutta-secca-quale-quanta-e-perche/",
-            publishedDate = "2020-02-10"
+            publishedDate = "2020-02-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5504,7 +6521,8 @@ object InvictusKnowledge {
                 "decrescente, sono: arachidi, pistacchi, mandorle dolci, nocciole e anacardi. ",
             articleTitle = "Frutta secca migliore: benefici a dieta e in palestra",
             url = "https://www.projectinvictus.it/frutta-secca-quale-quanta-e-perche/",
-            publishedDate = "2020-02-10"
+            publishedDate = "2020-02-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5514,7 +6532,8 @@ object InvictusKnowledge {
                 "g/kg) per preservare o aumentare la massa muscolare. ",
             articleTitle = "Insulino resistenza, sintomi e rimedi: cos’è e come ridurla?",
             url = "https://www.projectinvictus.it/insulino-resistenza-sintomi-e-rimedi/",
-            publishedDate = "2019-10-04"
+            publishedDate = "2019-10-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5524,7 +6543,8 @@ object InvictusKnowledge {
                 "mentre l’albumina lega in maniera più labile il testosterone (38% del totale). ",
             articleTitle = "Ormoni maschili: quali sono e come funzionano?",
             url = "https://www.projectinvictus.it/ormoni-maschili/",
-            publishedDate = "2019-09-30"
+            publishedDate = "2019-09-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5534,7 +6554,8 @@ object InvictusKnowledge {
                 "ramificati che costituiscono il 35% delle proteine muscolari. ",
             articleTitle = "I grassi bruciano al fuoco dei carboidrati",
             url = "https://www.projectinvictus.it/i-grassi-bruciano-al-fuoco-dei-carboidrati/",
-            publishedDate = "2018-06-27"
+            publishedDate = "2018-06-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5543,7 +6564,8 @@ object InvictusKnowledge {
                 "150-200g di proteine. ",
             articleTitle = "I grassi bruciano al fuoco dei carboidrati",
             url = "https://www.projectinvictus.it/i-grassi-bruciano-al-fuoco-dei-carboidrati/",
-            publishedDate = "2018-06-27"
+            publishedDate = "2018-06-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5552,7 +6574,8 @@ object InvictusKnowledge {
                 "giorni e lasciando invariate proteine e grassi. ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5563,7 +6586,8 @@ object InvictusKnowledge {
                 "glicogeno muscolare (1,3). ",
             articleTitle = "Carboidrati post-workout: perché no?",
             url = "https://www.projectinvictus.it/carboidrati-post-workout-perche-no/",
-            publishedDate = "2016-08-04"
+            publishedDate = "2016-08-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5571,7 +6595,8 @@ object InvictusKnowledge {
                 "Le proteine rispetto agli altri macronutrienti hanno una ASD del 20-30%. ",
             articleTitle = "Calorie per dimagrire: capiamo Ormoni, macronutrienti e calorie",
             url = "https://www.projectinvictus.it/ormoni-macronutrienti-e-calorie/",
-            publishedDate = "2016-03-10"
+            publishedDate = "2016-03-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5580,7 +6605,8 @@ object InvictusKnowledge {
                 "che per i muscoli si fa ogni 180 giorni circa. ",
             articleTitle = "Aminoacidi essenziali e non essenziali: basi di chimica",
             url = "https://www.projectinvictus.it/aminoacidi-biochimica/",
-            publishedDate = "2016-02-01"
+            publishedDate = "2016-02-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5589,7 +6615,8 @@ object InvictusKnowledge {
                 "rispetto alle 20-30 volte per carboidrati e grassi. ",
             articleTitle = "BCAA sempre e comunque utili?",
             url = "https://www.projectinvictus.it/bcaa-sempre-e-comunque-utili/",
-            publishedDate = "2014-03-13"
+            publishedDate = "2014-03-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5598,7 +6625,8 @@ object InvictusKnowledge {
                 "contengono fino al 25%. ",
             articleTitle = "BCAA sempre e comunque utili?",
             url = "https://www.projectinvictus.it/bcaa-sempre-e-comunque-utili/",
-            publishedDate = "2014-03-13"
+            publishedDate = "2014-03-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PROTEIN,
@@ -5607,7 +6635,38 @@ object InvictusKnowledge {
                 "proteine, portando il loro valore effettivo da 5,65 a 4kcal. ",
             articleTitle = "Le proteine fanno male? Impariamo a conoscerle!",
             url = "https://www.projectinvictus.it/proteine-fanno-male/",
-            publishedDate = "2013-03-29"
+            publishedDate = "2013-03-29",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.PROTEIN,
+            statement =
+                "Protein supplementation beyond total protein intakes of 1.62 g/kg/day resulted in no " +
+                "further RET-induced gains in FFM. ",
+            articleTitle = "A systematic review, meta-analysis and meta-regression of the effect of protein supplementation on resistance training-induced gains in muscle mass and strength in healthy adults",
+            url = "https://pubmed.ncbi.nlm.nih.gov/28698222/",
+            publishedDate = "2018",
+            kind = SourceKind.SYSTEMATIC_REVIEW
+        ),
+        Rule(
+            category = Category.PROTEIN,
+            statement =
+                "With protein supplementation, protein intakes at amounts greater than ~1.6 g/kg/day do " +
+                "not further contribute RET-induced gains in FFM. ",
+            articleTitle = "A systematic review, meta-analysis and meta-regression of the effect of protein supplementation on resistance training-induced gains in muscle mass and strength in healthy adults",
+            url = "https://pubmed.ncbi.nlm.nih.gov/28698222/",
+            publishedDate = "2018",
+            kind = SourceKind.SYSTEMATIC_REVIEW
+        ),
+        Rule(
+            category = Category.PROTEIN,
+            statement =
+                "Protein combined with an exercise intervention significantly reduces fat mass (-0.80 kg; " +
+                "95%CI, -1.32 to -0.28). ",
+            articleTitle = "Nutritional and exercise interventions in individuals with sarcopenic obesity around retirement age: a systematic review and meta-analysis",
+            url = "https://pubmed.ncbi.nlm.nih.gov/36882046/",
+            publishedDate = "2023",
+            kind = SourceKind.SYSTEMATIC_REVIEW
         ),
         Rule(
             category = Category.CARBS,
@@ -5616,7 +6675,8 @@ object InvictusKnowledge {
                 "(4,5 g/kg per il soggetto in questione). ",
             articleTitle = "Fabbisogno glucidico: come calcolarlo?",
             url = "https://www.projectinvictus.it/fabbisogno-glucidico-carboidrati/",
-            publishedDate = "2026-07-13"
+            publishedDate = "2026-07-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5625,7 +6685,8 @@ object InvictusKnowledge {
                 "all’allenamento. ",
             articleTitle = "Dieta personalizzata: la dieta che funziona",
             url = "https://www.projectinvictus.it/dieta-personalizzata/",
-            publishedDate = "2026-07-09"
+            publishedDate = "2026-07-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5636,7 +6697,8 @@ object InvictusKnowledge {
                 "la massa muscolare. ",
             articleTitle = "La dieta flessibile",
             url = "https://www.projectinvictus.it/dieta-flessibile/",
-            publishedDate = "2026-07-09"
+            publishedDate = "2026-07-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5646,7 +6708,8 @@ object InvictusKnowledge {
                 "tra 3 e 7 g/kg. ",
             articleTitle = "La dieta flessibile",
             url = "https://www.projectinvictus.it/dieta-flessibile/",
-            publishedDate = "2026-07-09"
+            publishedDate = "2026-07-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5655,7 +6718,8 @@ object InvictusKnowledge {
                 "zuccheri liberi a meno del 10% delle calorie totali giornaliere . ",
             articleTitle = "Il fruttosio fa male?",
             url = "https://www.projectinvictus.it/fruttosio-fa-male/",
-            publishedDate = "2025-10-16"
+            publishedDate = "2025-10-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5664,7 +6728,8 @@ object InvictusKnowledge {
                 "2,5 g/kg e di variare tra i grassi e i carboidrati. ",
             articleTitle = "Addominali scolpiti: come ottenerli",
             url = "https://www.projectinvictus.it/addominali-scolpiti/",
-            publishedDate = "2025-09-10"
+            publishedDate = "2025-09-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5674,7 +6739,8 @@ object InvictusKnowledge {
                 "cioccolato, contribuendo al recupero post-esercizio. ",
             articleTitle = "I 10 migliori alimenti per la massa muscolare",
             url = "https://www.projectinvictus.it/alimenti-per-la-massa-muscolare/",
-            publishedDate = "2025-07-18"
+            publishedDate = "2025-07-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5683,7 +6749,8 @@ object InvictusKnowledge {
                 "contengono circa 11 g di proteine e non ha tracce di carboidrati e grassi. ",
             articleTitle = "Colazione proteica: cosa mangiare ed esempi",
             url = "https://www.projectinvictus.it/colazione-proteica/",
-            publishedDate = "2025-04-08"
+            publishedDate = "2025-04-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5694,7 +6761,8 @@ object InvictusKnowledge {
                 "al tuo standard. ",
             articleTitle = "Dieta per la massa muscolare: la guida completa",
             url = "https://www.projectinvictus.it/dieta-per-la-massa-muscolare/",
-            publishedDate = "2025-03-12"
+            publishedDate = "2025-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5703,7 +6771,8 @@ object InvictusKnowledge {
                 "cala l’ acqua intracellulare ed interstiziale. ",
             articleTitle = "Dimagrire velocemente e perdere peso",
             url = "https://www.projectinvictus.it/dimagrire-velocemente/",
-            publishedDate = "2025-01-12"
+            publishedDate = "2025-01-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5713,7 +6782,8 @@ object InvictusKnowledge {
                 "dal momento della giornata in cui li mangi (anche la sera!). ",
             articleTitle = "Il pane fa ingrassare?",
             url = "https://www.projectinvictus.it/il-pane-fa-ingrassare/",
-            publishedDate = "2024-10-18"
+            publishedDate = "2024-10-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5724,7 +6794,8 @@ object InvictusKnowledge {
                 "magra e muscolare. ",
             articleTitle = "Il pane fa ingrassare?",
             url = "https://www.projectinvictus.it/il-pane-fa-ingrassare/",
-            publishedDate = "2024-10-18"
+            publishedDate = "2024-10-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5733,7 +6804,8 @@ object InvictusKnowledge {
                 "carboidrati) noi diventiamo dipendenti da essi. ",
             articleTitle = "Saltare la colazione sì o no? Fa bene o fa male?",
             url = "https://www.projectinvictus.it/saltare-la-colazione/",
-            publishedDate = "2024-08-10"
+            publishedDate = "2024-08-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5743,7 +6815,8 @@ object InvictusKnowledge {
                 "dell’eccesso si converta effettivamente in grassi. ",
             articleTitle = "Cosa sono le calorie?",
             url = "https://www.projectinvictus.it/caloria/",
-            publishedDate = "2024-07-14"
+            publishedDate = "2024-07-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5753,7 +6826,8 @@ object InvictusKnowledge {
                 "come l’ albicocca , bisogna quindi mangiarne alti quantitativi per raggiungere 50 g. ",
             articleTitle = "Indice Glicemico",
             url = "https://www.projectinvictus.it/indice-glicemico/",
-            publishedDate = "2024-05-05"
+            publishedDate = "2024-05-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5762,7 +6836,8 @@ object InvictusKnowledge {
                 "allenamento le riduce solo del 24-40% . ",
             articleTitle = "Carboidrati dopo l’allenamento in palestra",
             url = "https://www.projectinvictus.it/carboidrati-post-workout-palestra/",
-            publishedDate = "2024-03-26"
+            publishedDate = "2024-03-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5772,7 +6847,8 @@ object InvictusKnowledge {
                 "proteine, grassi) nel corso delle 24 ore . ",
             articleTitle = "Carboidrati dopo l’allenamento in palestra",
             url = "https://www.projectinvictus.it/carboidrati-post-workout-palestra/",
-            publishedDate = "2024-03-26"
+            publishedDate = "2024-03-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5781,7 +6857,8 @@ object InvictusKnowledge {
                 "blocchetto di grassi ( rapporto 1:1:1 tra i blocchetti ). ",
             articleTitle = "Dieta a zona: come funziona e menù",
             url = "https://www.projectinvictus.it/dieta-a-zona/",
-            publishedDate = "2024-02-28"
+            publishedDate = "2024-02-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5790,7 +6867,8 @@ object InvictusKnowledge {
                 "dovrebbero occupare il 45-60% del tuo fabbisogno calorico giornaliero. ",
             articleTitle = "Paleo dieta: come funziona e cosa mangiare",
             url = "https://www.projectinvictus.it/la-paleo-dieta/",
-            publishedDate = "2024-02-20"
+            publishedDate = "2024-02-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5800,7 +6878,8 @@ object InvictusKnowledge {
                 "settimana, intervallati da ricariche glucidiche nel weekend o il mercoledì. ",
             articleTitle = "Dieta metabolica: come funziona",
             url = "https://www.projectinvictus.it/dieta-metabolica/",
-            publishedDate = "2024-02-03"
+            publishedDate = "2024-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5810,7 +6889,8 @@ object InvictusKnowledge {
                 "assumere il giusto quantitativo di fibre alimentari. ",
             articleTitle = "Dieta metabolica: come funziona",
             url = "https://www.projectinvictus.it/dieta-metabolica/",
-            publishedDate = "2024-02-03"
+            publishedDate = "2024-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5819,7 +6899,8 @@ object InvictusKnowledge {
                 "vigoroso, consiglia di inserire una mini ricarica di 12-24 ore il mercoledì. ",
             articleTitle = "Dieta metabolica: come funziona",
             url = "https://www.projectinvictus.it/dieta-metabolica/",
-            publishedDate = "2024-02-03"
+            publishedDate = "2024-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5828,7 +6909,8 @@ object InvictusKnowledge {
                 "martedì, giovedì, venerdì) e glucidico 3 giorni (mercoledì, sabato, domenica). ",
             articleTitle = "Dieta metabolica: come funziona",
             url = "https://www.projectinvictus.it/dieta-metabolica/",
-            publishedDate = "2024-02-03"
+            publishedDate = "2024-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5839,7 +6921,8 @@ object InvictusKnowledge {
                 "squilibri ormonali). ",
             articleTitle = "Aumentare la massa muscolare nelle donne: come fare",
             url = "https://www.projectinvictus.it/aumentare-massa-muscolare-donne/",
-            publishedDate = "2024-01-29"
+            publishedDate = "2024-01-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5848,7 +6931,8 @@ object InvictusKnowledge {
                 "quelli a basso apporto glucidico . ",
             articleTitle = "Cos’è il Carb cycling e come funziona?",
             url = "https://www.projectinvictus.it/carb-cycling-come-applicarla/",
-            publishedDate = "2024-01-14"
+            publishedDate = "2024-01-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5857,7 +6941,8 @@ object InvictusKnowledge {
                 "dieta all’interno del fabbisogno di carboidrati. ",
             articleTitle = "Dieta senza zuccheri",
             url = "https://www.projectinvictus.it/dieta-senza-zuccheri/",
-            publishedDate = "2023-12-08"
+            publishedDate = "2023-12-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5867,7 +6952,8 @@ object InvictusKnowledge {
                 "principalmente da fonti vegetali. ",
             articleTitle = "Dieta Atkins: come funziona, quanto si perde, menù",
             url = "https://www.projectinvictus.it/dieta-atkins/",
-            publishedDate = "2023-06-20"
+            publishedDate = "2023-06-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5878,7 +6964,8 @@ object InvictusKnowledge {
                 "perdere circa 1 kg alla settimana. ",
             articleTitle = "Dieta Atkins: come funziona, quanto si perde, menù",
             url = "https://www.projectinvictus.it/dieta-atkins/",
-            publishedDate = "2023-06-20"
+            publishedDate = "2023-06-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5888,7 +6975,8 @@ object InvictusKnowledge {
                 "magnesio, zinco e ferro. ",
             articleTitle = "Dieta flexitariana: cos’è, cosa mangiare, menù",
             url = "https://www.projectinvictus.it/flexitariana/",
-            publishedDate = "2023-06-16"
+            publishedDate = "2023-06-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5896,7 +6984,8 @@ object InvictusKnowledge {
                 "Solitamente la concentrazione di carboidrati è del 6-8% ( bevande isotoniche ). ",
             articleTitle = "Bevande energetiche per lo sport",
             url = "https://www.projectinvictus.it/bevande-energetiche/",
-            publishedDate = "2023-06-07"
+            publishedDate = "2023-06-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5905,7 +6994,8 @@ object InvictusKnowledge {
                 "utili quando l’idratazione è più necessaria rispetto all’apporto glucidico. ",
             articleTitle = "Bevande energetiche per lo sport",
             url = "https://www.projectinvictus.it/bevande-energetiche/",
-            publishedDate = "2023-06-07"
+            publishedDate = "2023-06-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5916,7 +7006,8 @@ object InvictusKnowledge {
                 "contenuto di acqua e di carboidrati. ",
             articleTitle = "Bevande energetiche per lo sport",
             url = "https://www.projectinvictus.it/bevande-energetiche/",
-            publishedDate = "2023-06-07"
+            publishedDate = "2023-06-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5926,7 +7017,8 @@ object InvictusKnowledge {
                 "della durata, dell’intensità, del volume. ",
             articleTitle = "Bevande energetiche per lo sport",
             url = "https://www.projectinvictus.it/bevande-energetiche/",
-            publishedDate = "2023-06-07"
+            publishedDate = "2023-06-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5936,7 +7028,8 @@ object InvictusKnowledge {
                 "fabbisogno energetico. ",
             articleTitle = "La pasta fa ingrassare: miti e luoghi comuni",
             url = "https://www.projectinvictus.it/la-pasta-fa-ingrassare/",
-            publishedDate = "2023-04-26"
+            publishedDate = "2023-04-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5945,7 +7038,8 @@ object InvictusKnowledge {
                 "non scendere sotto i 2 g di carboidrati per kg di peso corporeo. ",
             articleTitle = "La pasta fa ingrassare: miti e luoghi comuni",
             url = "https://www.projectinvictus.it/la-pasta-fa-ingrassare/",
-            publishedDate = "2023-04-26"
+            publishedDate = "2023-04-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5956,7 +7050,8 @@ object InvictusKnowledge {
                 "o più ). ",
             articleTitle = "La pasta fa ingrassare: miti e luoghi comuni",
             url = "https://www.projectinvictus.it/la-pasta-fa-ingrassare/",
-            publishedDate = "2023-04-26"
+            publishedDate = "2023-04-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5965,7 +7060,8 @@ object InvictusKnowledge {
                 "glucidi, di solito inferiori a 50 g/die , per più settimane. ",
             articleTitle = "Dieta senza carboidrati: come funziona, cosa mangiare, controindicazioni",
             url = "https://www.projectinvictus.it/dieta-senza-carboidrati/",
-            publishedDate = "2023-04-25"
+            publishedDate = "2023-04-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5975,7 +7071,8 @@ object InvictusKnowledge {
                 "totale. ",
             articleTitle = "Dieta povera di carboidrati: cos’è, vantaggi e menù",
             url = "https://www.projectinvictus.it/dieta-povera-di-carboidrati/",
-            publishedDate = "2023-03-05"
+            publishedDate = "2023-03-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5986,7 +7083,8 @@ object InvictusKnowledge {
                 "famiglia dei carboidrati). ",
             articleTitle = "Aminoacidi: cosa sono e che funzione svolgono?",
             url = "https://www.projectinvictus.it/cosa-sono-gli-aminoacidi/",
-            publishedDate = "2022-12-25"
+            publishedDate = "2022-12-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -5995,7 +7093,8 @@ object InvictusKnowledge {
                 ": gli atleti natural hanno benefici nel tenere alta la quota di carboidrati. ",
             articleTitle = "Il culturismo: cos’è, dieta e allenamento",
             url = "https://www.projectinvictus.it/culturismo/",
-            publishedDate = "2022-12-03"
+            publishedDate = "2022-12-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6005,7 +7104,8 @@ object InvictusKnowledge {
                 "scorte di glicogeno epatico e muscolare. ",
             articleTitle = "Allenamento con il caldo nel bodybuilding: benefici, rischi e rimedi",
             url = "https://www.projectinvictus.it/allenarsi-con-il-caldo/",
-            publishedDate = "2021-11-10"
+            publishedDate = "2021-11-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6014,7 +7114,8 @@ object InvictusKnowledge {
                 "mediamente di un 20-30%. ",
             articleTitle = "Corsa a digiuno a stomaco vuoto per dimagrire",
             url = "https://www.projectinvictus.it/correre-a-digiuno/",
-            publishedDate = "2021-11-03"
+            publishedDate = "2021-11-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6024,7 +7125,8 @@ object InvictusKnowledge {
                 "esercizi e dall’intensità dell’attività fisica svolta. ",
             articleTitle = "Nutrient timing dei pasti per la palestra e il bodybuilding",
             url = "https://www.projectinvictus.it/nutrient-timing/",
-            publishedDate = "2021-11-02"
+            publishedDate = "2021-11-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6034,7 +7136,8 @@ object InvictusKnowledge {
                 "semplici. ",
             articleTitle = "Fruttosio o zucchero? Qual è il migliore?",
             url = "https://www.projectinvictus.it/fruttosio-o-zucchero-qual-e-il-migliore/",
-            publishedDate = "2021-10-08"
+            publishedDate = "2021-10-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6043,7 +7146,8 @@ object InvictusKnowledge {
                 "avessero le canoniche 4 kcal/g. ",
             articleTitle = "Fruttosio o zucchero? Qual è il migliore?",
             url = "https://www.projectinvictus.it/fruttosio-o-zucchero-qual-e-il-migliore/",
-            publishedDate = "2021-10-08"
+            publishedDate = "2021-10-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6052,7 +7156,8 @@ object InvictusKnowledge {
                 "sportivi) . ",
             articleTitle = "Nutrienti: quali sono e cosa sono?",
             url = "https://www.projectinvictus.it/nutrienti/",
-            publishedDate = "2021-10-07"
+            publishedDate = "2021-10-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6061,7 +7166,8 @@ object InvictusKnowledge {
                 "una quota che va dal 45-60% delle calorie giornaliere. ",
             articleTitle = "Nutrienti: quali sono e cosa sono?",
             url = "https://www.projectinvictus.it/nutrienti/",
-            publishedDate = "2021-10-07"
+            publishedDate = "2021-10-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6071,7 +7177,8 @@ object InvictusKnowledge {
                 "si preferisca i primi o i secondi: possiamo considerare sempre valide le 4 kcal/g. ",
             articleTitle = "Calorie macronutrienti",
             url = "https://www.projectinvictus.it/calorie-macronutrienti/",
-            publishedDate = "2021-09-13"
+            publishedDate = "2021-09-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6081,7 +7188,8 @@ object InvictusKnowledge {
                 "avranno un apporto proteico maggiore. ",
             articleTitle = "Calorie macronutrienti",
             url = "https://www.projectinvictus.it/calorie-macronutrienti/",
-            publishedDate = "2021-09-13"
+            publishedDate = "2021-09-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6090,7 +7198,8 @@ object InvictusKnowledge {
                 "assicurato anche mangiando fonti raffinate. ",
             articleTitle = "Calorie macronutrienti",
             url = "https://www.projectinvictus.it/calorie-macronutrienti/",
-            publishedDate = "2021-09-13"
+            publishedDate = "2021-09-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6100,7 +7209,8 @@ object InvictusKnowledge {
                 "energetica, al proprio obbiettivo e stile di vita. ",
             articleTitle = "Carboidrati semplici e complessi: qual è la differenza?",
             url = "https://www.projectinvictus.it/quali-sono-i-carboidrati/",
-            publishedDate = "2021-09-06"
+            publishedDate = "2021-09-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6111,7 +7221,8 @@ object InvictusKnowledge {
                 "zuccheri e calorie. ",
             articleTitle = "Dolcificanti artificiali: fanno male e fanno ingrassare?",
             url = "https://www.projectinvictus.it/dolcificanti-fanno-male-fanno-ingrassare/",
-            publishedDate = "2021-08-30"
+            publishedDate = "2021-08-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6119,7 +7230,8 @@ object InvictusKnowledge {
                 "Il corpo impiega il 5% delle calorie degli zuccheri per digerirle ed assimilarle. ",
             articleTitle = "Carboidrati semplici: funzioni, benefici ed esempi",
             url = "https://www.projectinvictus.it/carboidrati-semplici/",
-            publishedDate = "2021-08-26"
+            publishedDate = "2021-08-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6128,7 +7240,8 @@ object InvictusKnowledge {
                 "calorie provenienti dagli zuccheri semplici aggiunti (25-50 g). ",
             articleTitle = "Carboidrati semplici: funzioni, benefici ed esempi",
             url = "https://www.projectinvictus.it/carboidrati-semplici/",
-            publishedDate = "2021-08-26"
+            publishedDate = "2021-08-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6137,7 +7250,8 @@ object InvictusKnowledge {
                 "(25-50 g al giorno). ",
             articleTitle = "Carboidrati semplici: funzioni, benefici ed esempi",
             url = "https://www.projectinvictus.it/carboidrati-semplici/",
-            publishedDate = "2021-08-26"
+            publishedDate = "2021-08-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6148,7 +7262,8 @@ object InvictusKnowledge {
                 "principale fattore da tenere in considerazione. ",
             articleTitle = "Post workout: cosa assumere dopo l’allenamento in palestra?",
             url = "https://www.projectinvictus.it/post-workout-palestra-cosa-mangiare/",
-            publishedDate = "2021-08-03"
+            publishedDate = "2021-08-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6157,7 +7272,8 @@ object InvictusKnowledge {
                 "conti oppure no a fine delle 24 ore hai assunto tot grammi di carboidrati. ",
             articleTitle = "Post workout: cosa assumere dopo l’allenamento in palestra?",
             url = "https://www.projectinvictus.it/post-workout-palestra-cosa-mangiare/",
-            publishedDate = "2021-08-03"
+            publishedDate = "2021-08-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6166,7 +7282,8 @@ object InvictusKnowledge {
                 "l’allenamento dura molto (>90 minuti) e/o l’ambiente è molto caldo . ",
             articleTitle = "Intra workout per l’allenamento in palestra",
             url = "https://www.projectinvictus.it/intra-workout-cosa-assumere-durante-allenamento/",
-            publishedDate = "2021-08-02"
+            publishedDate = "2021-08-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6176,7 +7293,8 @@ object InvictusKnowledge {
                 "dimagrante . ",
             articleTitle = "Mirtillo rosso: proprietà, benefici e controindicazioni",
             url = "https://www.projectinvictus.it/mirtillo-rosso-proprieta-benefici/",
-            publishedDate = "2021-07-24"
+            publishedDate = "2021-07-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6186,7 +7304,8 @@ object InvictusKnowledge {
                 "scendere verso valori inferiori. ",
             articleTitle = "Grassi buoni: quali sono e a cosa servono?",
             url = "https://www.projectinvictus.it/grassi-buoni/",
-            publishedDate = "2021-06-23"
+            publishedDate = "2021-06-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6196,7 +7315,8 @@ object InvictusKnowledge {
                 "contenuto proteico più elevato (circa il 20% del suo peso). ",
             articleTitle = "Proteine nobili: significato e alimenti ricchi di proteine nobili",
             url = "https://www.projectinvictus.it/proteine-nobili/",
-            publishedDate = "2021-04-12"
+            publishedDate = "2021-04-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6206,7 +7326,8 @@ object InvictusKnowledge {
                 "grassi a 9 kcal . ",
             articleTitle = "IIFYM: che cos’è e come funziona?",
             url = "https://www.projectinvictus.it/iifym/",
-            publishedDate = "2021-01-27"
+            publishedDate = "2021-01-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6217,7 +7338,8 @@ object InvictusKnowledge {
                 "calorico giornaliero, mentre i trans l’1%. ",
             articleTitle = "IIFYM: che cos’è e come funziona?",
             url = "https://www.projectinvictus.it/iifym/",
-            publishedDate = "2021-01-27"
+            publishedDate = "2021-01-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6226,7 +7348,8 @@ object InvictusKnowledge {
                 "stimolare correttamente l’ insulina . ",
             articleTitle = "I carboidrati sono meglio a pranzo o a cena?",
             url = "https://www.projectinvictus.it/carboidrati-giorno-sera/",
-            publishedDate = "2020-11-10"
+            publishedDate = "2020-11-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6235,7 +7358,8 @@ object InvictusKnowledge {
                 "settimana . ",
             articleTitle = "I carboidrati sono meglio a pranzo o a cena?",
             url = "https://www.projectinvictus.it/carboidrati-giorno-sera/",
-            publishedDate = "2020-11-10"
+            publishedDate = "2020-11-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6244,7 +7368,8 @@ object InvictusKnowledge {
                 "buona massa magra puoi mescolare glucidi e lipidi senza il timore di ingrassare. ",
             articleTitle = "Grassi e carboidrati nello stesso pasto fanno ingrassare?",
             url = "https://www.projectinvictus.it/grassi-ed-carboidrati-vanno-mangiati-assieme/",
-            publishedDate = "2020-08-31"
+            publishedDate = "2020-08-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6253,7 +7378,8 @@ object InvictusKnowledge {
                 "dagli zuccheri aggiunti, stiamo parlando di 25g ovvero 6 cucchiaini da cucina. ",
             articleTitle = "Il glucosio: cos’è e dove si trova",
             url = "https://www.projectinvictus.it/glucosio/",
-            publishedDate = "2020-05-17"
+            publishedDate = "2020-05-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6262,7 +7388,8 @@ object InvictusKnowledge {
                 "modo da migliorare il partizionamento calorico del glucosio verso il muscolo. ",
             articleTitle = "Il glucosio: cos’è e dove si trova",
             url = "https://www.projectinvictus.it/glucosio/",
-            publishedDate = "2020-05-17"
+            publishedDate = "2020-05-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6273,7 +7400,8 @@ object InvictusKnowledge {
                 "glicogeno, che andranno ripristinate. ",
             articleTitle = "Carboidrati: la guida completa",
             url = "https://www.projectinvictus.it/carboidrati-guida-completa/",
-            publishedDate = "2020-04-13"
+            publishedDate = "2020-04-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6283,7 +7411,8 @@ object InvictusKnowledge {
                 "intervallo a seconda della tua soggettività. ",
             articleTitle = "Quanti carboidrati al giorno",
             url = "https://www.projectinvictus.it/quanti-carboidrati-al-giorno/",
-            publishedDate = "2020-04-06"
+            publishedDate = "2020-04-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6294,7 +7423,8 @@ object InvictusKnowledge {
                 "giorno! ",
             articleTitle = "Quanti carboidrati al giorno",
             url = "https://www.projectinvictus.it/quanti-carboidrati-al-giorno/",
-            publishedDate = "2020-04-06"
+            publishedDate = "2020-04-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6303,7 +7433,8 @@ object InvictusKnowledge {
                 "dagli zuccheri, il che significa che è bene limitarne il consumo. ",
             articleTitle = "Quanti carboidrati al giorno",
             url = "https://www.projectinvictus.it/quanti-carboidrati-al-giorno/",
-            publishedDate = "2020-04-06"
+            publishedDate = "2020-04-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6313,7 +7444,8 @@ object InvictusKnowledge {
                 "glucidica (50-70%) dei carboidrati giornalieri nelle ore a ridosso dell’allenamento. ",
             articleTitle = "Quanti carboidrati al giorno",
             url = "https://www.projectinvictus.it/quanti-carboidrati-al-giorno/",
-            publishedDate = "2020-04-06"
+            publishedDate = "2020-04-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6323,7 +7455,8 @@ object InvictusKnowledge {
                 "carboidrati corrispondono a 4 kcal). ",
             articleTitle = "Quanti carboidrati per dimagrire?",
             url = "https://www.projectinvictus.it/quanti-carboidrati-al-giorno-per-dimagrire/",
-            publishedDate = "2020-04-02"
+            publishedDate = "2020-04-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6333,7 +7466,8 @@ object InvictusKnowledge {
                 "zuccheri . ",
             articleTitle = "Quanti carboidrati per dimagrire?",
             url = "https://www.projectinvictus.it/quanti-carboidrati-al-giorno-per-dimagrire/",
-            publishedDate = "2020-04-02"
+            publishedDate = "2020-04-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6342,7 +7476,8 @@ object InvictusKnowledge {
                 "classificato come glucide . ",
             articleTitle = "Destrosio in palestra: che cos’è e a cosa serve",
             url = "https://www.projectinvictus.it/destrosio-bodybuilding-palestra/",
-            publishedDate = "2020-03-25"
+            publishedDate = "2020-03-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6351,7 +7486,8 @@ object InvictusKnowledge {
                 "peso corporeo ogni 2 ore nelle 6 ore dopo l’allenamento. ",
             articleTitle = "Destrosio in palestra: che cos’è e a cosa serve",
             url = "https://www.projectinvictus.it/destrosio-bodybuilding-palestra/",
-            publishedDate = "2020-03-25"
+            publishedDate = "2020-03-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6360,7 +7496,8 @@ object InvictusKnowledge {
                 "mentre per le proteine il valore consigliato è 1.4 – 2 g/kg di peso corporeo . ",
             articleTitle = "Dieta per ingrassare velocemente",
             url = "https://www.projectinvictus.it/dieta-per-ingrassare/",
-            publishedDate = "2020-02-28"
+            publishedDate = "2020-02-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6370,7 +7507,8 @@ object InvictusKnowledge {
                 "pratico di soddisfare il fabbisogno di glucosio è consumare le fonti amidacee. ",
             articleTitle = "Dieta dimagrante: come farla in modo efficace",
             url = "https://www.projectinvictus.it/dieta-dimagrante/",
-            publishedDate = "2018-10-02"
+            publishedDate = "2018-10-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6380,7 +7518,8 @@ object InvictusKnowledge {
                 "il 50% delle calorie). ",
             articleTitle = "Insulina e glucagone",
             url = "https://www.projectinvictus.it/insulina-e-glucagone/",
-            publishedDate = "2018-09-21"
+            publishedDate = "2018-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6389,7 +7528,8 @@ object InvictusKnowledge {
                 "l’acqua è 1:1, quindi per 50 gr di Vitargo vanno bene 500 ml di acqua. ",
             articleTitle = "Crossfit ed alimentazione (Vademecum per il non agonista)",
             url = "https://www.projectinvictus.it/crossfit-ed-alimentazione-vademecum-non-agonista/",
-            publishedDate = "2017-04-05"
+            publishedDate = "2017-04-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6398,7 +7538,8 @@ object InvictusKnowledge {
                 "dell’apporto di carboidrati di 10 grammi a settimana per le prossime 4 settimane (v . ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6407,7 +7548,8 @@ object InvictusKnowledge {
                 "giorni e lasciando invariate proteine e grassi. ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6418,7 +7560,8 @@ object InvictusKnowledge {
                 "settimane. ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6428,7 +7571,8 @@ object InvictusKnowledge {
                 "particolar modo di carboidrati, entro i primi 45-60 minuti post-allenamento. ",
             articleTitle = "Carboidrati post-workout: perché no?",
             url = "https://www.projectinvictus.it/carboidrati-post-workout-perche-no/",
-            publishedDate = "2016-08-04"
+            publishedDate = "2016-08-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6438,7 +7582,8 @@ object InvictusKnowledge {
                 "di carboidrati mangiato 5-6 ore prima. ",
             articleTitle = "Carboidrati post-workout: perché no?",
             url = "https://www.projectinvictus.it/carboidrati-post-workout-perche-no/",
-            publishedDate = "2016-08-04"
+            publishedDate = "2016-08-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6449,7 +7594,8 @@ object InvictusKnowledge {
                 "glicogeno muscolare (1,3). ",
             articleTitle = "Carboidrati post-workout: perché no?",
             url = "https://www.projectinvictus.it/carboidrati-post-workout-perche-no/",
-            publishedDate = "2016-08-04"
+            publishedDate = "2016-08-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6460,7 +7606,8 @@ object InvictusKnowledge {
                 "in grandi quantità. ",
             articleTitle = "Carboidrati post-workout: perché no?",
             url = "https://www.projectinvictus.it/carboidrati-post-workout-perche-no/",
-            publishedDate = "2016-08-04"
+            publishedDate = "2016-08-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6469,7 +7616,8 @@ object InvictusKnowledge {
                 "rispetto alle 20-30 volte per carboidrati e grassi. ",
             articleTitle = "BCAA sempre e comunque utili?",
             url = "https://www.projectinvictus.it/bcaa-sempre-e-comunque-utili/",
-            publishedDate = "2014-03-13"
+            publishedDate = "2014-03-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARBS,
@@ -6478,7 +7626,8 @@ object InvictusKnowledge {
                 "post allenamento. ",
             articleTitle = "La sensibilità insulinica (Parte 3)",
             url = "https://www.projectinvictus.it/la-sensibilita-insulinica-parte-3/",
-            publishedDate = "2014-01-24"
+            publishedDate = "2014-01-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6488,7 +7637,8 @@ object InvictusKnowledge {
                 "totale calorico giornaliero oppure fino a 1,5 g di grassi/kg peso corporeo. ",
             articleTitle = "Quanti grassi assumere?",
             url = "https://www.projectinvictus.it/quanti-grassi-al-giorno/",
-            publishedDate = "2026-08-25"
+            publishedDate = "2026-08-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6498,7 +7648,8 @@ object InvictusKnowledge {
                 "totale. ",
             articleTitle = "Quanti grassi assumere?",
             url = "https://www.projectinvictus.it/quanti-grassi-al-giorno/",
-            publishedDate = "2026-08-25"
+            publishedDate = "2026-08-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6508,7 +7659,8 @@ object InvictusKnowledge {
                 "fase di definizione o di massa. ",
             articleTitle = "Quanti grassi assumere?",
             url = "https://www.projectinvictus.it/quanti-grassi-al-giorno/",
-            publishedDate = "2026-08-25"
+            publishedDate = "2026-08-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6517,7 +7669,8 @@ object InvictusKnowledge {
                 "rialzati, sempre stando nel range 20-35% o alzando al massimo al 40%. ",
             articleTitle = "Quanti grassi assumere?",
             url = "https://www.projectinvictus.it/quanti-grassi-al-giorno/",
-            publishedDate = "2026-08-25"
+            publishedDate = "2026-08-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6526,7 +7679,8 @@ object InvictusKnowledge {
                 "20% se vuoi limitare l’abbassamento dell’ormone gonadico. ",
             articleTitle = "Come aumentare il testosterone",
             url = "https://www.projectinvictus.it/come-aumentare-il-testosterone/",
-            publishedDate = "2026-08-24"
+            publishedDate = "2026-08-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6535,7 +7689,8 @@ object InvictusKnowledge {
                 "giornaliera provenga dai grassi. ",
             articleTitle = "Dieta low-fat per dimagrire",
             url = "https://www.projectinvictus.it/dieta-low-fat/",
-            publishedDate = "2026-07-14"
+            publishedDate = "2026-07-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6544,7 +7699,8 @@ object InvictusKnowledge {
                 "dell’introito energetico giornaliero. ",
             articleTitle = "Dieta low-fat per dimagrire",
             url = "https://www.projectinvictus.it/dieta-low-fat/",
-            publishedDate = "2026-07-14"
+            publishedDate = "2026-07-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6553,7 +7709,8 @@ object InvictusKnowledge {
                 "rispetto agli uomini (minimo 0,8 g/kg). ",
             articleTitle = "Dieta low-fat per dimagrire",
             url = "https://www.projectinvictus.it/dieta-low-fat/",
-            publishedDate = "2026-07-14"
+            publishedDate = "2026-07-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6562,7 +7719,8 @@ object InvictusKnowledge {
                 "peso corporeo, da consumare preferibilmente lontano dall’allenamento. ",
             articleTitle = "Dieta personalizzata: la dieta che funziona",
             url = "https://www.projectinvictus.it/dieta-personalizzata/",
-            publishedDate = "2026-07-09"
+            publishedDate = "2026-07-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6573,7 +7731,8 @@ object InvictusKnowledge {
                 "la massa muscolare. ",
             articleTitle = "La dieta flessibile",
             url = "https://www.projectinvictus.it/dieta-flessibile/",
-            publishedDate = "2026-07-09"
+            publishedDate = "2026-07-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6583,7 +7742,8 @@ object InvictusKnowledge {
                 "caso, meglio preferire esercizi ad alta intensità di una certa durata (30-60 minuti) . ",
             articleTitle = "Il migliore allenamento per dimagrire",
             url = "https://www.projectinvictus.it/allenamento-per-dimagrire/",
-            publishedDate = "2026-05-15"
+            publishedDate = "2026-05-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6592,7 +7752,8 @@ object InvictusKnowledge {
                 "ma nel periodo di dimagrimento questa quota può scendere al 20%. ",
             articleTitle = "Dieta ipolipidica: cos’è e come funziona?",
             url = "https://www.projectinvictus.it/dieta-ipolipidica/",
-            publishedDate = "2025-12-20"
+            publishedDate = "2025-12-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6601,7 +7762,8 @@ object InvictusKnowledge {
                 "provenire da quelli saturi e trans (8% se le LDL sono elevate). ",
             articleTitle = "Dieta ipolipidica: cos’è e come funziona?",
             url = "https://www.projectinvictus.it/dieta-ipolipidica/",
-            publishedDate = "2025-12-20"
+            publishedDate = "2025-12-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6609,7 +7771,8 @@ object InvictusKnowledge {
                 "Velocità con cui perdi grasso: 0,5 – 1 % del proprio peso corporeo a settimana. ",
             articleTitle = "Pettorali scolpiti in poco tempo",
             url = "https://www.projectinvictus.it/pettorali-scolpiti/",
-            publishedDate = "2025-10-22"
+            publishedDate = "2025-10-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6618,7 +7781,8 @@ object InvictusKnowledge {
                 "2,5 g/kg e di variare tra i grassi e i carboidrati. ",
             articleTitle = "Addominali scolpiti: come ottenerli",
             url = "https://www.projectinvictus.it/addominali-scolpiti/",
-            publishedDate = "2025-09-10"
+            publishedDate = "2025-09-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6627,7 +7791,8 @@ object InvictusKnowledge {
                 "modo importante l’accumulo di grasso ectopico. ",
             articleTitle = "Grasso viscerale: cos’è e come eliminarlo",
             url = "https://www.projectinvictus.it/grasso-viscerale/",
-            publishedDate = "2025-09-08"
+            publishedDate = "2025-09-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6637,7 +7802,8 @@ object InvictusKnowledge {
                 "prescindere dall’alimento e che facciano bene o male alla salute. ",
             articleTitle = "Dieta per avere gli addominali",
             url = "https://www.projectinvictus.it/dieta-per-addominali/",
-            publishedDate = "2025-08-08"
+            publishedDate = "2025-08-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6646,7 +7812,8 @@ object InvictusKnowledge {
                 "se cerchi un elevato apporto proteico con un ridotto contenuto di grassi. ",
             articleTitle = "I 10 migliori alimenti per la massa muscolare",
             url = "https://www.projectinvictus.it/alimenti-per-la-massa-muscolare/",
-            publishedDate = "2025-07-18"
+            publishedDate = "2025-07-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6656,7 +7823,8 @@ object InvictusKnowledge {
                 "cioccolato, contribuendo al recupero post-esercizio. ",
             articleTitle = "I 10 migliori alimenti per la massa muscolare",
             url = "https://www.projectinvictus.it/alimenti-per-la-massa-muscolare/",
-            publishedDate = "2025-07-18"
+            publishedDate = "2025-07-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6664,7 +7832,8 @@ object InvictusKnowledge {
                 "In media per perdere davvero 1 kg di grasso ci vogliono 2-4 settimane . ",
             articleTitle = "Non riesco a dimagrire: rimedi",
             url = "https://www.projectinvictus.it/non-riesco-a-dimagrire/",
-            publishedDate = "2025-06-03"
+            publishedDate = "2025-06-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6674,7 +7843,8 @@ object InvictusKnowledge {
                 "essere sostenibile nel tempo e perdere grasso piuttosto che massa magra. ",
             articleTitle = "Non riesco a dimagrire: rimedi",
             url = "https://www.projectinvictus.it/non-riesco-a-dimagrire/",
-            publishedDate = "2025-06-03"
+            publishedDate = "2025-06-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6683,7 +7853,8 @@ object InvictusKnowledge {
                 "il quoziente respiratorio . ",
             articleTitle = "Corsa brucia grassi per dimagrire",
             url = "https://www.projectinvictus.it/corsa-brucia-grassi/",
-            publishedDate = "2025-06-01"
+            publishedDate = "2025-06-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6692,7 +7863,8 @@ object InvictusKnowledge {
                 "e otteniamo quindi 17 g di grasso consumati ogni 10 km. ",
             articleTitle = "Corsa brucia grassi per dimagrire",
             url = "https://www.projectinvictus.it/corsa-brucia-grassi/",
-            publishedDate = "2025-06-01"
+            publishedDate = "2025-06-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6703,7 +7875,8 @@ object InvictusKnowledge {
                 "di altri alimenti. ",
             articleTitle = "Proteine animali e vegetali: quali sono le migliori",
             url = "https://www.projectinvictus.it/proteine-animali-e-vegetali-a-confronto/",
-            publishedDate = "2025-05-15"
+            publishedDate = "2025-05-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6712,7 +7885,8 @@ object InvictusKnowledge {
                 "0,5-1% del proprio peso corporeo a settimana . ",
             articleTitle = "La dieta iperproteica per il dimagrimento",
             url = "https://www.projectinvictus.it/dieta-iperproteica-dimagrimento/",
-            publishedDate = "2025-05-08"
+            publishedDate = "2025-05-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6721,7 +7895,8 @@ object InvictusKnowledge {
                 "contengono circa 11 g di proteine e non ha tracce di carboidrati e grassi. ",
             articleTitle = "Colazione proteica: cosa mangiare ed esempi",
             url = "https://www.projectinvictus.it/colazione-proteica/",
-            publishedDate = "2025-04-08"
+            publishedDate = "2025-04-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6730,7 +7905,8 @@ object InvictusKnowledge {
                 "vuoi dimagrire più rapidamente devi mangiare di meno e/o muoverti di più. ",
             articleTitle = "Dieta ipocalorica per dimagrire: la guida completa",
             url = "https://www.projectinvictus.it/dieta-ipocalorica/",
-            publishedDate = "2025-01-13"
+            publishedDate = "2025-01-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6741,7 +7917,8 @@ object InvictusKnowledge {
                 "riesci a perdere kg. ",
             articleTitle = "Come dimagrire in una settimana",
             url = "https://www.projectinvictus.it/dimagrire-in-una-settimana/",
-            publishedDate = "2025-01-10"
+            publishedDate = "2025-01-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6750,7 +7927,8 @@ object InvictusKnowledge {
                 "graduale, circa 0,5-1% del tuo peso corporeo a settimana in media. ",
             articleTitle = "Dieta per dimagrire: la guida completa",
             url = "https://www.projectinvictus.it/dieta-per-dimagrire/",
-            publishedDate = "2025-01-05"
+            publishedDate = "2025-01-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6760,7 +7938,8 @@ object InvictusKnowledge {
                 "influenza e non l’unico (uno tra i più importante e non modificabile, la genetica ). ",
             articleTitle = "Superfood: quali sono e a cosa servono",
             url = "https://www.projectinvictus.it/superfood/",
-            publishedDate = "2024-12-02"
+            publishedDate = "2024-12-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6770,7 +7949,8 @@ object InvictusKnowledge {
                 "minore presenza di minerali. ",
             articleTitle = "Le 6 migliori proteine in polvere",
             url = "https://www.projectinvictus.it/migliori-proteine-in-polvere/",
-            publishedDate = "2024-11-03"
+            publishedDate = "2024-11-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6779,7 +7959,8 @@ object InvictusKnowledge {
                 "saturi per evitare problemi di salute ma non eliminarli del tutto. ",
             articleTitle = "Dieta per la pancia piatta",
             url = "https://www.projectinvictus.it/dieta-pancia-piatta/",
-            publishedDate = "2024-10-19"
+            publishedDate = "2024-10-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6789,7 +7970,8 @@ object InvictusKnowledge {
                 "fase di “grassa” e non di “massa”. ",
             articleTitle = "Dieta donna nel bodybuilding e in palestra",
             url = "https://www.projectinvictus.it/dieta-donne-bodybuilding/",
-            publishedDate = "2024-07-31"
+            publishedDate = "2024-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6799,7 +7981,8 @@ object InvictusKnowledge {
                 "dell’eccesso si converta effettivamente in grassi. ",
             articleTitle = "Cosa sono le calorie?",
             url = "https://www.projectinvictus.it/caloria/",
-            publishedDate = "2024-07-14"
+            publishedDate = "2024-07-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6809,7 +7992,8 @@ object InvictusKnowledge {
                 "assimilazione al contrario è la più lunga). ",
             articleTitle = "Cosa sono le calorie?",
             url = "https://www.projectinvictus.it/caloria/",
-            publishedDate = "2024-07-14"
+            publishedDate = "2024-07-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6819,7 +8003,8 @@ object InvictusKnowledge {
                 "considerando il range prima consigliato di 0.5-1 kg a settimana. ",
             articleTitle = "Fisico asciutto: come ottenerlo",
             url = "https://www.projectinvictus.it/dieta-asciugare-fisico/",
-            publishedDate = "2024-04-07"
+            publishedDate = "2024-04-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6829,7 +8014,8 @@ object InvictusKnowledge {
                 "giorno (tramite frutta e verdura). ",
             articleTitle = "Dieta ormonale: cos’è e come funziona",
             url = "https://www.projectinvictus.it/dieta-ormonale/",
-            publishedDate = "2024-04-02"
+            publishedDate = "2024-04-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6839,7 +8025,8 @@ object InvictusKnowledge {
                 "proteine, grassi) nel corso delle 24 ore . ",
             articleTitle = "Carboidrati dopo l’allenamento in palestra",
             url = "https://www.projectinvictus.it/carboidrati-post-workout-palestra/",
-            publishedDate = "2024-03-26"
+            publishedDate = "2024-03-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6848,7 +8035,8 @@ object InvictusKnowledge {
                 "blocchetto di grassi ( rapporto 1:1:1 tra i blocchetti ). ",
             articleTitle = "Dieta a zona: come funziona e menù",
             url = "https://www.projectinvictus.it/dieta-a-zona/",
-            publishedDate = "2024-02-28"
+            publishedDate = "2024-02-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6858,7 +8046,8 @@ object InvictusKnowledge {
                 "assumere il giusto quantitativo di fibre alimentari. ",
             articleTitle = "Dieta metabolica: come funziona",
             url = "https://www.projectinvictus.it/dieta-metabolica/",
-            publishedDate = "2024-02-03"
+            publishedDate = "2024-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6868,7 +8057,8 @@ object InvictusKnowledge {
                 "sfruttando successivamente l’effetto anabolico, anticatabolico dell’insulina il weekend. ",
             articleTitle = "Dieta metabolica: come funziona",
             url = "https://www.projectinvictus.it/dieta-metabolica/",
-            publishedDate = "2024-02-03"
+            publishedDate = "2024-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6879,7 +8069,8 @@ object InvictusKnowledge {
                 "squilibri ormonali). ",
             articleTitle = "Aumentare la massa muscolare nelle donne: come fare",
             url = "https://www.projectinvictus.it/aumentare-massa-muscolare-donne/",
-            publishedDate = "2024-01-29"
+            publishedDate = "2024-01-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6888,7 +8079,8 @@ object InvictusKnowledge {
                 "calorie ti ritroverai non solo più grosso ma anche più grasso . ",
             articleTitle = "Le proteine fanno ingrassare?",
             url = "https://www.projectinvictus.it/le-proteine-fanno-ingrassare/",
-            publishedDate = "2024-01-21"
+            publishedDate = "2024-01-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6897,7 +8089,8 @@ object InvictusKnowledge {
                 "alimentari) e otteniamo, quindi, 17 g di grasso consumati ogni 10 km . ",
             articleTitle = "Correre per dimagrire: quanto peso perdi?",
             url = "https://www.projectinvictus.it/correre-per-dimagrire/",
-            publishedDate = "2023-12-12"
+            publishedDate = "2023-12-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6907,7 +8100,8 @@ object InvictusKnowledge {
                 "persona castrata. ",
             articleTitle = "Natural bodybuilding: cos’è, allenamento, dieta",
             url = "https://www.projectinvictus.it/natural-bodybuilding/",
-            publishedDate = "2023-10-18"
+            publishedDate = "2023-10-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6917,7 +8111,8 @@ object InvictusKnowledge {
                 "muscolari da natural. ",
             articleTitle = "Natural bodybuilding: cos’è, allenamento, dieta",
             url = "https://www.projectinvictus.it/natural-bodybuilding/",
-            publishedDate = "2023-10-18"
+            publishedDate = "2023-10-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6927,7 +8122,8 @@ object InvictusKnowledge {
                 "fabbisogno energetico) non sono un problema. ",
             articleTitle = "Latte: fa male o fa bene?",
             url = "https://www.projectinvictus.it/latte-fa-male-o-bene/",
-            publishedDate = "2023-08-23"
+            publishedDate = "2023-08-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6936,7 +8132,8 @@ object InvictusKnowledge {
                 "volte alla settimana. ",
             articleTitle = "Cosa mangiare per ingrassare in modo sano",
             url = "https://www.projectinvictus.it/cosa-mangiare-per-ingrassare/",
-            publishedDate = "2023-07-27"
+            publishedDate = "2023-07-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6947,7 +8144,8 @@ object InvictusKnowledge {
                 "che è una riserva di grassi. ",
             articleTitle = "La pasta fa ingrassare: miti e luoghi comuni",
             url = "https://www.projectinvictus.it/la-pasta-fa-ingrassare/",
-            publishedDate = "2023-04-26"
+            publishedDate = "2023-04-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6956,7 +8154,8 @@ object InvictusKnowledge {
                 "nella zona sotto ombelicale (grasso tipico nell’uomo). ",
             articleTitle = "Addominali bassi: come allenarli",
             url = "https://www.projectinvictus.it/addominali-bassi/",
-            publishedDate = "2023-01-25"
+            publishedDate = "2023-01-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6965,7 +8164,8 @@ object InvictusKnowledge {
                 "rappresentano più del 70% dell’energia apportata. ",
             articleTitle = "Noci di macadamia: proprietà, benefici, calorie",
             url = "https://www.projectinvictus.it/noci-di-macadamia/",
-            publishedDate = "2022-11-26"
+            publishedDate = "2022-11-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6975,7 +8175,8 @@ object InvictusKnowledge {
                 "ore, chiamata afterburning. ",
             articleTitle = "Il CrossFit fa dimagrire?",
             url = "https://www.projectinvictus.it/crossfit-fa-dimagrire/",
-            publishedDate = "2022-11-20"
+            publishedDate = "2022-11-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6986,7 +8187,8 @@ object InvictusKnowledge {
                 "un altro. ",
             articleTitle = "Beta ossidazione",
             url = "https://www.projectinvictus.it/beta-ossidazione/",
-            publishedDate = "2022-10-25"
+            publishedDate = "2022-10-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -6995,7 +8197,8 @@ object InvictusKnowledge {
                 "cui l’80% dell’energia consumata proviene dall’ossidazione degli acidi grassi. ",
             articleTitle = "Beta ossidazione",
             url = "https://www.projectinvictus.it/beta-ossidazione/",
-            publishedDate = "2022-10-25"
+            publishedDate = "2022-10-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7003,7 +8206,8 @@ object InvictusKnowledge {
                 "Per perdere 1 kg di grasso ci vorranno più di 2-3 settimane. ",
             articleTitle = "Tartaruga addominali: come ottenerla",
             url = "https://www.projectinvictus.it/tartaruga-addominali/",
-            publishedDate = "2022-09-21"
+            publishedDate = "2022-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7013,7 +8217,8 @@ object InvictusKnowledge {
                 "salutare, 20% cibo libero (anche junk food). ",
             articleTitle = "Junk food e cibo spazzatura: cosa sono e perché fanno male",
             url = "https://www.projectinvictus.it/junk-food-cibo-spazzatura/",
-            publishedDate = "2022-08-11"
+            publishedDate = "2022-08-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7022,7 +8227,8 @@ object InvictusKnowledge {
                 "superare il 10% delle calorie giornaliere. ",
             articleTitle = "Come diventare grossi in poco tempo",
             url = "https://www.projectinvictus.it/come-diventare-grossi/",
-            publishedDate = "2022-07-26"
+            publishedDate = "2022-07-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7031,7 +8237,8 @@ object InvictusKnowledge {
                 "dell’energia che ti serve deriva dagli acidi grassi saturi è meglio iniziare a ridurli! ",
             articleTitle = "Gli acidi grassi saturi fanno male?",
             url = "https://www.projectinvictus.it/acidi-grassi-saturi-fanno-bene-o-male/",
-            publishedDate = "2022-05-31"
+            publishedDate = "2022-05-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7041,7 +8248,8 @@ object InvictusKnowledge {
                 "prodotto. ",
             articleTitle = "Gli acidi grassi saturi fanno male?",
             url = "https://www.projectinvictus.it/acidi-grassi-saturi-fanno-bene-o-male/",
-            publishedDate = "2022-05-31"
+            publishedDate = "2022-05-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7049,7 +8257,8 @@ object InvictusKnowledge {
                 "Il 95% del grasso nell’olio di cocco è saturo e circa la metà è acido laurico. ",
             articleTitle = "Mountain Dog Diet: cos’è e come farla",
             url = "https://www.projectinvictus.it/dieta-mountain-dog/",
-            publishedDate = "2022-05-21"
+            publishedDate = "2022-05-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7059,7 +8268,8 @@ object InvictusKnowledge {
                 "polinsaturi. ",
             articleTitle = "Mountain Dog Diet: cos’è e come farla",
             url = "https://www.projectinvictus.it/dieta-mountain-dog/",
-            publishedDate = "2022-05-21"
+            publishedDate = "2022-05-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7068,7 +8278,8 @@ object InvictusKnowledge {
                 "di 0,5 g/kg per assicurare la corretta funzionalità dell’organismo. ",
             articleTitle = "Macronutrienti per la definizione muscolare",
             url = "https://www.projectinvictus.it/macronutrienti-definizione-muscolare/",
-            publishedDate = "2022-02-03"
+            publishedDate = "2022-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7077,7 +8288,8 @@ object InvictusKnowledge {
                 "che viene mantenuta solamente per un periodo relativamente breve. ",
             articleTitle = "Macronutrienti per la definizione muscolare",
             url = "https://www.projectinvictus.it/macronutrienti-definizione-muscolare/",
-            publishedDate = "2022-02-03"
+            publishedDate = "2022-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7086,7 +8298,8 @@ object InvictusKnowledge {
                 "mediamente di un 20-30%. ",
             articleTitle = "Corsa a digiuno a stomaco vuoto per dimagrire",
             url = "https://www.projectinvictus.it/correre-a-digiuno/",
-            publishedDate = "2021-11-03"
+            publishedDate = "2021-11-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7095,7 +8308,8 @@ object InvictusKnowledge {
                 "bodybuilder di 100 kg risulterebbe grasso anche col 5% di FM (Fat Mass, massa grassa). ",
             articleTitle = "Le calorie fanno ingrassare veramente?",
             url = "https://www.projectinvictus.it/una-calorie-e-un-caloria-vediamo-di-fare-chiarezza/",
-            publishedDate = "2021-11-01"
+            publishedDate = "2021-11-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7103,7 +8317,8 @@ object InvictusKnowledge {
                 "Per i grassi si consiglia un range intorno al 25-30% delle calorie giornaliere. ",
             articleTitle = "Nutrienti: quali sono e cosa sono?",
             url = "https://www.projectinvictus.it/nutrienti/",
-            publishedDate = "2021-10-07"
+            publishedDate = "2021-10-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7111,7 +8326,8 @@ object InvictusKnowledge {
                 "Si consiglia di non superare il 10% delle calorie dai grassi saturi. ",
             articleTitle = "Nutrienti: quali sono e cosa sono?",
             url = "https://www.projectinvictus.it/nutrienti/",
-            publishedDate = "2021-10-07"
+            publishedDate = "2021-10-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7121,7 +8337,8 @@ object InvictusKnowledge {
                 "riserve lipidiche del nostro organismo, nelle membrane cellulari e nel fegato. ",
             articleTitle = "Nutrienti: quali sono e cosa sono?",
             url = "https://www.projectinvictus.it/nutrienti/",
-            publishedDate = "2021-10-07"
+            publishedDate = "2021-10-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7131,7 +8348,8 @@ object InvictusKnowledge {
                 "energetico). ",
             articleTitle = "L’olio di palma fa male alla salute?",
             url = "https://www.projectinvictus.it/olio-di-palma-fa-male/",
-            publishedDate = "2021-09-22"
+            publishedDate = "2021-09-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7141,7 +8359,8 @@ object InvictusKnowledge {
                 "fitosteroli. ",
             articleTitle = "L’olio di palma fa male alla salute?",
             url = "https://www.projectinvictus.it/olio-di-palma-fa-male/",
-            publishedDate = "2021-09-22"
+            publishedDate = "2021-09-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7150,7 +8369,8 @@ object InvictusKnowledge {
                 "assunti nella dieta e sono molto calorici: apportano 9 kcal per grammo . ",
             articleTitle = "Grassi monoinsaturi: fanno male o fanno bene? I benefici",
             url = "https://www.projectinvictus.it/grassi-monoinsaturi/",
-            publishedDate = "2021-07-08"
+            publishedDate = "2021-07-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7160,7 +8380,8 @@ object InvictusKnowledge {
                 "rappresenta il 95-100% dei grassi monoinsaturi contenuti. ",
             articleTitle = "Grassi monoinsaturi: fanno male o fanno bene? I benefici",
             url = "https://www.projectinvictus.it/grassi-monoinsaturi/",
-            publishedDate = "2021-07-08"
+            publishedDate = "2021-07-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7171,7 +8392,8 @@ object InvictusKnowledge {
                 "energetico, i polinsaturi il 5-10%. ",
             articleTitle = "Grassi monoinsaturi: fanno male o fanno bene? I benefici",
             url = "https://www.projectinvictus.it/grassi-monoinsaturi/",
-            publishedDate = "2021-07-08"
+            publishedDate = "2021-07-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7181,7 +8403,8 @@ object InvictusKnowledge {
                 "dell’energia giornaliera, i MUFA buoni contribuiscono per circa il 10% . ",
             articleTitle = "Grassi monoinsaturi: fanno male o fanno bene? I benefici",
             url = "https://www.projectinvictus.it/grassi-monoinsaturi/",
-            publishedDate = "2021-07-08"
+            publishedDate = "2021-07-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7192,7 +8415,8 @@ object InvictusKnowledge {
                 "giorno . ",
             articleTitle = "Acidi grassi essenziali: quali sono e perché sono importanti?",
             url = "https://www.projectinvictus.it/acidi-grassi-essenziali/",
-            publishedDate = "2021-07-06"
+            publishedDate = "2021-07-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7203,7 +8427,8 @@ object InvictusKnowledge {
                 "pesce ). ",
             articleTitle = "Acidi grassi essenziali: quali sono e perché sono importanti?",
             url = "https://www.projectinvictus.it/acidi-grassi-essenziali/",
-            publishedDate = "2021-07-06"
+            publishedDate = "2021-07-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7213,7 +8438,8 @@ object InvictusKnowledge {
                 "oli vegetali di semi (di lino, di arachide,…) sulla verdura. ",
             articleTitle = "Acidi grassi essenziali: quali sono e perché sono importanti?",
             url = "https://www.projectinvictus.it/acidi-grassi-essenziali/",
-            publishedDate = "2021-07-06"
+            publishedDate = "2021-07-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7222,7 +8448,8 @@ object InvictusKnowledge {
                 "(oltre al 25-30% delle calorie) questi si accumulano nel tessuto adiposo . ",
             articleTitle = "Lipogenesi: cos’è, come e dove avviene?",
             url = "https://www.projectinvictus.it/lipogenesi/",
-            publishedDate = "2021-07-02"
+            publishedDate = "2021-07-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7233,7 +8460,8 @@ object InvictusKnowledge {
                 "(Pag. ",
             articleTitle = "Acidi grassi trans, salute e rischi: cosa sono e perché è meglio evitarli?",
             url = "https://www.projectinvictus.it/acidi-grassi-trans/",
-            publishedDate = "2021-06-30"
+            publishedDate = "2021-06-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7242,7 +8470,8 @@ object InvictusKnowledge {
                 "mentre il restante 10% (valore limite massimo) è fornito da grassi saturi. ",
             articleTitle = "Acidi grassi trans, salute e rischi: cosa sono e perché è meglio evitarli?",
             url = "https://www.projectinvictus.it/acidi-grassi-trans/",
-            publishedDate = "2021-06-30"
+            publishedDate = "2021-06-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7251,7 +8480,8 @@ object InvictusKnowledge {
                 "di insaturi. ",
             articleTitle = "Grassi buoni e cattivi: benefici, rischi e dove trovarli?",
             url = "https://www.projectinvictus.it/grassi-buoni-e-cattivi/",
-            publishedDate = "2021-06-27"
+            publishedDate = "2021-06-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7261,7 +8491,8 @@ object InvictusKnowledge {
                 "fabbisogno energetico, mentre quelli idrogenati e trans è bene ridurli al minimo. ",
             articleTitle = "Grassi buoni e cattivi: benefici, rischi e dove trovarli?",
             url = "https://www.projectinvictus.it/grassi-buoni-e-cattivi/",
-            publishedDate = "2021-06-27"
+            publishedDate = "2021-06-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7270,7 +8501,8 @@ object InvictusKnowledge {
                 "quantità facilmente raggiungibile e superabile se questi alimenti non vengono moderati. ",
             articleTitle = "Grassi buoni e cattivi: benefici, rischi e dove trovarli?",
             url = "https://www.projectinvictus.it/grassi-buoni-e-cattivi/",
-            publishedDate = "2021-06-27"
+            publishedDate = "2021-06-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7280,7 +8512,8 @@ object InvictusKnowledge {
                 "invece il 30% . ",
             articleTitle = "Grassi: cosa sono, quali sono e che funzione hanno?",
             url = "https://www.projectinvictus.it/grassi/",
-            publishedDate = "2021-06-25"
+            publishedDate = "2021-06-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7289,7 +8522,8 @@ object InvictusKnowledge {
                 "trans, non dovrebbe superare il 10% delle calorie totali nella dieta. ",
             articleTitle = "Grassi: cosa sono, quali sono e che funzione hanno?",
             url = "https://www.projectinvictus.it/grassi/",
-            publishedDate = "2021-06-25"
+            publishedDate = "2021-06-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7298,7 +8532,8 @@ object InvictusKnowledge {
                 "del fabbisogno energetico a prescindere dalla fonte da cui questi derivino. ",
             articleTitle = "Grassi vegetali: caratteristiche e benefici",
             url = "https://www.projectinvictus.it/grassi-vegetali/",
-            publishedDate = "2021-06-24"
+            publishedDate = "2021-06-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7307,7 +8542,8 @@ object InvictusKnowledge {
                 "del totale degli acidi grassi. ",
             articleTitle = "Grassi vegetali: caratteristiche e benefici",
             url = "https://www.projectinvictus.it/grassi-vegetali/",
-            publishedDate = "2021-06-24"
+            publishedDate = "2021-06-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7315,7 +8551,8 @@ object InvictusKnowledge {
                 "La restante percentuale (7-10% massimo) viene data dai grassi saturi. ",
             articleTitle = "Grassi buoni: quali sono e a cosa servono?",
             url = "https://www.projectinvictus.it/grassi-buoni/",
-            publishedDate = "2021-06-23"
+            publishedDate = "2021-06-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7325,7 +8562,8 @@ object InvictusKnowledge {
                 "scendere verso valori inferiori. ",
             articleTitle = "Grassi buoni: quali sono e a cosa servono?",
             url = "https://www.projectinvictus.it/grassi-buoni/",
-            publishedDate = "2021-06-23"
+            publishedDate = "2021-06-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7335,7 +8573,8 @@ object InvictusKnowledge {
                 "magnesio. ",
             articleTitle = "Cocco: benefici, proprietà e calorie",
             url = "https://www.projectinvictus.it/cocco-proprieta-benefici/",
-            publishedDate = "2021-05-31"
+            publishedDate = "2021-05-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7345,7 +8584,8 @@ object InvictusKnowledge {
                 "assenti. ",
             articleTitle = "Proteine del siero del latte: cosa sono e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-del-siero-del-latte/",
-            publishedDate = "2021-05-20"
+            publishedDate = "2021-05-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7356,7 +8596,8 @@ object InvictusKnowledge {
                 "negli alimenti animali. ",
             articleTitle = "Proteine animali sono dannose?",
             url = "https://www.projectinvictus.it/proteine-animali/",
-            publishedDate = "2021-04-28"
+            publishedDate = "2021-04-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7366,7 +8607,8 @@ object InvictusKnowledge {
                 "contenuto proteico più elevato (circa il 20% del suo peso). ",
             articleTitle = "Proteine nobili: significato e alimenti ricchi di proteine nobili",
             url = "https://www.projectinvictus.it/proteine-nobili/",
-            publishedDate = "2021-04-12"
+            publishedDate = "2021-04-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7375,7 +8617,8 @@ object InvictusKnowledge {
                 "variabile di grassi (0-25%) e più alto di acidi grassi essenziali (EPA, DHA). ",
             articleTitle = "Cosa mangiare a cena per dimagrire?",
             url = "https://www.projectinvictus.it/cena-per-dimagrire/",
-            publishedDate = "2021-04-06"
+            publishedDate = "2021-04-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7385,7 +8628,8 @@ object InvictusKnowledge {
                 "grassi a 9 kcal . ",
             articleTitle = "IIFYM: che cos’è e come funziona?",
             url = "https://www.projectinvictus.it/iifym/",
-            publishedDate = "2021-01-27"
+            publishedDate = "2021-01-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7396,7 +8640,8 @@ object InvictusKnowledge {
                 "calorico giornaliero, mentre i trans l’1%. ",
             articleTitle = "IIFYM: che cos’è e come funziona?",
             url = "https://www.projectinvictus.it/iifym/",
-            publishedDate = "2021-01-27"
+            publishedDate = "2021-01-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7405,7 +8650,8 @@ object InvictusKnowledge {
                 "fibre e almeno 2 g di grassi per 100 g di alimento . ",
             articleTitle = "I carboidrati sono meglio a pranzo o a cena?",
             url = "https://www.projectinvictus.it/carboidrati-giorno-sera/",
-            publishedDate = "2020-11-10"
+            publishedDate = "2020-11-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7414,7 +8660,8 @@ object InvictusKnowledge {
                 "buona massa magra puoi mescolare glucidi e lipidi senza il timore di ingrassare. ",
             articleTitle = "Grassi e carboidrati nello stesso pasto fanno ingrassare?",
             url = "https://www.projectinvictus.it/grassi-ed-carboidrati-vanno-mangiati-assieme/",
-            publishedDate = "2020-08-31"
+            publishedDate = "2020-08-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7424,7 +8671,8 @@ object InvictusKnowledge {
                 "viscerale e totale del corpo, aumentare la VO2 max e ridurre l’ insulino-resistenza. ",
             articleTitle = "Sindrome da ovaio policistico: dieta ed allenamento",
             url = "https://www.projectinvictus.it/sindrome-ovaio-policistico-dieta-allenamento/",
-            publishedDate = "2020-08-06"
+            publishedDate = "2020-08-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7434,7 +8682,8 @@ object InvictusKnowledge {
                 "differenzia notevolmente dagli altri legumi. ",
             articleTitle = "Legumi: quanti sono e quali sono i migliori?",
             url = "https://www.projectinvictus.it/legumi/",
-            publishedDate = "2020-02-12"
+            publishedDate = "2020-02-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7443,7 +8692,8 @@ object InvictusKnowledge {
                 "2 e il 3% del peso totale dell’individuo. ",
             articleTitle = "Valutazione composizione corporea",
             url = "https://www.projectinvictus.it/valutazione-composizione-corporea/",
-            publishedDate = "2018-06-14"
+            publishedDate = "2018-06-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7453,7 +8703,8 @@ object InvictusKnowledge {
                 "ma di loro non ne vedrete traccia (se non iniziare ad intravederli sotto al 15%). ",
             articleTitle = "Esercizio completo addominali: qual è il migliore",
             url = "https://www.projectinvictus.it/esercizio-completo-addominali-migliore/",
-            publishedDate = "2017-12-14"
+            publishedDate = "2017-12-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7462,7 +8713,8 @@ object InvictusKnowledge {
                 "chi vuole salvaguardare i suoi range fisiologici. ",
             articleTitle = "Testosterone: la guida a questo ormone",
             url = "https://www.projectinvictus.it/testosterone-la-guida-ormone/",
-            publishedDate = "2017-12-03"
+            publishedDate = "2017-12-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7471,7 +8723,8 @@ object InvictusKnowledge {
                 "Oxidation ) copre oltre il 90% del fabbisogno energetico. ",
             articleTitle = "Cosa succede quando il muscolo incontra il grasso?",
             url = "https://www.projectinvictus.it/muscolo-incontra-grasso/",
-            publishedDate = "2017-03-09"
+            publishedDate = "2017-03-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7482,7 +8735,8 @@ object InvictusKnowledge {
                 "dei grassi a 30 g. ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7491,7 +8745,8 @@ object InvictusKnowledge {
                 "rispetto al programma iniziale. ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7499,7 +8754,8 @@ object InvictusKnowledge {
                 "L’obiettivo del 6% di grasso corporeo è ormai a portata di mano! ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7508,7 +8764,8 @@ object InvictusKnowledge {
                 "giorni e lasciando invariate proteine e grassi. ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7517,7 +8774,8 @@ object InvictusKnowledge {
                 "negli animali allevati al pascolo, dove sono presenti tra 2 e 6 volte più omega 3. ",
             articleTitle = "La Dieta Mountain Dog (Parte 2)",
             url = "https://www.projectinvictus.it/la-dieta-mountain-dog-parte-2/",
-            publishedDate = "2014-05-05"
+            publishedDate = "2014-05-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7526,7 +8784,8 @@ object InvictusKnowledge {
                 "rispetto alle 20-30 volte per carboidrati e grassi. ",
             articleTitle = "BCAA sempre e comunque utili?",
             url = "https://www.projectinvictus.it/bcaa-sempre-e-comunque-utili/",
-            publishedDate = "2014-03-13"
+            publishedDate = "2014-03-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FAT,
@@ -7535,7 +8794,8 @@ object InvictusKnowledge {
                 "vostro consumo giornaliero di grassi. ",
             articleTitle = "La sensibilità insulinica (Parte 3)",
             url = "https://www.projectinvictus.it/la-sensibilita-insulinica-parte-3/",
-            publishedDate = "2014-01-24"
+            publishedDate = "2014-01-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7545,7 +8805,8 @@ object InvictusKnowledge {
                 "anche se non c’è un vero e proprio limite da non superare. ",
             articleTitle = "Quanta frutta mangiare al giorno?",
             url = "https://www.projectinvictus.it/quanta-frutta-mangiare-al-giorno/",
-            publishedDate = "2025-11-11"
+            publishedDate = "2025-11-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7555,7 +8816,8 @@ object InvictusKnowledge {
                 "prescindere dall’alimento e che facciano bene o male alla salute. ",
             articleTitle = "Dieta per avere gli addominali",
             url = "https://www.projectinvictus.it/dieta-per-addominali/",
-            publishedDate = "2025-08-08"
+            publishedDate = "2025-08-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7565,7 +8827,8 @@ object InvictusKnowledge {
                 "porzione di riferimento è di 1 frutto medio o 2 frutti piccoli per 2-3 volte al giorno. ",
             articleTitle = "Dieta estiva per dimagrire",
             url = "https://www.projectinvictus.it/dieta-estiva/",
-            publishedDate = "2025-04-27"
+            publishedDate = "2025-04-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7574,7 +8837,8 @@ object InvictusKnowledge {
                 "ottenibile proprio tramite le porzioni e gli alimenti sopra indicati. ",
             articleTitle = "Dimagrire velocemente e perdere peso",
             url = "https://www.projectinvictus.it/dimagrire-velocemente/",
-            publishedDate = "2025-01-12"
+            publishedDate = "2025-01-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7584,7 +8848,8 @@ object InvictusKnowledge {
                 "giorno (tramite frutta e verdura). ",
             articleTitle = "Dieta ormonale: cos’è e come funziona",
             url = "https://www.projectinvictus.it/dieta-ormonale/",
-            publishedDate = "2024-04-02"
+            publishedDate = "2024-04-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7594,7 +8859,8 @@ object InvictusKnowledge {
                 "assumere il giusto quantitativo di fibre alimentari. ",
             articleTitle = "Dieta metabolica: come funziona",
             url = "https://www.projectinvictus.it/dieta-metabolica/",
-            publishedDate = "2024-02-03"
+            publishedDate = "2024-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7604,7 +8870,8 @@ object InvictusKnowledge {
                 "sfruttando successivamente l’effetto anabolico, anticatabolico dell’insulina il weekend. ",
             articleTitle = "Dieta metabolica: come funziona",
             url = "https://www.projectinvictus.it/dieta-metabolica/",
-            publishedDate = "2024-02-03"
+            publishedDate = "2024-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7614,7 +8881,8 @@ object InvictusKnowledge {
                 "mangiare troppo nel corso del pasto. ",
             articleTitle = "Dimagrire senza dieta in modo definitivo",
             url = "https://www.projectinvictus.it/dieta-senza-dieta/",
-            publishedDate = "2024-01-30"
+            publishedDate = "2024-01-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7625,7 +8893,8 @@ object InvictusKnowledge {
                 "(farro, orzo, riso), frutta, verdura. ",
             articleTitle = "Come dimagrire le gambe: esercizi, dieta, consigli",
             url = "https://www.projectinvictus.it/come-dimagrire-le-gambe/",
-            publishedDate = "2023-09-14"
+            publishedDate = "2023-09-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7634,7 +8903,8 @@ object InvictusKnowledge {
                 "circa l’80% (6-8 ripetizioni massimali) vengono reclutate tutte le fibre muscolari. ",
             articleTitle = "Ipertrofia muscolare: la guida completa",
             url = "https://www.projectinvictus.it/ipertrofia-muscolare-la-guida-completa/",
-            publishedDate = "2023-08-28"
+            publishedDate = "2023-08-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7644,7 +8914,8 @@ object InvictusKnowledge {
                 "principalmente da fonti vegetali. ",
             articleTitle = "Dieta Atkins: come funziona, quanto si perde, menù",
             url = "https://www.projectinvictus.it/dieta-atkins/",
-            publishedDate = "2023-06-20"
+            publishedDate = "2023-06-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7654,7 +8925,8 @@ object InvictusKnowledge {
                 "magnesio, zinco e ferro. ",
             articleTitle = "Dieta flexitariana: cos’è, cosa mangiare, menù",
             url = "https://www.projectinvictus.it/flexitariana/",
-            publishedDate = "2023-06-16"
+            publishedDate = "2023-06-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7663,7 +8935,8 @@ object InvictusKnowledge {
                 "quantità di vitamine, sali minerali e fibra alimentare (30 g/die). ",
             articleTitle = "Dieta e tumori: relazione e raccomandazioni",
             url = "https://www.projectinvictus.it/dieta-tumori/",
-            publishedDate = "2023-06-11"
+            publishedDate = "2023-06-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7674,7 +8947,8 @@ object InvictusKnowledge {
                 "che è una riserva di grassi. ",
             articleTitle = "La pasta fa ingrassare: miti e luoghi comuni",
             url = "https://www.projectinvictus.it/la-pasta-fa-ingrassare/",
-            publishedDate = "2023-04-26"
+            publishedDate = "2023-04-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7685,7 +8959,8 @@ object InvictusKnowledge {
                 "famiglia dei carboidrati). ",
             articleTitle = "Aminoacidi: cosa sono e che funzione svolgono?",
             url = "https://www.projectinvictus.it/cosa-sono-gli-aminoacidi/",
-            publishedDate = "2022-12-25"
+            publishedDate = "2022-12-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7694,7 +8969,8 @@ object InvictusKnowledge {
                 "guscio massimo 3 volte a settimana . ",
             articleTitle = "Noci di macadamia: proprietà, benefici, calorie",
             url = "https://www.projectinvictus.it/noci-di-macadamia/",
-            publishedDate = "2022-11-26"
+            publishedDate = "2022-11-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7704,7 +8980,8 @@ object InvictusKnowledge {
                 "triplo Drop Set . ",
             articleTitle = "Drop set bodybuilding: cos’è e come si fa",
             url = "https://www.projectinvictus.it/drop-set-bodybuilding/",
-            publishedDate = "2022-11-16"
+            publishedDate = "2022-11-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7714,7 +8991,8 @@ object InvictusKnowledge {
                 "prodotto. ",
             articleTitle = "Gli acidi grassi saturi fanno male?",
             url = "https://www.projectinvictus.it/acidi-grassi-saturi-fanno-bene-o-male/",
-            publishedDate = "2022-05-31"
+            publishedDate = "2022-05-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7724,7 +9002,8 @@ object InvictusKnowledge {
                 "dell’esercizio fisico. ",
             articleTitle = "Integratore di ossido nitrico",
             url = "https://www.projectinvictus.it/ossido-nitrico-integratore/",
-            publishedDate = "2022-02-27"
+            publishedDate = "2022-02-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7733,7 +9012,8 @@ object InvictusKnowledge {
                 "calorico si aggira intorno alle 50 kcal/100g. ",
             articleTitle = "Calorie frutta: tabella",
             url = "https://www.projectinvictus.it/calorie-frutta-tabella/",
-            publishedDate = "2021-10-20"
+            publishedDate = "2021-10-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7742,7 +9022,8 @@ object InvictusKnowledge {
                 "assicurato anche mangiando fonti raffinate. ",
             articleTitle = "Calorie macronutrienti",
             url = "https://www.projectinvictus.it/calorie-macronutrienti/",
-            publishedDate = "2021-09-13"
+            publishedDate = "2021-09-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7752,7 +9033,8 @@ object InvictusKnowledge {
                 "delle calorie giornaliere introdotte. ",
             articleTitle = "Carboidrati complessi: funzioni, benefici ed esempi",
             url = "https://www.projectinvictus.it/carboidrati-complessi/",
-            publishedDate = "2021-09-01"
+            publishedDate = "2021-09-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7763,7 +9045,8 @@ object InvictusKnowledge {
                 "pesce ). ",
             articleTitle = "Acidi grassi essenziali: quali sono e perché sono importanti?",
             url = "https://www.projectinvictus.it/acidi-grassi-essenziali/",
-            publishedDate = "2021-07-06"
+            publishedDate = "2021-07-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7773,7 +9056,8 @@ object InvictusKnowledge {
                 "oli vegetali di semi (di lino, di arachide,…) sulla verdura. ",
             articleTitle = "Acidi grassi essenziali: quali sono e perché sono importanti?",
             url = "https://www.projectinvictus.it/acidi-grassi-essenziali/",
-            publishedDate = "2021-07-06"
+            publishedDate = "2021-07-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7783,7 +9067,8 @@ object InvictusKnowledge {
                 "di 2 kcal/g e ha molti benefici sulla salute. ",
             articleTitle = "Frutti proteici: la frutta più proteica",
             url = "https://www.projectinvictus.it/frutta-proteica/",
-            publishedDate = "2021-06-03"
+            publishedDate = "2021-06-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7793,7 +9078,8 @@ object InvictusKnowledge {
                 "vegetali. ",
             articleTitle = "Proteine animali sono dannose?",
             url = "https://www.projectinvictus.it/proteine-animali/",
-            publishedDate = "2021-04-28"
+            publishedDate = "2021-04-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7802,7 +9088,8 @@ object InvictusKnowledge {
                 "sono meno digeribili rispetto a quelle animali (60-80% VS 90%) . ",
             articleTitle = "Proteine: cosa sono e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-cosa-sono-a-cosa-servono/",
-            publishedDate = "2021-04-14"
+            publishedDate = "2021-04-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7811,7 +9098,8 @@ object InvictusKnowledge {
                 "proteico molto variabile (8-20%) e non contengono tutti gli aminoacidi essenziali . ",
             articleTitle = "Proteine nobili: significato e alimenti ricchi di proteine nobili",
             url = "https://www.projectinvictus.it/proteine-nobili/",
-            publishedDate = "2021-04-12"
+            publishedDate = "2021-04-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7821,7 +9109,8 @@ object InvictusKnowledge {
                 "fabbisogno proteico rispetto a quello consigliato per i non vegetariani . ",
             articleTitle = "Proteine nobili: significato e alimenti ricchi di proteine nobili",
             url = "https://www.projectinvictus.it/proteine-nobili/",
-            publishedDate = "2021-04-12"
+            publishedDate = "2021-04-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7830,7 +9119,8 @@ object InvictusKnowledge {
                 "fibre e almeno 2 g di grassi per 100 g di alimento . ",
             articleTitle = "I carboidrati sono meglio a pranzo o a cena?",
             url = "https://www.projectinvictus.it/carboidrati-giorno-sera/",
-            publishedDate = "2020-11-10"
+            publishedDate = "2020-11-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7840,7 +9130,8 @@ object InvictusKnowledge {
                 "origine animale come carne (18%) e latticini (10%). ",
             articleTitle = "Alimentazione in gravidanza: cosa mangiare?",
             url = "https://www.projectinvictus.it/alimentazione-in-gravidanza/",
-            publishedDate = "2020-11-07"
+            publishedDate = "2020-11-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7849,7 +9140,8 @@ object InvictusKnowledge {
                 "20-35% di digeribilità in meno (è una stima ovviamente). ",
             articleTitle = "Proteine vegetali per la palestra",
             url = "https://www.projectinvictus.it/proteine-vegetali/",
-            publishedDate = "2020-07-24"
+            publishedDate = "2020-07-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7859,7 +9151,8 @@ object InvictusKnowledge {
                 "glucidica (50-70%) dei carboidrati giornalieri nelle ore a ridosso dell’allenamento. ",
             articleTitle = "Quanti carboidrati al giorno",
             url = "https://www.projectinvictus.it/quanti-carboidrati-al-giorno/",
-            publishedDate = "2020-04-06"
+            publishedDate = "2020-04-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7869,7 +9162,8 @@ object InvictusKnowledge {
                 "differenzia notevolmente dagli altri legumi. ",
             articleTitle = "Legumi: quanti sono e quali sono i migliori?",
             url = "https://www.projectinvictus.it/legumi/",
-            publishedDate = "2020-02-12"
+            publishedDate = "2020-02-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7879,7 +9173,8 @@ object InvictusKnowledge {
                 "ma bisogna saper paragonare l’effetto saziante con il contenuto calorico. ",
             articleTitle = "Frutta secca migliore: benefici a dieta e in palestra",
             url = "https://www.projectinvictus.it/frutta-secca-quale-quanta-e-perche/",
-            publishedDate = "2020-02-10"
+            publishedDate = "2020-02-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7887,7 +9182,8 @@ object InvictusKnowledge {
                 "Basta l’80% del carico massimale per reclutare tutte le fibre muscolari. ",
             articleTitle = "Le fibre muscolari",
             url = "https://www.projectinvictus.it/le-fibre-muscolari/",
-            publishedDate = "2017-06-27"
+            publishedDate = "2017-06-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.FIBER,
@@ -7896,7 +9192,8 @@ object InvictusKnowledge {
                 "massimale si attivano TUTTE le fibre muscolari. ",
             articleTitle = "La Forza nel Bodybuilding è veramente utile?",
             url = "https://www.projectinvictus.it/forza-bodybuilding/",
-            publishedDate = "2016-10-10"
+            publishedDate = "2016-10-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -7906,7 +9203,8 @@ object InvictusKnowledge {
                 "ingrassare in entrambi i casi. ",
             articleTitle = "Colazione per dimagrire: cosa mangiare ed esempi",
             url = "https://www.projectinvictus.it/colazione-per-dimagrire/",
-            publishedDate = "2025-10-28"
+            publishedDate = "2025-10-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -7916,7 +9214,8 @@ object InvictusKnowledge {
                 "coincidere con i normali pasti che fai nell’arco della giornata. ",
             articleTitle = "Quante proteine assumere?",
             url = "https://www.projectinvictus.it/quante-proteine-assumere/",
-            publishedDate = "2025-07-31"
+            publishedDate = "2025-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -7925,7 +9224,8 @@ object InvictusKnowledge {
                 "che contenga almeno 20 g di proteine. ",
             articleTitle = "Quante proteine assumere?",
             url = "https://www.projectinvictus.it/quante-proteine-assumere/",
-            publishedDate = "2025-07-31"
+            publishedDate = "2025-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -7935,7 +9235,8 @@ object InvictusKnowledge {
                 "risultati. ",
             articleTitle = "Quante proteine assumere?",
             url = "https://www.projectinvictus.it/quante-proteine-assumere/",
-            publishedDate = "2025-07-31"
+            publishedDate = "2025-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -7944,7 +9245,8 @@ object InvictusKnowledge {
                 "totale giornaliera (200 – 300 kcal). ",
             articleTitle = "10 spuntini sani se sei a dieta (o meno)",
             url = "https://www.projectinvictus.it/spuntini-sani/",
-            publishedDate = "2025-04-26"
+            publishedDate = "2025-04-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -7954,7 +9256,8 @@ object InvictusKnowledge {
                 "anche gli altri pasti della giornata. ",
             articleTitle = "Colazione proteica: cosa mangiare ed esempi",
             url = "https://www.projectinvictus.it/colazione-proteica/",
-            publishedDate = "2025-04-08"
+            publishedDate = "2025-04-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -7963,7 +9266,8 @@ object InvictusKnowledge {
                 "assumere dalle 100 Kcal alle 400 Kcal. ",
             articleTitle = "Colazione ideale: la guida completa",
             url = "https://www.projectinvictus.it/colazione-ideale/",
-            publishedDate = "2024-08-10"
+            publishedDate = "2024-08-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -7973,7 +9277,8 @@ object InvictusKnowledge {
                 "colazione breakfast: breaking a fast, cioè rompi digiuno. ",
             articleTitle = "Digiuno intermittente: cos’è e come funziona?",
             url = "https://www.projectinvictus.it/digiuno-intermittente/",
-            publishedDate = "2024-02-17"
+            publishedDate = "2024-02-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -7983,7 +9288,8 @@ object InvictusKnowledge {
                 "maggior controllo sulla fame. ",
             articleTitle = "Dieta Atkins: come funziona, quanto si perde, menù",
             url = "https://www.projectinvictus.it/dieta-atkins/",
-            publishedDate = "2023-06-20"
+            publishedDate = "2023-06-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -7993,7 +9299,8 @@ object InvictusKnowledge {
                 "e la performance. ",
             articleTitle = "Nutrient timing dei pasti per la palestra e il bodybuilding",
             url = "https://www.projectinvictus.it/nutrient-timing/",
-            publishedDate = "2021-11-02"
+            publishedDate = "2021-11-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -8004,7 +9311,8 @@ object InvictusKnowledge {
                 "principale fattore da tenere in considerazione. ",
             articleTitle = "Post workout: cosa assumere dopo l’allenamento in palestra?",
             url = "https://www.projectinvictus.it/post-workout-palestra-cosa-mangiare/",
-            publishedDate = "2021-08-03"
+            publishedDate = "2021-08-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -8012,7 +9320,8 @@ object InvictusKnowledge {
                 "Colazione Costituisce, di solito, circa il 15% delle calorie giornaliere. ",
             articleTitle = "Dieta Equilibrata: le Basi di un’Alimentazione Sana e Bilanciata",
             url = "https://www.projectinvictus.it/dieta-equilibrata-alimentazione-bilanciata/",
-            publishedDate = "2021-05-23"
+            publishedDate = "2021-05-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -8020,7 +9329,8 @@ object InvictusKnowledge {
                 "Pranzo Dovrebbe essere il pasto più abbondante, con circa il 40% delle calorie. ",
             articleTitle = "Dieta Equilibrata: le Basi di un’Alimentazione Sana e Bilanciata",
             url = "https://www.projectinvictus.it/dieta-equilibrata-alimentazione-bilanciata/",
-            publishedDate = "2021-05-23"
+            publishedDate = "2021-05-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -8029,7 +9339,8 @@ object InvictusKnowledge {
                 "calorie. ",
             articleTitle = "Dieta Equilibrata: le Basi di un’Alimentazione Sana e Bilanciata",
             url = "https://www.projectinvictus.it/dieta-equilibrata-alimentazione-bilanciata/",
-            publishedDate = "2021-05-23"
+            publishedDate = "2021-05-23",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -8039,7 +9350,8 @@ object InvictusKnowledge {
                 "pool ematico aminoacidico e soddisfare il fabbisogno proteico giornaliero. ",
             articleTitle = "Proteine idrolizzate: benefici e controindicazioni",
             url = "https://www.projectinvictus.it/proteine-idrolizzate/",
-            publishedDate = "2021-04-22"
+            publishedDate = "2021-04-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -8049,7 +9361,8 @@ object InvictusKnowledge {
                 "si completino a vicenda dal punto di vista nutrizionale. ",
             articleTitle = "Cosa mangiare a cena per dimagrire?",
             url = "https://www.projectinvictus.it/cena-per-dimagrire/",
-            publishedDate = "2021-04-06"
+            publishedDate = "2021-04-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -8058,7 +9371,8 @@ object InvictusKnowledge {
                 "sull’articolazione della spalla pari a 80-90% del peso corporeo. ",
             articleTitle = "Muscolo infraspinato: anatomia e funzioni",
             url = "https://www.projectinvictus.it/infraspinato-anatomia-e-funzioni/",
-            publishedDate = "2021-03-05"
+            publishedDate = "2021-03-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -8069,7 +9383,8 @@ object InvictusKnowledge {
                 "anabolico di un pasto). ",
             articleTitle = "Intermittent fasting: come farlo in pratica?",
             url = "https://www.projectinvictus.it/intermittent-fasting/",
-            publishedDate = "2020-12-11"
+            publishedDate = "2020-12-11",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -8079,7 +9394,8 @@ object InvictusKnowledge {
                 "di riaddormentarsi, mangia almeno il 25% delle calorie dopo cena e durante la notte. ",
             articleTitle = "Abbuffate di dolci e cibo: ingrasso tanto?",
             url = "https://www.projectinvictus.it/abbuffate-dolci-natalizie-sopravvivere/",
-            publishedDate = "2020-09-10"
+            publishedDate = "2020-09-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -8089,7 +9405,8 @@ object InvictusKnowledge {
                 "a mantenere più aderenza alla dieta. ",
             articleTitle = "Ogni quanto mangiare per dimagrire?",
             url = "https://www.projectinvictus.it/frequenza-dei-pasti/",
-            publishedDate = "2020-07-13"
+            publishedDate = "2020-07-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -8099,7 +9416,8 @@ object InvictusKnowledge {
                 "proteine a pasto). ",
             articleTitle = "Ogni quanto mangiare per dimagrire?",
             url = "https://www.projectinvictus.it/frequenza-dei-pasti/",
-            publishedDate = "2020-07-13"
+            publishedDate = "2020-07-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -8108,7 +9426,8 @@ object InvictusKnowledge {
                 "modo di fare una colazione più corposa. ",
             articleTitle = "Come mangiare prima di una gara",
             url = "https://www.projectinvictus.it/come-mangiare-prima-di-una-gara/",
-            publishedDate = "2019-06-13"
+            publishedDate = "2019-06-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.MEALS,
@@ -8117,7 +9436,8 @@ object InvictusKnowledge {
                 "persone dichiarava di consumare regolarmente la prima colazione. ",
             articleTitle = "Colazione e obesità: anche la scienza sbaglia",
             url = "https://www.projectinvictus.it/colazione-e-obesita-anche-la-scienza-sbaglia/",
-            publishedDate = "2014-02-19"
+            publishedDate = "2014-02-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TIMING,
@@ -8127,7 +9447,8 @@ object InvictusKnowledge {
                 "coincidere con i normali pasti che fai nell’arco della giornata. ",
             articleTitle = "Quante proteine assumere?",
             url = "https://www.projectinvictus.it/quante-proteine-assumere/",
-            publishedDate = "2025-07-31"
+            publishedDate = "2025-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TIMING,
@@ -8137,7 +9458,8 @@ object InvictusKnowledge {
                 "proteine, grassi) nel corso delle 24 ore . ",
             articleTitle = "Carboidrati dopo l’allenamento in palestra",
             url = "https://www.projectinvictus.it/carboidrati-post-workout-palestra/",
-            publishedDate = "2024-03-26"
+            publishedDate = "2024-03-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TIMING,
@@ -8147,7 +9469,8 @@ object InvictusKnowledge {
                 "allenamenti a digiuno. ",
             articleTitle = "Quando assumere proteine: prima o dopo allenamento?",
             url = "https://www.projectinvictus.it/proteine-prima-o-dopo-allenamento/",
-            publishedDate = "2023-09-24"
+            publishedDate = "2023-09-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TIMING,
@@ -8158,7 +9481,8 @@ object InvictusKnowledge {
                 "efficace, ma la loro assunzione nella giornata. ",
             articleTitle = "Proteine palestra: quali prendere e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-palestra/",
-            publishedDate = "2023-09-21"
+            publishedDate = "2023-09-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TIMING,
@@ -8168,7 +9492,8 @@ object InvictusKnowledge {
                 "nel post-workout . ",
             articleTitle = "HMB integratore: cos’è, a cosa serve, funziona?",
             url = "https://www.projectinvictus.it/hmb-integratore/",
-            publishedDate = "2022-01-31"
+            publishedDate = "2022-01-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TIMING,
@@ -8178,7 +9503,8 @@ object InvictusKnowledge {
                 "perdurare anche 48 ore. ",
             articleTitle = "Nutrient timing dei pasti per la palestra e il bodybuilding",
             url = "https://www.projectinvictus.it/nutrient-timing/",
-            publishedDate = "2021-11-02"
+            publishedDate = "2021-11-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TIMING,
@@ -8187,7 +9513,8 @@ object InvictusKnowledge {
                 "5-10% circa nel totale della dieta . ",
             articleTitle = "Nutrient timing dei pasti per la palestra e il bodybuilding",
             url = "https://www.projectinvictus.it/nutrient-timing/",
-            publishedDate = "2021-11-02"
+            publishedDate = "2021-11-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TIMING,
@@ -8198,7 +9525,8 @@ object InvictusKnowledge {
                 "proteica. ",
             articleTitle = "Post workout: cosa assumere dopo l’allenamento in palestra?",
             url = "https://www.projectinvictus.it/post-workout-palestra-cosa-mangiare/",
-            publishedDate = "2021-08-03"
+            publishedDate = "2021-08-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.TIMING,
@@ -8209,7 +9537,8 @@ object InvictusKnowledge {
                 "glicogeno muscolare (1,3). ",
             articleTitle = "Carboidrati post-workout: perché no?",
             url = "https://www.projectinvictus.it/carboidrati-post-workout-perche-no/",
-            publishedDate = "2016-08-04"
+            publishedDate = "2016-08-04",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARB_CYCLING,
@@ -8218,7 +9547,8 @@ object InvictusKnowledge {
                 "intorno alle 12 – 20 serie a settimana . ",
             articleTitle = "Ricomposizione corporea: la guida completa",
             url = "https://www.projectinvictus.it/ricomposizione-corporea/",
-            publishedDate = "2026-08-18"
+            publishedDate = "2026-08-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARB_CYCLING,
@@ -8227,7 +9557,8 @@ object InvictusKnowledge {
                 "vigoroso, consiglia di inserire una mini ricarica di 12-24 ore il mercoledì. ",
             articleTitle = "Dieta metabolica: come funziona",
             url = "https://www.projectinvictus.it/dieta-metabolica/",
-            publishedDate = "2024-02-03"
+            publishedDate = "2024-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARB_CYCLING,
@@ -8236,7 +9567,8 @@ object InvictusKnowledge {
                 "togliendo i carboidrati per massimo 3 giorni. ",
             articleTitle = "Dieta metabolica: come funziona",
             url = "https://www.projectinvictus.it/dieta-metabolica/",
-            publishedDate = "2024-02-03"
+            publishedDate = "2024-02-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARB_CYCLING,
@@ -8247,7 +9579,8 @@ object InvictusKnowledge {
                 "ritenevo più accettabile e proficua. ",
             articleTitle = "Il mio percorso bodybuilding (Nicolò Liani)",
             url = "https://www.projectinvictus.it/percorso-nicolo-liani/",
-            publishedDate = "2018-09-13"
+            publishedDate = "2018-09-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARB_CYCLING,
@@ -8256,7 +9589,8 @@ object InvictusKnowledge {
                 "150-200g di proteine. ",
             articleTitle = "I grassi bruciano al fuoco dei carboidrati",
             url = "https://www.projectinvictus.it/i-grassi-bruciano-al-fuoco-dei-carboidrati/",
-            publishedDate = "2018-06-27"
+            publishedDate = "2018-06-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARB_CYCLING,
@@ -8267,7 +9601,8 @@ object InvictusKnowledge {
                 "settimane. ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.CARB_CYCLING,
@@ -8276,7 +9611,17 @@ object InvictusKnowledge {
                 "durante gli allenamenti (30-40 g) tende a ridurre significativamente il DOMS. ",
             articleTitle = "BCAA sempre e comunque utili?",
             url = "https://www.projectinvictus.it/bcaa-sempre-e-comunque-utili/",
-            publishedDate = "2014-03-13"
+            publishedDate = "2014-03-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CARB_CYCLING,
+            statement =
+                "CK almost certainly increased by 77.9±25.4% (0.75±0.19) post-simulation for all players. ",
+            articleTitle = "Metabolic demands and replenishment of muscle glycogen after a rugby league match simulation protocol",
+            url = "https://pubmed.ncbi.nlm.nih.gov/28238618/",
+            publishedDate = "2017",
+            kind = SourceKind.INDIVIDUAL_STUDY
         ),
         Rule(
             category = Category.HYDRATION,
@@ -8284,7 +9629,8 @@ object InvictusKnowledge {
                 "In generale si consiglia di bere almeno 30-35 mL di acqua per kg di peso corporeo . ",
             articleTitle = "Quanta acqua bere al giorno",
             url = "https://www.projectinvictus.it/quanta-acqua-bere-al-giorno/",
-            publishedDate = "2026-02-06"
+            publishedDate = "2026-02-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.HYDRATION,
@@ -8294,7 +9640,8 @@ object InvictusKnowledge {
                 "introdotta nel corso della giornata. ",
             articleTitle = "Quanta acqua bere al giorno",
             url = "https://www.projectinvictus.it/quanta-acqua-bere-al-giorno/",
-            publishedDate = "2026-02-06"
+            publishedDate = "2026-02-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.HYDRATION,
@@ -8303,7 +9650,8 @@ object InvictusKnowledge {
                 "dopo pochi giorni senza assumere acqua. ",
             articleTitle = "Quanta acqua bere al giorno",
             url = "https://www.projectinvictus.it/quanta-acqua-bere-al-giorno/",
-            publishedDate = "2026-02-06"
+            publishedDate = "2026-02-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.HYDRATION,
@@ -8312,7 +9660,8 @@ object InvictusKnowledge {
                 "acqua ogni 1000 kcal . ",
             articleTitle = "Bere tanta acqua per dimagrire",
             url = "https://www.projectinvictus.it/bere-acqua-fa-dimagrire/",
-            publishedDate = "2025-05-16"
+            publishedDate = "2025-05-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.HYDRATION,
@@ -8321,7 +9670,8 @@ object InvictusKnowledge {
                 "cala l’ acqua intracellulare ed interstiziale. ",
             articleTitle = "Dimagrire velocemente e perdere peso",
             url = "https://www.projectinvictus.it/dimagrire-velocemente/",
-            publishedDate = "2025-01-12"
+            publishedDate = "2025-01-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.HYDRATION,
@@ -8331,7 +9681,8 @@ object InvictusKnowledge {
                 "gli alimenti, al peso corporeo e all’attività fisica svolta. ",
             articleTitle = "Voglio dimagrire 20 kg: come perderli in modo definitivo",
             url = "https://www.projectinvictus.it/voglio-dimagrire-20-kg/",
-            publishedDate = "2024-08-24"
+            publishedDate = "2024-08-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.HYDRATION,
@@ -8341,7 +9692,8 @@ object InvictusKnowledge {
                 "vitamina C . ",
             articleTitle = "Cibi e alimenti drenanti",
             url = "https://www.projectinvictus.it/cibo-drenante/",
-            publishedDate = "2023-08-15"
+            publishedDate = "2023-08-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.HYDRATION,
@@ -8350,7 +9702,8 @@ object InvictusKnowledge {
                 "utili quando l’idratazione è più necessaria rispetto all’apporto glucidico. ",
             articleTitle = "Bevande energetiche per lo sport",
             url = "https://www.projectinvictus.it/bevande-energetiche/",
-            publishedDate = "2023-06-07"
+            publishedDate = "2023-06-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.HYDRATION,
@@ -8361,7 +9714,8 @@ object InvictusKnowledge {
                 "contenuto di acqua e di carboidrati. ",
             articleTitle = "Bevande energetiche per lo sport",
             url = "https://www.projectinvictus.it/bevande-energetiche/",
-            publishedDate = "2023-06-07"
+            publishedDate = "2023-06-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.HYDRATION,
@@ -8371,7 +9725,8 @@ object InvictusKnowledge {
                 "addirittura del 20-30%. ",
             articleTitle = "Allenamento con il caldo nel bodybuilding: benefici, rischi e rimedi",
             url = "https://www.projectinvictus.it/allenarsi-con-il-caldo/",
-            publishedDate = "2021-11-10"
+            publishedDate = "2021-11-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.HYDRATION,
@@ -8381,7 +9736,8 @@ object InvictusKnowledge {
                 "nutrienti . ",
             articleTitle = "Sostanze nutritive: cosa sono e quali sono?",
             url = "https://www.projectinvictus.it/sostanze-nutritive/",
-            publishedDate = "2021-09-30"
+            publishedDate = "2021-09-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.HYDRATION,
@@ -8392,7 +9748,8 @@ object InvictusKnowledge {
                 "presenti in etichetta per 3). ",
             articleTitle = "Legumi: quanti sono e quali sono i migliori?",
             url = "https://www.projectinvictus.it/legumi/",
-            publishedDate = "2020-02-12"
+            publishedDate = "2020-02-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.HYDRATION,
@@ -8403,7 +9760,8 @@ object InvictusKnowledge {
                 "dei grassi a 30 g. ",
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
-            publishedDate = "2016-10-31"
+            publishedDate = "2016-10-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.ALCOHOL,
@@ -8412,7 +9770,8 @@ object InvictusKnowledge {
                 "dosi consigliate (2-3 bicchieri nell’uomo, 1-2 nella donna). ",
             articleTitle = "Come aumentare il testosterone",
             url = "https://www.projectinvictus.it/come-aumentare-il-testosterone/",
-            publishedDate = "2026-08-24"
+            publishedDate = "2026-08-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.ALCOHOL,
@@ -8423,7 +9782,8 @@ object InvictusKnowledge {
                 "calcolo. ",
             articleTitle = "Calcolo metabolismo basale",
             url = "https://www.projectinvictus.it/metabolismo-basale/",
-            publishedDate = "2025-01-17"
+            publishedDate = "2025-01-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.ALCOHOL,
@@ -8432,7 +9792,8 @@ object InvictusKnowledge {
                 "formule, per via pratica, monitorando per 1-2 settimane tutto ciò che introduci (ad es. ",
             articleTitle = "Deficit calorico: cos’è e come calcolarlo",
             url = "https://www.projectinvictus.it/deficit-calorico-calcolo/",
-            publishedDate = "2025-01-15"
+            publishedDate = "2025-01-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.ALCOHOL,
@@ -8441,7 +9802,8 @@ object InvictusKnowledge {
                 "a 1-2 volte alla settimana e fermarti a 1-2 bicchieri. ",
             articleTitle = "Dimagrire senza sport: come fare",
             url = "https://www.projectinvictus.it/dimagrire-senza-sport/",
-            publishedDate = "2023-04-14"
+            publishedDate = "2023-04-14",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.ALCOHOL,
@@ -8450,7 +9812,8 @@ object InvictusKnowledge {
                 "moderato 1 – 2 volte a settimana . ",
             articleTitle = "Come diventare grossi in poco tempo",
             url = "https://www.projectinvictus.it/come-diventare-grossi/",
-            publishedDate = "2022-07-26"
+            publishedDate = "2022-07-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SUBSTITUTION,
@@ -8460,7 +9823,8 @@ object InvictusKnowledge {
                 "tenuta di Cross Body Stretch e Sleeper’s Stretch ( solo se questo non evoca dolore ). ",
             articleTitle = "Riabilitazione e prevenzione della spalla: impingement sub-acromiale",
             url = "https://www.projectinvictus.it/riabilitazione-e-prevenzione-della-spalla-impingement-sub-acromiale/",
-            publishedDate = "2015-01-26"
+            publishedDate = "2015-01-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.ADHERENCE,
@@ -8469,7 +9833,8 @@ object InvictusKnowledge {
                 "prime due settimane , in base all’aderenza del soggetto al piano alimentare suggerito. ",
             articleTitle = "Dieta Plank: come funziona e controindicazioni",
             url = "https://www.projectinvictus.it/dieta-plank/",
-            publishedDate = "2026-01-18"
+            publishedDate = "2026-01-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.ADHERENCE,
@@ -8479,7 +9844,8 @@ object InvictusKnowledge {
                 "di riaddormentarsi, mangia almeno il 25% delle calorie dopo cena e durante la notte. ",
             articleTitle = "Abbuffate di dolci e cibo: ingrasso tanto?",
             url = "https://www.projectinvictus.it/abbuffate-dolci-natalizie-sopravvivere/",
-            publishedDate = "2020-09-10"
+            publishedDate = "2020-09-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8489,7 +9855,8 @@ object InvictusKnowledge {
                 "totale calorico giornaliero oppure fino a 1,5 g di grassi/kg peso corporeo. ",
             articleTitle = "Quanti grassi assumere?",
             url = "https://www.projectinvictus.it/quanti-grassi-al-giorno/",
-            publishedDate = "2026-08-25"
+            publishedDate = "2026-08-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8498,7 +9865,8 @@ object InvictusKnowledge {
                 "peso corporeo, da consumare preferibilmente lontano dall’allenamento. ",
             articleTitle = "Dieta personalizzata: la dieta che funziona",
             url = "https://www.projectinvictus.it/dieta-personalizzata/",
-            publishedDate = "2026-07-09"
+            publishedDate = "2026-07-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8509,7 +9877,8 @@ object InvictusKnowledge {
                 "intende consumare . ",
             articleTitle = "Cannella: proprietà, controindicazioni, dosi giornaliere",
             url = "https://www.projectinvictus.it/cannella-benefici-proprieta/",
-            publishedDate = "2026-03-22"
+            publishedDate = "2026-03-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8518,7 +9887,8 @@ object InvictusKnowledge {
                 "kg dovrebbe ingerire 50 g di Ceylon. ",
             articleTitle = "Cannella: proprietà, controindicazioni, dosi giornaliere",
             url = "https://www.projectinvictus.it/cannella-benefici-proprieta/",
-            publishedDate = "2026-03-22"
+            publishedDate = "2026-03-22",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8526,7 +9896,8 @@ object InvictusKnowledge {
                 "In generale si consiglia di bere almeno 30-35 mL di acqua per kg di peso corporeo . ",
             articleTitle = "Quanta acqua bere al giorno",
             url = "https://www.projectinvictus.it/quanta-acqua-bere-al-giorno/",
-            publishedDate = "2026-02-06"
+            publishedDate = "2026-02-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8535,7 +9906,8 @@ object InvictusKnowledge {
                 "dimagrimento sostenibile, sano e duraturo . ",
             articleTitle = "Dieta per dimagrire 10 kg",
             url = "https://www.projectinvictus.it/dieta-per-dimagrire-10-kg/",
-            publishedDate = "2025-09-02"
+            publishedDate = "2025-09-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8545,7 +9917,8 @@ object InvictusKnowledge {
                 "proteine/kg peso corporeo . ",
             articleTitle = "La dieta iperproteica per il dimagrimento",
             url = "https://www.projectinvictus.it/dieta-iperproteica-dimagrimento/",
-            publishedDate = "2025-05-08"
+            publishedDate = "2025-05-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8554,7 +9927,8 @@ object InvictusKnowledge {
                 "0,5-1% del proprio peso corporeo a settimana . ",
             articleTitle = "La dieta iperproteica per il dimagrimento",
             url = "https://www.projectinvictus.it/dieta-iperproteica-dimagrimento/",
-            publishedDate = "2025-05-08"
+            publishedDate = "2025-05-08",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8563,7 +9937,8 @@ object InvictusKnowledge {
                 "puoi immaginare di perdere circa lo 0,5 – 1% del peso corporeo a settimana . ",
             articleTitle = "Grasso addominale: cos’è, come eliminarlo, rischi",
             url = "https://www.projectinvictus.it/grasso-addominale/",
-            publishedDate = "2025-04-29"
+            publishedDate = "2025-04-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8572,7 +9947,8 @@ object InvictusKnowledge {
                 "settimane) . ",
             articleTitle = "Deficit calorico: cos’è e come calcolarlo",
             url = "https://www.projectinvictus.it/deficit-calorico-calcolo/",
-            publishedDate = "2025-01-15"
+            publishedDate = "2025-01-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8580,7 +9956,8 @@ object InvictusKnowledge {
                 "Per aumentare di 2 kg di peso corporeo sono necessari circa 25-40 giorni . ",
             articleTitle = "Quanto tempo ci vuole ad ingrassare?",
             url = "https://www.projectinvictus.it/quanto-tempo-per-ingrassare/",
-            publishedDate = "2024-04-30"
+            publishedDate = "2024-04-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8589,7 +9966,8 @@ object InvictusKnowledge {
                 "settimana. ",
             articleTitle = "Dieta mediterranea per dimagrire",
             url = "https://www.projectinvictus.it/dieta-mediterranea/",
-            publishedDate = "2024-03-29"
+            publishedDate = "2024-03-29",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8598,7 +9976,8 @@ object InvictusKnowledge {
                 "proprio peso corporeo a settimana . ",
             articleTitle = "Dieta a zona: come funziona e menù",
             url = "https://www.projectinvictus.it/dieta-a-zona/",
-            publishedDate = "2024-02-28"
+            publishedDate = "2024-02-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8606,7 +9985,8 @@ object InvictusKnowledge {
                 "Bisogna perdere in una settimana da 0.5 – 1% del peso corporeo . ",
             articleTitle = "Bodybuilding: la guida completa",
             url = "https://www.projectinvictus.it/bodybuilding/",
-            publishedDate = "2024-01-05"
+            publishedDate = "2024-01-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8616,7 +9996,8 @@ object InvictusKnowledge {
                 "di aumento del peso corporeo mensile. ",
             articleTitle = "Come aumentare la massa muscolare?",
             url = "https://www.projectinvictus.it/aumentare-massa-muscolare/",
-            publishedDate = "2023-12-21"
+            publishedDate = "2023-12-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8625,7 +10006,8 @@ object InvictusKnowledge {
                 "tuo peso corporeo a settimana . ",
             articleTitle = "Dieta vegetariana per dimagrire",
             url = "https://www.projectinvictus.it/dieta-vegetariana-per-dimagrire/",
-            publishedDate = "2023-06-26"
+            publishedDate = "2023-06-26",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8635,7 +10017,8 @@ object InvictusKnowledge {
                 "viene toccato con i piedi. ",
             articleTitle = "Muscle Up: esecuzione corretta e come iniziare",
             url = "https://www.projectinvictus.it/muscle-up-la-guida-completa/",
-            publishedDate = "2023-01-01"
+            publishedDate = "2023-01-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8645,7 +10028,8 @@ object InvictusKnowledge {
                 "macronutrienti, con un apporto proteico di 2,3-3,1g/kg di peso corporeo. ",
             articleTitle = "Catabolismo",
             url = "https://www.projectinvictus.it/catabolismo/",
-            publishedDate = "2022-09-18"
+            publishedDate = "2022-09-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8654,7 +10038,8 @@ object InvictusKnowledge {
                 "a settimana . ",
             articleTitle = "Il bilancio energetico",
             url = "https://www.projectinvictus.it/bilancio-energetico/",
-            publishedDate = "2022-08-27"
+            publishedDate = "2022-08-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8663,7 +10048,8 @@ object InvictusKnowledge {
                 "proprio peso corporeo a settimana. ",
             articleTitle = "Il bilancio energetico",
             url = "https://www.projectinvictus.it/bilancio-energetico/",
-            publishedDate = "2022-08-27"
+            publishedDate = "2022-08-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8672,7 +10058,8 @@ object InvictusKnowledge {
                 "peso corporeo in military press è un ottimo obiettivo iniziale. ",
             articleTitle = "Bandiera umana: tutorial e progressioni per impararla",
             url = "https://www.projectinvictus.it/la-bandiera-human-flag-tutorial-ed-esecuzione/",
-            publishedDate = "2022-03-19"
+            publishedDate = "2022-03-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8682,7 +10069,8 @@ object InvictusKnowledge {
                 "addirittura del 20-30%. ",
             articleTitle = "Allenamento con il caldo nel bodybuilding: benefici, rischi e rimedi",
             url = "https://www.projectinvictus.it/allenarsi-con-il-caldo/",
-            publishedDate = "2021-11-10"
+            publishedDate = "2021-11-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8692,7 +10080,8 @@ object InvictusKnowledge {
                 "giorni di allenamento, prima dell’allenamento). ",
             articleTitle = "Caffeina, allenamento e palestra: effetti e dosaggi",
             url = "https://www.projectinvictus.it/caffeina-effetti-e-dosaggi/",
-            publishedDate = "2021-07-28"
+            publishedDate = "2021-07-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8702,7 +10091,8 @@ object InvictusKnowledge {
                 "peso corporeo a settimana, passa allo 0.5%. ",
             articleTitle = "Macronutrienti: cosa sono e in quali alimenti si trovano?",
             url = "https://www.projectinvictus.it/macronutrienti-nella-dieta-cosa-dobbiamo-sapere/",
-            publishedDate = "2021-01-17"
+            publishedDate = "2021-01-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8713,7 +10103,8 @@ object InvictusKnowledge {
                 "giorno! ",
             articleTitle = "Quanti carboidrati al giorno",
             url = "https://www.projectinvictus.it/quanti-carboidrati-al-giorno/",
-            publishedDate = "2020-04-06"
+            publishedDate = "2020-04-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8721,7 +10112,8 @@ object InvictusKnowledge {
                 "Per questo motivo, è consigliato perdere 0.5-1% del peso corporeo a settimana . ",
             articleTitle = "Quanti carboidrati per dimagrire?",
             url = "https://www.projectinvictus.it/quanti-carboidrati-al-giorno-per-dimagrire/",
-            publishedDate = "2020-04-02"
+            publishedDate = "2020-04-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8729,7 +10121,8 @@ object InvictusKnowledge {
                 "È importante, comunque, mantenere un introito minimo pari a 1g/1 kg di peso corporeo . ",
             articleTitle = "Quanti carboidrati per dimagrire?",
             url = "https://www.projectinvictus.it/quanti-carboidrati-al-giorno-per-dimagrire/",
-            publishedDate = "2020-04-02"
+            publishedDate = "2020-04-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8738,7 +10131,8 @@ object InvictusKnowledge {
                 "peso corporeo ogni 2 ore nelle 6 ore dopo l’allenamento. ",
             articleTitle = "Destrosio in palestra: che cos’è e a cosa serve",
             url = "https://www.projectinvictus.it/destrosio-bodybuilding-palestra/",
-            publishedDate = "2020-03-25"
+            publishedDate = "2020-03-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8747,7 +10141,8 @@ object InvictusKnowledge {
                 "da ogni medico, corrispondono sempre a circa 0.8 g/kg peso corporeo. ",
             articleTitle = "Fabbisogno proteico: come calcolarlo?",
             url = "https://www.projectinvictus.it/fabbisogno-proteico/",
-            publishedDate = "2020-03-03"
+            publishedDate = "2020-03-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8757,7 +10152,8 @@ object InvictusKnowledge {
                 "corporeo, sia per gli uomini che per le donne. ",
             articleTitle = "Fabbisogno proteico: come calcolarlo?",
             url = "https://www.projectinvictus.it/fabbisogno-proteico/",
-            publishedDate = "2020-03-03"
+            publishedDate = "2020-03-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8766,7 +10162,8 @@ object InvictusKnowledge {
                 "0.70 g/kg peso corporeo passiamo a una dose consigliata maggiore di 0.84 g di proteine. ",
             articleTitle = "Fabbisogno proteico: come calcolarlo?",
             url = "https://www.projectinvictus.it/fabbisogno-proteico/",
-            publishedDate = "2020-03-03"
+            publishedDate = "2020-03-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8775,7 +10172,8 @@ object InvictusKnowledge {
                 "corporeo). ",
             articleTitle = "Fabbisogno proteico: come calcolarlo?",
             url = "https://www.projectinvictus.it/fabbisogno-proteico/",
-            publishedDate = "2020-03-03"
+            publishedDate = "2020-03-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8784,7 +10182,8 @@ object InvictusKnowledge {
                 "mentre per le proteine il valore consigliato è 1.4 – 2 g/kg di peso corporeo . ",
             articleTitle = "Dieta per ingrassare velocemente",
             url = "https://www.projectinvictus.it/dieta-per-ingrassare/",
-            publishedDate = "2020-02-28"
+            publishedDate = "2020-02-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8793,7 +10192,8 @@ object InvictusKnowledge {
                 "50-60% del nostro peso corporeo. ",
             articleTitle = "Esercizi calistenici: quali sono, quali fare a casa",
             url = "https://www.projectinvictus.it/esercizi-calistenici/",
-            publishedDate = "2019-12-21"
+            publishedDate = "2019-12-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8804,7 +10204,8 @@ object InvictusKnowledge {
                 "ritenevo più accettabile e proficua. ",
             articleTitle = "Il mio percorso bodybuilding (Nicolò Liani)",
             url = "https://www.projectinvictus.it/percorso-nicolo-liani/",
-            publishedDate = "2018-09-13"
+            publishedDate = "2018-09-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8813,7 +10214,8 @@ object InvictusKnowledge {
                 "40% del peso corporeo ed è per questo il più esteso organo di cui disponiamo. ",
             articleTitle = "Cosa succede quando il muscolo incontra il grasso?",
             url = "https://www.projectinvictus.it/muscolo-incontra-grasso/",
-            publishedDate = "2017-03-09"
+            publishedDate = "2017-03-09",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8823,7 +10225,8 @@ object InvictusKnowledge {
                 "peso corporeo, e impostare pause di 30 secondi tra le serie multiple. ",
             articleTitle = "Scrollate inverse per il riequilibrio scapolare",
             url = "https://www.projectinvictus.it/scrollate-inverse-per-riequilibrio-scapolare/",
-            publishedDate = "2014-11-06"
+            publishedDate = "2014-11-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.WEIGHT,
@@ -8833,7 +10236,8 @@ object InvictusKnowledge {
                 "panca, con i piedi appoggiati a terra. ",
             articleTitle = "Scrollate inverse per il riequilibrio scapolare",
             url = "https://www.projectinvictus.it/scrollate-inverse-per-riequilibrio-scapolare/",
-            publishedDate = "2014-11-06"
+            publishedDate = "2014-11-06",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.BODYCOMP,
@@ -8844,7 +10248,8 @@ object InvictusKnowledge {
                 "kcal. ",
             articleTitle = "Il migliore allenamento per dimagrire",
             url = "https://www.projectinvictus.it/allenamento-per-dimagrire/",
-            publishedDate = "2026-05-15"
+            publishedDate = "2026-05-15",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.BODYCOMP,
@@ -8854,7 +10259,8 @@ object InvictusKnowledge {
                 "settimana. ",
             articleTitle = "Dieta Plank: come funziona e controindicazioni",
             url = "https://www.projectinvictus.it/dieta-plank/",
-            publishedDate = "2026-01-18"
+            publishedDate = "2026-01-18",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.BODYCOMP,
@@ -8864,7 +10270,8 @@ object InvictusKnowledge {
                 "massa grassa superiore a circa l’11% per gli uomini e 16% per le donne . ",
             articleTitle = "Dieta per la massa muscolare: la guida completa",
             url = "https://www.projectinvictus.it/dieta-per-la-massa-muscolare/",
-            publishedDate = "2025-03-12"
+            publishedDate = "2025-03-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.BODYCOMP,
@@ -8875,7 +10282,8 @@ object InvictusKnowledge {
                 "riesci a perdere kg. ",
             articleTitle = "Come dimagrire in una settimana",
             url = "https://www.projectinvictus.it/dimagrire-in-una-settimana/",
-            publishedDate = "2025-01-10"
+            publishedDate = "2025-01-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.BODYCOMP,
@@ -8885,7 +10293,8 @@ object InvictusKnowledge {
                 "20% per le donne). ",
             articleTitle = "Mini cut: cos’è e come impostarlo in fase di massa",
             url = "https://www.projectinvictus.it/mini-cut/",
-            publishedDate = "2024-11-16"
+            publishedDate = "2024-11-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.BODYCOMP,
@@ -8895,7 +10304,8 @@ object InvictusKnowledge {
                 "fase di “grassa” e non di “massa”. ",
             articleTitle = "Dieta donna nel bodybuilding e in palestra",
             url = "https://www.projectinvictus.it/dieta-donne-bodybuilding/",
-            publishedDate = "2024-07-31"
+            publishedDate = "2024-07-31",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.BODYCOMP,
@@ -8904,7 +10314,8 @@ object InvictusKnowledge {
                 "Luca può continuare con questo schema di incremento. ",
             articleTitle = "Reverse diet: come impostarla",
             url = "https://www.projectinvictus.it/reverse-diet/",
-            publishedDate = "2024-03-07"
+            publishedDate = "2024-03-07",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.BODYCOMP,
@@ -8914,7 +10325,8 @@ object InvictusKnowledge {
                 "e la performance. ",
             articleTitle = "Nutrient timing dei pasti per la palestra e il bodybuilding",
             url = "https://www.projectinvictus.it/nutrient-timing/",
-            publishedDate = "2021-11-02"
+            publishedDate = "2021-11-02",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.BODYCOMP,
@@ -8923,7 +10335,8 @@ object InvictusKnowledge {
                 "bodybuilder di 100 kg risulterebbe grasso anche col 5% di FM (Fat Mass, massa grassa). ",
             articleTitle = "Le calorie fanno ingrassare veramente?",
             url = "https://www.projectinvictus.it/una-calorie-e-un-caloria-vediamo-di-fare-chiarezza/",
-            publishedDate = "2021-11-01"
+            publishedDate = "2021-11-01",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.BODYCOMP,
@@ -8932,7 +10345,8 @@ object InvictusKnowledge {
                 "il 22% per le donne. ",
             articleTitle = "Dieta per ingrassare velocemente",
             url = "https://www.projectinvictus.it/dieta-per-ingrassare/",
-            publishedDate = "2020-02-28"
+            publishedDate = "2020-02-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.BODYCOMP,
@@ -8942,7 +10356,8 @@ object InvictusKnowledge {
                 "tra donne, si sono osservate perdite fino a 16kg e aumenti fino a 36kg in 12 mesi! ",
             articleTitle = "Ormoni femminili: cosa conoscere sugli estrogeni",
             url = "https://www.projectinvictus.it/ormoni-femminili-cosa-conoscere-sugli-estrogeni/",
-            publishedDate = "2019-06-25"
+            publishedDate = "2019-06-25",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SUPPLEMENT,
@@ -8952,7 +10367,8 @@ object InvictusKnowledge {
                 "allenamenti a digiuno. ",
             articleTitle = "Quando assumere proteine: prima o dopo allenamento?",
             url = "https://www.projectinvictus.it/proteine-prima-o-dopo-allenamento/",
-            publishedDate = "2023-09-24"
+            publishedDate = "2023-09-24",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SUPPLEMENT,
@@ -8962,7 +10378,8 @@ object InvictusKnowledge {
                 "e 50%. ",
             articleTitle = "Creatina monoidrato per la palestra",
             url = "https://www.projectinvictus.it/creatina-monoidrato/",
-            publishedDate = "2022-01-10"
+            publishedDate = "2022-01-10",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SUPPLEMENT,
@@ -8973,7 +10390,8 @@ object InvictusKnowledge {
                 "prevalentemente glucidico. ",
             articleTitle = "Creatina e caffeina: effetti positivi e negativi",
             url = "https://www.projectinvictus.it/creatina-caffeina/",
-            publishedDate = "2021-12-27"
+            publishedDate = "2021-12-27",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SUPPLEMENT,
@@ -8983,7 +10401,8 @@ object InvictusKnowledge {
                 "al 40% . ",
             articleTitle = "Creatina nel bodybuilding: assunzione in fase di definizione muscolare",
             url = "https://www.projectinvictus.it/creatina-definizione-muscolare/",
-            publishedDate = "2021-12-12"
+            publishedDate = "2021-12-12",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SUPPLEMENT,
@@ -8992,7 +10411,8 @@ object InvictusKnowledge {
                 "creatina in 3-4 settimane (secondo alcuni studi, mediamente in 28 giorni). ",
             articleTitle = "Creatina in palestra: cos’è, a cosa serve, benefici e controindicazioni",
             url = "https://www.projectinvictus.it/creatina-a-cosa-serve/",
-            publishedDate = "2021-11-30"
+            publishedDate = "2021-11-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SUPPLEMENT,
@@ -9001,7 +10421,8 @@ object InvictusKnowledge {
                 "muscolari di creatina appena del 40% rispetto al proprio limite massimo. ",
             articleTitle = "Creatina in palestra: cos’è, a cosa serve, benefici e controindicazioni",
             url = "https://www.projectinvictus.it/creatina-a-cosa-serve/",
-            publishedDate = "2021-11-30"
+            publishedDate = "2021-11-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SUPPLEMENT,
@@ -9011,7 +10432,8 @@ object InvictusKnowledge {
                 "alla norma e col metodo del carico . ",
             articleTitle = "Creatina in palestra: cos’è, a cosa serve, benefici e controindicazioni",
             url = "https://www.projectinvictus.it/creatina-a-cosa-serve/",
-            publishedDate = "2021-11-30"
+            publishedDate = "2021-11-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SUPPLEMENT,
@@ -9021,7 +10443,8 @@ object InvictusKnowledge {
                 "che da quella introdotta con la dieta; la sua emivita è di circa 15 giorni. ",
             articleTitle = "Vitamina D per l’allenamento",
             url = "https://www.projectinvictus.it/vitamina-d/",
-            publishedDate = "2021-08-16"
+            publishedDate = "2021-08-16",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SUPPLEMENT,
@@ -9030,7 +10453,8 @@ object InvictusKnowledge {
                 "hanno la caratteristica di avere una buona composizione aminoacidica. ",
             articleTitle = "Proteine del siero del latte: cosa sono e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-del-siero-del-latte/",
-            publishedDate = "2021-05-20"
+            publishedDate = "2021-05-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SUPPLEMENT,
@@ -9039,7 +10463,8 @@ object InvictusKnowledge {
                 "negli animali allevati al pascolo, dove sono presenti tra 2 e 6 volte più omega 3. ",
             articleTitle = "La Dieta Mountain Dog (Parte 2)",
             url = "https://www.projectinvictus.it/la-dieta-mountain-dog-parte-2/",
-            publishedDate = "2014-05-05"
+            publishedDate = "2014-05-05",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SUPPLEMENT,
@@ -9048,7 +10473,8 @@ object InvictusKnowledge {
                 "contengono fino al 25%. ",
             articleTitle = "BCAA sempre e comunque utili?",
             url = "https://www.projectinvictus.it/bcaa-sempre-e-comunque-utili/",
-            publishedDate = "2014-03-13"
+            publishedDate = "2014-03-13",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_NUT,
@@ -9058,7 +10484,8 @@ object InvictusKnowledge {
                 "minore presenza di minerali. ",
             articleTitle = "Le 6 migliori proteine in polvere",
             url = "https://www.projectinvictus.it/migliori-proteine-in-polvere/",
-            publishedDate = "2024-11-03"
+            publishedDate = "2024-11-03",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_NUT,
@@ -9068,7 +10495,8 @@ object InvictusKnowledge {
                 "persone accusano una sensazione di debolezza durante i giorni della DMD. ",
             articleTitle = "Dieta Mima Digiuno: come funziona, benefici e cosa mangiare",
             url = "https://www.projectinvictus.it/dieta-mima-digiuno/",
-            publishedDate = "2024-07-30"
+            publishedDate = "2024-07-30",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_NUT,
@@ -9078,7 +10506,8 @@ object InvictusKnowledge {
                 "osteoporosi, anemia, dermatite che affliggono quasi il 50% dei pazienti. ",
             articleTitle = "Glutine: cos’è, dove si trova, perché fa male",
             url = "https://www.projectinvictus.it/glutine/",
-            publishedDate = "2023-06-28"
+            publishedDate = "2023-06-28",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_NUT,
@@ -9087,7 +10516,8 @@ object InvictusKnowledge {
                 "meccanismi immunologici, interessano circa il 4% della popolazione adulta. ",
             articleTitle = "Allergie alimentari: sintomi, cause, rimedi",
             url = "https://www.projectinvictus.it/allergie-alimentari/",
-            publishedDate = "2022-12-21"
+            publishedDate = "2022-12-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_NUT,
@@ -9096,7 +10526,8 @@ object InvictusKnowledge {
                 "massimo di 2 ore dall’ingestione dell’ alimento offending . ",
             articleTitle = "Allergie alimentari: sintomi, cause, rimedi",
             url = "https://www.projectinvictus.it/allergie-alimentari/",
-            publishedDate = "2022-12-21"
+            publishedDate = "2022-12-21",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_NUT,
@@ -9106,7 +10537,8 @@ object InvictusKnowledge {
                 "assenti. ",
             articleTitle = "Proteine del siero del latte: cosa sono e a cosa servono?",
             url = "https://www.projectinvictus.it/proteine-del-siero-del-latte/",
-            publishedDate = "2021-05-20"
+            publishedDate = "2021-05-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_NUT,
@@ -9117,7 +10549,8 @@ object InvictusKnowledge {
                 "alle altre sostanze presenti nel latte. ",
             articleTitle = "Proteine isolate: benefici e controindicazioni",
             url = "https://www.projectinvictus.it/proteine-isolate/",
-            publishedDate = "2021-04-20"
+            publishedDate = "2021-04-20",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.SAFETY_NUT,
@@ -9127,7 +10560,8 @@ object InvictusKnowledge {
                 "contengono proteine per il 10-15% del totale. ",
             articleTitle = "Proteine vegetali per la palestra",
             url = "https://www.projectinvictus.it/proteine-vegetali/",
-            publishedDate = "2020-07-24"
+            publishedDate = "2020-07-24",
+            kind = SourceKind.DIVULGATIVE
         )
     )
 

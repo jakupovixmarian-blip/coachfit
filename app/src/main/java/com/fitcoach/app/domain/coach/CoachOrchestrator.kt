@@ -94,8 +94,16 @@ class CoachOrchestrator @Inject constructor(
     ): CoachTurnResult {
         val deadlineAt = deadlineMs?.let { System.currentTimeMillis() + it }
         val messages = mutableListOf<ChatMessageDto>()
-        messages += ChatMessageDto(role = "system", content = systemPrompt)
-        messages += ChatMessageDto(role = "system", content = contextPrompt)
+        // Un solo messaggio system. Due messaggi system consecutivi sono
+        // formalmente validi, ma alcuni provider dietro OpenRouter (Parasail)
+        // li rifiutano con "System message must be at the beginning": la
+        // richiesta falliva in base a chi serviva la chiamata.
+        messages += ChatMessageDto(
+            role = "system",
+            content = listOf(systemPrompt, contextPrompt)
+                .filter { it.isNotBlank() }
+                .joinToString("\n\n")
+        )
         messages += history
         messages += ChatMessageDto(role = "user", content = userMessage)
 

@@ -17,6 +17,7 @@ import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
 import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
 import com.fitcoach.app.domain.coach.AiProgramGenerationService
+import com.fitcoach.app.domain.coach.tools.ConsultInvictusTool
 import com.fitcoach.app.domain.coach.CoachOrchestrator
 import com.fitcoach.app.domain.coach.tools.CoachTool
 import com.fitcoach.app.domain.coach.tools.CoachToolRegistry
@@ -163,7 +164,10 @@ class OpenRouterLiveProbe {
                     userRepo, foodRepo, exerciseRepo, nutritionRepo,
                     workoutRepo, planVersionRepo, db, json
                 ),
-                SolveMealPortionsTool(userRepo, foodRepo)
+                SolveMealPortionsTool(userRepo, foodRepo),
+                // Senza questo il modello non ha accesso alla metodologia: e il
+                // caso che il probe deve coprire, non solo la generazione.
+                ConsultInvictusTool()
             )
             val service = AiProgramGenerationService(
                 CoachOrchestrator(AiClient(api, json), CoachToolRegistry(tools), json),

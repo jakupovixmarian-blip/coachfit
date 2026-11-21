@@ -1,6 +1,7 @@
 package com.fitcoach.app.collaudo
 
 import com.fitcoach.app.domain.knowledge.InvictusKnowledge
+import com.fitcoach.app.domain.model.SourceKind
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
@@ -63,6 +64,29 @@ class InvictusKnowledgeCoverageTest {
     }
 
     @Test
+    fun `deload ha una base solida grazie alla letteratura primaria`() {
+        // Le fonti divulgative davano 2 regole: troppo poche per decidere
+        // quando scaricare. Ora ci sono studi indicizzati su PubMed.
+        val deload = InvictusKnowledge.forCategory(InvictusKnowledge.Category.of("DELOAD")!!)
+        assertThat(deload.size).isAtLeast(5)
+    }
+
+    @Test
+    fun `le regole da letteratura primaria sono distinguibili`() {
+        // Chi legge una regola deve poter vedere se il numero viene da una
+        // meta-analisi o da un articolo divulgativo.
+        val primarie = InvictusKnowledge.rules.filter {
+            it.kind == SourceKind.SYSTEMATIC_REVIEW || it.kind == SourceKind.INDIVIDUAL_STUDY
+        }
+        assertThat(primarie).isNotEmpty()
+        primarie.forEach { r ->
+            assertThat(r.url).contains("pubmed.ncbi.nlm.nih.gov")
+        }
+        val meta = primarie.filter { it.kind == SourceKind.SYSTEMATIC_REVIEW }
+        assertThat(meta).isNotEmpty()
+    }
+
+    @Test
     fun `le categorie di parametro hanno una base solida`() {
         // Sotto 3 regole il parametro e' fragile: il modello ha poco su cui
         // basarsi e tende a inventare. Deload e sostituzioni sono i piu' sottili
@@ -80,7 +104,9 @@ class InvictusKnowledgeCoverageTest {
         InvictusKnowledge.rules.forEach { r ->
             assertThat(r.statement).isNotEmpty()
             assertThat(r.articleTitle).isNotEmpty()
-            assertThat(r.url).startsWith("https://www.projectinvictus.it/")
+            // Due fonti ammesse: divulgativa (Project InVictus) e primaria
+            // (PubMed). Entrambe verificabili; il kind dice quale.
+            assertThat(r.url).matches("https://(www\\.projectinvictus\\.it|pubmed\\.ncbi\\.nlm\\.nih\\.gov)/.*")
             assertThat(r.publishedDate).isNotEmpty()
         }
     }

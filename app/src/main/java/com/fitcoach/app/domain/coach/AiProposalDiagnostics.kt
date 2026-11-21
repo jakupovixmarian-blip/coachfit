@@ -48,23 +48,15 @@ object AiProposalDiagnostics {
         val trainingDays = proposal.workout.days.map { it.dayIndex }.distinct().sorted()
         if (trainingDays.size != profile.trainingDaysPerWeek) {
             errors += "giorni allenamento: attesi ${profile.trainingDaysPerWeek}, " +
-                "ricevuti ${trainingDays.size} (${trainingDays.joinToString()})"
+                "ricevuti ${trainingDays.size} (${trainingDays.joinToString()}). " +
+                "days deve elencare solo le sedute: i giorni di riposo non vanno inseriti."
         }
         if (trainingDays.any { it !in 0..6 }) {
             errors += "giorni allenamento: indici fuori intervallo 0-6 " +
                 "(${trainingDays.filterNot { it in 0..6 }.joinToString()})"
         }
-        val expectedRest = (0..6).filterNot { it in trainingDays }
-        val calendarWorkout = proposal.calendar.workoutDayIndices.distinct().sorted()
-        if (calendarWorkout != trainingDays) {
-            errors += "calendario workout: attesi ${trainingDays.joinToString()}, " +
-                "ricevuti ${calendarWorkout.joinToString()}"
-        }
-        val calendarRest = proposal.calendar.restDayIndices.distinct().sorted()
-        if (calendarRest != expectedRest) {
-            errors += "calendario riposo: attesi ${expectedRest.joinToString()}, " +
-                "ricevuti ${calendarRest.joinToString()}"
-        }
+        // Il calendario non si controlla piu': e' derivato da workout.days in
+        // SubmitFullProgramTool, quindi non puo' divergere.
 
         val nutritionIndices = proposal.nutrition.days.map { it.dayIndex }.sorted()
         if (nutritionIndices != (0..6).toList()) {

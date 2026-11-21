@@ -91,6 +91,9 @@ class ConsultInvictusTool @Inject constructor() : CoachTool {
                 "categoria" to JsonOut.str(r.category.label),
                 "regola" to JsonOut.str(r.statement),
                 "fonte" to JsonOut.str(r.articleTitle),
+                // Il modello deve sapere se un numero viene da una meta-analisi
+                // o da un articolo divulgativo: non hanno lo stesso peso.
+                "tipo_fonte" to JsonOut.str(r.kind.label),
                 "url" to JsonOut.str(r.url)
             )
         }

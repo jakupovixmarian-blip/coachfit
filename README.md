@@ -308,6 +308,26 @@ unico rigenera solo la parte richiesta; in caso di provider non raggiungibile o 
 non valida **nessun piano viene alterato** e la rigenerazione è **annullabile** (i piani
 precedenti vengono riattivati).
 
+### Un solo cancello, una sola verita
+
+`ProgramGenerationEngine.validate` decide il salvataggio;
+`AiProposalDiagnostics.analyze` spiega al modello cosa correggere. Sono due
+implementazioni della stessa regola, e sono divergite: il vincolo dolce/salato
+della colazione esisteva solo nella diagnostica, quindi un piano con albume a
+colazione "dolce" veniva respinto e poi **salvato se il modello insisteva**.
+Ora `validate` applica lo stesso vincolo, e `GateDiagnosticsAgreementTest`
+blocca future divergenze: se la diagnostica trova una violazione, il cancello
+non puo' accettare.
+
+Il **calendario** (`workoutDayIndices` / `restDayIndices`) non era
+informazione: era un duplicato di `workout.days`, confrontato solo con esso.
+Chiederlo al modello produceva incoerenze (sedute 0,1,2,3 e calendario
+0,1,3,4) che bloccavano programmi per il resto corretti. Ora
+`SubmitFullProgramTool` lo **deriva** da `workout.days`: una classe intera di
+errori eliminata senza perdere nulla. Anche lo schema dichiara che `days`
+contiene **solo le sedute**, non i sette giorni della settimana — era questa
+ambiguita' a produrre tre giorni vuoti su sette.
+
 ## Check-in settimanale adattivo (l'AI come decisore)
 
 Il **check-in settimanale** è condotto dall'**AI centrale** (`WeeklyCheckInService` →
@@ -346,8 +366,13 @@ applicabilità**. La schermata Impostazioni → Fonti e versioni mostra le fonti
 
 Le soglie di volume non possono nascere da un motore di calcolo: 10 serie di polpacci
 per un avanzato non sono né giuste né sbagliate in assoluto, dipendono dalla metodologia.
-`InvictusCorpus` porta dentro l'app **159 regole** estratte dagli articoli di
-projectinvictus.it, ognuna con titolo, URL e data della fonte.
+`InvictusCorpus` porta dentro l'app **991 regole** estratte dagli articoli di
+projectinvictus.it, ognuna con titolo, URL e data della fonte. Il corpus è
+integrato con **letteratura primaria da PubMed** per i parametri che la fonte
+divulgativa copre male (deload, progressione, volume): 10 regole da
+revisioni sistematiche/meta-analisi e 36 da studi individuali, oltre a 947
+regole divulgative. Ogni regola dichiara `tipo_fonte`, così il modello sa se
+sta leggendo una meta-analisi o un articolo di blog.
 
 Ogni regola è una frase prescrittiva con un numero verificabile (serie, ripetizioni,
 grammi, kcal, percentuali), filtrata dalle categorie metodologiche del sito. Sono
@@ -407,9 +432,10 @@ Se una categoria non serve a generare, non è nel corpus. Ogni regola contiene u
 numero verificabile e il link all'articolo: "12-20 serie a settimana in
 ricomposizione", "RPE minimo 7,5", "una settimana di scarico ogni 3-5".
 
-Due categorie restano sottili nella fonte e sono dichiarate tali: deload (2
-regole) e sostituzioni alimentari (1). Non vengono riempite con frasi generiche
-per fare numero.
+Due categorie restano sottili nella fonte divulgativa e sono dichiarate tali:
+deload e sostituzioni alimentari. Per il deload la lacuna è colmata dalle fonti
+primarie (vedi `InvictusKnowledgeCoverageTest`), non da frasi generiche: il test
+verifica che ogni categoria critica abbia una base solida, non solo un conteggio.
 
 Ogni voce torna con `fonte` e `url`, così la proposta del coach è verificabile. Senza
 `argomento` lo strumento dà la prima regola di ogni tema: serve a orientarsi, non a
@@ -418,11 +444,14 @@ leggere tutto. Un argomento senza risultati risponde `ok:false` invece di invent
 Il catalogo completo resta in app e continua a funzionare offline; solo la chat AI
 richiede rete.
 
-**Rigenerazione.** `tools/corpus/fetch_invictus.py` legge i 1.357 articoli via REST API
-pubblica di WordPress (`/wp-json/wp/v2/posts`, `robots.txt` consente la lettura) e
-`tools/corpus/build_invictus_corpus.py` filtra le affermazioni e riscrive la tabella
-Kotlin. Il filtro scarta tabelle, righe di scheda, frasi senza unità di misura e
-contenuti enciclopedici sugli alimenti.
+**Rigenerazione.** La pipeline è riproducibile da zero in `tools/corpus/`:
+`fetch_invictus.py` legge i 1.357 articoli via REST API pubblica di WordPress
+(`/wp-json/wp/v2/posts`, `robots.txt` consente la lettura), `fetch_primary.py`
+interroga PubMed/NCBI, `extract_rules.py` + `filter_rules.py` filtrano le
+affermazioni, `build_invictus_v2.py` riscrive la tabella Kotlin. Il filtro scarta
+tabelle, righe di scheda, frasi senza unità di misura e contenuti enciclopedici
+sugli alimenti. Il parsing PubMed usa `esummary` (JSON strutturato): il parsing
+testuale di `efetch` produceva titoli errati (date, DOI) al posto dei titoli.
 
 ## AI configurabile
 

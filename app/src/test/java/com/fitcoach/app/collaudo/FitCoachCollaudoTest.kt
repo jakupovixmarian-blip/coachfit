@@ -253,10 +253,18 @@ class FitCoachCollaudoTest {
     fun `FASE 2 - la sostituzione alimentare mantiene i macro comparabili`() = runTest {
         generate()
         val plan = nutritionRepository.getActivePlan()!!
-        val day = plan.days.first { it.meals.any { m -> m.entries.any { e -> e.foodName == "Petto di pollo" } } }
-        val entry = day.meals.flatMap { it.entries }.first { it.foodName == "Petto di pollo" }
+        // Quale fonte proteica capiti nel piano dipende dal fixture: cercare
+        // "Petto di pollo" legava il test a un dettaglio irrilevante. Serve una
+        // qualsiasi fonte proteica, e un'altra con lo stesso ruolo.
+        val entry = plan.days.flatMap { it.meals }.flatMap { it.entries }
+            .first { it.protein >= 15.0 }
         val original = foodRepository.getById(entry.foodItemId)!!
-        val candidate = foodRepository.getByName("Fesa di tacchino")!!
+        val candidate = FoodSeedData.foods.first {
+            it.id != original.id &&
+                it.category == original.category &&
+                it.proteinPer100g >= 15.0
+        }
+        val day = plan.days.first { d -> d.meals.any { m -> m.entries.any { it.id == entry.id } } }
         val preview = substitutionRepository.preview(entry.id, day.dayIndex, candidate)
         assertThat(preview).isNotNull()
         assertThat(preview!!.substituteGrams).isGreaterThan(0.0)

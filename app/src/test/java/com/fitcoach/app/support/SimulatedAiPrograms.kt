@@ -13,6 +13,7 @@ import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.ExerciseCategory
 import com.fitcoach.app.domain.model.FoodItem
+import com.fitcoach.app.domain.nutrition.BreakfastConstraint
 import com.fitcoach.app.domain.model.MealSlot
 import com.fitcoach.app.domain.model.MuscleGroup
 import com.fitcoach.app.domain.model.SplitType
@@ -141,7 +142,7 @@ object SimulatedAiPrograms {
         val carbs: List<FoodItem>,
         val fats: List<FoodItem>,
         val veggies: List<FoodItem>,
-        val fruits: List<FoodItem>
+        val fruits: List<FoodItem>,
     )
 
     private fun buildBank(foods: List<FoodItem>): Bank {
@@ -180,9 +181,15 @@ object SimulatedAiPrograms {
         val isBreakfast = slot == MealSlot.BREAKFAST
         (if (isBreakfast) pick(bank.fruits, dayIndex + mealIndex)
         else pick(bank.veggies, dayIndex + mealIndex))?.let { foods += it }
-        pick(bank.carbs, dayIndex * 3 + mealIndex)?.let { foods += it }
-        pick(bank.proteins, dayIndex * 5 + mealIndex)?.let { foods += it }
-        pick(bank.fats, dayIndex * 2 + mealIndex)?.let { foods += it }
+        // A colazione il fixture deve rispettare la preferenza dolce/salata:
+        // altrimenti i test falliscono per un difetto del fixture e non del
+        // codice. La classificazione non va duplicata: si usa quella reale.
+        fun allowed(food: FoodItem): Boolean =
+            !isBreakfast || BreakfastConstraint.flavorOf(food) != BreakfastConstraint.Flavor.SAVORY
+
+        pick(bank.carbs.filter(::allowed), dayIndex * 3 + mealIndex)?.let { foods += it }
+        pick(bank.proteins.filter(::allowed), dayIndex * 5 + mealIndex)?.let { foods += it }
+        pick(bank.fats.filter(::allowed), dayIndex * 2 + mealIndex)?.let { foods += it }
         return foods
     }
 

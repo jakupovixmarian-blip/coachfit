@@ -50,8 +50,10 @@ class ConsultInvictusToolTest {
             val obj = r.jsonObject
             assertThat(obj["regola"]!!.jsonPrimitive.content).isNotEmpty()
             assertThat(obj["fonte"]!!.jsonPrimitive.content).isNotEmpty()
+            // Due fonti ammesse: divulgativa (Project InVictus) e primaria
+            // (PubMed). Il campo "tipo_fonte" dice quale.
             assertThat(obj["url"]!!.jsonPrimitive.content)
-                .startsWith("https://www.projectinvictus.it/")
+                .matches("https://(www\\.projectinvictus\\.it|pubmed\\.ncbi\\.nlm\\.nih\\.gov)/.*")
         }
     }
 

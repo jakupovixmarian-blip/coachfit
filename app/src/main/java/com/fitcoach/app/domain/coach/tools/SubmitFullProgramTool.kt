@@ -8,6 +8,7 @@ import com.fitcoach.app.data.repository.NutritionRepository
 import com.fitcoach.app.data.repository.PlanVersionRepository
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.data.repository.WorkoutRepository
+import com.fitcoach.app.domain.coach.AiCalendarProposal
 import com.fitcoach.app.domain.coach.AiProgramProposalJson
 import com.fitcoach.app.domain.coach.ProgramGenerationEngine
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
@@ -67,12 +68,15 @@ class SubmitFullProgramTool @Inject constructor(
         "workout" to Schema.freeObject(
             "Oggetto {split (FULL_BODY|UPPER_LOWER|PUSH_PULL_LEGS|CUSTOM), rationale, " +
                 "days:[{dayIndex, title, muscleGroups:[...], exercises:[{exerciseName, sets, minReps, " +
-                "maxReps, restSeconds, targetRir, technique, techniqueReason}]}]}."
+                "maxReps, restSeconds, targetRir, technique, techniqueReason}]}]}. " +
+                "IMPORTANTE: days contiene ESATTAMENTE i giorni di allenamento del profilo " +
+                "(uno per seduta, dayIndex 0-6), non i sette giorni della settimana: i giorni " +
+                "di riposo NON vanno inseriti e ogni voce deve avere almeno 6 serie."
         ),
         "calendar" to Schema.freeObject(
-            "Oggetto {workoutDayIndices:[...], restDayIndices:[...]} coerente con i giorni allenamento."
+            "Opzionale e ignorato: il calendario viene derivato da workout.days."
         ),
-        required = listOf("nutrition", "workout", "calendar"),
+        required = listOf("nutrition", "workout"),
         additionalProperties = true
     )
 
@@ -87,8 +91,19 @@ class SubmitFullProgramTool @Inject constructor(
                 (JsonArgs(arguments).string("scope") ?: "BOTH").trim().uppercase()
             )
         }.getOrDefault(ProgramGenerationEngine.Scope.BOTH)
-        val decoded = AiProgramProposalJson.decode(json, json.encodeToString(JsonObject.serializer(), arguments))
+        val raw = AiProgramProposalJson.decode(json, json.encodeToString(JsonObject.serializer(), arguments))
             ?: return fail("Struttura non valida: invia un singolo oggetto conforme allo schema.")
+        // Il calendario non aggiunge informazione: e' interamente derivabile dai
+        // giorni presenti in workout.days. Chiederlo al modello produceva solo
+        // incoerenze (sedute 0,1,2,3 e calendario 0,1,3,4) che bloccavano
+        // programmi per il resto corretti.
+        val trainingIndices = raw.workout.days.map { it.dayIndex }.distinct().sorted()
+        val decoded = raw.copy(
+            calendar = AiCalendarProposal(
+                workoutDayIndices = trainingIndices,
+                restDayIndices = (0..6).filterNot { it in trainingIndices }
+            )
+        )
 
         val foods = FoodFilter.allowedFoods(foodRepository.getAll(), profile)
         val exercises = exerciseRepository.getAll()
