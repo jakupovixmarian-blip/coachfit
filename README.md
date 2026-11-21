@@ -690,22 +690,22 @@ con `sdk.dir=...`.
 
 ### Download dell'APK gia compilato
 
-L'APK debug della versione corrente (2.5.0, versionCode 31) e pubblicato su:
+L'APK debug della versione corrente (2.5.1, versionCode 32) e pubblicato su:
 
 - Pagina di download: <https://work-1-htenipprquxeyoak.prod-runtime.all-hands.dev/>
-- File diretto: <https://work-1-htenipprquxeyoak.prod-runtime.all-hands.dev/FitCoach-2.5.0-debug.apk>
+- File diretto: <https://work-1-htenipprquxeyoak.prod-runtime.all-hands.dev/FitCoach-2.5.1-debug.apk>
 
 Il server statico serve solo la cartella `/workspace/apk-download`, che contiene gli APK e
 la pagina. Non espone il codice sorgente. Il link e valido finche il processo
 `python3 -m http.server 12000` resta in esecuzione nell'ambiente di lavoro.
 
-SHA-256 dell'APK debug 2.5.0:
+SHA-256 dell'APK debug 2.5.1:
 
 ```
-1cc474558271ee72901268a27b52dbd7e9b5470abd0b61cc4b89c0c66d306ebf
+b88cd20b6139bfbbd98880d6ef79c6627146d7f2f5db4fbf02adc34e55e64f75
 ```
 
-Confrontalo dopo il download con `sha256sum FitCoach-2.5.0-debug.apk`: se non coincide, il
+Confrontalo dopo il download con `sha256sum FitCoach-2.5.1-debug.apk`: se non coincide, il
 file e arrivato incompleto o e un'altra build.
 
 ### Dove sono Ricette e Salute
