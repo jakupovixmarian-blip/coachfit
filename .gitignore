@@ -31,3 +31,4 @@ keystore.properties
 
 # Build artifacts / dist
 /dist/
+__pycache__/

@@ -132,9 +132,13 @@ object AiProposalDiagnostics {
                                 ).firstOrNull()?.let { offending ->
                                     val actual = BreakfastConstraint.flavorOf(offending)
                                     val wanted = if (actual == BreakfastConstraint.Flavor.SAVORY) "dolce" else "salata"
+                                    val suitable = BreakfastConstraint
+                                        .suitable(profile.breakfastPreference, foods)
                                     errors += "giorno ${day.dayIndex}, colazione: " +
                                         "'${offending.name}' e ${actual.name.lowercase()}, ma la colazione " +
-                                        "scelta e $wanted: sostituiscilo con alimenti adatti"
+                                        "scelta e $wanted: sostituiscilo" +
+                                        if (suitable.isEmpty()) " con alimenti adatti"
+                                        else " con uno di questi (nome esatto): ${suitable.joinToString()}"
                                 }
                             }
                             val factor = entry.grams / 100.0

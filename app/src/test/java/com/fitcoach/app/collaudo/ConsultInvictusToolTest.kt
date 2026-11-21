@@ -37,8 +37,8 @@ class ConsultInvictusToolTest {
         val regole = result["regole"]!!.jsonArray
         assertThat(regole.size).isAtLeast(5)
         // Un tema per voce: serve a orientarsi, non a leggere tutto.
-        val temi = regole.map { it.jsonObject["tema"]!!.jsonPrimitive.content }
-        assertThat(temi.toSet().size).isEqualTo(temi.size)
+        val categorie = regole.map { it.jsonObject["categoria"]!!.jsonPrimitive.content }
+        assertThat(categorie.toSet().size).isEqualTo(categorie.size)
     }
 
     @Test
@@ -64,6 +64,7 @@ class ConsultInvictusToolTest {
         // Il filtro deve restituire attinenza, non il corpus intero.
         val totale = result["totaleTrovate"]!!.jsonPrimitive.int
         assertThat(regole.size).isAtMost(totale)
+        assertThat(totale).isAtLeast(regole.size)
     }
 
     @Test

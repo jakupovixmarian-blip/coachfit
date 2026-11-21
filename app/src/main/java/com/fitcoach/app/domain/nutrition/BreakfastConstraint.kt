@@ -69,6 +69,19 @@ object BreakfastConstraint {
         return foods.filter { flavorOf(it) == opposite }
     }
 
+    /**
+     * Alimenti del catalogo adatti alla preferenza, per il messaggio di errore.
+     * Dire "usa alimenti adatti" senza nominarli lascia il modello a indovinare.
+     */
+    fun suitable(preference: BreakfastPreference, foods: List<FoodItem>, limit: Int = 8): List<String> {
+        val wanted = when (preference) {
+            BreakfastPreference.SWEET -> Flavor.SWEET
+            BreakfastPreference.SAVORY -> Flavor.SAVORY
+            else -> return emptyList()
+        }
+        return foods.filter { flavorOf(it) == wanted }.map { it.name }.take(limit)
+    }
+
     /** Messaggio per il modello: cosa ha sbagliato e come rimediare. */
     fun hint(preference: BreakfastPreference): String = when (preference) {
         BreakfastPreference.SWEET ->

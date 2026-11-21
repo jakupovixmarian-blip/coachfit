@@ -1,9 +1,7 @@
 package com.fitcoach.app.domain.coach.tools
 
-import com.fitcoach.app.domain.knowledge.InvictusCorpus
-import com.fitcoach.app.domain.knowledge.KnowledgeCorpus
+import com.fitcoach.app.domain.knowledge.InvictusKnowledge
 import com.fitcoach.app.domain.knowledge.InvictusExercises
-import com.fitcoach.app.domain.knowledge.InvictusNutrition
 import com.fitcoach.app.domain.knowledge.InvictusTechniques
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -59,50 +57,38 @@ class ConsultInvictusTool @Inject constructor() : CoachTool {
         }
     }
 
-    private fun training(topic: String?, limit: Int): String {
-        val all = InvictusCorpus.rules.filter { it.area == KnowledgeCorpus.Area.TRAINING }
-        val filtered = if (topic.isNullOrBlank()) {
-            // Senza argomento: la prima regola di ogni tema, per dare il quadro.
-            all.groupBy { it.topic }.values.mapNotNull { it.firstOrNull() }
-        } else {
-            all.filter { it.matches(topic) }
-        }
-        if (filtered.isEmpty()) return fail("Nessuna regola di allenamento per '$topic'. Temi disponibili: ${topics()}.")
+    private fun training(topic: String?, limit: Int): String =
+        fromKnowledge(InvictusKnowledge.Area.ALLENAMENTO, "allenamento", topic, limit)
 
-        val items = filtered.take(limit).map { r ->
-            JsonOut.obj(
-                "tema" to JsonOut.str(r.topic.label),
-                "regola" to JsonOut.str(r.statement),
-                "fonte" to JsonOut.str(r.articleTitle),
-                "url" to JsonOut.str(r.url)
-            )
-        }
-        return JsonOut.encode(
-            JsonOut.obj(
-                "ok" to JsonOut.bool(true),
-                "area" to JsonOut.str("allenamento"),
-                "totaleTrovate" to JsonOut.num(filtered.size),
-                "regole" to JsonOut.arr(items)
-            )
-        )
-    }
+    private fun nutrition(topic: String?, limit: Int): String =
+        fromKnowledge(InvictusKnowledge.Area.NUTRIZIONE, "nutrizione", topic, limit)
 
-    private fun nutrition(topic: String?, limit: Int): String {
-        val all = InvictusNutrition.rules
+    /**
+     * Consulta [InvictusKnowledge]. Senza argomento da' una regola per
+     * categoria: serve a orientarsi tra i parametri, non a leggere tutto.
+     */
+    private fun fromKnowledge(
+        area: InvictusKnowledge.Area,
+        areaName: String,
+        topic: String?,
+        limit: Int
+    ): String {
+        val pool = InvictusKnowledge.forArea(area)
         val filtered = if (topic.isNullOrBlank()) {
-            all.groupBy { it.topic }.values.mapNotNull { it.firstOrNull() }
-        } else {
-            all.filter {
-                it.statement.contains(topic, ignoreCase = true) ||
-                    it.topic.label.contains(topic, ignoreCase = true) ||
-                    it.articleTitle.contains(topic, ignoreCase = true)
+            InvictusKnowledge.categoriesOf(area).mapNotNull { c ->
+                InvictusKnowledge.forCategory(c).firstOrNull()
             }
+        } else {
+            InvictusKnowledge.search(topic, area, limit = Int.MAX_VALUE)
         }
-        if (filtered.isEmpty()) return fail("Nessuna regola nutrizionale per '$topic'.")
+        if (filtered.isEmpty()) {
+            val cats = InvictusKnowledge.categoriesOf(area).joinToString { it.label }
+            return fail("Nessuna regola di $areaName per '$topic'. Categorie disponibili: $cats.")
+        }
 
         val items = filtered.take(limit).map { r ->
             JsonOut.obj(
-                "tema" to JsonOut.str(r.topic.label),
+                "categoria" to JsonOut.str(r.category.label),
                 "regola" to JsonOut.str(r.statement),
                 "fonte" to JsonOut.str(r.articleTitle),
                 "url" to JsonOut.str(r.url)
@@ -111,7 +97,7 @@ class ConsultInvictusTool @Inject constructor() : CoachTool {
         return JsonOut.encode(
             JsonOut.obj(
                 "ok" to JsonOut.bool(true),
-                "area" to JsonOut.str("nutrizione"),
+                "area" to JsonOut.str(areaName),
                 "totaleTrovate" to JsonOut.num(filtered.size),
                 "regole" to JsonOut.arr(items)
             )
@@ -175,13 +161,6 @@ class ConsultInvictusTool @Inject constructor() : CoachTool {
             )
         )
     }
-
-    private fun InvictusCorpus.Rule.matches(topic: String): Boolean =
-        statement.contains(topic, ignoreCase = true) ||
-            this.topic.label.contains(topic, ignoreCase = true) ||
-            articleTitle.contains(topic, ignoreCase = true)
-
-    private fun topics(): String = InvictusCorpus.Topic.entries.joinToString { it.label }
 
     private fun fail(message: String): String =
         JsonOut.encode(JsonOut.obj("ok" to JsonOut.bool(false), "errore" to JsonOut.str(message)))

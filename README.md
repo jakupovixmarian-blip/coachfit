@@ -382,10 +382,34 @@ gli serve, quando gli serve.
 
 | Area | Cosa restituisce | Voci |
 |---|---|---|
-| `allenamento` | Regole di metodo con numero e fonte | 159 |
-| `nutrizione` | Proteine, carboidrati, grassi, bilancio, timing | 134 |
+| `allenamento` | Split, frequenza, volume, RIR, recuperi, progressione, periodizzazione, deload | 391 |
+| `nutrizione` | Calorie, metabolismo, proteine, carboidrati, grassi, fibre, pasti, timing, ricariche | 554 |
 | `tecniche` | Come si esegue una tecnica d'intensità | 7 |
 | `esercizi` | Muscoli, esecuzione, errori, varianti | 141 |
+
+Le due aree sono divise in **35 categorie**, una per ogni parametro che il
+generatore deve decidere. Non sono sezioni tematiche: sono le decisioni che una
+scheda o un piano alimentare richiedono.
+
+| Allenamento | | Nutrizione | |
+|---|---|---|---|
+| Split | Frequenza | Calorie | Metabolismo |
+| Volume | Intensità, RIR/RPE | Proteine | Carboidrati |
+| Range ripetizioni | Recuperi | Grassi | Fibre |
+| Progressione | Periodizzazione | Numero pasti | Timing |
+| Deload | Affaticamento | Ricariche | Idratazione |
+| Tecniche | Esecuzione | Alcol | Sostituzioni |
+| Riscaldamento | Cardio | Aderenza | Lettura del peso |
+| Livello | Obiettivo | Composizione | Integratori |
+| Sicurezza | | Allergie | |
+
+Se una categoria non serve a generare, non è nel corpus. Ogni regola contiene un
+numero verificabile e il link all'articolo: "12-20 serie a settimana in
+ricomposizione", "RPE minimo 7,5", "una settimana di scarico ogni 3-5".
+
+Due categorie restano sottili nella fonte e sono dichiarate tali: deload (2
+regole) e sostituzioni alimentari (1). Non vengono riempite con frasi generiche
+per fare numero.
 
 Ogni voce torna con `fonte` e `url`, così la proposta del coach è verificabile. Senza
 `argomento` lo strumento dà la prima regola di ogni tema: serve a orientarsi, non a
