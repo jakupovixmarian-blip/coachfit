@@ -1,16 +1,14 @@
 package com.fitcoach.app.ui.anamnesis
 
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.performClick
-import com.fitcoach.app.MainActivity
 import com.fitcoach.app.domain.anamnesis.AnamnesisEngine
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.ui.theme.FitCoachTheme
@@ -38,7 +36,7 @@ import java.io.File
 class GenerateButtonClickTest {
 
     @get:Rule
-    val composeRule = createAndroidComposeRule<MainActivity>()
+    val composeRule = createComposeRule()
 
     private fun stateAfterConfirm(generating: Boolean, message: String? = null) = AnamnesisUiState(
         loading = false,
@@ -63,7 +61,7 @@ class GenerateButtonClickTest {
     @Test
     fun il_tocco_sul_pulsante_arriva_al_callback() {
         var premuto = 0
-        composeRule.activity.setContent {
+        composeRule.setContent {
             FitCoachTheme {
                 Surface(Modifier.fillMaxSize()) {
                     AnamnesisContent(
@@ -84,7 +82,7 @@ class GenerateButtonClickTest {
 
     @Test
     fun durante_la_generazione_lo_schermo_mostra_avanzamento_e_nessun_pulsante_muto() {
-        composeRule.activity.setContent {
+        composeRule.setContent {
             FitCoachTheme {
                 Surface(Modifier.fillMaxSize()) {
                     AnamnesisContent(

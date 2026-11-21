@@ -209,23 +209,6 @@ fun AiProvidersScreen(
                 }
             }
 
-            state.testStatus?.let { status ->
-                item {
-                    SectionCard {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = if (state.testOk == true) "✓ " else "✕ ",
-                                color = if (state.testOk == true) Emerald else ErrorRed,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(status, style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface)
-                        }
-                    }
-                }
-            }
-
             if (setupMode) {
                 item {
                     SectionCard {
@@ -262,6 +245,24 @@ fun AiProvidersScreen(
                             }
                         }
                     }
+                }
+            }
+        }
+
+        // L'esito sta fuori dalla lista: dentro finiva sotto la piega e chi
+        // premeva "Testa connessione" vedeva solo il pulsante tornare attivo,
+        // senza sapere se era andata.
+        state.testStatus?.let { status ->
+            SectionCard(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (state.testOk == true) "✓ " else "✕ ",
+                        color = if (state.testOk == true) Emerald else ErrorRed,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(status, style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }

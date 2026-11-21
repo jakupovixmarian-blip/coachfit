@@ -538,6 +538,20 @@ Lezioni:
   l'asserzione si legge il composable. Il titolo vero e' "Anamnesi iniziale - Il tuo profilo".
 - Controprova obbligatoria per i fix di timeout: rimuovere il budget e vedere il test
   fallire. Senza questo passaggio non si sa se il test guarda davvero il difetto.
+- **`createAndroidComposeRule<MainActivity>()` + `activity.setContent {}` e una doppia
+  composizione**: il NavHost reale resta in piedi in parallelo a quello del test, e sotto
+  carico la composizione arriva da `arch_disk_io`, con
+  `CalledFromWrongThreadException`. Un test cosi passa da solo e fallisce nella suite.
+  Per testare un singolo composable serve `createComposeRule()`.
+- **Una `LazyColumn` non compone cio' che sta sotto la piega**: `onNodeWithText("Salva")`
+  fallisce con "could not find any node" anche se il pulsante e' nella schermata. Prima
+  `performScrollToNode`, oppure — meglio — spostare cio' che l'utente deve vedere
+  (l'esito di un test) fuori dalla lista.
+- Le schermate partono con `loading = true` e si popolano in una coroutine del ViewModel:
+  `waitForIdle` non attende quel lavoro. Va usato `waitUntil` su un nodo reale.
+- Un server HTTP di prova si scrive con `ServerSocket`: `com.sun.net.httpserver` non e'
+  nel classpath Android, e un mock dell'interfaccia Retrofit non esercita il percorso
+  vero (OkHttp, serializzazione, header).
 
 ## Ordine del primo avvio: il provider viene prima delle domande
 
