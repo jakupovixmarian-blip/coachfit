@@ -668,7 +668,7 @@ la pagina. Non espone il codice sorgente. Il link e valido finche il processo
 SHA-256 dell'APK debug 2.5.0:
 
 ```
-e2619390e484fc774d693c18591cf60efd1455a91e8c97a192533a2121e82307
+1cc474558271ee72901268a27b52dbd7e9b5470abd0b61cc4b89c0c66d306ebf
 ```
 
 Confrontalo dopo il download con `sha256sum FitCoach-2.5.0-debug.apk`: se non coincide, il

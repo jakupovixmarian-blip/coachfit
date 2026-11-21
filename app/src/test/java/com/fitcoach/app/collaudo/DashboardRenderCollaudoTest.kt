@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.click
@@ -68,6 +69,7 @@ class DashboardRenderCollaudoTest {
         var retry = 0
         var recipes = 0
         var health = 0
+        var settings = 0
     }
 
     private fun baseState(
@@ -120,6 +122,7 @@ class DashboardRenderCollaudoTest {
                         onRetry = { clicks.retry++ },
                         onOpenRecipes = { clicks.recipes++ },
                         onOpenHealth = { clicks.health++ },
+                        onOpenSettings = { clicks.settings++ },
                     )
                 }
             }
@@ -253,6 +256,19 @@ class DashboardRenderCollaudoTest {
 
         assertThat(clicks.recipes).isEqualTo(1)
         assertThat(clicks.health).isEqualTo(1)
+    }
+
+    /**
+     * L'ingresso alle Impostazioni era un'icona sovrapposta all'header, sopra il
+     * badge del giorno. Ora e' in linea nell'header e deve restare raggiungibile.
+     */
+    @Test
+    fun `le impostazioni restano raggiungibili dall'header`() {
+        val clicks = Clicks()
+        render(baseState(), clicks)
+
+        composeRule.onNodeWithContentDescription("Impostazioni").performClick()
+        assertThat(clicks.settings).isEqualTo(1)
     }
 
     /**

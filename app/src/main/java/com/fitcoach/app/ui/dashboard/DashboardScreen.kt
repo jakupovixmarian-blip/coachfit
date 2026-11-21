@@ -1,14 +1,8 @@
 package com.fitcoach.app.ui.dashboard
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -18,10 +12,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
@@ -31,7 +23,6 @@ import androidx.navigation.NavHostController
 import com.fitcoach.app.ui.navigation.Routes
 import com.fitcoach.app.ui.navigation.navigateTopLevel
 import com.fitcoach.app.ui.screens.dashboard.DashboardContent
-import com.fitcoach.app.ui.theme.Emerald
 
 @Composable
 fun DashboardScreen(
@@ -74,20 +65,8 @@ fun DashboardScreen(
             onRetry = { viewModel.refresh() },
             onOpenRecipes = { navController.navigate(Routes.RECIPES) },
             onOpenHealth = { navController.navigate(Routes.HEALTH) },
+            onOpenSettings = { navController.navigate(Routes.SETTINGS) },
         )
-
-        // La Dashboard è l'unico ingresso alle Impostazioni. Ricette e Salute
-        // sono passate dentro DashboardContent come voci etichettate: qui
-        // restava un'icona sola, che copriva comunque il badge del giorno.
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 8.dp, end = 8.dp)
-        ) {
-            IconButton(onClick = { navController.navigate(Routes.SETTINGS) }) {
-                Icon(Icons.Filled.Settings, contentDescription = "Impostazioni", tint = Emerald)
-            }
-        }
     }
 
     if (showWeightDialog) {

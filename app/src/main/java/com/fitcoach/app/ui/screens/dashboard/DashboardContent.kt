@@ -21,6 +21,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -133,6 +137,7 @@ fun DashboardContent(
     onRetry: () -> Unit,
     onOpenRecipes: () -> Unit = {},
     onOpenHealth: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val motionEnabled = rememberMotionEnabled()
@@ -150,6 +155,7 @@ fun DashboardContent(
                 onGenerateProgram = onGenerateProgram,
                 onOpenRecipes = onOpenRecipes,
                 onOpenHealth = onOpenHealth,
+                onOpenSettings = onOpenSettings,
             )
             else -> DashboardBody(
                 state = state,
@@ -163,6 +169,7 @@ fun DashboardContent(
                 onSkipWorkout = onSkipWorkout,
                 onOpenRecipes = onOpenRecipes,
                 onOpenHealth = onOpenHealth,
+                onOpenSettings = onOpenSettings,
             )
         }
     }
@@ -185,6 +192,7 @@ private fun DashboardBody(
     onSkipWorkout: () -> Unit,
     onOpenRecipes: () -> Unit,
     onOpenHealth: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -194,7 +202,9 @@ private fun DashboardBody(
             .padding(top = 16.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        StaggeredEntry(0, motionEnabled) { DashboardHeader(state) }
+        StaggeredEntry(0, motionEnabled) {
+            DashboardHeader(state, onOpenSettings = onOpenSettings)
+        }
         StaggeredEntry(1, motionEnabled) {
             // Ricette e Salute erano raggiungibili solo da due icone sovrapposte
             // al badge del giorno: si vedevano a stento e coprivano il testo.
@@ -269,7 +279,7 @@ private fun StaggeredEntry(
 /* -------------------------------------------------------------------------- */
 
 @Composable
-private fun DashboardHeader(state: DashboardUiState) {
+private fun DashboardHeader(state: DashboardUiState, onOpenSettings: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -295,6 +305,15 @@ private fun DashboardHeader(state: DashboardUiState) {
         }
         Spacer(Modifier.width(10.dp))
         Pill(text = dayTypeLabel(state.dayType), color = dayTypeColor(state.dayType))
+        Spacer(Modifier.width(4.dp))
+        // In linea nell'header: da sovrapposta copriva il badge del giorno.
+        IconButton(onClick = onOpenSettings, modifier = Modifier.size(36.dp)) {
+            Icon(
+                imageVector = Icons.Filled.Settings,
+                contentDescription = "Impostazioni",
+                tint = TextSecondary,
+            )
+        }
     }
 }
 
@@ -1105,33 +1124,46 @@ private fun DashboardNoPlan(
     onGenerateProgram: () -> Unit,
     onOpenRecipes: () -> Unit,
     onOpenHealth: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        if (needsAnamnesis) {
-            EmptyState(
-                title = "Completa l'anamnesi",
-                message = "Il Coach AI genera nutrizione e allenamento sui tuoi " +
-                    "dati reali: servono le risposte dell'anamnesi guidata.",
-                actionLabel = "Inizia l'anamnesi",
-                onAction = onOpenAnamnesis,
-            )
-        } else {
-            EmptyState(
-                title = "Nessun programma attivo",
-                message = "L'anamnesi e' confermata: genera il piano di nutrizione " +
-                    "e la scheda di allenamento.",
-                actionLabel = "Genera il programma",
-                onAction = onGenerateProgram,
+    Box(modifier = Modifier.fillMaxSize()) {
+        IconButton(
+            onClick = onOpenSettings,
+            modifier = Modifier.align(Alignment.TopEnd).padding(top = 4.dp, end = 8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Settings,
+                contentDescription = "Impostazioni",
+                tint = TextSecondary,
             )
         }
-        Spacer(Modifier.height(20.dp))
-        DashboardShortcuts(onOpenRecipes = onOpenRecipes, onOpenHealth = onOpenHealth)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            if (needsAnamnesis) {
+                EmptyState(
+                    title = "Completa l'anamnesi",
+                    message = "Il Coach AI genera nutrizione e allenamento sui tuoi " +
+                        "dati reali: servono le risposte dell'anamnesi guidata.",
+                    actionLabel = "Inizia l'anamnesi",
+                    onAction = onOpenAnamnesis,
+                )
+            } else {
+                EmptyState(
+                    title = "Nessun programma attivo",
+                    message = "L'anamnesi e' confermata: genera il piano di nutrizione " +
+                        "e la scheda di allenamento.",
+                    actionLabel = "Genera il programma",
+                    onAction = onGenerateProgram,
+                )
+            }
+            Spacer(Modifier.height(20.dp))
+            DashboardShortcuts(onOpenRecipes = onOpenRecipes, onOpenHealth = onOpenHealth)
+        }
     }
 }
 
