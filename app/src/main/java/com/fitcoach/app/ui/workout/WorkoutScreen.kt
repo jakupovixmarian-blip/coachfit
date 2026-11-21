@@ -1,6 +1,8 @@
 package com.fitcoach.app.ui.workout
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
@@ -55,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -73,6 +76,8 @@ import com.fitcoach.app.ui.components.SectionCard
 import com.fitcoach.app.ui.components.SectionHeader
 import com.fitcoach.app.ui.theme.CarbsColor
 import com.fitcoach.app.ui.theme.Emerald
+import com.fitcoach.app.ui.theme.FitRadius
+import com.fitcoach.app.ui.theme.FitSurfaceInteractive
 import com.fitcoach.app.ui.theme.ErrorRed
 import com.fitcoach.app.ui.theme.TextSecondary
 import java.time.LocalDate
@@ -379,19 +384,6 @@ fun WorkoutScreen(
             }
         }
 
-        if (state.resting) {
-            item {
-                RestTimerCard(
-                    remaining = state.restRemainingSeconds,
-                    total = state.restTotalSeconds,
-                    reason = state.restReason,
-                    onSkip = { viewModel.skipRest() },
-                    onAdd = { viewModel.addRestTime(it) },
-                    onSetManual = { viewModel.startRestWithSeconds(it) }
-                )
-            }
-        }
-
         if (today != null) {
             today.exercises.forEach { planned ->
                 item {
@@ -399,6 +391,20 @@ fun WorkoutScreen(
                         planned = planned,
                         loggedSets = viewModel.sessionSetsFor(planned.exerciseId),
                         lastPerformance = state.lastPerformances[planned.exerciseId],
+                        expanded = state.expandedExerciseId == planned.exerciseId,
+                        restRemaining = if (state.restExerciseId == planned.exerciseId)
+                            state.restRemainingSeconds else 0,
+                        restTotal = if (state.restExerciseId == planned.exerciseId)
+                            state.restTotalSeconds else 0,
+                        restReason = state.restReason,
+                        timerSeconds = state.exerciseTimers[planned.exerciseId] ?: 0,
+                        timerRunning = planned.exerciseId in state.exerciseTimerRunning,
+                        onToggle = { viewModel.toggleExercise(planned.exerciseId) },
+                        onToggleTimer = { viewModel.toggleExerciseTimer(planned.exerciseId) },
+                        onResetTimer = { viewModel.resetExerciseTimer(planned.exerciseId) },
+                        onSkipRest = { viewModel.skipRest() },
+                        onAddRest = { viewModel.addRestTime(it) },
+                        onManualRest = { viewModel.startRestWithSeconds(it) },
                         onLogSet = { viewModel.logSetFor(planned) },
                         onSubstitute = { viewModel.openSubstitution(planned) },
                         onRemove = { viewModel.removeExercise(planned) },
@@ -1047,71 +1053,6 @@ private fun ExerciseLibraryDialog(
     )
 }
 
-@Composable
-private fun RestTimerCard(
-    remaining: Int,
-    total: Int,
-    reason: String,
-    onSkip: () -> Unit,
-    onAdd: (Int) -> Unit,
-    onSetManual: (Int) -> Unit
-) {
-    val progress = if (total > 0) (total - remaining).toFloat() / total else 0f
-    var manualInput by remember { mutableStateOf("") }
-    SectionCard {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            SectionHeader("Recupero", reason.ifBlank { "Recupero in corso" })
-            Spacer(Modifier.height(16.dp))
-            Text(
-                formatRest(remaining),
-                style = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.Bold,
-                color = Emerald
-            )
-            Spacer(Modifier.height(14.dp))
-            LinearProgressIndicator(
-                progress = { progress.coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth().height(8.dp),
-                color = Emerald
-            )
-            Spacer(Modifier.height(16.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(onClick = { onAdd(30) }, modifier = Modifier.weight(1f)) { Text("+30s") }
-                OutlinedButton(onClick = { onAdd(60) }, modifier = Modifier.weight(1f)) { Text("+1 min") }
-                Button(onClick = onSkip, modifier = Modifier.weight(1f)) { Text("Salta") }
-            }
-            Spacer(Modifier.height(16.dp))
-            Text(
-                "Imposta un tempo manuale (minuti)",
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary
-            )
-            Spacer(Modifier.height(6.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = manualInput,
-                    onValueChange = { manualInput = it.filter { c -> c.isDigit() } },
-                    label = { Text("Minuti") },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
-                Button(
-                    onClick = {
-                        val minutes = manualInput.toIntOrNull()
-                        if (minutes != null) onSetManual(minutes * 60)
-                        manualInput = ""
-                    },
-                    enabled = (manualInput.toIntOrNull() ?: 0) > 0
-                ) { Text("Avvia") }
-            }
-        }
-    }
-}
-
 private fun formatRest(seconds: Int): String {
     val m = seconds / 60
     val s = seconds % 60
@@ -1123,6 +1064,18 @@ private fun ExerciseCard(
     planned: PlannedExercise,
     loggedSets: List<WorkoutSet>,
     lastPerformance: ExercisePerformance?,
+    expanded: Boolean,
+    restRemaining: Int,
+    restTotal: Int,
+    restReason: String,
+    timerSeconds: Int,
+    timerRunning: Boolean,
+    onToggle: () -> Unit,
+    onToggleTimer: () -> Unit,
+    onResetTimer: () -> Unit,
+    onSkipRest: () -> Unit,
+    onAddRest: (Int) -> Unit,
+    onManualRest: (Int) -> Unit,
     onLogSet: () -> Unit,
     onSubstitute: () -> Unit,
     onRemove: () -> Unit,
@@ -1131,7 +1084,9 @@ private fun ExerciseCard(
     SectionCard {
         Column {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggle() },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1149,8 +1104,31 @@ private fun ExerciseCard(
                         color = TextSecondary
                     )
                 }
-                planned.targetWeightKg?.let { Pill("%.1f kg".format(it), CarbsColor) }
+                if (timerSeconds > 0) {
+                    Spacer(Modifier.width(8.dp))
+                    Pill(formatRest(timerSeconds), if (timerRunning) Emerald else TextSecondary)
+                }
+                planned.targetWeightKg?.let {
+                    Spacer(Modifier.width(6.dp))
+                    Pill("%.1f kg".format(it), CarbsColor)
+                }
+                Icon(
+                    imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = if (expanded) "Chiudi esercizio" else "Apri esercizio",
+                    tint = TextSecondary
+                )
             }
+
+            if (!expanded) {
+                Text(
+                    "Tocca per serie, ripetizioni, carichi e cronometro",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+                return@Column
+            }
+
             if (planned.selectionReason.isNotBlank()) {
                 Spacer(Modifier.height(6.dp))
                 Text(planned.selectionReason, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
@@ -1173,29 +1151,31 @@ private fun ExerciseCard(
                     color = Emerald
                 )
             }
-            if (planned.technique.isNotBlank()) {
-                Spacer(Modifier.height(6.dp))
-                Text(planned.technique, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+
+            Spacer(Modifier.height(10.dp))
+            SetGrid(planned = planned, loggedSets = loggedSets)
+
+            Spacer(Modifier.height(10.dp))
+            ExerciseTimerRow(
+                seconds = timerSeconds,
+                running = timerRunning,
+                onToggle = onToggleTimer,
+                onReset = onResetTimer
+            )
+
+            if (restTotal > 0) {
+                Spacer(Modifier.height(10.dp))
+                RestTimerInline(
+                    remaining = restRemaining,
+                    total = restTotal,
+                    reason = restReason,
+                    onSkip = onSkipRest,
+                    onAdd = onAddRest,
+                    onSetManual = onManualRest
+                )
             }
-            Spacer(Modifier.height(8.dp))
-            if (loggedSets.isNotEmpty()) {
-                loggedSets.sortedBy { it.setIndex }.forEach { s ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            "Serie ${s.setIndex + 1}: ${s.weightKg} kg × ${s.actualReps}" +
-                                (s.rir?.let { " @RIR $it" } ?: ""),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Icon(Icons.Filled.Check, contentDescription = null, tint = Emerald,
-                            modifier = Modifier.width(16.dp))
-                    }
-                }
-            }
-            Spacer(Modifier.height(8.dp))
+
+            Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
                     onClick = { onLogSet() },
@@ -1203,7 +1183,7 @@ private fun ExerciseCard(
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = null)
                     Spacer(Modifier.width(6.dp))
-                    Text("Registra serie ${loggedSets.size + 1}")
+                    Text("Serie ${loggedSets.size + 1}")
                 }
                 OutlinedButton(onClick = onSubstitute) {
                     Icon(Icons.Filled.SwapHoriz, contentDescription = "Sostituisci esercizio")
@@ -1215,6 +1195,150 @@ private fun ExerciseCard(
                     Icon(Icons.Filled.Delete, contentDescription = "Rimuovi esercizio")
                 }
             }
+        }
+    }
+}
+
+/**
+ * Riquadri serie / ripetizioni / carico.
+ *
+ * Le serie pianificate restano visibili anche prima di essere registrate: il
+ * carico proposto dal motore e' un suggerimento, quello effettivo compare solo
+ * dopo che l'utente lo registra. Una serie non registrata non mostra un carico.
+ */
+@Composable
+private fun SetGrid(planned: PlannedExercise, loggedSets: List<WorkoutSet>) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            SetGridCell("Serie", "${loggedSets.size}/${planned.sets}", Modifier.weight(1f))
+            SetGridCell("Rep", "${planned.minReps}-${planned.maxReps}", Modifier.weight(1f))
+            SetGridCell("Carico", planned.targetWeightKg?.let { "%.1f kg".format(it) } ?: "da definire",
+                Modifier.weight(1f))
+            SetGridCell("RIR", planned.targetRir.toString(), Modifier.weight(0.7f))
+        }
+        if (loggedSets.isNotEmpty()) {
+            loggedSets.sortedBy { it.setIndex }.forEach { s ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Serie ${s.setIndex + 1}: ${"%.1f".format(s.weightKg)} kg × ${s.actualReps}" +
+                            (s.rir?.let { " @RIR $it" } ?: ""),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Icon(Icons.Filled.Check, contentDescription = "Serie registrata", tint = Emerald,
+                        modifier = Modifier.width(16.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SetGridCell(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(FitRadius.sm))
+            .background(FitSurfaceInteractive)
+            .padding(vertical = 8.dp, horizontal = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+        Spacer(Modifier.height(2.dp))
+        Text(value, style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun ExerciseTimerRow(
+    seconds: Int,
+    running: Boolean,
+    onToggle: () -> Unit,
+    onReset: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(FitRadius.sm))
+            .background(FitSurfaceInteractive)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Filled.Timer, contentDescription = null,
+            tint = if (running) Emerald else TextSecondary)
+        Spacer(Modifier.width(8.dp))
+        Column(Modifier.weight(1f)) {
+            Text("Cronometro esercizio", style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary)
+            Text(formatRest(seconds), style = MaterialTheme.typography.titleMedium,
+                color = if (running) Emerald else MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold)
+        }
+        TextButton(onClick = onReset, enabled = seconds > 0) { Text("Azzera") }
+        Button(onClick = onToggle) { Text(if (running) "Pausa" else "Avvia") }
+    }
+}
+
+@Composable
+private fun RestTimerInline(
+    remaining: Int,
+    total: Int,
+    reason: String,
+    onSkip: () -> Unit,
+    onAdd: (Int) -> Unit,
+    onSetManual: (Int) -> Unit
+) {
+    val progress = if (total > 0) (total - remaining).toFloat() / total else 0f
+    var manualInput by remember { mutableStateOf("") }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(FitRadius.sm))
+            .background(FitSurfaceInteractive)
+            .padding(12.dp)
+    ) {
+        Text(reason.ifBlank { "Recupero" }, style = MaterialTheme.typography.labelSmall,
+            color = TextSecondary)
+        Spacer(Modifier.height(4.dp))
+        Text(formatRest(remaining), style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold, color = Emerald)
+        Spacer(Modifier.height(8.dp))
+        LinearProgressIndicator(
+            progress = { progress.coerceIn(0f, 1f) },
+            modifier = Modifier.fillMaxWidth().height(6.dp),
+            color = Emerald
+        )
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { onAdd(30) }, modifier = Modifier.weight(1f)) { Text("+30s") }
+            OutlinedButton(onClick = { onAdd(60) }, modifier = Modifier.weight(1f)) { Text("+1 min") }
+            Button(onClick = onSkip, modifier = Modifier.weight(1f)) { Text("Salta") }
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = manualInput,
+                onValueChange = { manualInput = it.filter { c -> c.isDigit() } },
+                label = { Text("Minuti") },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
+            )
+            Button(
+                onClick = {
+                    val minutes = manualInput.toIntOrNull()
+                    if (minutes != null) onSetManual(minutes * 60)
+                    manualInput = ""
+                },
+                enabled = (manualInput.toIntOrNull() ?: 0) > 0
+            ) { Text("Avvia") }
         }
     }
 }

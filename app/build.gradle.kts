@@ -152,6 +152,8 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.health.connect)
+    implementation(libs.guava)
 
     implementation(libs.vico.compose.m3)
     implementation(libs.androidx.security.crypto)

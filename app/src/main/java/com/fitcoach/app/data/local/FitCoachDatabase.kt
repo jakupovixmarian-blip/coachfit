@@ -34,6 +34,7 @@ import com.fitcoach.app.data.local.dao.V2AnamnesisDao
 import com.fitcoach.app.data.local.dao.V2GenerationDao
 import com.fitcoach.app.data.local.dao.WorkoutScheduleOverrideDao
 import com.fitcoach.app.data.local.dao.ProgressPhotoDao
+import com.fitcoach.app.data.local.dao.SavedRecipeDao
 import com.fitcoach.app.data.local.entity.AiProviderSettingsEntity
 import com.fitcoach.app.data.local.entity.CheckInEntity
 import com.fitcoach.app.data.local.entity.ChatMessageEntity
@@ -66,6 +67,7 @@ import com.fitcoach.app.data.local.entity.WorkoutSetEntity
 import com.fitcoach.app.data.local.entity.V2AnamnesisAnswerEntity
 import com.fitcoach.app.data.local.entity.V2AnamnesisSessionEntity
 import com.fitcoach.app.data.local.entity.V2GenerationJobEntity
+import com.fitcoach.app.data.local.entity.SavedRecipeEntity
 import com.fitcoach.app.data.local.entity.V2GenerationPayloadEntity
 import com.fitcoach.app.data.local.entity.WorkoutScheduleOverrideEntity
 import com.fitcoach.app.data.local.entity.ProgressPhotoEntity
@@ -106,9 +108,10 @@ import com.fitcoach.app.data.local.entity.ProgressPhotoEntity
         V2AnamnesisSessionEntity::class,
         V2AnamnesisAnswerEntity::class,
         V2GenerationJobEntity::class,
-        V2GenerationPayloadEntity::class
+        V2GenerationPayloadEntity::class,
+        SavedRecipeEntity::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -137,6 +140,7 @@ abstract class FitCoachDatabase : RoomDatabase() {
     abstract fun aiSettingsDao(): AiSettingsDao
     abstract fun workoutScheduleOverrideDao(): WorkoutScheduleOverrideDao
     abstract fun progressPhotoDao(): ProgressPhotoDao
+    abstract fun savedRecipeDao(): SavedRecipeDao
 
     abstract fun notificationDao(): NotificationDao
     abstract fun scientificSourceDao(): ScientificSourceDao

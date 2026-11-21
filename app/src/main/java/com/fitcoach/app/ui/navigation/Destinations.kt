@@ -47,4 +47,8 @@ object Routes {
     const val KNOWLEDGE = "knowledge"
     const val DEVICES = "devices"
     const val RECIPES = "recipes"
+    /** Apre la sezione Ricette gia sulla scheda di creazione. */
+    const val RECIPES_CREATE = "recipes_create"
+    /** Sezione Salute: dispositivi, report giornaliero, ricette. */
+    const val HEALTH = "health"
 }

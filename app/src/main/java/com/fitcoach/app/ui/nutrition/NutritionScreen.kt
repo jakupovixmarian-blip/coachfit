@@ -98,6 +98,14 @@ fun NutritionScreen(
 
     if (state.plan == null) {
         Column(Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                IconButton(onClick = { navController.navigate(com.fitcoach.app.ui.navigation.Routes.RECIPES) }) {
+                    Icon(Icons.Filled.MenuBook, contentDescription = "Ricette", tint = Emerald)
+                }
+            }
             EmptyState(
                 title = "Nessun piano alimentare",
                 message = "Genera un piano completo a 7 giorni con ciclicita dei carboidrati, " +

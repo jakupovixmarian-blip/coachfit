@@ -60,6 +60,13 @@ data class WorkoutUiState(
     val restTotalSeconds: Int = 0,
     val restReason: String = "",
     val resting: Boolean = false,
+    /** Recupero associato all'esercizio aperto: il timer vive dentro la card. */
+    val restExerciseId: Long? = null,
+    /** Esercizio espanso nella lista: mostra serie, rep e carichi inline. */
+    val expandedExerciseId: Long? = null,
+    /** Cronometro per esercizio (tempo sotto tensione della seduta corrente). */
+    val exerciseTimers: Map<Long, Int> = emptyMap(),
+    val exerciseTimerRunning: Set<Long> = emptySet(),
     // Sostituzione esercizio.
     val substituteFor: PlannedExercise? = null,
     val editingExercise: PlannedExercise? = null,
@@ -115,6 +122,7 @@ class WorkoutViewModel @Inject constructor(
 
     private var restJob: kotlinx.coroutines.Job? = null
     private var stopwatchJob: kotlinx.coroutines.Job? = null
+    private var exerciseTimerJob: kotlinx.coroutines.Job? = null
 
     init {
         load()
@@ -609,20 +617,21 @@ class WorkoutViewModel @Inject constructor(
             }
             _state.value = _state.value.copy(form = null)
             // Avvia il cronometro di recupero consigliato per l'esercizio.
-            startRest(form.planned.restSeconds, form.planned.restReason)
+            startRest(form.planned.restSeconds, form.planned.restReason, form.planned.exerciseId)
             load()
         }
     }
 
     /** Avvia il cronometro di recupero con la durata consigliata dal motore. */
-    fun startRest(seconds: Int, reason: String) {
+    fun startRest(seconds: Int, reason: String, exerciseId: Long? = null) {
         if (seconds <= 0) return
         restJob?.cancel()
         _state.value = _state.value.copy(
             restRemainingSeconds = seconds,
             restTotalSeconds = seconds,
             restReason = reason,
-            resting = true
+            resting = true,
+            restExerciseId = exerciseId ?: _state.value.expandedExerciseId
         )
         runRestTimer(seconds)
     }
@@ -630,7 +639,54 @@ class WorkoutViewModel @Inject constructor(
     fun skipRest() {
         restJob?.cancel()
         notificationScheduler.cancelRestAlarm()
-        _state.value = _state.value.copy(resting = false, restRemainingSeconds = 0)
+        _state.value = _state.value.copy(
+            resting = false, restRemainingSeconds = 0, restExerciseId = null
+        )
+    }
+
+    /** Apre o chiude il riquadro inline dell'esercizio. */
+    fun toggleExercise(exerciseId: Long) {
+        val current = _state.value.expandedExerciseId
+        _state.value = _state.value.copy(
+            expandedExerciseId = if (current == exerciseId) null else exerciseId
+        )
+    }
+
+    /**
+     * Cronometro dell'esercizio: misura il tempo effettivo sulla singola
+     * macchina, separato dal recupero. Ogni esercizio ha il suo contatore,
+     * cosi passare da un esercizio all'altro non azzera il tempo gia speso.
+     */
+    fun toggleExerciseTimer(exerciseId: Long) {
+        val running = _state.value.exerciseTimerRunning
+        if (exerciseId in running) {
+            exerciseTimerJob?.cancel()
+            exerciseTimerJob = null
+            _state.value = _state.value.copy(exerciseTimerRunning = running - exerciseId)
+            return
+        }
+        _state.value = _state.value.copy(exerciseTimerRunning = running + exerciseId)
+        exerciseTimerJob?.cancel()
+        exerciseTimerJob = viewModelScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(1000L)
+                val current = _state.value
+                val active = current.exerciseTimerRunning
+                if (active.isEmpty()) break
+                val timers = current.exerciseTimers.toMutableMap()
+                active.forEach { id -> timers[id] = (timers[id] ?: 0) + 1 }
+                _state.value = current.copy(exerciseTimers = timers)
+            }
+        }
+    }
+
+    fun resetExerciseTimer(exerciseId: Long) {
+        exerciseTimerJob?.cancel()
+        exerciseTimerJob = null
+        _state.value = _state.value.copy(
+            exerciseTimers = _state.value.exerciseTimers - exerciseId,
+            exerciseTimerRunning = _state.value.exerciseTimerRunning - exerciseId
+        )
     }
 
     fun addRestTime(seconds: Int) {

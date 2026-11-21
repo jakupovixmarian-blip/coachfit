@@ -1,9 +1,11 @@
 package com.fitcoach.app.ui.dashboard
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -75,13 +77,17 @@ fun DashboardScreen(
 
         // La Dashboard è l'unico ingresso alle Impostazioni: il pulsante resta
         // sovrapposto finché DashboardContent non lo prevede al suo interno.
-        IconButton(
-            onClick = { navController.navigate(Routes.SETTINGS) },
+        Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = 8.dp, end = 8.dp)
         ) {
-            Icon(Icons.Filled.Settings, contentDescription = "Impostazioni", tint = Emerald)
+            IconButton(onClick = { navController.navigate(Routes.HEALTH) }) {
+                Icon(Icons.Filled.FavoriteBorder, contentDescription = "Salute", tint = Emerald)
+            }
+            IconButton(onClick = { navController.navigate(Routes.SETTINGS) }) {
+                Icon(Icons.Filled.Settings, contentDescription = "Impostazioni", tint = Emerald)
+            }
         }
     }
 

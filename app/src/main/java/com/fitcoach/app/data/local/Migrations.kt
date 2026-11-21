@@ -343,3 +343,31 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
         )
     }
 }
+
+/**
+ * Ricette create dall'utente. Nuova tabella: nessun dato esistente da migrare,
+ * le ricette precedenti non esistono.
+ */
+val MIGRATION_14_15 = object : Migration(14, 15) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `saved_recipes` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `name` TEXT NOT NULL,
+                `slot` TEXT NOT NULL,
+                `dayIndex` INTEGER NOT NULL,
+                `style` TEXT NOT NULL,
+                `ingredients` TEXT NOT NULL,
+                `steps` TEXT NOT NULL,
+                `kcal` REAL NOT NULL,
+                `protein` REAL NOT NULL,
+                `carbs` REAL NOT NULL,
+                `fat` REAL NOT NULL,
+                `createdAt` INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_saved_recipes_createdAt` ON `saved_recipes` (`createdAt`)")
+    }
+}

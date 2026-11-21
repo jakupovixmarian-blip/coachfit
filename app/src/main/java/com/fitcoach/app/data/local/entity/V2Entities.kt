@@ -47,3 +47,27 @@ data class V2GenerationPayloadEntity(
     val payloadJson: String,
     val updatedAt: Long
 )
+
+/**
+ * Ricetta creata dall'utente a partire dagli alimenti di un pasto del piano.
+ *
+ * Salva la composizione (nomi e grammature) come testo, perche una ricetta e'
+ * uno snapshot: se il piano cambia, la ricetta creata resta quella che l'utente
+ * ha approvato invece di mutare sotto i suoi occhi.
+ */
+@Entity(tableName = "saved_recipes", indices = [Index(value = ["createdAt"])])
+data class SavedRecipeEntity(
+    @androidx.room.PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val slot: String,
+    val dayIndex: Int,
+    val style: String,
+    /** Ingredienti serializzati: "nome\u001Fgrammi\u001Fkcal\u001Fproteine\u001Fcarbo\u001Fgrassi" per riga. */
+    val ingredients: String,
+    val steps: String,
+    val kcal: Double,
+    val protein: Double,
+    val carbs: Double,
+    val fat: Double,
+    val createdAt: Long
+)

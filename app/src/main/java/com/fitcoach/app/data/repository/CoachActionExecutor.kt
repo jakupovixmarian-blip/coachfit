@@ -338,9 +338,33 @@ class CoachActionExecutor @Inject constructor(
         )
     }
 
+    /**
+     * Risolve il piano nutrizionale indicato dalla proposta.
+     *
+     * L'AI puo sbagliare o inventare l'id: se l'id non esiste ma un piano attivo
+     * c'e, la proposta si applica al piano attivo invece di fallire. Il fallimento
+     * capita esattamente quando l'utente vede il piano a schermo, ed e il caso in
+     * cui l'errore sarebbe piu fuorviante.
+     */
+    private suspend fun resolveNutritionPlanId(requested: Long?): Long {
+        val active = planDao.getActive()
+            ?: throw IllegalArgumentException("Nessun piano alimentare attivo da modificare.")
+        // Il piano attivo ha sempre la precedenza. Un id diverso indica una
+        // proposta costruita su una versione vecchia, oppure inventata: in
+        // entrambi i casi modificare quel piano non avrebbe effetto visibile,
+        // perche l'utente segue quello attivo.
+        if (requested != null && requested != active.id &&
+            planDao.getById(requested)?.isActive == true
+        ) {
+            return requested
+        }
+        return active.id
+    }
+
     private suspend fun applyCalorieAdjustment(action: CoachAction): Map<String, String> {
-        val planId = action.payload.require("planId").toLong()
-        val plan = planDao.getById(planId) ?: throw IllegalArgumentException("Piano non trovato.")
+        val planId = resolveNutritionPlanId(action.payload["planId"]?.toLongOrNull())
+        val plan = planDao.getById(planId)
+            ?: throw IllegalArgumentException("Piano alimentare non trovato.")
         val newWeekly = action.payload.require("weeklyKcal").toDouble()
         require(newWeekly > 0.0) { "Il target calorico deve essere positivo." }
         val ratio = newWeekly / plan.weeklyCalories
@@ -387,8 +411,34 @@ class CoachActionExecutor @Inject constructor(
         )
     }
 
+    /**
+     * Risolve il mesociclo indicato dalla proposta sull'id reale.
+     *
+     * Come per il piano, l'id puo essere inventato dall'AI: si ricade sul primo
+     * mesociclo del piano di allenamento attivo, che e quello che l'utente sta
+     * seguendo. Se non c'e alcun mesociclo attivo la modifica non ha senso e
+     * viene rifiutata con un messaggio esplicito.
+     */
+    private suspend fun resolveMesocycleId(requested: Long?): Long {
+        if (requested != null) {
+            val activePlanId = workoutPlanDao.getActive()?.id
+            if (activePlanId != null) {
+                val found = mesoDao.getForPlan(activePlanId).firstOrNull { it.id == requested }
+                if (found != null) return found.id
+            }
+            val anyPlan = workoutPlanDao.getAll().firstNotNullOfOrNull { plan ->
+                mesoDao.getForPlan(plan.id).firstOrNull { it.id == requested }
+            }
+            if (anyPlan != null) return anyPlan.id
+        }
+        val active = workoutPlanDao.getActive()
+            ?: throw IllegalArgumentException("Nessun piano di allenamento attivo da modificare.")
+        return mesoDao.getForPlan(active.id).firstOrNull()?.id
+            ?: throw IllegalArgumentException("Il piano attivo non ha un mesociclo da modificare.")
+    }
+
     private suspend fun applyVolumeAdjustment(action: CoachAction): Map<String, String> {
-        val mesocycleId = action.payload.require("mesocycleId").toLong()
+        val mesocycleId = resolveMesocycleId(action.payload["mesocycleId"]?.toLongOrNull())
         val reduction = action.payload["volumeReductionPercent"]?.toDoubleOrNull() ?: 20.0
         require(reduction in -30.0..80.0) { "Variazione volume fuori dai limiti." }
         val result = mutableMapOf("kind" to "PLANNED_SETS", "mesocycleId" to mesocycleId.toString())
@@ -404,9 +454,11 @@ class CoachActionExecutor @Inject constructor(
 
     private suspend fun applyDeload(action: CoachAction): Map<String, String> {
         val percent = action.payload["volumeReductionPercent"]?.toDoubleOrNull() ?: 40.0
-        val mesocycleId = action.payload.require("mesocycleId").toLong()
+        val mesocycleId = resolveMesocycleId(action.payload["mesocycleId"]?.toLongOrNull())
         val planId = action.payload["planId"]?.toLongOrNull()
-        val meso = mesoDao.getForPlan(planId ?: 0L).firstOrNull { it.id == mesocycleId }
+        val meso = (planId?.let { mesoDao.getForPlan(it) }
+            ?: workoutPlanDao.getActive()?.let { mesoDao.getForPlan(it.id) })
+            ?.firstOrNull { it.id == mesocycleId }
             ?: throw IllegalArgumentException("Mesociclo non trovato.")
         mesoDao.insert(meso.copy(isDeload = true, focus = "${meso.focus} (deload)"))
 

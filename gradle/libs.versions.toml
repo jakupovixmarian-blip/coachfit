@@ -27,6 +27,7 @@ truth = "1.4.4"
 robolectric = "4.14.1"
 camerax = "1.4.1"
 mlkitBarcode = "17.3.0"
+guava = "31.1-android"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -77,6 +78,8 @@ mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-health-connect = { group = "androidx.health.connect", name = "connect-client", version = "1.1.0-alpha07" }
+guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 
 [plugins]

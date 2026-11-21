@@ -41,6 +41,47 @@ cena.
 - Un test confronta ogni ingrediente con il database alimentare reale, così un
   refuso in un nome non può far sparire una ricetta in silenzio.
 
+### Creare, vedere e salvare una ricetta
+
+Oltre alle ricette del piano la sezione permette di comporre una ricetta a
+partire da un pasto reale e di conservarla.
+
+- **Crea ricetta**: si sceglie il giorno (1-7) e il pasto; il compositore
+  `RecipeComposer` riorganizza gli alimenti già previsti in un piatto, in tre
+  stili: Classica, Leggera (senza grassi aggiunti) e Ricca (aggiunge una fonte
+  extra). Le grammature restano quelle del piano: il piatto non è un pasto
+  diverso, i totali coincidono con gli alimenti usati.
+- Il ruolo di ogni alimento (fonte proteica, carboidrati, verdura, frutta,
+  grassi, latticini) si deduce dai macro, non dalla categoria del catalogo, che
+  non è omogenea. Per gli alimenti fuori anagrafica si usano i macro della
+  porzione effettiva; il nome da solo non basta a distinguere un piatto
+  proteico da uno di carboidrati.
+- **Anteprima**: ingredienti con grammi, crudo/cotto, kcal e macro, totali del
+  piatto e passi di assemblaggio. I passi non contengono dosaggi: i dosaggi sono
+  già nel piano.
+- **Salva**: la ricetta finisce in `saved_recipes` (Room, schema v15) con
+  ingredienti, passi e totali, e resta consultabile anche dopo il riavvio.
+- Se gli alimenti non bastano a comporre un piatto sensato (meno di due
+  ingredienti) il compositore restituisce `null` e l'app lo dice, invece di
+  proporre un piatto inventato.
+- Una riga corrotta nel database non fa fallire l'elenco: gli ingredienti non
+  leggibili vengono scartati singolarmente.
+
+## Salute e report giornaliero
+
+La sezione **Salute** (cuore nella Dashboard) legge i dati reali da Health
+Connect e mostra il report della giornata.
+
+- Dati letti: calorie attive, passi-equivalenti di attività, frequenza cardiaca
+  a riposo, HRV, sonno, peso. Ogni campo è **nullable**: se il dato non esiste
+  resta assente e l'app lo dichiara, non mostra uno zero.
+- I permessi Health Connect vengono richiesti con `ActivityResultContracts`
+  raggruppati per tipo di record; se l'utente nega un permesso la sezione
+  continua a funzionare con i dati disponibili.
+- Il peso letto da Health Connect è separato dal peso registrato a mano: il
+  report non sovrascrive mai una misurazione dell'utente.
+- Dalla sezione si raggiungono **Ricette** e **Dispositivi** (bilance BLE).
+
 ## Dispositivi Bluetooth (bilance, BIA, cardio)
 
 La sezione **Dispositivi** collega bilance e cardiofrequenzimetri BLE e legge i
@@ -112,6 +153,27 @@ non modifica `data/` né `domain/`.
   scelto con registrazione di serie/ripetizioni/carichi, cronometro di sessione e **allarme
   di fine recupero** (suona anche a schermo spento). In alto, accesso alla schermata
   **Crea scheda personalizzata** per costruire una split manualmente.
+
+### Riquadri dell'esercizio: serie, ripetizioni, carico e cronometro
+
+Ogni esercizio della seduta è una card espandibile. Chiusa mostra nome, gruppo
+muscolare, schema serie×ripetizioni, RIR e recupero; toccandola si aprono i
+riquadri operativi.
+
+- **Serie**: quante serie sono state registrate sul totale previsto (`2/4`).
+- **Rep**: il range del programma (`8-10`), non un numero inventato.
+- **Carico**: il carico proposto dal motore, oppure "da definire" se il motore
+  non ha ancora un riferimento per quell'esercizio.
+- **RIR**: il target della serie.
+- Sotto i riquadri compare l'elenco delle serie realmente registrate, con carico,
+  ripetizioni e RIR effettivi: una serie non registrata non mostra alcun carico.
+- **Cronometro esercizio**: tempo dedicato a quell'esercizio, indipendente dal
+  recupero e dal cronometro di sessione. Ogni esercizio ha il proprio contatore,
+  quindi passare a un altro esercizio non azzera il tempo già speso. Avvia,
+  mette in pausa e azzera.
+- **Recupero inline**: il timer di recupero vive dentro la card dell'esercizio che
+  lo ha generato, non in cima alla lista. Mostra conto alla rovescia, barra di
+  avanzamento, +30s, +1 min, salta e l'impostazione manuale in minuti.
 
 ## Sistema nutrizionale integrato
 
@@ -333,6 +395,25 @@ Strumenti (in `domain/coach/tools`, iniettati come `Set<CoachTool>` via Hilt):
   (`ProgramGenerationCoordinator` → `submit_full_program`): un solo motore, una sola
   autorità decisionale. Per le modifiche puntuali l'AI preferisce gli strumenti `propose_*`
   specifici.
+
+### Identificativi nelle proposte: perche "Approva e applica" non fallisce piu
+
+L'AI riceve il contesto del programma in forma testuale e puo citare un `planId`
+inesistente, o non citarlo affatto, pur avendo davanti un piano reale. Prima
+questo produceva il messaggio *"Impossibile applicare la modifica: Piano non
+trovato"* proprio nel caso in cui l'utente vedeva il piano sullo schermo.
+
+Ora la correzione e su due livelli:
+
+- Il prompt espone gli **id reali** di piano nutrizionale, piano di allenamento e
+  mesociclo, con l'istruzione esplicita di usarli e non inventarne altri.
+- L'esecutore (`CoachActionExecutor`) **risolve** comunque l'id: se l'id e
+  assente, inesistente o riferito a una versione non piu attiva, la proposta
+  viene applicata al **piano attivo**, cioe quello che l'utente sta seguendo.
+  Una proposta non puo modificare una vecchia versione in silenzio, perche non
+  avrebbe effetto visibile.
+- Se davvero non esiste alcun piano attivo, il messaggio lo dice
+  ("Nessun piano alimentare attivo da modificare") invece di un errore generico.
 
 La generazione del percorso (piano alimentare + scheda) avviene tramite il **Coach AI**:
 il modello produce il JSON con strategia e struttura, l'app risolve gli identificativi

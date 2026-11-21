@@ -196,6 +196,7 @@ object CoachPromptBuilder {
             sb.appendLine("PIANO NUTRIZIONALE: nessun piano attivo.")
         } else {
             sb.appendLine("PIANO NUTRIZIONALE ATTIVO")
+            sb.appendLine("- ID piano: ${np.id} (usa questo id in planId, non inventarne altri)")
             sb.appendLine("- BMR: %.0f kcal (${np.bmrFormula})".format(np.bmr))
             sb.appendLine("- TDEE: %.0f kcal (${np.tdeeFormula})".format(np.tdee))
             sb.appendLine("- Calorie settimanali: %.0f kcal".format(np.weeklyCalories))
@@ -235,9 +236,13 @@ object CoachPromptBuilder {
             sb.appendLine("PIANO DI ALLENAMENTO: nessun piano attivo.")
         } else {
             sb.appendLine("PIANO DI ALLENAMENTO ATTIVO")
+            sb.appendLine("- ID piano: ${wp.id}")
             sb.appendLine("- Split: ${wp.splitType.label}")
             wp.mesocycles.firstOrNull()?.let { m ->
-                sb.appendLine("- Mesociclo: ${m.name} (${m.weekCount} settimane, ${m.progressionModel})")
+                sb.appendLine(
+                    "- Mesociclo: ${m.name} (id ${m.id}, ${m.weekCount} settimane, ${m.progressionModel})" +
+                        " (usa questo id in mesocycleId)"
+                )
             }
             wp.days.forEach { d ->
                 if (d.isRestDay) return@forEach

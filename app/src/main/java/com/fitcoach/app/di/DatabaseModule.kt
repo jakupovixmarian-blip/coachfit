@@ -18,6 +18,7 @@ import com.fitcoach.app.data.local.MIGRATION_10_11
 import com.fitcoach.app.data.local.MIGRATION_11_12
 import com.fitcoach.app.data.local.MIGRATION_12_13
 import com.fitcoach.app.data.local.MIGRATION_13_14
+import com.fitcoach.app.data.local.MIGRATION_14_15
 import com.fitcoach.app.data.local.dao.AiSettingsDao
 import com.fitcoach.app.data.local.dao.CheckInDao
 import com.fitcoach.app.data.local.dao.ChatDao
@@ -35,6 +36,7 @@ import com.fitcoach.app.data.local.dao.PlanVersionDao
 import com.fitcoach.app.data.local.dao.PlannedExerciseDao
 import com.fitcoach.app.data.local.dao.ProgramChangeDao
 import com.fitcoach.app.data.local.dao.ProgressDao
+import com.fitcoach.app.data.local.dao.SavedRecipeDao
 import com.fitcoach.app.data.local.dao.ScientificSourceDao
 import com.fitcoach.app.data.local.dao.ShoppingItemDao
 import com.fitcoach.app.data.local.dao.SubstitutionLogDao
@@ -62,7 +64,7 @@ object DatabaseModule {
     fun provideDatabase(@ApplicationContext context: Context): FitCoachDatabase =
         Room.databaseBuilder(context, FitCoachDatabase::class.java, FitCoachDatabase.DB_NAME)
             .addMigrations(
-                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14
+                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15
             )
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
@@ -74,6 +76,7 @@ object DatabaseModule {
             // esplicito (e va aggiunta), non cancellare i dati dell'utente.
             .build()
 
+    @Provides fun savedRecipeDao(db: FitCoachDatabase): SavedRecipeDao = db.savedRecipeDao()
     @Provides fun userProfileDao(db: FitCoachDatabase): UserProfileDao = db.userProfileDao()
     @Provides fun userPreferencesDao(db: FitCoachDatabase): UserPreferencesDao = db.userPreferencesDao()
     @Provides fun foodDao(db: FitCoachDatabase): FoodDao = db.foodDao()
