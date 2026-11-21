@@ -373,23 +373,22 @@ titolo, autori, data, URL verificabile, evidenza, **regola derivata** e **limiti
 applicabilità**. La schermata Impostazioni → Fonti e versioni mostra le fonti e lo
 **storico delle versioni dei piani** (ogni rigenerazione salva uno snapshot immutabile).
 
-### Corpus Project InVictus (metodologia, `InvictusCorpus`)
+### Corpus Project InVictus (metodologia, `InvictusKnowledge`)
 
 Le soglie di volume non possono nascere da un motore di calcolo: 10 serie di polpacci
 per un avanzato non sono né giuste né sbagliate in assoluto, dipendono dalla metodologia.
-`InvictusCorpus` porta dentro l'app **991 regole** estratte dagli articoli di
+`InvictusKnowledge` porta dentro l'app **1.046 regole** estratte dagli articoli di
 projectinvictus.it, ognuna con titolo, URL e data della fonte. Il corpus è
 integrato con **letteratura primaria da PubMed** per i parametri che la fonte
 divulgativa copre male (deload, progressione, volume): 10 regole da
-revisioni sistematiche/meta-analisi e 36 da studi individuali, oltre a 947
+revisioni sistematiche/meta-analisi e 36 da studi individuali, oltre a 1.000
 regole divulgative. Ogni regola dichiara `tipo_fonte`, così il modello sa se
 sta leggendo una meta-analisi o un articolo di blog.
 
 Ogni regola è una frase prescrittiva con un numero verificabile (serie, ripetizioni,
 grammi, kcal, percentuali), filtrata dalle categorie metodologiche del sito. Sono
-classificate per argomento — volume, frequenza, recupero, intensità/RIR, periodizzazione,
-progressione, tecniche, esecuzione, proteine, carboidrati, grassi, calorie, timing,
-composizione corporea, sicurezza — così il prompt ne seleziona solo quelle utili.
+classificate per parametro di generazione — 35 categorie, da `SPLIT` a `SAFETY_NUT` — così
+lo strumento ne restituisce solo quelle utili.
 
 Esempi di ciò che il corpus porta al motore: ipertrofia tra **10 e 25 serie** allenanti a
 settimana, ricomposizione a **12-20**, quadricipiti almeno **8-10** per il mantenimento,
@@ -416,12 +415,19 @@ L'interfaccia è lo strumento `consult_invictus`, sullo stesso modello di `list_
 `list_exercises`: il modello vede nome, descrizione e schema, e chiede solo la parte che
 gli serve, quando gli serve.
 
+Il corpus è **unico**: `InvictusKnowledge`. Il vecchio `InvictusCorpus` (159 regole, 15
+topic) è stato fuso dentro e la sua sorgente — `/tmp/claims_final.json` — non era più
+riproducibile, quindi le 55 regole che non esistevano altrove vivono in
+`tools/corpus/invictus_corpus_extra.json`. Due corpus con tassonomie diverse (15 e 35
+categorie) erano la causa per cui il prompt iniettava quello povero mentre il tool
+interrogava quello ricco.
+
 | Area | Cosa restituisce | Voci |
 |---|---|---|
-| `allenamento` | Split, frequenza, volume, RIR, recuperi, progressione, periodizzazione, deload | 391 |
-| `nutrizione` | Calorie, metabolismo, proteine, carboidrati, grassi, fibre, pasti, timing, ricariche | 554 |
-| `tecniche` | Come si esegue una tecnica d'intensità | 7 |
-| `esercizi` | Muscoli, esecuzione, errori, varianti | 141 |
+| `allenamento` | Split, frequenza, volume, RIR, recuperi, progressione, periodizzazione, deload | 403 |
+| `nutrizione` | Calorie, metabolismo, proteine, carboidrati, grassi, fibre, pasti, timing, ricariche | 643 |
+| `tecniche` | Come si esegue una tecnica d'intensità | 8 |
+| `esercizi` | Muscoli, esecuzione, errori, varianti | 142 |
 
 Le due aree sono divise in **35 categorie**, una per ogni parametro che il
 generatore deve decidere. Non sono sezioni tematiche: sono le decisioni che una

@@ -608,3 +608,29 @@ controllo fuori dal checker, quel test cade.
   falliscono a rotazione: e' flakiness di Robolectric/Compose (`ArrayIndexOutOfBounds`
   dentro il framework di test), **non** una regressione. Verificare con `git stash` prima
   di indagare: sul codice originale falliscono ugualmente.
+
+## Il corpus InVictus: uno solo, e non nel prompt
+
+Due file facevano la stessa cosa con tassonomie diverse: `InvictusCorpus` (159 regole, 15
+topic) finiva **nel prompt**, `InvictusKnowledge` (991 regole, 35 categorie) era quello che
+`consult_invictus` interrogava. Il modello leggeva il corpus povero e non poteva cercare in
+quello ricco. Ora esiste solo `InvictusKnowledge` (1.046 regole).
+
+- La sorgente del vecchio `InvictusCorpus` era `/tmp/claims_final.json`, che **non esiste
+  piu'**. Le 55 regole che non erano presenti altrove sono in
+  `tools/corpus/invictus_corpus_extra.json`, versionato. Non cancellarlo: e' l'unica copia.
+- `build_invictus_v2.py` mappa i vecchi topic sulle categorie del generatore
+  (`RECOVERY`→`REST`, `EXERCISE`→`EXECUTION`, `SAFETY`→`SAFETY_TRAIN`/`SAFETY_NUT`) e fa
+  dedup per statement. La rigenerazione e' idempotente: verificato con `diff` prima e dopo.
+- **Non rimettere il corpus nel prompt.** La docstring di `InvictusKnowledge` lo diceva
+  gia' dal primo giorno, mentre il codice lo iniettava: la divergenza e' durata perche'
+  nessun test la misurava. Ora `ThresholdsAreWarningsTest` controlla che
+  `AiProgramGenerationService` non contenga `InvictusKnowledge.promptBlock`.
+
+Attenzione al parsing dei `.kt` generati: uno statement conteneva `"grassi):"` e un
+parser che bilancia le parentesi senza ignorare le stringhe perde la regola in silenzio.
+Contare le regole prima e dopo ogni fusione, e confrontare gli statement, non solo i totali.
+
+Il corpus **non e' ancora la fonte dei parametri**: nella prova live
+`toolTrace=[submit_full_program]`, zero consultazioni. Il prompt lo suggerisce in prosa, e
+la prosa si ignora quando c'e' uno strumento obbligatorio in concorrenza.

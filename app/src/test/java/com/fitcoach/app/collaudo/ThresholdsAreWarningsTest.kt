@@ -1,6 +1,6 @@
 package com.fitcoach.app.collaudo
 
-import com.fitcoach.app.domain.knowledge.InvictusCorpus
+import com.fitcoach.app.domain.knowledge.InvictusKnowledge
 import com.fitcoach.app.domain.knowledge.KnowledgeCorpus
 import com.fitcoach.app.domain.model.Equipment
 import com.fitcoach.app.domain.model.Exercise
@@ -112,73 +112,80 @@ class ThresholdsAreWarningsTest {
 
     @Test
     fun `il corpus invictus cita una fonte verificabile per ogni regola`() {
-        assertThat(InvictusCorpus.rules.size).isAtLeast(120)
-        InvictusCorpus.rules.forEach { rule ->
+        assertThat(InvictusKnowledge.rules.size).isAtLeast(120)
+        InvictusKnowledge.rules.forEach { rule ->
             assertThat(rule.statement).isNotEmpty()
             assertThat(rule.articleTitle).isNotEmpty()
-            assertThat(rule.url).startsWith("https://www.projectinvictus.it/")
+            assertThat(rule.url).startsWith("https://")
             assertThat(rule.publishedDate).isNotEmpty()
-            // La metodologia Invictus e divulgativa: non va spacciata per linee guida.
-            assertThat(rule.kind).isEqualTo(SourceKind.DIVULGATIVE)
+            // L'URL deve corrispondere al tipo dichiarato: una regola divulgativa
+            // rimanda a InVictus, una da letteratura a PubMed. Se i due divergono,
+            // la citazione e' falsa e il modello non puo' verificarla.
+            when (rule.kind) {
+                SourceKind.DIVULGATIVE ->
+                    assertThat(rule.url).startsWith("https://www.projectinvictus.it/")
+                SourceKind.SYSTEMATIC_REVIEW, SourceKind.INDIVIDUAL_STUDY ->
+                    assertThat(rule.url).startsWith("https://pubmed.ncbi.nlm.nih.gov/")
+                SourceKind.OFFICIAL_GUIDELINE ->
+                    assertThat(rule.url).startsWith("https://")
+            }
         }
     }
 
     @Test
     fun `ogni regola contiene un numero verificabile`() {
         // Il valore del corpus sta nei numeri: senza, e' un'opinione.
-        InvictusCorpus.rules.forEach { rule ->
+        InvictusKnowledge.rules.forEach { rule ->
             assertThat(rule.statement).matches(".*\\d.*")
         }
     }
 
     @Test
     fun `il corpus copre tutti gli argomenti che servono al motore`() {
-        val training = InvictusCorpus.forArea(KnowledgeCorpus.Area.TRAINING)
-        val nutrition = InvictusCorpus.forArea(KnowledgeCorpus.Area.NUTRITION)
+        val training = InvictusKnowledge.forArea(InvictusKnowledge.Area.ALLENAMENTO)
+        val nutrition = InvictusKnowledge.forArea(InvictusKnowledge.Area.NUTRIZIONE)
         assertThat(training.size).isAtLeast(60)
         assertThat(nutrition.size).isAtLeast(50)
 
-        // Ogni argomento del motore deve avere almeno una regola.
+        // Ogni parametro che il motore deve decidere ha almeno una regola.
         listOf(
-            InvictusCorpus.Topic.VOLUME,
-            InvictusCorpus.Topic.FREQUENCY,
-            InvictusCorpus.Topic.RECOVERY,
-            InvictusCorpus.Topic.INTENSITY,
-            InvictusCorpus.Topic.PROTEIN,
-            InvictusCorpus.Topic.CARBS,
-            InvictusCorpus.Topic.FAT,
-            InvictusCorpus.Topic.CALORIES
-        ).forEach { topic ->
-            assertThat(InvictusCorpus.forTopic(topic)).isNotEmpty()
+            InvictusKnowledge.Category.SPLIT,
+            InvictusKnowledge.Category.VOLUME,
+            InvictusKnowledge.Category.FREQUENCY,
+            InvictusKnowledge.Category.REST,
+            InvictusKnowledge.Category.INTENSITY,
+            InvictusKnowledge.Category.REPS,
+            InvictusKnowledge.Category.PROTEIN,
+            InvictusKnowledge.Category.CARBS,
+            InvictusKnowledge.Category.FAT,
+            InvictusKnowledge.Category.CALORIES
+        ).forEach { category ->
+            assertThat(InvictusKnowledge.forCategory(category)).isNotEmpty()
         }
     }
 
     @Test
     fun `le regole contengono i numeri chiave della metodologia`() {
-        val all = InvictusCorpus.rules.joinToString("\n") { it.statement }
+        val all = InvictusKnowledge.rules.joinToString("\n") { it.statement }
         assertThat(all).contains("serie")
         assertThat(all).contains("proteine")
         assertThat(all).contains("grassi")
     }
 
     @Test
-    fun `il blocco prompt resta limitato e cita la fonte`() {
-        // Il prompt non deve diventare un elenco interminabile: si limita per argomento.
-        val block = InvictusCorpus.promptBlock(maxPerTopic = 3)
-        assertThat(block).contains("PROJECT INVICTUS")
-        assertThat(block).contains("https://www.projectinvictus.it/")
-
-        val maxExpected = InvictusCorpus.Topic.entries.size * 3
-        val ruleLines = block.lines().count { it.startsWith("- ") }
-        assertThat(ruleLines).isAtMost(maxExpected)
-        assertThat(ruleLines).isAtLeast(20)
-    }
-
-    @Test
-    fun `il testo completo riporta tutte le regole consultabili`() {
-        val full = InvictusCorpus.fullText()
-        InvictusCorpus.rules.forEach { rule ->
-            assertThat(full).contains(rule.articleTitle)
-        }
+    fun `il corpus non entra nel prompt di generazione`() {
+        // Su un modello piccolo un contesto gonfiato produce programmi non validi:
+        // il corpus si interroga con consult_invictus, non si incolla nel prompt.
+        val source = java.io.File(
+            "src/main/java/com/fitcoach/app/domain/coach/AiProgramGenerationService.kt"
+        ).takeIf { it.exists() }
+            ?: java.io.File(
+                "app/src/main/java/com/fitcoach/app/domain/coach/AiProgramGenerationService.kt"
+            )
+        assertThat(source.exists()).isTrue()
+        val text = source.readText()
+        assertThat(text).doesNotContain("InvictusKnowledge.promptBlock")
+        assertThat(text).doesNotContain("InvictusKnowledge.rules")
+        assertThat(text).contains("consult_invictus")
     }
 }

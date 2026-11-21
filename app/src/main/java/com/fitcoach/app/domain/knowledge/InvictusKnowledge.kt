@@ -688,6 +688,102 @@ object InvictusKnowledge {
             kind = SourceKind.SYSTEMATIC_REVIEW
         ),
         Rule(
+            category = Category.FREQUENCY,
+            statement =
+                "Frequenza ideale: 2 volte parte alta e 2 volte gambe. ",
+            articleTitle = "Allenamento in multifrequenza: 5 schede di allenamento",
+            url = "https://www.projectinvictus.it/allenamento-in-multifrequenza/",
+            publishedDate = "2024-04-01",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.FREQUENCY,
+            statement =
+                "Innanzitutto prendi in considerazione un esercizio che verrà ripetuto per più volte " +
+                "durante la settimana ( lavoro in multifrequenza ) e crea una modulazione su almeno 2 " +
+                "giorni che preveda l’utilizzo di questo esercizio su più rep range . ",
+            articleTitle = "Come programmare l’allenamento",
+            url = "https://www.projectinvictus.it/programmazione-allenamento-palestra/",
+            publishedDate = "2026-09-16",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.FREQUENCY,
+            statement =
+                "Per questo conviene allenarsi 3 – 4 volte a settimana , anche inserendo allenamenti " +
+                "metabolici o cardio o HIIT 1-3 volte / settimana, facendo attenzione a non fare troppo " +
+                "per non rischiare il sovrallenamento. ",
+            articleTitle = "Definizione in palestra: come definire i muscoli",
+            url = "https://www.projectinvictus.it/definizione-palestra/",
+            publishedDate = "2024-01-15",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.FREQUENCY,
+            statement =
+                "La frequenza di allenamento va da 5 – 7 giorni a settimana per Arthur Jones a 3 per " +
+                "Mentzer. ",
+            articleTitle = "Heavy Duty: principi e scheda di allenamento",
+            url = "https://www.projectinvictus.it/heavy-duty-allenamento/",
+            publishedDate = "2022-07-31",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.FREQUENCY,
+            statement =
+                "Puoi allenare le spalle direttamente da 1-4 volte a settimana. ",
+            articleTitle = "I migliori esercizi per le spalle",
+            url = "https://www.projectinvictus.it/esercizi-spalle-la-guida-completa/",
+            publishedDate = "2025-01-21",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.FREQUENCY,
+            statement =
+                "La frequenza di allenamento dello stesso gruppo muscolare è ogni 5 giorni circa. ",
+            articleTitle = "Il metodo Hatfield",
+            url = "https://www.projectinvictus.it/metodo-hatfield-ipertrofia/",
+            publishedDate = "2025-05-10",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.FREQUENCY,
+            statement =
+                "Eseguire gli esercizi seguenti 2-3 volte a settimana a fine allenamento, è il minimo " +
+                "sindacale per stimolare il retto dell’addome e gli obliq ui. ",
+            articleTitle = "Addominali scolpiti: come ottenerli",
+            url = "https://www.projectinvictus.it/addominali-scolpiti/",
+            publishedDate = "2025-09-10",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.FREQUENCY,
+            statement =
+                "Allenamento 1 Allenamento da ripetere almeno 3 volte a settimana. ",
+            articleTitle = "Calf Raise: esercizi efficaci per i polpacci e scheda di allenamento",
+            url = "https://www.projectinvictus.it/calf-raise/",
+            publishedDate = "2026-07-17",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.FREQUENCY,
+            statement =
+                "Assolutamente consigliato da fare, almeno 3-7 volte a settimana per almeno 10′ . ",
+            articleTitle = "I migliori esercizi fitness",
+            url = "https://www.projectinvictus.it/esercizi-fitness/",
+            publishedDate = "2024-07-28",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.FREQUENCY,
+            statement =
+                "La frequenza settimanale ottimale è su 4-6 giorni. ",
+            articleTitle = "Impariamo a programmare alcuni allenamenti da palestra (1xMax)",
+            url = "https://www.projectinvictus.it/impariamo-a-programmare-part-1-1xmax/",
+            publishedDate = "2013-10-08",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
             category = Category.EXERCISE_SELECT,
             statement =
                 "Esercizi complementari glutei uomo I complementari servono per andare a completare il " +
@@ -1128,6 +1224,103 @@ object InvictusKnowledge {
             kind = SourceKind.INDIVIDUAL_STUDY
         ),
         Rule(
+            category = Category.VOLUME,
+            statement =
+                "Passai dunque ad una media di 3050kcal circa, introducendo allo stesso tempo a livello " +
+                "di training, lavori più lattacidi, aumentando quindi il volume totale settimanale in " +
+                "concomitanza di un abbassamento calorico . ",
+            articleTitle = "Il mio percorso bodybuilding (Nicolò Liani)",
+            url = "https://www.projectinvictus.it/percorso-nicolo-liani/",
+            publishedDate = "2018-09-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "Se vuoi dare enfasi al pettorale puoi aggiungere un esercizio e/o aumentare i set fino " +
+                "ad una massimo di 25 serie a settimana. ",
+            articleTitle = "Scheda pettorali in palestra",
+            url = "https://www.projectinvictus.it/scheda-pettorali/",
+            publishedDate = "2026-07-07",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "Nella singola seduta puoi eseguire almeno 3-4 serie di questo esercizio. ",
+            articleTitle = "Alzate laterali: esecuzione corretta, varianti e muscoli coinvolti",
+            url = "https://www.projectinvictus.it/alzate-laterali/",
+            publishedDate = "2025-04-09",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "PANCA: 5 serie da 5 ripetizioni Peso usato la settimana prima. ",
+            articleTitle = "Lo squat pesante dopo i 40 anni: quando l’età non conta, anche se conta.",
+            url = "https://www.projectinvictus.it/lo-squat-pesante-dopo-i-40-anni/",
+            publishedDate = "2018-07-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "MILITARY PRESS: 5 serie da 5 ripetizioni Peso usato la settimana prima. ",
+            articleTitle = "Lo squat pesante dopo i 40 anni: quando l’età non conta, anche se conta.",
+            url = "https://www.projectinvictus.it/lo-squat-pesante-dopo-i-40-anni/",
+            publishedDate = "2018-07-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "PANCA: serie da 5 ripetizioni Peso usato la settimana prima cercando di rendere molto " +
+                "esplosivo ogni colpo. ",
+            articleTitle = "Lo squat pesante dopo i 40 anni: quando l’età non conta, anche se conta.",
+            url = "https://www.projectinvictus.it/lo-squat-pesante-dopo-i-40-anni/",
+            publishedDate = "2018-07-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "Peso usato la settimana prima + 10% MILITARY PRESS: 5 serie da 5 ripetizioni Peso usato " +
+                "la settimana prima cercando di rendere molto esplosivo ogni colpo. ",
+            articleTitle = "Lo squat pesante dopo i 40 anni: quando l’età non conta, anche se conta.",
+            url = "https://www.projectinvictus.it/lo-squat-pesante-dopo-i-40-anni/",
+            publishedDate = "2018-07-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "PANCA: 5 serie da 4 ripetizioni Peso usato la settimana prima. ",
+            articleTitle = "Lo squat pesante dopo i 40 anni: quando l’età non conta, anche se conta.",
+            url = "https://www.projectinvictus.it/lo-squat-pesante-dopo-i-40-anni/",
+            publishedDate = "2018-07-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "MILITARY PRESS: 5 serie da 4 ripetizioni Peso usato la settimana prima. ",
+            articleTitle = "Lo squat pesante dopo i 40 anni: quando l’età non conta, anche se conta.",
+            url = "https://www.projectinvictus.it/lo-squat-pesante-dopo-i-40-anni/",
+            publishedDate = "2018-07-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.VOLUME,
+            statement =
+                "In questo test di 8 settimane ho strutturato l’allenamento in 2 blocchi da 3 settimane " +
+                "seguiti da una settimana di Deload e test (ho già eseguito una prima settimana di test " +
+                "degli RPE a volume limitato, una sorta di Acclimation). ",
+            articleTitle = "L’autoregolazione nell’allenamento della forza",
+            url = "https://www.projectinvictus.it/autoregolazione-allenamento-della-forza/",
+            publishedDate = "2017-01-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
             category = Category.INTENSITY,
             statement =
                 "Una serie allenante deve avere minimo un RPE di 7,5 (3 ripetizioni di margine dal " +
@@ -1375,6 +1568,60 @@ object InvictusKnowledge {
             url = "https://pubmed.ncbi.nlm.nih.gov/36584157/",
             publishedDate = "2022",
             kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.INTENSITY,
+            statement =
+                "Si può calcolare moltiplicando le serie per le ripetizioni allenanti (ovvero con un " +
+                "buffer massimo di 3, se il nostro cedimento arriva a 10 ripetizioni, contano solo le " +
+                "serie dove arriviamo almeno a 7). ",
+            articleTitle = "Il culturismo: cos’è, dieta e allenamento",
+            url = "https://www.projectinvictus.it/culturismo/",
+            publishedDate = "2022-12-03",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.INTENSITY,
+            statement =
+                "Se le serie vengono portate al cedimento o quasi, con un buffer massimo di 1 – 3 " +
+                "ripetizioni, sei sicuro di portarti a casa uno dei parametri allenanti più importanti. ",
+            articleTitle = "Ricomposizione corporea: la guida completa",
+            url = "https://www.projectinvictus.it/ricomposizione-corporea/",
+            publishedDate = "2026-08-18",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.INTENSITY,
+            statement =
+                "Nella sua versione originale prevedeva l’applicazione di carichi del 90% o superiori, " +
+                "coi quali venivano eseguite una serie di singole intervallate da circa 10 secondi di " +
+                "pausa fino ad arrivare a cedimento muscolare. ",
+            articleTitle = "Tecniche intensità nel bodybuilding",
+            url = "https://www.projectinvictus.it/tecniche-intensita-bodybuilding/",
+            publishedDate = "2025-08-27",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.INTENSITY,
+            statement =
+                "Sembra che le intensità minime per provocare questo adattamento corrispondano a circa il " +
+                "30% 1-RM, e che a bassissime intensità si necessiti di portare lo sforzo alla massima " +
+                "fatica (cedimento), ma sono necessarie ulteriori ricerche per poter trarre conclusioni " +
+                "più esaustive[21]. ",
+            articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 1)",
+            url = "https://www.projectinvictus.it/chiarimenti-e-incomprensioni-sullintensita-nellesercizio-con-i-pesi-parte-1/",
+            publishedDate = "2014-06-05",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.INTENSITY,
+            statement =
+                "Fai massimo 6-8 ripetizioni senza accumulare acido lattico, lavorando a buffer (con " +
+                "margine). ",
+            articleTitle = "Esercizi per il riscaldamento: perchè e quali fare",
+            url = "https://www.projectinvictus.it/esercizi-di-riscaldamento/",
+            publishedDate = "2024-06-19",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.REPS,
@@ -2535,6 +2782,27 @@ object InvictusKnowledge {
             kind = SourceKind.INDIVIDUAL_STUDY
         ),
         Rule(
+            category = Category.REST,
+            statement =
+                "Questo perchè ogni volta che si porta il muscolo allo sfinimento: 1 aumentano di molti i " +
+                "tempi di recupero tra i giorni (invece qui dobbiamo allenare la panca 3 volte a " +
+                "settima), 2 si deteriora la tecnica perchè si pensa esclusivamente a concludere l’alzata " +
+                "perdendo completamente l’assetto. ",
+            articleTitle = "5×5 per migliorare la tua Panca Piana (versione inVictus)",
+            url = "https://www.projectinvictus.it/5x5-per-migliorare-la-tua-panca-piana-versione-invictus/",
+            publishedDate = "2014-09-09",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.REST,
+            statement =
+                "Esegui questi esercizi per 3 serie, con 45” di pausa tra le serie. ",
+            articleTitle = "Crunch laterali: come farli correttamente",
+            url = "https://www.projectinvictus.it/crunch-obliqui/",
+            publishedDate = "2024-07-10",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
             category = Category.PROGRESSION,
             statement =
                 "Nel mio caso quindi si tratterebbe di 22-23 settimane solo per ripristinare tutti quegli " +
@@ -2705,6 +2973,16 @@ object InvictusKnowledge {
             url = "https://pubmed.ncbi.nlm.nih.gov/36582265/",
             publishedDate = "2022",
             kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.PROGRESSION,
+            statement =
+                "Se riesci ad eseguire correttamente >12-15 ripetizioni è meglio piuttosto, se scegli " +
+                "questa variante, utilizzare la versione con sovraccarico. ",
+            articleTitle = "Calf in piedi: esecuzione corretta",
+            url = "https://www.projectinvictus.it/calf-in-piedi/",
+            publishedDate = "2023-05-17",
+            kind = SourceKind.DIVULGATIVE
         ),
         Rule(
             category = Category.PERIODIZATION,
@@ -3251,6 +3529,48 @@ object InvictusKnowledge {
             articleTitle = "Chiarimenti e incomprensioni sull’intensità nell’esercizio con i pesi. (Parte 2)",
             url = "https://www.projectinvictus.it/chiarimenti-e-incomprensioni-sullintensita-nellesercizio-con-i-pesi-parte-2/",
             publishedDate = "2014-06-12",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.EXECUTION,
+            statement =
+                "Il range ipertrofico ( 6-12 ripetizioni ) è il miglior compromesso tra carichi medi e " +
+                "tempi medi sotto tensione ( TUT ). ",
+            articleTitle = "Bodybuilding: la guida completa",
+            url = "https://www.projectinvictus.it/bodybuilding/",
+            publishedDate = "2024-01-05",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.EXECUTION,
+            statement =
+                "Come indicazione le mani vanno tenute almeno ad una larghezza di 1.5 volte le spalle e " +
+                "in caso di ridotta mobilità scapolo-omerale, il consiglio è quello di allargare anche a " +
+                "2 volte. ",
+            articleTitle = "Lento dietro: esecuzione corretta e muscoli coinvolti",
+            url = "https://www.projectinvictus.it/lento-dietro-lento-avanti/",
+            publishedDate = "2022-12-15",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.EXECUTION,
+            statement =
+                "Esecuzione corretta del Military press Per eseguire al meglio il Military press con " +
+                "bilanciere la presa deve essere poco più larga delle spalle (da 1.2 a 1.5 volte le " +
+                "spalle). ",
+            articleTitle = "Military Press: esecuzione corretta e muscoli coinvolti",
+            url = "https://www.projectinvictus.it/military-press/",
+            publishedDate = "2026-04-29",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.EXECUTION,
+            statement =
+                "L’esecuzione corretta prevede di posizionarsi a terra con le mani circa ad una larghezza " +
+                "di 1.5 volte le spalle. ",
+            articleTitle = "Flessioni per allenare i pettorali",
+            url = "https://www.projectinvictus.it/flessioni-pettorali/",
+            publishedDate = "2022-03-12",
             kind = SourceKind.DIVULGATIVE
         ),
         Rule(
@@ -5253,6 +5573,59 @@ object InvictusKnowledge {
             kind = SourceKind.DIVULGATIVE
         ),
         Rule(
+            category = Category.CALORIES,
+            statement =
+                "Ora queste 3750 kcal non verranno stoccate tutte quante negli adipociti, per capire però " +
+                "in che % circa verranno depositate in questi ultimi, dobbiamo analizzare il contesto in " +
+                "cui Giuseppe si trova. ",
+            articleTitle = "Il mio percorso bodybuilding (Nicolò Liani)",
+            url = "https://www.projectinvictus.it/percorso-nicolo-liani/",
+            publishedDate = "2018-09-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CALORIES,
+            statement =
+                "La seconda fase (2 settimane) è di mantenimento , e punta a mantenere il peso perso " +
+                "nella prima fase. ",
+            articleTitle = "Dieta Sirt: come funziona e quali cibi mangiare",
+            url = "https://www.projectinvictus.it/dieta-sirt/",
+            publishedDate = "2024-01-30",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CALORIES,
+            statement =
+                "La dieta dei 3 giorni funziona perché fa mangiare quantità molto ridotte di cibo (circa " +
+                "1000 kcal / giorno), rendendo la settimana equilibrata anche se negli altri 4 giorni " +
+                "mangi un po’ di più. ",
+            articleTitle = "Dieta dei 3 giorni per perdere peso",
+            url = "https://www.projectinvictus.it/dieta-dei-3-giorni/",
+            publishedDate = "2024-05-19",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CALORIES,
+            statement =
+                "Le diete ipocaloriche dovrebbero mediamente creare un deficit calorico del 15-20% " +
+                "rispetto al tuo fabbisogno. ",
+            articleTitle = "Dieta ipocalorica per dimagrire: la guida completa",
+            url = "https://www.projectinvictus.it/dieta-ipocalorica/",
+            publishedDate = "2025-01-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CALORIES,
+            statement =
+                "Fai attenzione alle calorie nascoste Quanti cucchiaini di zucchero e quanti di olio " +
+                "spesso non vengono considerati, quando invece apportano molte calorie, soprattutto l’ " +
+                "olio che apporta circa 100 kcal per 10 ml (1 cucchiaio da minestra). ",
+            articleTitle = "Dimagrire senza dieta in modo definitivo",
+            url = "https://www.projectinvictus.it/dieta-senza-dieta/",
+            publishedDate = "2024-01-30",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
             category = Category.METABOLISM,
             statement =
                 "Questi numeri valgono se la persona prima di mettersi a dieta avevamo un buon TDEE " +
@@ -6669,6 +7042,82 @@ object InvictusKnowledge {
             kind = SourceKind.SYSTEMATIC_REVIEW
         ),
         Rule(
+            category = Category.PROTEIN,
+            statement =
+                "dieta a zona 40% carbo, 30% proteine, 30% grassi): è sempre meglio basarsi su g / kg " +
+                "riferiti al peso ideale. ",
+            articleTitle = "Definizione in palestra: come definire i muscoli",
+            url = "https://www.projectinvictus.it/definizione-palestra/",
+            publishedDate = "2024-01-15",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.PROTEIN,
+            statement =
+                "Come noterete la mia media calorica si è abbassata di 200 kcal circa da quella di " +
+                "partenza, ed ho aumentato in proporzione l’intake proteico semplicemente per un discorso " +
+                "di maggiore sazietà non per altro. ",
+            articleTitle = "Il mio percorso bodybuilding (Nicolò Liani)",
+            url = "https://www.projectinvictus.it/percorso-nicolo-liani/",
+            publishedDate = "2018-09-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.PROTEIN,
+            statement =
+                "Alcuni alimenti proteici magri, soprattutto i derivati del latte light, possono " +
+                "assolvere una funzione simile – ma con una dilatazione dei tempi digestivi di circa il " +
+                "+50% rispetto ai precedenti. ",
+            articleTitle = "Pre workout bodybuilding: cosa mangiare e cosa assumere prima della palestra?",
+            url = "https://www.projectinvictus.it/pre-workout-palestra-bodybuilding/",
+            publishedDate = "2022-01-12",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.PROTEIN,
+            statement =
+                "Le fonti proteiche è meglio distribuirle in modo uniforme nell’arco delle 24 ore in modo " +
+                "che ciascun pasto contenga 20-40 g di proteine (da alimenti o in alternativa proteine in " +
+                "polvere) per volta. ",
+            articleTitle = "Quando assumere proteine: prima o dopo allenamento?",
+            url = "https://www.projectinvictus.it/proteine-prima-o-dopo-allenamento/",
+            publishedDate = "2023-09-24",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.PROTEIN,
+            statement =
+                "I cereali sono molto poveri di grassi e sono costituiti per circa il 70% da carboidrati " +
+                "e per il 12% da proteine. ",
+            articleTitle = "Dieta ipolipidica: cos’è e come funziona?",
+            url = "https://www.projectinvictus.it/dieta-ipolipidica/",
+            publishedDate = "2025-12-20",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.PROTEIN,
+            statement =
+                "Le proteine sono una componente fondamentale del muscolo (di cui costituiscono circa il " +
+                "20%) e la funzione più nota è sicuramente quella di garantire la contrazione , che " +
+                "avviene tramite lo scivolamento dei filamenti proteici di miosina rispetto a quelli di " +
+                "actina. ",
+            articleTitle = "Proteine palestra: quali prendere e a cosa servono?",
+            url = "https://www.projectinvictus.it/proteine-palestra/",
+            publishedDate = "2023-09-21",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.PROTEIN,
+            statement =
+                "Le proteine post-workout (circa 25 g di proteine o 10-12 g di aminoacidi essenziali) " +
+                "sono utili specialmente nel caso in cui non hai fatto un pasto pre-allenamento o vieni " +
+                "da abbastanza ore di digiuno. ",
+            articleTitle = "Proteine palestra: quali prendere e a cosa servono?",
+            url = "https://www.projectinvictus.it/proteine-palestra/",
+            publishedDate = "2023-09-21",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
             category = Category.CARBS,
             statement =
                 "Sapendo che 1 g di carboidrati = 4 kcal, dovrà assumere 361 g di carboidrati al giorno " +
@@ -7627,6 +8076,29 @@ object InvictusKnowledge {
             articleTitle = "La sensibilità insulinica (Parte 3)",
             url = "https://www.projectinvictus.it/la-sensibilita-insulinica-parte-3/",
             publishedDate = "2014-01-24",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CARBS,
+            statement =
+                "Ad esempio, se mangi molti carboidrati e poi ti pesi, noterai subito che l’ago della " +
+                "bilancia indica un peso corporeo maggiore rispetto al solito: infatti, ad ogni grammo di " +
+                "glucosio immagazzinato sotto forma di glicogeno corrispondono circa 3 g di acqua. ",
+            articleTitle = "Dieta per ingrassare velocemente",
+            url = "https://www.projectinvictus.it/dieta-per-ingrassare/",
+            publishedDate = "2020-02-28",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CARBS,
+            statement =
+                "Nel breve periodo si può assistere a: Perdita di peso rapida : si assiste ad un cospicuo " +
+                "calo ponderale sia per aumento della diuresi legata all’esaurimento del glicogeno " +
+                "epatico (1g di glicogeno trattiene 3g di acqua circa) sia per l’aumento della lipolisi e " +
+                "dell’ossidazione degli acidi grassi. ",
+            articleTitle = "Dieta povera di carboidrati: cos’è, vantaggi e menù",
+            url = "https://www.projectinvictus.it/dieta-povera-di-carboidrati/",
+            publishedDate = "2023-03-05",
             kind = SourceKind.DIVULGATIVE
         ),
         Rule(
@@ -8798,6 +9270,47 @@ object InvictusKnowledge {
             kind = SourceKind.DIVULGATIVE
         ),
         Rule(
+            category = Category.FAT,
+            statement =
+                "Molti atleti, per preservare la massa contrattile preferiscono tagliare questo " +
+                "macronutriente ed in media andiamo da quantitativi da 0,4-1,2g/kg di grassi . ",
+            articleTitle = "Il culturismo: cos’è, dieta e allenamento",
+            url = "https://www.projectinvictus.it/culturismo/",
+            publishedDate = "2022-12-03",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.FAT,
+            statement =
+                "Perdere 1 kg di grasso richiede un deficit calorico di circa 7.000 calorie , e le diete " +
+                "lampo solitamente non consentono di raggiungere un tale deficit in così poco tempo. ",
+            articleTitle = "Dieta lampo per dimagrire in poco tempo",
+            url = "https://www.projectinvictus.it/dieta-lampo/",
+            publishedDate = "2025-06-03",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.FAT,
+            statement =
+                "Il mio obiettivo è quello di incrementare di circa 200g il mio peso medio settimanale, " +
+                "di settimana in settimana, così da aumentare la massa muscolare e migliorare i miei " +
+                "massimali senza accumulare eccessivamente grasso. ",
+            articleTitle = "L’autoregolazione nell’allenamento della forza",
+            url = "https://www.projectinvictus.it/autoregolazione-allenamento-della-forza/",
+            publishedDate = "2017-01-13",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.FAT,
+            statement =
+                "Il grasso nel burro contiene più grassi monoinsaturi di quanto si potrebbe pensare, " +
+                "circa il 30%. ",
+            articleTitle = "Mountain Dog Diet: cos’è e come farla",
+            url = "https://www.projectinvictus.it/dieta-mountain-dog/",
+            publishedDate = "2022-05-21",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
             category = Category.FIBER,
             statement =
                 "Le linee guida internazionali per una sana alimentazione , a prescindere dal tuo " +
@@ -9538,6 +10051,16 @@ object InvictusKnowledge {
             articleTitle = "Carboidrati post-workout: perché no?",
             url = "https://www.projectinvictus.it/carboidrati-post-workout-perche-no/",
             publishedDate = "2016-08-04",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.TIMING,
+            statement =
+                "Se l’obbiettivo è estetico , il post-workout può comprendere circa il 30% dei glucidi " +
+                "giornalieri, con il restante 70% suddiviso negli altri pasti. ",
+            articleTitle = "Carboidrati dopo l’allenamento in palestra",
+            url = "https://www.projectinvictus.it/carboidrati-post-workout-palestra/",
+            publishedDate = "2024-03-26",
             kind = SourceKind.DIVULGATIVE
         ),
         Rule(
@@ -10360,6 +10883,17 @@ object InvictusKnowledge {
             kind = SourceKind.DIVULGATIVE
         ),
         Rule(
+            category = Category.BODYCOMP,
+            statement =
+                "In questo contesto, però, non sempre è conveniente non incrementare il tessuto adiposo " +
+                "in quando potresti trovarti a fine definizione con una percentuale molto bassa (circa " +
+                "5%) di massa grassa , che è sottofisiologica . ",
+            articleTitle = "Reverse diet: come impostarla",
+            url = "https://www.projectinvictus.it/reverse-diet/",
+            publishedDate = "2024-03-07",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
             category = Category.SUPPLEMENT,
             statement =
                 "Nell’immediato post-workout prendere proteine in polvere non ha grandi utilità, se non " +
@@ -10561,6 +11095,39 @@ object InvictusKnowledge {
             articleTitle = "Proteine vegetali per la palestra",
             url = "https://www.projectinvictus.it/proteine-vegetali/",
             publishedDate = "2020-07-24",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.SAFETY_NUT,
+            statement =
+                "Anche se difficile da diagnosticare con precisione, si ritiene che le articolazioni " +
+                "sacro-iliache siano la fonte di dolore in circa il 25% dei pazienti affetti da lombalgia " +
+                "cronica , sebbene la letteratura non abbia ancora trovato un accordo unanime a riguardo. ",
+            articleTitle = "Bacino: anatomia e funzioni",
+            url = "https://www.projectinvictus.it/bacino-anatomia-funzioni/",
+            publishedDate = "2020-05-27",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.SAFETY_NUT,
+            statement =
+                "Da un punto di vista della prognosi, nell’85% circa dei casi il dolore svanisce " +
+                "spontaneamente entro un anno ed è caratterizzato da frequenti recidive e riacutizzazioni " +
+                "del dolore. ",
+            articleTitle = "Gomito: anatomia e dolore",
+            url = "https://www.projectinvictus.it/gomito-anatomia-dolore/",
+            publishedDate = "2019-10-25",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.SAFETY_NUT,
+            statement =
+                "Dolore al coccige: cause e trattamento Il dolore al coccige, detto coccigodinia, " +
+                "rappresenta un problema scarsamente diffuso nella popolazione affetta da disordini " +
+                "muscoloscheletrici, con una prevalenza di circa l’1%. ",
+            articleTitle = "Il coccige: dolore ed anatomia",
+            url = "https://www.projectinvictus.it/coccige/",
+            publishedDate = "2020-03-01",
             kind = SourceKind.DIVULGATIVE
         )
     )

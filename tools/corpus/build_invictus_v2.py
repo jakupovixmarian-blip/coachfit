@@ -49,6 +49,51 @@ for _code, _extra in _primary.items():
         _r["kind"] = _primary_kind(_r)
     data[_code].extend(_extra)
 
+# Regole del vecchio InvictusCorpus: la loro sorgente (/tmp/claims_final.json) non
+# e' piu' riproducibile, quindi vivono in un JSON versionato. Erano organizzate per
+# topic generico; qui vanno nella categoria che il generatore interroga davvero.
+_TOPIC_TO_CATEGORY = {
+    "VOLUME": "VOLUME",
+    "FREQUENCY": "FREQUENCY",
+    "RECOVERY": "REST",
+    "INTENSITY": "INTENSITY",
+    "PERIODIZATION": "PERIODIZATION",
+    "PROGRESSION": "PROGRESSION",
+    "TECHNIQUES": "TECHNIQUE",
+    "EXERCISE": "EXECUTION",
+    "PROTEIN": "PROTEIN",
+    "CARBS": "CARBS",
+    "FAT": "FAT",
+    "CALORIES": "CALORIES",
+    "TIMING": "TIMING",
+    "BODYCOMP": "BODYCOMP",
+}
+_SAFETY_BY_AREA = {"TRAINING": "SAFETY_TRAIN", "NUTRITION": "SAFETY_NUT", "SAFETY": "SAFETY_NUT"}
+
+_seen = {r["statement"].strip() for rs in data.values() for r in rs}
+_extra_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "invictus_corpus_extra.json")
+with open(_extra_path) as f:
+    for _r in json.load(f):
+        _code = (
+            _SAFETY_BY_AREA.get(_r["area"], "SAFETY_NUT")
+            if _r["topic"] == "SAFETY"
+            else _TOPIC_TO_CATEGORY.get(_r["topic"])
+        )
+        if _code is None or _code not in data:
+            sys.exit(f"topic senza categoria: {_r['topic']} -> {_code}")
+        if _r["statement"].strip() in _seen:
+            continue
+        _seen.add(_r["statement"].strip())
+        data[_code].append(
+            {
+                "statement": _r["statement"],
+                "articleTitle": _r["articleTitle"],
+                "url": _r["url"],
+                "publishedDate": _r["publishedDate"],
+                "kind": "DIVULGATIVE",
+            }
+        )
+
 enum_lines = []
 for code, (area, label) in taxonomy.ALL.items():
     enum_lines.append(f'        {code}("{label}", Area.{area.upper()})')

@@ -178,6 +178,10 @@ class OpenRouterLiveProbe {
             val result = service.generate(profile)
             val elapsed = (System.currentTimeMillis() - started) / 1000.0
             println("=== RISULTATO in ${elapsed}s: $result")
+            (result as? AiProgramGenerationService.Result.Success)?.let {
+                println("=== STRUMENTI CHIAMATI (${it.toolTrace.size}): ${it.toolTrace}")
+                println("=== HA CONSULTATO INVICTUS: ${it.toolTrace.any { t -> t.contains("invictus") }}")
+            }
             val failure = (result as? AiProgramGenerationService.Result.Failure)?.message
             assertWithMessage("generazione reale fallita: $failure")
                 .that(result)

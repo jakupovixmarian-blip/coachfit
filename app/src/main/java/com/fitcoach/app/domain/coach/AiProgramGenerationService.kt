@@ -9,7 +9,6 @@ import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.FoodItem
 import com.fitcoach.app.domain.model.UserProfile
-import com.fitcoach.app.domain.knowledge.InvictusCorpus
 import com.fitcoach.app.domain.knowledge.KnowledgeCorpus
 import com.fitcoach.app.domain.nutrition.BreakfastConstraint
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
@@ -49,7 +48,15 @@ class AiProgramGenerationService @Inject constructor(
         data class Success(
             val nutritionPlanId: Long,
             val workoutPlanId: Long,
-            val warnings: List<String> = emptyList()
+            val warnings: List<String> = emptyList(),
+            /**
+             * Strumenti effettivamente chiamati dal modello, in ordine.
+             *
+             * Serve a distinguere "il piano e buono" da "il piano e buono perche
+             * il modello ha consultato il corpus": senza questa traccia non c'e
+             * modo di sapere se una fonte e stata letta o solo citata.
+             */
+            val toolTrace: List<String> = emptyList()
         ) : Result
 
         /**
@@ -107,10 +114,10 @@ class AiProgramGenerationService @Inject constructor(
                     "verifica il provider AI o prova un modello con il supporto agli strumenti."
             )
 
-        return interpretSubmission(submission.output)
+        return interpretSubmission(submission.output, turn.toolTrace)
     }
 
-    private fun interpretSubmission(output: String): Result {
+    private fun interpretSubmission(output: String, toolTrace: List<String> = emptyList()): Result {
         val obj = runCatching { json.parseToJsonElement(output) as? JsonObject }.getOrNull()
             ?: return Result.Failure("Risposta dello strumento non leggibile. Riprova.")
         val ok = (obj["ok"] as? JsonPrimitive)?.booleanOrNull ?: false
@@ -132,7 +139,7 @@ class AiProgramGenerationService @Inject constructor(
         val warnings = (obj["avvisi"] as? JsonArray)
             ?.mapNotNull { (it as? JsonPrimitive)?.content }
             ?: emptyList()
-        return Result.Success(nutritionId, workoutId, warnings)
+        return Result.Success(nutritionId, workoutId, warnings, toolTrace)
     }
 
     /**
@@ -217,8 +224,6 @@ class AiProgramGenerationService @Inject constructor(
         appendLine("Consegnalo con lo strumento submit_full_program: la verifica e il salvataggio avvengono li.")
         appendLine()
         appendLine(KnowledgeCorpus.promptBlock())
-        appendLine()
-        appendLine(InvictusCorpus.promptBlock(maxPerTopic = 5))
     }
 
     companion object {
