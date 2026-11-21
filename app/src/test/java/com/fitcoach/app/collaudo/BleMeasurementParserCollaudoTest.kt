@@ -68,4 +68,90 @@ class BleMeasurementParserCollaudoTest {
     fun `un payload cardio vuoto non produce valori`() {
         assertThat(BleMeasurementParser.parseHeartRate(byteArrayOf())).isNull()
     }
+
+    // ---------------- Body Composition (BIA) ----------------
+
+    /** Costruisce un payload 0x2A9C con i soli campi richiesti. */
+    private fun bodyComposition(
+        flags: Int,
+        weightRaw: Int,
+        optional: List<Int> = emptyList()
+    ): ByteArray {
+        val bytes = mutableListOf<Byte>()
+        bytes.add(flags.toByte()); bytes.add((flags shr 8).toByte())
+        bytes.add((weightRaw and 0xFF).toByte())
+        bytes.add(((weightRaw shr 8) and 0xFF).toByte())
+        // 2026-03-14 07:30:00
+        bytes.add(0xEA.toByte()); bytes.add(0x07)
+        bytes.add(3); bytes.add(14); bytes.add(7); bytes.add(30); bytes.add(0)
+        optional.forEach {
+            bytes.add((it and 0xFF).toByte())
+            bytes.add(((it shr 8) and 0xFF).toByte())
+        }
+        return bytes.toByteArray()
+    }
+
+    @Test
+    fun `la composizione corporea legge peso e massa grassa`() {
+        // flags: peso + BMI(0x01) + grassa(0x08)
+        val payload = bodyComposition(
+            flags = 0x09,
+            weightRaw = 15000, // 75.0 kg
+            optional = listOf(232, 185) // BMI 23.2, grassa 18.5%
+        )
+        val result = BleMeasurementParser.parseBodyComposition(payload)!!
+        assertThat(result.weightKg).isWithin(0.01).of(75.0)
+        assertThat(result.bmi!!).isWithin(0.01).of(23.2)
+        assertThat(result.fatPercent!!).isWithin(0.01).of(18.5)
+        assertThat(result.measuredAt!!.year).isEqualTo(2026)
+        assertThat(result.measuredAt!!.monthValue).isEqualTo(3)
+        assertThat(result.measuredAt!!.dayOfMonth).isEqualTo(14)
+    }
+
+    @Test
+    fun `i campi non trasmessi restano null e non vengono inventati`() {
+        // Solo peso e BMI: nessun dato su grassa, muscolo o osso.
+        val payload = bodyComposition(flags = 0x01, weightRaw = 16000, optional = listOf(240))
+        val result = BleMeasurementParser.parseBodyComposition(payload)!!
+        assertThat(result.weightKg).isWithin(0.01).of(80.0)
+        assertThat(result.bmi!!).isWithin(0.01).of(24.0)
+        assertThat(result.fatPercent).isNull()
+        assertThat(result.muscleMassKg).isNull()
+        assertThat(result.boneMassKg).isNull()
+        assertThat(result.waterMassKg).isNull()
+    }
+
+    @Test
+    fun `la massa muscolare viene letta solo se il flag e impostato`() {
+        // BMI(1) + grassa(8) + magra(0x10) + muscolo(0x20)
+        val payload = bodyComposition(
+            flags = 0x39,
+            weightRaw = 15000,
+            optional = listOf(232, 185, 12000, 9000)
+        )
+        val result = BleMeasurementParser.parseBodyComposition(payload)!!
+        assertThat(result.fatPercent!!).isWithin(0.01).of(18.5)
+        assertThat(result.leanMassKg!!).isWithin(0.01).of(60.0)
+        assertThat(result.muscleMassKg!!).isWithin(0.01).of(45.0)
+        assertThat(result.boneMassKg).isNull()
+    }
+
+    @Test
+    fun `un payload di composizione troppo corto non produce valori`() {
+        assertThat(BleMeasurementParser.parseBodyComposition(byteArrayOf(0x01, 0x00, 0x01))).isNull()
+    }
+
+    @Test
+    fun `il nome da mostrare usa quello annunciato quando presente`() {
+        assertThat(
+            com.fitcoach.app.domain.device.BleDeviceManager.displayName("AA:BB:CC:DD:EE:FF", "Mi Scale")
+        ).isEqualTo("Mi Scale")
+    }
+
+    @Test
+    fun `senza nome annunciato si mostra il MAC e non un testo generico`() {
+        val label = com.fitcoach.app.domain.device.BleDeviceManager.displayName("AA:BB:CC:DD:EE:FF", null)
+        assertThat(label).contains("EE:FF")
+        assertThat(label).doesNotContain("sconosciuto")
+    }
 }

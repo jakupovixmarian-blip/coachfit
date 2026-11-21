@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventNote
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -140,6 +141,9 @@ fun NutritionScreen(
                 Row {
                     IconButton(onClick = { navController.navigate(com.fitcoach.app.ui.navigation.Routes.DIARY) }) {
                         Icon(Icons.Filled.EventNote, contentDescription = "Diario", tint = Emerald)
+                    }
+                    IconButton(onClick = { navController.navigate(com.fitcoach.app.ui.navigation.Routes.RECIPES) }) {
+                        Icon(Icons.Filled.MenuBook, contentDescription = "Ricette", tint = Emerald)
                     }
                     IconButton(onClick = { viewModel.createManualPlan() }) {
                         Icon(Icons.Filled.Edit, contentDescription = "Crea piano manuale", tint = TextSecondary)

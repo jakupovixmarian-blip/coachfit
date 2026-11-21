@@ -20,6 +20,42 @@ Sviluppato per fasi verificabili. Ogni fase è stata compilata e testata.
 | 6 – Notifiche e statistiche | Calendario notifiche, grafici, export dati | ✅ |
 | 7 – Collaudo | Test unitari motori, build APK debug/release; UI E2E da eseguire su dispositivo | ◐ |
 
+## Ricette dai pasti del piano
+
+La sezione **Ricette** (icona libro nella schermata Alimentazione) non è un
+ricettario generico: propone ricette costruite sugli alimenti che il piano
+assegna davvero a ciascun pasto, filtrate per colazione, spuntino, pranzo e
+cena.
+
+- Le grammature sono quelle calcolate dal motore nutrizionale, non inventate.
+- Una ricetta compare solo se gli alimenti che le servono sono presenti in quel
+  pasto: niente ingredienti fuori piano.
+- Se un ingrediente è escluso per allergia, intolleranza o preferenza, la
+  ricetta non viene proposta affatto (una versione ridotta sembrerebbe conforme
+  al piano senza esserlo).
+- Se un pasto non ha alimenti coperti da una ricetta, la ricetta non compare e
+  l'app lo dice: il pasto resta comunque visibile nel piano.
+- Un test confronta ogni ingrediente con il database alimentare reale, così un
+  refuso in un nome non può far sparire una ricetta in silenzio.
+
+## Dispositivi Bluetooth (bilance, BIA, cardio)
+
+La sezione **Dispositivi** collega bilance e cardiofrequenzimetri BLE e legge i
+dati reali dal dispositivo.
+
+- Il collegamento abilita le **indications** sulla caratteristica di misura: le
+  bilance notificano il peso invece di rispondere a una lettura diretta, che su
+  quasi tutti i modelli fallisce con `GATT_READ_NOT_PERMITTED`.
+- Molte bilance non annunciano il nome nell'adv packet: il nome viene letto
+  dalla Generic Access (0x2A00) dopo la connessione e la scheda si aggiorna.
+  Senza nome si mostra il MAC con un'etichetta chiara.
+- Le bilance **BIA** espongono la Body Composition (0x2A9C): l'app mostra massa
+  grassa, massa magra, massa muscolare, acqua, massa ossea, BMI e impedenza.
+  Solo i campi realmente trasmessi vengono mostrati: gli altri restano assenti,
+  non stimati.
+- Un watchdog di 20 secondi chiude il tentativo e riporta l'errore, invece di
+  lasciare la schermata su un indicatore indefinito.
+
 ## Stack tecnologico
 
 - **Kotlin**, **Jetpack Compose**, **Material 3**

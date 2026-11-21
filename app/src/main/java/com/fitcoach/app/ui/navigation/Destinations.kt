@@ -46,4 +46,5 @@ object Routes {
     const val PROFILE_EDIT = "profile_edit"
     const val KNOWLEDGE = "knowledge"
     const val DEVICES = "devices"
+    const val RECIPES = "recipes"
 }

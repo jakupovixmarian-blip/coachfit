@@ -27,9 +27,9 @@ object BleMeasurementParser {
      * Body Composition Measurement (0x2A9C), usata dalle bilance BIA.
      *
      * Struttura (Bluetooth SIG):
-     *  - byte 0: flags;
-     *  - byte 1-2: peso uint16 little-endian, risoluzione 0.005 kg;
-     *  - byte 3-4: anno uint16, poi mese, giorno, ore, minuti, secondi;
+     *  - byte 0-1: flags (16 bit);
+     *  - byte 2-3: peso uint16 little-endian, risoluzione 0.005 kg;
+     *  - byte 4-5: anno uint16, poi mese, giorno, ore, minuti, secondi;
      *  - campi opzionali, presenti solo se il flag corrispondente e impostato,
      *    NELL'ORDINE dei bit: BMI (bit 0), altezza (1), circonferenza (2),
      *    massa grassa % (3), massa magra (4), massa muscolare (5), massa ossea (6),
@@ -39,11 +39,14 @@ object BleMeasurementParser {
      */
     fun parseBodyComposition(value: ByteArray): BodyComposition? {
         if (value.size < 11) return null
-        val flags = value[0].toInt() and 0xFF
-        val rawWeight = ((value[2].toInt() and 0xFF) shl 8) or (value[1].toInt() and 0xFF)
+        // I flags di questa caratteristica sono a 16 bit (2 byte), non a 8 come
+        // in Weight Measurement: leggerne uno solo sposta tutto il payload di
+        // un byte e produce valori senza senso.
+        val flags = u16(value, 0) ?: return null
+        val rawWeight = u16(value, 2) ?: return null
         val weightKg = rawWeight / 200.0
 
-        var index = 3
+        var index = 4
         // Timestamp: anno, mese, giorno, ore, minuti, secondi.
         val year = u16(value, index) ?: return null
         index += 2

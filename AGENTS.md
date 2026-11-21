@@ -589,6 +589,28 @@ lo avrebbe bloccato nel setup a ogni avvio.
 - `epochDay` nello stato va riletto dentro `load()`, non solo nell'inizializzatore:
   un'app aperta oltre la mezzanotte resterebbe su ieri.
 
+- **Le bilance notificano, non si leggono.** `readCharacteristic` su 0x2A9D
+  risponde `GATT_READ_NOT_PERMITTED` su quasi tutti i modelli: va abilitato il
+  CCCD (indications) e si aspetta `onCharacteristicChanged`. La lettura diretta
+  resta solo come ripiego. Serve anche un watchdog: senza timeout la UI resta
+  su "Connessione..." per sempre quando il dispositivo non risponde.
+- **Il nome BLE spesso non e' nell'adv packet.** `device.name` e' null finche'
+  non ci si connette: va letto il GAP 0x2A00 dopo la scoperta dei servizi e la
+  UI aggiornata. Mostrare solo il MAC sembra un bug di connessione.
+- **I flags di Body Composition (0x2A9C) sono a 16 bit**, non a 8 come in Weight
+  Measurement. Leggerne uno solo sposta il payload di un byte e produce numeri
+  plausibili ma sbagliati: peggio di un errore.
+- **Un'azione lunga senza stato "in corso" sembra bloccata.** `approvePending`
+  applicava la proposta senza esporre `applying`: il pulsante restava
+  cliccabile, nessun progress, e la rigenerazione (fino a 6 minuti) sembrava un
+  blocco. Ogni azione con chiamata di rete deve avere stato, pulsanti
+  disabilitati e un esito che azzera l'attesa in ogni ramo.
+- **Le ricette si costruiscono sui pasti reali, non su un ricettario.** Una
+  ricetta compare solo se i suoi ingredienti sono in quel pasto; se un
+  ingrediente e' escluso per allergia la ricetta va scartata interamente (non
+  "ridotta"), altrimenti sembra conforme al piano senza esserlo. I nomi degli
+  ingredienti devono combaciare con `FoodSeedData`: un refuso fa sparire la
+  ricetta in silenzio, quindi c'e' un test che li confronta.
 - `AiConfigResolver.resolve()` restituisce **sempre** una configurazione, anche senza chiave:
   usarla come test di prontezza fa risultare configurato un provider mai impostato. Serve
   `resolveConfigured()`.
