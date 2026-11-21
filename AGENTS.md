@@ -571,3 +571,31 @@ lo avrebbe bloccato nel setup a ogni avvio.
   test e l'istanza e' un singleton in memoria, quindi il flag va riscritto via store.
   `SeededProfileApplication` semina il flag "setup gia' visto", perche' rappresenta un
   utente gia' operativo.
+
+## Validazione della generazione AI: un cancello, non due
+
+`ProgramGenerationEngine.validate` decide il salvataggio, `AiProposalDiagnostics.analyze`
+spiega al modello cosa correggere. Sono **due implementazioni della stessa regola** e
+tendono a divergere: il vincolo dolce/salato della colazione era solo nella diagnostica,
+quindi il piano veniva respinto e poi **salvato se il modello insisteva**. Quando si
+aggiunge un vincolo, va messo in entrambe, e `GateDiagnosticsAgreementTest` verifica il
+contratto: se `analyze` trova una violazione, `validate` deve rifiutare.
+
+- Il **calendario** della proposta (`workoutDayIndices`/`restDayIndices`) era un duplicato
+  di `workout.days`, confrontato solo con esso. Non portava informazione e poteva solo
+  divergere: ora `SubmitFullProgramTool` lo **deriva**. Non chiedere al modello dati
+  ricavabili da altri dati gia' presenti.
+
+- Lo schema di `submit_full_program` deve dire che `workout.days` contiene **solo le
+  sedute**, non i sette giorni della settimana. L'ambiguita' produceva tre giorni vuoti
+  su sette, e il messaggio "attesi 4, ricevuti 7" non bastava a correggerla.
+
+- `SimulatedAiPrograms` e' un fixture: deve rispettare i vincoli reali (a colazione usa
+  `BreakfastConstraint.flavorOf`), altrimenti i test falliscono per un difetto del fixture
+  e non del codice. Non legare i test a nomi di alimento hardcoded ("Petto di pollo"):
+  cercare per ruolo (macro dominante) rende il test indipendente dal fixture.
+
+- `NavigationFlowCollaudoTest`, `DashboardRenderCollaudoTest`, `AnamnesisLayoutTest`
+  falliscono a rotazione: e' flakiness di Robolectric/Compose (`ArrayIndexOutOfBounds`
+  dentro il framework di test), **non** una regressione. Verificare con `git stash` prima
+  di indagare: sul codice originale falliscono ugualmente.
