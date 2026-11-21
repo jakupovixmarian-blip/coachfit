@@ -10,7 +10,6 @@ import com.fitcoach.app.domain.device.DeviceKind
 import com.fitcoach.app.domain.device.DiscoveredDevice
 import com.fitcoach.app.domain.device.Measurement
 import com.fitcoach.app.domain.model.WeightRecord
-import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
