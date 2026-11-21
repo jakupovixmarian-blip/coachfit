@@ -114,6 +114,8 @@ class WorkoutViewModel @Inject constructor(
     private val exerciseRepository: ExerciseRepository,
     private val generationCoordinator: ProgramGenerationCoordinator,
     private val notificationScheduler: com.fitcoach.app.notifications.NotificationScheduler,
+    private val restAlarmPlayer: com.fitcoach.app.notifications.RestAlarmPlayer,
+    private val preferencesRepository: com.fitcoach.app.data.repository.PreferencesRepository,
     @ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
 
@@ -718,6 +720,13 @@ class WorkoutViewModel @Inject constructor(
                 kotlinx.coroutines.delay(minOf(remainingMs, 1000L))
             }
             _state.value = _state.value.copy(resting = false, restRemainingSeconds = 0)
+            // In primo piano l'avviso deve essere immediato: la notifica da sola
+            // non basta se l'utente ha silenziato il canale o negato il permesso.
+            val prefs = runCatching { preferencesRepository.getOrCreate() }.getOrNull()
+            restAlarmPlayer.play(
+                sound = prefs?.restAlarmSound ?: true,
+                vibration = prefs?.restAlarmVibration ?: true
+            )
         }
     }
 

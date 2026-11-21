@@ -27,4 +27,7 @@
     <string name="notif_action_confirm">Conferma</string>
     <string name="notif_action_confirm_meal">Confermo il pasto</string>
     <string name="notif_action_confirm_workout">Inizio allenamento</string>
+
+    <!-- Health Connect -->
+    <string name="health_rationale_label">Dati salute di FitCoach</string>
 </resources>

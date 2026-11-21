@@ -82,6 +82,16 @@ Connect e mostra il report della giornata.
   report non sovrascrive mai una misurazione dell'utente.
 - Dalla sezione si raggiungono **Ricette** e **Dispositivi** (bilance BLE).
 
+Health Connect riconosce FitCoach come app che gestisce dati di salute perché il
+manifest dichiara `HealthPermissionsRationaleActivity` con i due `activity-alias`
+per `androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE`
+(`ACTION_SHOW_PERMISSIONS_RATIONALE` e la variante
+`android.health.connect.action.SHOW_PERMISSIONS_RATIONALE`). Senza questa
+dichiarazione il sistema non mostra l'app fra quelle autorizzate a leggere i
+dati. Se il contract dei permessi non si risolve (Health Connect assente o
+aggiornamento richiesto) la schermata apre direttamente le impostazioni di
+Health Connect invece di non fare nulla.
+
 ## Dispositivi Bluetooth (bilance, BIA, cardio)
 
 La sezione **Dispositivi** collega bilance e cardiofrequenzimetri BLE e legge i
@@ -99,6 +109,10 @@ dati reali dal dispositivo.
   non stimati.
 - Un watchdog di 20 secondi chiude il tentativo e riporta l'errore, invece di
   lasciare la schermata su un indicatore indefinito.
+- Se il permesso Bluetooth è stato negato in modo definitivo il sistema non
+  mostra più il dialogo: il pulsante aprirebbe un launcher che si chiude subito,
+  sembrando rotto. In quel caso l'app porta alla schermata delle autorizzazioni
+  dell'app e spiega cosa attivare.
 
 ## Stack tecnologico
 
@@ -157,8 +171,17 @@ non modifica `data/` né `domain/`.
 ### Riquadri dell'esercizio: serie, ripetizioni, carico e cronometro
 
 Ogni esercizio della seduta è una card espandibile. Chiusa mostra nome, gruppo
-muscolare, schema serie×ripetizioni, RIR e recupero; toccandola si aprono i
-riquadri operativi.
+muscolare, schema serie×ripetizioni, RIR, recupero e, se presente, la tecnica
+d'intensità; toccandola si aprono i riquadri operativi.
+
+La tecnica d'intensità è un campo strutturato (`IntensityTechnique`: DROP_SET,
+REST_PAUSE, MYO_REPS, SUPERSET, BACK_OFF_SET, CLUSTER_SET, FAILURE,
+ECCENTRIC_EMPHASIS) più una motivazione testuale. Prima la chat scriveva solo la
+nota libera `technique`, mentre la scheda leggeva `intensityTechnique`: la
+tecnica applicata dall'AI restava invisibile. Ora il tool
+`propose_exercise_substitution` scrive entrambi i campi, la scheda mostra la
+tecnica anche senza motivazione e l'annullamento ripristina esercizio e tecnica
+precedenti. Un valore non riconosciuto non viene applicato come se fosse valido.
 
 - **Serie**: quante serie sono state registrate sul totale previsto (`2/4`).
 - **Rep**: il range del programma (`8-10`), non un numero inventato.
@@ -627,6 +650,17 @@ conferma.
 Promemoria per colazione, spuntini, pranzo, cena, allenamento, idratazione, check-in
 settimanale e valutazione del peso. Orari personalizzabili, attivazione/disattivazione,
 ripristino dopo reboot (`BootReceiver`), gestione permessi Android 12+/13+.
+
+Gli allarmi vengono riarmati a ogni ritorno dell'app in primo piano
+(`MainActivity.onResume`). Serve perché il sistema può perdere gli allarmi esatti:
+dopo un aggiornamento dell'app, quando il permesso viene concesso dopo il primo
+avvio, o per le ottimizzazioni batteria dei produttori. Prima il riarmo avveniva
+solo in `FitCoachApplication.onCreate`, quindi le notifiche restavano mute finché
+l'app non veniva chiusa e riaperta del tutto.
+
+A fine recupero tra le serie parte un avviso sonoro e una vibrazione
+(`RestAlarmPlayer`), disattivabili separatamente in Impostazioni > Notifiche >
+"Fine recupero". Le due preferenze sono aggiunte dalla migrazione Room 15 -> 16.
 
 ## Sicurezza
 

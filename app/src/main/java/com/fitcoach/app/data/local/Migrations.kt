@@ -371,3 +371,14 @@ val MIGRATION_14_15 = object : Migration(14, 15) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_saved_recipes_createdAt` ON `saved_recipes` (`createdAt`)")
     }
 }
+
+/**
+ * Preferenze dell'avviso di fine recupero. Le colonne nascono con DEFAULT 1,
+ * quindi chi aggiorna trova l'avviso attivo come prima dell'aggiornamento.
+ */
+val MIGRATION_15_16 = object : Migration(15, 16) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE user_preferences ADD COLUMN restAlarmSound INTEGER NOT NULL DEFAULT 1")
+        db.execSQL("ALTER TABLE user_preferences ADD COLUMN restAlarmVibration INTEGER NOT NULL DEFAULT 1")
+    }
+}

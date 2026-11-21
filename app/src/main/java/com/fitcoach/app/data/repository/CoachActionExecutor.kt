@@ -5,6 +5,7 @@ import com.fitcoach.app.data.local.FitCoachDatabase
 import com.fitcoach.app.domain.coach.CoachAction
 import com.fitcoach.app.domain.model.ChangeDomain
 import com.fitcoach.app.domain.model.ChangeStatus
+import com.fitcoach.app.domain.model.IntensityTechnique
 import com.fitcoach.app.domain.model.ProgramChange
 import com.fitcoach.app.domain.usecase.ProgramGenerationResult
 import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
@@ -216,11 +217,31 @@ class CoachActionExecutor @Inject constructor(
                 carbs = revert.require("carbs").toDouble(),
                 fat = revert.require("fat").toDouble()
             )
-            "PLANNED_EXERCISE" -> plannedDao.updateTarget(
-                id = revert.require("plannedId").toLong(),
-                weight = revert["weight"]?.toDoubleOrNull(),
-                reps = revert["reps"]?.toIntOrNull()
-            )
+            "PLANNED_EXERCISE" -> {
+                val plannedId = revert.require("plannedId").toLong()
+                // Una sostituzione cambia esercizio e tecnica, non solo il
+                // carico: annullarla deve riportare la scheda com'era, altrimenti
+                // la tecnica d'intensita' resta addosso all'esercizio nuovo.
+                val previousExerciseId = revert["exerciseId"]?.toLongOrNull()
+                val previousName = revert["exerciseName"].orEmpty()
+                if (previousExerciseId != null && previousName.isNotBlank()) {
+                    plannedDao.substituteExercise(
+                        id = plannedId,
+                        exerciseId = previousExerciseId,
+                        name = previousName,
+                        technique = revert["technique"].orEmpty(),
+                        intensityTechnique = revert["intensityTechnique"]
+                            ?.let { runCatching { IntensityTechnique.valueOf(it) }.getOrNull() }
+                            ?: IntensityTechnique.NONE,
+                        techniqueReason = revert["techniqueReason"].orEmpty()
+                    )
+                }
+                plannedDao.updateTarget(
+                    id = plannedId,
+                    weight = revert["weight"]?.toDoubleOrNull(),
+                    reps = revert["reps"]?.toIntOrNull()
+                )
+            }
             "PLANNED_SETS" -> revert.filterKeys { it.startsWith("sets_") }.forEach { (key, value) ->
                 val plannedId = key.removePrefix("sets_").toLong()
                 plannedDao.updateSets(plannedId, value.toInt())
@@ -312,16 +333,28 @@ class CoachActionExecutor @Inject constructor(
         val exerciseId = action.payload.require("exerciseId").toLong()
         val name = action.payload.require("exerciseName")
         val technique = action.payload["technique"] ?: ""
+        val intensity = action.payload["intensityTechnique"]
+            ?.let { runCatching { IntensityTechnique.valueOf(it.uppercase()) }.getOrNull() }
+            ?: IntensityTechnique.NONE
+        val techniqueReason = action.payload["techniqueReason"] ?: ""
 
-        val existing = action.payload["dayId"]?.toLongOrNull()?.let { dayId ->
-            plannedDao.getForDay(dayId).firstOrNull { it.id == plannedId }
-        }
-        plannedDao.substituteExercise(plannedId, exerciseId, name, technique)
+        // Lo snapshot serve SEMPRE: senza, l'annullamento non sa cosa ripristinare.
+        // Prima veniva letto solo se il payload conteneva dayId, che il tool non
+        // invia, quindi annullare una sostituzione non rimetteva l'esercizio.
+        val existing = plannedDao.getById(plannedId)
+        plannedDao.substituteExercise(
+            plannedId, exerciseId, name, technique, intensity, techniqueReason
+        )
         return mapOf(
             "kind" to "PLANNED_EXERCISE",
             "plannedId" to plannedId.toString(),
             "weight" to (existing?.targetWeightKg?.toString() ?: ""),
-            "reps" to (existing?.targetReps?.toString() ?: "")
+            "reps" to (existing?.targetReps?.toString() ?: ""),
+            "exerciseId" to (existing?.exerciseId?.toString() ?: ""),
+            "exerciseName" to (existing?.exerciseName ?: ""),
+            "technique" to (existing?.technique ?: ""),
+            "intensityTechnique" to (existing?.intensityTechnique?.name ?: "NONE"),
+            "techniqueReason" to (existing?.techniqueReason ?: "")
         )
     }
 

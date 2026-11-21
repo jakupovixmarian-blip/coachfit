@@ -145,7 +145,11 @@ data class UserPreferencesEntity(
     val deferMinutes: Int = 15,
     val coachAuthorizationMode: String = "CONFIRMATION",
     val locale: String = "it",
-    val unitsMetric: Boolean = true
+    val unitsMetric: Boolean = true,
+    /** Avviso sonoro al termine del recupero tra le serie. */
+    val restAlarmSound: Boolean = true,
+    /** Vibrazione al termine del recupero tra le serie. */
+    val restAlarmVibration: Boolean = true
 )
 
 // -------------------- NUTRIZIONE --------------------

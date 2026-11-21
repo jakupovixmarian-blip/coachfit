@@ -77,6 +77,41 @@
             </intent-filter>
         </activity>
 
+        <!-- Health Connect riconosce FitCoach come app salute solo se esiste
+             un'activity che risponde a ACTION_SHOW_PERMISSIONS_RATIONALE.
+             I due activity-alias aggiungono la voce "Dati e accesso" nella
+             scheda dell'app dentro Health Connect. Senza questi tre elementi
+             la richiesta di permessi si chiude senza mostrare nulla. -->
+        <activity
+            android:name=".ui.health.HealthPermissionsRationaleActivity"
+            android:exported="true"
+            android:label="@string/health_rationale_label"
+            android:theme="@style/Theme.FitCoach">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+        </activity>
+
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity=".ui.health.HealthPermissionsRationaleActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name="HealthPermissionsRationaleAlias"
+            android:exported="true"
+            android:targetActivity=".ui.health.HealthPermissionsRationaleActivity">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+        </activity-alias>
+
         <receiver
             android:name=".notifications.BootReceiver"
             android:enabled="true"

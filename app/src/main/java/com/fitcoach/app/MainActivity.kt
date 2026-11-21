@@ -17,16 +17,30 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import com.fitcoach.app.data.repository.NotificationRepository
+import com.fitcoach.app.data.repository.PreferencesRepository
+import com.fitcoach.app.notifications.NotificationScheduler
 import com.fitcoach.app.notifications.ReminderReceiver
 import com.fitcoach.app.ui.navigation.FitCoachNavHost
 import com.fitcoach.app.ui.theme.FitCoachTheme
 import com.fitcoach.app.ui.theme.HyperionBackground
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private var pendingRoute by mutableStateOf<String?>(null)
+
+    @Inject lateinit var notificationScheduler: NotificationScheduler
+    @Inject lateinit var preferencesRepository: PreferencesRepository
+    @Inject lateinit var notificationRepository: NotificationRepository
+
+    private val rearmScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val notificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -60,6 +74,24 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         pendingRoute = intent.deepLinkRoute()
+    }
+
+    /**
+     * Gli allarmi si perdono quando il sistema forza l'app in stop, quando il
+     * permesso per gli allarmi esatti viene concesso dopo il primo avvio o per
+     * le ottimizzazioni batteria dei produttori. Riaromarli a ogni ritorno in
+     * primo piano evita che le notifiche restino mute finche' l'app non viene
+     * chiusa e riaperta del tutto.
+     */
+    override fun onResume() {
+        super.onResume()
+        rearmScope.launch {
+            runCatching {
+                val prefs = preferencesRepository.getOrCreate()
+                val records = notificationRepository.getAll()
+                notificationScheduler.scheduleAll(prefs, records)
+            }
+        }
     }
 
     private fun Intent.deepLinkRoute(): String? =

@@ -111,7 +111,7 @@ import com.fitcoach.app.data.local.entity.ProgressPhotoEntity
         V2GenerationPayloadEntity::class,
         SavedRecipeEntity::class
     ],
-    version = 15,
+    version = 16,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

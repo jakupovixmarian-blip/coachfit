@@ -97,6 +97,28 @@ fun NotificationSettingsScreen(
                 }
             }
 
+            item {
+                SectionCard {
+                    Column {
+                        SectionHeader(
+                            "Fine recupero",
+                            "Avviso quando il cronometro tra le serie arriva a zero"
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        ToggleRow(
+                            label = "Suono",
+                            checked = state.restAlarmSound,
+                            onCheckedChange = viewModel::setRestAlarmSound
+                        )
+                        ToggleRow(
+                            label = "Vibrazione",
+                            checked = state.restAlarmVibration,
+                            onCheckedChange = viewModel::setRestAlarmVibration
+                        )
+                    }
+                }
+            }
+
             items(state.records, key = { it.id }) { record ->
                 NotificationRow(
                     record = record,
@@ -155,5 +177,22 @@ private fun NotificationRow(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ToggleRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface)
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

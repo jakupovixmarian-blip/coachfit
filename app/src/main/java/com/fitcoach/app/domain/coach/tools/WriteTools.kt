@@ -105,7 +105,14 @@ class SubstituteExerciseTool @Inject constructor(
         "plannedId" to Schema.integer("Id dell'esercizio pianificato (plannedId da get_active_workout_plan)."),
         "exerciseId" to Schema.integer("Id del nuovo esercizio dal catalogo."),
         "exerciseName" to Schema.string("Nome del nuovo esercizio."),
-        "technique" to Schema.string("Nota tecnica (opzionale)."),
+        "technique" to Schema.string("Nota tecnica libera (opzionale)."),
+        "intensityTechnique" to Schema.string(
+            "Tecnica d'intensita' da applicare: NONE, DROP_SET, REST_PAUSE, MYO_REPS, " +
+                "SUPERSET, BACK_OFF_SET, CLUSTER_SET, FAILURE, ECCENTRIC_EMPHASIS."
+        ),
+        "techniqueReason" to Schema.string(
+            "Perche' quella tecnica su questo esercizio: viene mostrato nella scheda."
+        ),
         "title" to Schema.string("Titolo breve della proposta."),
         "rationale" to Schema.string("Motivazione."),
         required = listOf("plannedId", "exerciseId", "exerciseName")
@@ -117,7 +124,13 @@ class SubstituteExerciseTool @Inject constructor(
             "plannedId" to (a.int("plannedId")?.toString() ?: return err("plannedId mancante")),
             "exerciseId" to (a.int("exerciseId")?.toString() ?: return err("exerciseId mancante")),
             "exerciseName" to (a.string("exerciseName") ?: return err("exerciseName mancante")),
-            "technique" to (a.string("technique") ?: "")
+            "technique" to (a.string("technique") ?: ""),
+            "intensityTechnique" to (
+                a.string("intensityTechnique")
+                    ?.trim()?.uppercase()
+                    ?.takeIf { it in INTENSITY_TECHNIQUES } ?: "NONE"
+                ),
+            "techniqueReason" to (a.string("techniqueReason") ?: "")
         )
         val action = CoachAction(
             action = CoachAction.ACTION_SUBSTITUTE_EXERCISE,
@@ -131,6 +144,14 @@ class SubstituteExerciseTool @Inject constructor(
     }
 
     private fun err(m: String) = """{"ok":false,"error":"$m"}"""
+
+    private companion object {
+        /** Valori allineati a IntensityTechnique: altro non e' applicabile. */
+        val INTENSITY_TECHNIQUES = setOf(
+            "NONE", "DROP_SET", "REST_PAUSE", "MYO_REPS", "SUPERSET",
+            "BACK_OFF_SET", "CLUSTER_SET", "FAILURE", "ECCENTRIC_EMPHASIS"
+        )
+    }
 }
 
 /** Propone lo spostamento di una seduta a un altro giorno della settimana. */

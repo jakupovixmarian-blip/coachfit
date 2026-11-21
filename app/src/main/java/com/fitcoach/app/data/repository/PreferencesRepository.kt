@@ -50,7 +50,9 @@ class PreferencesRepository @Inject constructor(
         coachAuthorizationMode = runCatching { CoachAuthorizationMode.valueOf(coachAuthorizationMode) }
             .getOrDefault(CoachAuthorizationMode.CONFIRMATION),
         locale = locale,
-        unitsMetric = unitsMetric
+        unitsMetric = unitsMetric,
+        restAlarmSound = restAlarmSound,
+        restAlarmVibration = restAlarmVibration
     )
 
     private fun UserPreferences.toEntity() = UserPreferencesEntity(
@@ -71,7 +73,9 @@ class PreferencesRepository @Inject constructor(
         deferMinutes = deferMinutes,
         coachAuthorizationMode = coachAuthorizationMode.name,
         locale = locale,
-        unitsMetric = unitsMetric
+        unitsMetric = unitsMetric,
+        restAlarmSound = restAlarmSound,
+        restAlarmVibration = restAlarmVibration
     )
 
     private fun encodeSchedules(schedules: List<MealSchedule>): String =

@@ -139,4 +139,33 @@ class MigrationTest {
         assertThat(rejected).isTrue()
         db.close()
     }
+
+    @Test
+    fun `la migrazione 15 verso 16 aggiunge le preferenze dell'avviso di recupero`() {
+        helper.createDatabase(TEST_DB, 15).use { db ->
+            db.execSQL(
+                "INSERT INTO user_preferences " +
+                    "(profileId, mealScheduleJson, workoutTime, hydrationRemindersEnabled, " +
+                    "hydrationIntervalHours, hydrationStartTime, hydrationEndTime, " +
+                    "weeklyCheckInEnabled, weeklyCheckInDay, weeklyCheckInTime, " +
+                    "weightReminderEnabled, weightReminderDay, weightReminderTime, " +
+                    "notificationsEnabled, deferMinutes, coachAuthorizationMode, locale, unitsMetric) " +
+                    "VALUES (1, '', '18:30', 1, 3, '08:00', '22:00', 1, 1, '09:00', " +
+                    "1, 1, '07:00', 1, 15, 'CONFIRMATION', 'it', 1)"
+            )
+        }
+
+        // Se la migrazione non producesse esattamente lo schema atteso, questo
+        // fallirebbe con "Migration didn't properly handle user_preferences".
+        val db = helper.runMigrationsAndValidate(TEST_DB, 16, true, MIGRATION_15_16)
+        db.query("SELECT workoutTime, restAlarmSound, restAlarmVibration FROM user_preferences").use { c ->
+            assertThat(c.moveToFirst()).isTrue()
+            // L'orario salvato dall'utente deve sopravvivere alla migrazione.
+            assertThat(c.getString(0)).isEqualTo("18:30")
+            // Default attivo: chi aggiorna continua a sentire l'avviso.
+            assertThat(c.getInt(1)).isEqualTo(1)
+            assertThat(c.getInt(2)).isEqualTo(1)
+        }
+        db.close()
+    }
 }

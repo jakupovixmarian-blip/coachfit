@@ -17,6 +17,10 @@ data class NotificationSettingsUiState(
     val loading: Boolean = true,
     val records: List<NotificationRecord> = emptyList(),
     val globalEnabled: Boolean = true,
+    /** Avviso sonoro a fine recupero. */
+    val restAlarmSound: Boolean = true,
+    /** Vibrazione a fine recupero. */
+    val restAlarmVibration: Boolean = true,
     val message: String? = null
 )
 
@@ -41,7 +45,9 @@ class NotificationSettingsViewModel @Inject constructor(
             _state.value = NotificationSettingsUiState(
                 loading = false,
                 records = records,
-                globalEnabled = prefs.notificationsEnabled
+                globalEnabled = prefs.notificationsEnabled,
+                restAlarmSound = prefs.restAlarmSound,
+                restAlarmVibration = prefs.restAlarmVibration
             )
         }
     }
@@ -71,6 +77,23 @@ class NotificationSettingsViewModel @Inject constructor(
             val prefs = preferencesRepository.getOrCreate()
             preferencesRepository.save(prefs.copy(notificationsEnabled = enabled))
             reschedule()
+            load()
+        }
+    }
+
+    /** Suono e vibrazione dell'avviso di fine recupero. Non toccano gli allarmi. */
+    fun setRestAlarmSound(enabled: Boolean) {
+        viewModelScope.launch {
+            val prefs = preferencesRepository.getOrCreate()
+            preferencesRepository.save(prefs.copy(restAlarmSound = enabled))
+            load()
+        }
+    }
+
+    fun setRestAlarmVibration(enabled: Boolean) {
+        viewModelScope.launch {
+            val prefs = preferencesRepository.getOrCreate()
+            preferencesRepository.save(prefs.copy(restAlarmVibration = enabled))
             load()
         }
     }

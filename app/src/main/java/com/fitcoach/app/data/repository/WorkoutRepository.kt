@@ -295,8 +295,17 @@ class WorkoutRepository @Inject constructor(
         return base.map { day -> day.copy(dayIndex = targets[day.id] ?: day.dayIndex) }
     }
 
-    suspend fun substituteExercise(plannedId: Long, exerciseId: Long, name: String, technique: String) =
-        plannedDao.substituteExercise(plannedId, exerciseId, name, technique)
+    suspend fun substituteExercise(
+        plannedId: Long,
+        exerciseId: Long,
+        name: String,
+        technique: String,
+        intensityTechnique: com.fitcoach.app.domain.model.IntensityTechnique =
+            com.fitcoach.app.domain.model.IntensityTechnique.NONE,
+        techniqueReason: String = ""
+    ) = plannedDao.substituteExercise(
+        plannedId, exerciseId, name, technique, intensityTechnique, techniqueReason
+    )
 
     /**
      * Sostituisce un esercizio mantenendo, quando possibile, lo stimolo previsto

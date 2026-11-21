@@ -1,6 +1,9 @@
 package com.fitcoach.app.ui.health
 
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -59,6 +63,7 @@ fun HealthScreen(
     viewModel: HealthViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     // I permessi di Health Connect NON sono permessi runtime Android: vanno
     // chiesti con il contratto della libreria, che apre la sua schermata.
@@ -67,6 +72,32 @@ fun HealthScreen(
     val permissionLauncher = rememberLauncherForActivityResult(
         PermissionController.createRequestPermissionResultContract()
     ) { viewModel.onPermissionsResult() }
+
+    /**
+     * Se la schermata dei permessi non si apre (provider assente o non
+     * risolvibile) non deve succedere nulla di silenzioso: si apre Health
+     * Connect dalle impostazioni di sistema, dove l'accesso si concede a mano.
+     */
+    fun requestPermissions() {
+        val launched = runCatching { permissionLauncher.launch(viewModel.requiredPermissions) }
+        if (launched.isFailure) {
+            val opened = runCatching {
+                context.startActivity(
+                    Intent(HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS)
+                )
+            }
+            if (opened.isFailure) {
+                val fallback = runCatching {
+                    context.startActivity(
+                        Intent("android.settings.APPLICATION_DETAILS_SETTINGS").apply {
+                            data = Uri.fromParts("package", context.packageName, null)
+                        }
+                    )
+                }
+                if (fallback.isFailure) viewModel.onPermissionsResult()
+            }
+        }
+    }
 
     Column(Modifier.fillMaxSize()) {
         Row(
@@ -155,11 +186,9 @@ fun HealthScreen(
                                             color = TextSecondary
                                         )
                                         Spacer(Modifier.height(10.dp))
-                                        Button(onClick = {
-                                            permissionLauncher.launch(
-                                                viewModel.requiredPermissions
-                                            )
-                                        }) { Text("Concedi accesso") }
+                                        Button(onClick = { requestPermissions() }) {
+                                            Text("Concedi accesso")
+                                        }
                                     } else {
                                         HealthMetrics(state.snapshot, state.scaleWeightKg,
                                             state.scaleBodyFat)

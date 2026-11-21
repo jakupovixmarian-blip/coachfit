@@ -37,6 +37,7 @@ import com.fitcoach.app.data.local.entity.WorkoutPlanEntity
 import com.fitcoach.app.data.local.entity.WorkoutSessionEntity
 import com.fitcoach.app.data.local.entity.WorkoutSetEntity
 import com.fitcoach.app.domain.model.ChangeDomain
+import com.fitcoach.app.domain.model.IntensityTechnique
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -341,8 +342,26 @@ interface PlannedExerciseDao {
     @Query("UPDATE planned_exercises SET targetWeightKg = :weight, targetReps = :reps WHERE id = :id")
     suspend fun updateTarget(id: Long, weight: Double?, reps: Int?)
 
-    @Query("UPDATE planned_exercises SET exerciseId = :exerciseId, exerciseName = :name, technique = :technique WHERE id = :id")
-    suspend fun substituteExercise(id: Long, exerciseId: Long, name: String, technique: String)
+    /**
+     * Sostituisce l'esercizio e, se indicata, la tecnica d'intensita'.
+     *
+     * `intensityTechnique` e `techniqueReason` sono i campi che la scheda legge
+     * per mostrare il riquadro della tecnica: scrivere solo `technique`
+     * aggiornava il piano senza far comparire nulla a schermo.
+     */
+    @Query(
+        "UPDATE planned_exercises SET exerciseId = :exerciseId, exerciseName = :name, " +
+            "technique = :technique, intensityTechnique = :intensityTechnique, " +
+            "techniqueReason = :techniqueReason WHERE id = :id"
+    )
+    suspend fun substituteExercise(
+        id: Long,
+        exerciseId: Long,
+        name: String,
+        technique: String,
+        intensityTechnique: IntensityTechnique,
+        techniqueReason: String
+    )
 
     @Query("UPDATE planned_exercises SET sets = :sets WHERE id = :id")
     suspend fun updateSets(id: Long, sets: Int)

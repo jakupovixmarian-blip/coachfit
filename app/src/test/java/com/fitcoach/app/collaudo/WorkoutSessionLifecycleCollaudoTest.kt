@@ -75,6 +75,8 @@ class WorkoutSessionLifecycleCollaudoTest {
     private lateinit var workoutRepository: WorkoutRepository
     private lateinit var exerciseRepository: ExerciseRepository
     private lateinit var scheduler: NotificationScheduler
+    private lateinit var preferencesRepository: com.fitcoach.app.data.repository.PreferencesRepository
+    private lateinit var restAlarmPlayer: com.fitcoach.app.notifications.RestAlarmPlayer
 
     @Before
     fun setUp() {
@@ -85,6 +87,9 @@ class WorkoutSessionLifecycleCollaudoTest {
         workoutRepository = WorkoutRepository(db)
         exerciseRepository = ExerciseRepository(db.exerciseDao())
         scheduler = NotificationScheduler(context)
+        preferencesRepository =
+            com.fitcoach.app.data.repository.PreferencesRepository(db.userPreferencesDao())
+        restAlarmPlayer = com.fitcoach.app.notifications.RestAlarmPlayer(context)
         kotlinx.coroutines.runBlocking {
             db.exerciseDao().insertAll(ExerciseSeedData.exercises.map { it.toEntity() })
         }
@@ -120,6 +125,8 @@ class WorkoutSessionLifecycleCollaudoTest {
         exerciseRepository = exerciseRepository,
         generationCoordinator = coordinator(),
         notificationScheduler = scheduler,
+        restAlarmPlayer = restAlarmPlayer,
+        preferencesRepository = preferencesRepository,
         context = context,
     )
 

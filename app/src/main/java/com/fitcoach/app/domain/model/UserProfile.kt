@@ -192,5 +192,7 @@ data class UserPreferences(
     val deferMinutes: Int = 15,
     val coachAuthorizationMode: CoachAuthorizationMode = CoachAuthorizationMode.CONFIRMATION,
     val locale: String = "it",
-    val unitsMetric: Boolean = true
+    val unitsMetric: Boolean = true,
+    val restAlarmSound: Boolean = true,
+    val restAlarmVibration: Boolean = true
 )

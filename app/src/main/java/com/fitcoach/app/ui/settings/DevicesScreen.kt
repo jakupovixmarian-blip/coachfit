@@ -1,5 +1,11 @@
 package com.fitcoach.app.ui.settings
 
+import android.content.Intent
+import android.content.Context
+import android.content.ContextWrapper
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -35,8 +41,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -60,12 +68,47 @@ fun DevicesScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
+    val context = LocalContext.current
+    val activity = context.findActivity()
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { granted ->
         viewModel.refreshCapabilities()
-        if (granted.values.all { it }) viewModel.startScan()
-        else viewModel.startScan() // startScan gestisce l'assenza di permessi con un messaggio.
+        if (granted.values.all { it }) {
+            viewModel.startScan()
+        } else if (granted.isNotEmpty()) {
+            // Un rifiuto definitivo non riapre piu' il dialogo: senza questo
+            // controllo il pulsante sembra non fare nulla per sempre.
+            val blocked = viewModel.requiredPermissions().any { permission ->
+                activity?.let {
+                    !ActivityCompat.shouldShowRequestPermissionRationale(it, permission)
+                } ?: false
+            }
+            if (blocked) viewModel.onPermissionsBlocked() else viewModel.startScan()
+        } else {
+            viewModel.startScan()
+        }
+    }
+
+    /**
+     * I permessi Bluetooth non compaiono piu' dopo un rifiuto definitivo: il
+     * launcher si chiude subito e sembra che il pulsante non funzioni. In quel
+     * caso si apre la schermata dell'app, dove il permesso si concede a mano.
+     */
+    fun requestPermissionsOrOpenSettings() {
+        if (!viewModel.permissionsPermanentlyDenied()) {
+            permissionLauncher.launch(viewModel.requiredPermissions().toTypedArray())
+            return
+        }
+        val opened = runCatching {
+            context.startActivity(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", context.packageName, null)
+                }
+            )
+        }
+        if (opened.isFailure) viewModel.onPermissionsBlocked()
     }
 
     LaunchedEffect(state.message) {
@@ -118,7 +161,7 @@ fun DevicesScreen(
                             Button(
                                 onClick = {
                                     if (state.permissionGranted) viewModel.startScan()
-                                    else permissionLauncher.launch(viewModel.requiredPermissions().toTypedArray())
+                                    else requestPermissionsOrOpenSettings()
                                 },
                                 enabled = state.bluetoothSupported && !state.scanning
                             ) {
@@ -273,4 +316,14 @@ private fun MetricLine(label: String, value: String) {
         Text(value, style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface)
     }
+}
+
+/** Le impostazioni di sistema richiedono un'Activity, non un Context qualsiasi. */
+internal fun Context.findActivity(): ComponentActivity? {
+    var current = this
+    while (current is ContextWrapper) {
+        if (current is ComponentActivity) return current
+        current = current.baseContext
+    }
+    return null
 }

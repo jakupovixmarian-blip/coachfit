@@ -730,7 +730,9 @@ private fun WeekDayCard(day: WorkoutDay, selected: Boolean, onSelect: () -> Unit
                         Text(
                             "${exercise.primaryMuscle.label} · " +
                                 "rec ${exercise.restSeconds}s · RIR ${exercise.targetRir}" +
-                                if (exercise.technique.isNotBlank()) " · ${exercise.technique}" else "",
+                                if (exercise.technique.isNotBlank()) " · ${exercise.technique}" else "" +
+                                if (exercise.intensityTechnique != IntensityTechnique.NONE)
+                                    " · ${exercise.intensityTechnique.label}" else "",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
@@ -1133,9 +1135,24 @@ private fun ExerciseCard(
                 Spacer(Modifier.height(6.dp))
                 Text(planned.selectionReason, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
             }
-            if (planned.intensityTechnique != IntensityTechnique.NONE && planned.techniqueReason.isNotBlank()) {
-                Spacer(Modifier.height(4.dp))
-                Text(planned.techniqueReason, style = MaterialTheme.typography.bodySmall, color = Emerald)
+            // La sezione deve comparire quando la tecnica c'e', non solo quando
+            // c'e' anche la motivazione: altrimenti una tecnica applicata dalla
+            // chat resta invisibile nella scheda.
+            if (planned.intensityTechnique != IntensityTechnique.NONE) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "Tecnica: ${planned.intensityTechnique.label}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Emerald
+                )
+                if (planned.techniqueReason.isNotBlank()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        planned.techniqueReason,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                }
             }
             if (planned.restReason.isNotBlank()) {
                 Spacer(Modifier.height(4.dp))

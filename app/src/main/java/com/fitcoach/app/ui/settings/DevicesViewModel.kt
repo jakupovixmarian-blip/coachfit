@@ -10,6 +10,8 @@ import com.fitcoach.app.domain.device.DeviceKind
 import com.fitcoach.app.domain.device.DiscoveredDevice
 import com.fitcoach.app.domain.device.Measurement
 import com.fitcoach.app.domain.model.WeightRecord
+import androidx.activity.ComponentActivity
+import androidx.core.app.ActivityCompat
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,7 +47,8 @@ data class DevicesUiState(
 @HiltViewModel
 class DevicesViewModel @Inject constructor(
     private val bleDeviceManager: BleDeviceManager,
-    private val progressRepository: ProgressRepository
+    private val progressRepository: ProgressRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DevicesUiState())
@@ -66,6 +69,24 @@ class DevicesViewModel @Inject constructor(
     }
 
     fun requiredPermissions(): List<String> = bleDeviceManager.requiredPermissions()
+
+    /**
+     * Un rifiuto definitivo impedisce al sistema di mostrare ancora il dialogo.
+     * Va distinto da "non ancora concesso", perche' richiede un percorso diverso.
+     */
+    fun permissionsPermanentlyDenied(): Boolean {
+        val activity = context.findActivity() ?: return false
+        return bleDeviceManager.requiredPermissions().any { permission ->
+            !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
+        }
+    }
+
+    fun onPermissionsBlocked() {
+        _state.value = _state.value.copy(
+            message = "Permesso Bluetooth negato in modo definitivo. Attivalo dalle " +
+                "impostazioni dell'app, sezione Autorizzazioni."
+        )
+    }
 
     /** Avvia la scansione BLE reale e aggiorna la lista man mano che arrivano i dispositivi. */
     fun startScan() {
