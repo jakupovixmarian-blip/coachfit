@@ -131,6 +131,8 @@ fun DashboardContent(
     onSkipWorkout: () -> Unit,
     onGenerateProgram: () -> Unit,
     onRetry: () -> Unit,
+    onOpenRecipes: () -> Unit = {},
+    onOpenHealth: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val motionEnabled = rememberMotionEnabled()
@@ -146,6 +148,8 @@ fun DashboardContent(
                 needsAnamnesis = state.needsAnamnesis,
                 onOpenAnamnesis = onOpenAnamnesis,
                 onGenerateProgram = onGenerateProgram,
+                onOpenRecipes = onOpenRecipes,
+                onOpenHealth = onOpenHealth,
             )
             else -> DashboardBody(
                 state = state,
@@ -157,6 +161,8 @@ fun DashboardContent(
                 onOpenAnamnesis = onOpenAnamnesis,
                 onLogWeight = onLogWeight,
                 onSkipWorkout = onSkipWorkout,
+                onOpenRecipes = onOpenRecipes,
+                onOpenHealth = onOpenHealth,
             )
         }
     }
@@ -177,6 +183,8 @@ private fun DashboardBody(
     onOpenAnamnesis: () -> Unit,
     onLogWeight: () -> Unit,
     onSkipWorkout: () -> Unit,
+    onOpenRecipes: () -> Unit,
+    onOpenHealth: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -187,6 +195,15 @@ private fun DashboardBody(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         StaggeredEntry(0, motionEnabled) { DashboardHeader(state) }
+        StaggeredEntry(1, motionEnabled) {
+            // Ricette e Salute erano raggiungibili solo da due icone sovrapposte
+            // al badge del giorno: si vedevano a stento e coprivano il testo.
+            // Qui sono voci etichettate, sempre presenti.
+            DashboardShortcuts(
+                onOpenRecipes = onOpenRecipes,
+                onOpenHealth = onOpenHealth,
+            )
+        }
         if (state.needsAnamnesis) {
             StaggeredEntry(1, motionEnabled) {
                 AnamnesisCard(state.anamnesisSummary, onOpenAnamnesis)
@@ -278,6 +295,71 @@ private fun DashboardHeader(state: DashboardUiState) {
         }
         Spacer(Modifier.width(10.dp))
         Pill(text = dayTypeLabel(state.dayType), color = dayTypeColor(state.dayType))
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* 1b. Scorciatoie: Ricette e Salute                                          */
+/* -------------------------------------------------------------------------- */
+
+@Composable
+private fun DashboardShortcuts(
+    onOpenRecipes: () -> Unit,
+    onOpenHealth: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        ShortcutTile(
+            title = "Ricette",
+            subtitle = "Dal piano",
+            onClick = onOpenRecipes,
+            modifier = Modifier.weight(1f),
+        )
+        ShortcutTile(
+            title = "Salute",
+            subtitle = "Misure e dispositivi",
+            onClick = onOpenHealth,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun ShortcutTile(
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val interaction = remember { MutableInteractionSource() }
+    SectionCard(
+        modifier = modifier
+            .pressFeedback(interaction)
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                onClick = onClick,
+            ),
+    ) {
+        Column {
+            Text(
+                text = title,
+                style = FitTextStyles.h3,
+                color = TextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = subtitle,
+                style = FitTextStyles.caption,
+                color = TextSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
@@ -1021,12 +1103,15 @@ private fun DashboardNoPlan(
     needsAnamnesis: Boolean,
     onOpenAnamnesis: () -> Unit,
     onGenerateProgram: () -> Unit,
+    onOpenRecipes: () -> Unit,
+    onOpenHealth: () -> Unit,
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(20.dp),
-        contentAlignment = Alignment.Center,
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (needsAnamnesis) {
             EmptyState(
@@ -1045,6 +1130,8 @@ private fun DashboardNoPlan(
                 onAction = onGenerateProgram,
             )
         }
+        Spacer(Modifier.height(20.dp))
+        DashboardShortcuts(onOpenRecipes = onOpenRecipes, onOpenHealth = onOpenHealth)
     }
 }
 

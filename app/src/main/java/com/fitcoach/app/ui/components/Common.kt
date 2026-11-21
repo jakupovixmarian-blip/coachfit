@@ -110,9 +110,13 @@ fun SectionCard(
  * Sostituisce il vecchio header con pallino: più gerarchico, stessa occupazione.
  */
 @Composable
-fun SectionHeader(title: String, subtitle: String? = null) {
+fun SectionHeader(
+    title: String,
+    subtitle: String? = null,
+    modifier: Modifier = Modifier,
+) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(

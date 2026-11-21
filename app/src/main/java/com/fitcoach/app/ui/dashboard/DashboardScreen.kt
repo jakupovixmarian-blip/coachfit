@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -73,18 +72,18 @@ fun DashboardScreen(
             onSkipWorkout = { viewModel.skipTodayWorkout() },
             onGenerateProgram = { viewModel.generateProgram() },
             onRetry = { viewModel.refresh() },
+            onOpenRecipes = { navController.navigate(Routes.RECIPES) },
+            onOpenHealth = { navController.navigate(Routes.HEALTH) },
         )
 
-        // La Dashboard è l'unico ingresso alle Impostazioni: il pulsante resta
-        // sovrapposto finché DashboardContent non lo prevede al suo interno.
+        // La Dashboard è l'unico ingresso alle Impostazioni. Ricette e Salute
+        // sono passate dentro DashboardContent come voci etichettate: qui
+        // restava un'icona sola, che copriva comunque il badge del giorno.
         Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = 8.dp, end = 8.dp)
         ) {
-            IconButton(onClick = { navController.navigate(Routes.HEALTH) }) {
-                Icon(Icons.Filled.FavoriteBorder, contentDescription = "Salute", tint = Emerald)
-            }
             IconButton(onClick = { navController.navigate(Routes.SETTINGS) }) {
                 Icon(Icons.Filled.Settings, contentDescription = "Impostazioni", tint = Emerald)
             }

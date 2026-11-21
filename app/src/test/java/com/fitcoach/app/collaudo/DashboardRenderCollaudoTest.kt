@@ -66,6 +66,8 @@ class DashboardRenderCollaudoTest {
         var skipWorkout = 0
         var generate = 0
         var retry = 0
+        var recipes = 0
+        var health = 0
     }
 
     private fun baseState(
@@ -116,6 +118,8 @@ class DashboardRenderCollaudoTest {
                         onSkipWorkout = { clicks.skipWorkout++ },
                         onGenerateProgram = { clicks.generate++ },
                         onRetry = { clicks.retry++ },
+                        onOpenRecipes = { clicks.recipes++ },
+                        onOpenHealth = { clicks.health++ },
                     )
                 }
             }
@@ -229,5 +233,47 @@ class DashboardRenderCollaudoTest {
         }
 
         assertThat(clicks.workout).isEqualTo(0)
+    }
+
+    /**
+     * Difetto segnalato: "Ricette e Salute non si vedono installando l'app".
+     * Le due sezioni esistevano ma erano raggiungibili solo da icone senza
+     * etichetta sovrapposte al badge del giorno. Ora sono voci visibili.
+     */
+    @Test
+    fun `ricette e salute sono voci visibili e cliccabili con un piano attivo`() {
+        val clicks = Clicks()
+        render(baseState(), clicks)
+
+        composeRule.onNodeWithText("Ricette").assertExists()
+        composeRule.onNodeWithText("Salute").assertExists()
+
+        composeRule.onNodeWithText("Ricette").performClick()
+        composeRule.onNodeWithText("Salute").performClick()
+
+        assertThat(clicks.recipes).isEqualTo(1)
+        assertThat(clicks.health).isEqualTo(1)
+    }
+
+    /**
+     * Le stesse due voci devono restare raggiungibili al primo avvio, quando
+     * non c'e' ancora un piano: era il caso in cui l'utente non trovava nulla.
+     */
+    @Test
+    fun `ricette e salute sono raggiungibili anche senza piano attivo`() {
+        val clicks = Clicks()
+        render(
+            DashboardUiState(isLoading = false, hasPlan = false, needsAnamnesis = true),
+            clicks,
+        )
+
+        composeRule.onNodeWithText("Ricette").assertExists()
+        composeRule.onNodeWithText("Salute").assertExists()
+
+        composeRule.onNodeWithText("Ricette").performClick()
+        composeRule.onNodeWithText("Salute").performClick()
+
+        assertThat(clicks.recipes).isEqualTo(1)
+        assertThat(clicks.health).isEqualTo(1)
     }
 }

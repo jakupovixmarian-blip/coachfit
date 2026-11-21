@@ -145,7 +145,7 @@ fun NutritionScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SectionHeader("Alimentazione", plan.name)
+                SectionHeader("Alimentazione", plan.name, modifier = Modifier.weight(1f))
                 Row {
                     IconButton(onClick = { navController.navigate(com.fitcoach.app.ui.navigation.Routes.DIARY) }) {
                         Icon(Icons.Filled.EventNote, contentDescription = "Diario", tint = Emerald)

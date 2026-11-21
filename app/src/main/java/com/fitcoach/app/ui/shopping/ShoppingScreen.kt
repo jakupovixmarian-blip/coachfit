@@ -95,7 +95,8 @@ fun ShoppingScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SectionHeader("Spesa settimanale", "Generata dal piano alimentare effettivo")
+                SectionHeader("Spesa settimanale", "Generata dal piano alimentare effettivo",
+                    modifier = Modifier.weight(1f))
                 Row {
                     IconButton(onClick = { viewModel.load() }) {
                         Icon(Icons.Filled.Refresh, contentDescription = "Rigenera", tint = Emerald)

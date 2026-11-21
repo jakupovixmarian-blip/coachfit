@@ -146,7 +146,7 @@ fun WorkoutScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SectionHeader("Allenamento", plan.splitType.label)
+                SectionHeader("Allenamento", plan.splitType.label, modifier = Modifier.weight(1f))
                 Row {
                     IconButton(onClick = { navController.navigate(com.fitcoach.app.ui.navigation.Routes.CUSTOM_WORKOUT) }) {
                         Icon(Icons.Filled.Edit, contentDescription = "Crea scheda personalizzata", tint = TextSecondary)

@@ -32,6 +32,27 @@
         android:name="android.hardware.camera.any"
         android:required="false" />
 
+    <!-- Health Connect: la libreria pretende che ogni record letto sia
+         dichiarato qui, altrimenti la richiesta di permessi torna vuota e la
+         sezione Salute resta su "Concedi accesso" senza leggere un dato.
+         Il blocco <queries> serve su Android 11+ per vedere l'app Health
+         Connect e poterne aprire la schermata dei permessi. -->
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE_VARIABILITY" />
+
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+        <intent>
+            <action android:name="androidx.health.action.ACTION_REQUEST_PERMISSIONS" />
+        </intent>
+        <intent>
+            <action android:name="androidx.health.action.ACTION_HEALTH_CONNECT_SETTINGS" />
+        </intent>
+    </queries>
+
     <application
         android:name=".FitCoachApplication"
         android:allowBackup="false"

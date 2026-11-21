@@ -656,23 +656,37 @@ con `sdk.dir=...`.
 
 ### Download dell'APK gia compilato
 
-L'APK debug della versione corrente (2.4.0, versionCode 30) e pubblicato su:
+L'APK debug della versione corrente (2.5.0, versionCode 31) e pubblicato su:
 
 - Pagina di download: <https://work-1-htenipprquxeyoak.prod-runtime.all-hands.dev/>
-- File diretto: <https://work-1-htenipprquxeyoak.prod-runtime.all-hands.dev/FitCoach-2.4.0-debug.apk>
+- File diretto: <https://work-1-htenipprquxeyoak.prod-runtime.all-hands.dev/FitCoach-2.5.0-debug.apk>
 
 Il server statico serve solo la cartella `/workspace/apk-download`, che contiene gli APK e
 la pagina. Non espone il codice sorgente. Il link e valido finche il processo
 `python3 -m http.server 12000` resta in esecuzione nell'ambiente di lavoro.
 
-SHA-256 dell'APK debug 2.4.0:
+SHA-256 dell'APK debug 2.5.0:
 
 ```
-e5c197245bca2c85de8b1dc74be6ca524f27c0f1e66bdb89d99e8c1876c9bfbe
+e2619390e484fc774d693c18591cf60efd1455a91e8c97a192533a2121e82307
 ```
 
-Confrontalo dopo il download con `sha256sum FitCoach-2.4.0-debug.apk`: se non coincide, il
+Confrontalo dopo il download con `sha256sum FitCoach-2.5.0-debug.apk`: se non coincide, il
 file e arrivato incompleto o e un'altra build.
+
+### Dove sono Ricette e Salute
+
+Nella Dashboard, subito sotto il saluto, ci sono due riquadri etichettati **Ricette** e
+**Salute**. Fino alla 2.4.0 le stesse destinazioni esistevano solo come icone senza testo
+sovrapposte al badge del giorno: erano presenti nel codice ma di fatto introvabili.
+
+La sezione Salute legge i dati da Health Connect. Servono i permessi dichiarati nel
+manifest (`android.permission.health.READ_*`) e il blocco `<queries>` verso
+`com.google.android.apps.healthdata`: senza di essi la richiesta di permessi torna vuota
+e la schermata resta su "Concedi accesso" per sempre. I permessi vanno richiesti con
+`PermissionController.createRequestPermissionResultContract()`, non con
+`ActivityResultContracts.RequestMultiplePermissions()`, che non conosce i permessi di
+Health Connect.
 
 ### Quale build hai installato
 

@@ -1,8 +1,7 @@
 package com.fitcoach.app.ui.health
 
-import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.health.connect.client.PermissionController
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -61,8 +60,12 @@ fun HealthScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
+    // I permessi di Health Connect NON sono permessi runtime Android: vanno
+    // chiesti con il contratto della libreria, che apre la sua schermata.
+    // Con RequestMultiplePermissions la richiesta torna vuota e il report
+    // resta per sempre senza dati.
     val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
+        PermissionController.createRequestPermissionResultContract()
     ) { viewModel.onPermissionsResult() }
 
     Column(Modifier.fillMaxSize()) {
@@ -153,12 +156,9 @@ fun HealthScreen(
                                         )
                                         Spacer(Modifier.height(10.dp))
                                         Button(onClick = {
-                                            val activity = navController.context as? Activity
-                                            if (activity != null) {
-                                                permissionLauncher.launch(
-                                                    viewModel.requiredPermissions.toTypedArray()
-                                                )
-                                            }
+                                            permissionLauncher.launch(
+                                                viewModel.requiredPermissions
+                                            )
                                         }) { Text("Concedi accesso") }
                                     } else {
                                         HealthMetrics(state.snapshot, state.scaleWeightKg,
