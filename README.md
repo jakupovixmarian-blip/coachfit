@@ -654,6 +654,26 @@ con `sdk.dir=...`.
 ./gradlew :app:assembleRelease
 ```
 
+### Download dell'APK gia compilato
+
+L'APK debug della versione corrente (2.4.0, versionCode 30) e pubblicato su:
+
+- Pagina di download: <https://work-1-htenipprquxeyoak.prod-runtime.all-hands.dev/>
+- File diretto: <https://work-1-htenipprquxeyoak.prod-runtime.all-hands.dev/FitCoach-2.4.0-debug.apk>
+
+Il server statico serve solo la cartella `/workspace/apk-download`, che contiene gli APK e
+la pagina. Non espone il codice sorgente. Il link e valido finche il processo
+`python3 -m http.server 12000` resta in esecuzione nell'ambiente di lavoro.
+
+SHA-256 dell'APK debug 2.4.0:
+
+```
+e5c197245bca2c85de8b1dc74be6ca524f27c0f1e66bdb89d99e8c1876c9bfbe
+```
+
+Confrontalo dopo il download con `sha256sum FitCoach-2.4.0-debug.apk`: se non coincide, il
+file e arrivato incompleto o e un'altra build.
+
 ### Quale build hai installato
 
 Impostazioni -> in fondo, la card **Versione** mostra `versionName` e `versionCode`.
