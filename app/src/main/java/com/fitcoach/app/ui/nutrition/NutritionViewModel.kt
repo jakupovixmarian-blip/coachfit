@@ -16,6 +16,7 @@ import com.fitcoach.app.domain.model.MealEntry
 import com.fitcoach.app.domain.model.NutritionDay
 import com.fitcoach.app.domain.model.NutritionPlan
 import com.fitcoach.app.domain.nutrition.FoodSubstitutionEngine
+import com.fitcoach.app.domain.nutrition.NutritionDiaryEngine
 import com.fitcoach.app.domain.usecase.ProgramGenerationCoordinator
 import com.fitcoach.app.domain.usecase.ProgramGenerationResult
 import com.fitcoach.app.domain.workout.WorkoutPlanBuilder
@@ -30,7 +31,10 @@ import javax.inject.Inject
 data class NutritionUiState(
     val loading: Boolean = true,
     val plan: NutritionPlan? = null,
-    val selectedDayIndex: Int = 0,
+    // Si apre sul giorno di oggi: partire sempre da lunedi' faceva credere
+    // all'utente che i target di oggi fossero quelli del lunedi'.
+    val selectedDayIndex: Int =
+        NutritionDiaryEngine.dayIndexFor(NutritionDiaryRepository.todayEpochDay()),
     val message: String? = null,
     val generating: Boolean = false,
     val epochDay: Long = NutritionDiaryRepository.todayEpochDay(),
@@ -70,6 +74,19 @@ data class NutritionUiState(
 ) {
     val selectedDay: NutritionDay?
         get() = plan?.days?.firstOrNull { it.dayIndex == selectedDayIndex }
+
+    /**
+     * Data del diario a cui si riferisce il giorno mostrato. Il piano e' una
+     * settimana-tipo: se l'utente apre il lunedi' mentre oggi e' sabato, la
+     * spunta riguarda lunedi'. Prima questa data era sempre "oggi", e le voci
+     * di un altro giorno finivano sul diario di oggi.
+     */
+    val selectedEpochDay: Long
+        get() = NutritionDiaryEngine.epochDayForDayIndex(selectedDayIndex, epochDay)
+
+    /** Vero se il giorno mostrato e' quello di oggi: solo allora si puo' mangiare. */
+    val isSelectedDayToday: Boolean
+        get() = selectedEpochDay == epochDay
 }
 
 @HiltViewModel
@@ -93,12 +110,20 @@ class NutritionViewModel @Inject constructor(
 
     fun load() {
         viewModelScope.launch {
+            // La data va riletta: il ViewModel sopravvive alla navigazione e
+            // un'app rimasta aperta oltre la mezzanotte resterebbe su ieri.
+            val oggi = NutritionDiaryRepository.todayEpochDay()
             val plan = nutritionRepository.getActivePlan()
-            val checks = diaryRepository.planChecks(_state.value.epochDay).mapValues { it.value.id }
             _state.value = _state.value.copy(
                 loading = false,
                 plan = plan,
-                selectedDayIndex = _state.value.selectedDayIndex.coerceIn(0, 6),
+                epochDay = oggi,
+                selectedDayIndex = _state.value.selectedDayIndex.coerceIn(0, 6)
+            )
+            // Lette dopo l'aggiornamento della data: selectedEpochDay dipende da epochDay.
+            val checks = diaryRepository.planChecks(_state.value.selectedEpochDay)
+                .mapValues { it.value.id }
+            _state.value = _state.value.copy(
                 checks = checks,
                 plans = nutritionRepository.getAllPlans()
             )
@@ -107,14 +132,21 @@ class NutritionViewModel @Inject constructor(
 
     fun selectDay(index: Int) {
         _state.value = _state.value.copy(selectedDayIndex = index.coerceIn(0, 6))
+        // Le spunte appartengono a una data: cambiando giorno cambia il diario.
+        viewModelScope.launch {
+            val checks = diaryRepository.planChecks(_state.value.selectedEpochDay)
+                .mapValues { it.value.id }
+            _state.value = _state.value.copy(checks = checks)
+        }
     }
 
     fun toggleEntry(entry: MealEntry) {
         viewModelScope.launch {
             val day = _state.value.selectedDay ?: return@launch
             val meal = day.meals.firstOrNull { m -> m.entries.any { it.id == entry.id } } ?: return@launch
-            diaryRepository.togglePlanEntry(entry, meal.slot, meal.time, _state.value.epochDay)
-            val checks = diaryRepository.planChecks(_state.value.epochDay).mapValues { it.value.id }
+            val data = _state.value.selectedEpochDay
+            diaryRepository.togglePlanEntry(entry, meal.slot, meal.time, data)
+            val checks = diaryRepository.planChecks(data).mapValues { it.value.id }
             _state.value = _state.value.copy(checks = checks)
         }
     }
@@ -191,7 +223,9 @@ class NutritionViewModel @Inject constructor(
             val plan = nutritionRepository.getActivePlan()
             _state.value = _state.value.copy(
                 plan = plan,
-                selectedDayIndex = 0,
+                selectedDayIndex = NutritionDiaryEngine.dayIndexFor(
+                    NutritionDiaryRepository.todayEpochDay()
+                ),
                 message = "Piano manuale creato. Aggiungi gli alimenti ai pasti."
             )
             refreshPlanList()
@@ -207,7 +241,13 @@ class NutritionViewModel @Inject constructor(
         viewModelScope.launch {
             nutritionRepository.setActivePlan(planId)
             val plan = nutritionRepository.getActivePlan()
-            _state.value = _state.value.copy(plan = plan, selectedDayIndex = 0, message = "Piano attivato.")
+            _state.value = _state.value.copy(
+                plan = plan,
+                selectedDayIndex = NutritionDiaryEngine.dayIndexFor(
+                    NutritionDiaryRepository.todayEpochDay()
+                ),
+                message = "Piano attivato."
+            )
             refreshPlanList()
         }
     }
@@ -259,7 +299,11 @@ class NutritionViewModel @Inject constructor(
             }
             val active = nutritionRepository.getActivePlan()
             _state.value = _state.value.copy(
-                plan = active, selectedDayIndex = 0, message = "Copia creata e attivata."
+                plan = active,
+                selectedDayIndex = NutritionDiaryEngine.dayIndexFor(
+                    NutritionDiaryRepository.todayEpochDay()
+                ),
+                message = "Copia creata e attivata."
             )
             refreshPlanList()
         }
@@ -525,7 +569,7 @@ class NutritionViewModel @Inject constructor(
                 substitutionRepository.apply(
                     entryId = entry.id,
                     dayIndex = _state.value.selectedDayIndex,
-                    epochDay = _state.value.epochDay,
+                    epochDay = _state.value.selectedEpochDay,
                     substitute = substitute,
                     result = result
                 )

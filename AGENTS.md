@@ -573,6 +573,22 @@ lo avrebbe bloccato nel setup a ogni avvio.
 ### Trappole incontrate
 
 
+- **La data del diario non e' "oggi", e' il giorno che l'utente guarda.** Il piano
+  nutrizionale e' una settimana-tipo: `NutritionUiState.selectedEpochDay` traduce
+  `selectedDayIndex` nella data reale della settimana corrente tramite
+  `NutritionDiaryEngine.epochDayForDayIndex`, e **tutto** cio' che scrive sul diario
+  (spunte, sostituzioni) usa quella data. Prima si usava sempre `todayEpochDay()`:
+  aprendo il lunedi' mentre oggi era sabato, gli alimenti di lunedi' finivano sul
+  diario di sabato e la Home mostrava consumi contro un target che non era il loro
+  (es. target 1908 kcal di sabato LOW con 2307 kcal di alimenti del lunedi' HIGH).
+  Alimentazione si apre sul giorno corrente, non su lunedi'.
+- **I ViewModel sopravvivono alla navigazione**: `init { refresh() }` gira una volta
+  sola, quindi la Home restava sui valori vecchi dopo aver spuntato alimenti. Serve
+  `repeatOnLifecycle(RESUMED) { refresh() }` in `DashboardScreen`, che copre anche il
+  cambio di data a app aperta (mezzanotte).
+- `epochDay` nello stato va riletto dentro `load()`, non solo nell'inizializzatore:
+  un'app aperta oltre la mezzanotte resterebbe su ieri.
+
 - `AiConfigResolver.resolve()` restituisce **sempre** una configurazione, anche senza chiave:
   usarla come test di prontezza fa risultare configurato un provider mai impostato. Serve
   `resolveConfigured()`.

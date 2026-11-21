@@ -101,6 +101,21 @@ object NutritionDiaryEngine {
 
     fun dayIndexFor(epochDay: Long): Int = LocalDate.ofEpochDay(epochDay).dayOfWeek.value - 1
 
+    /**
+     * Data reale a cui corrisponde un giorno del piano (0 = lunedi).
+     *
+     * Il piano e' una settimana-tipo: i suoi 7 giorni sono i 7 giorni della
+     * settimana corrente. Questa funzione e' l'unico punto che traduce un
+     * indice del piano in una data, cosi' Home e Alimentazione non possono
+     * divergere: se l'utente guarda lunedi' mentre oggi e' sabato, la spunta
+     * riguarda lunedi' e non sabato.
+     */
+    fun epochDayForDayIndex(dayIndex: Int, referenceEpochDay: Long): Long {
+        val reference = LocalDate.ofEpochDay(referenceEpochDay)
+        val lunedi = reference.minusDays((reference.dayOfWeek.value - 1).toLong())
+        return lunedi.plusDays(dayIndex.coerceIn(0, 6).toLong()).toEpochDay()
+    }
+
     /** Trova la tipologia di giornata (HIGH/MEDIUM/LOW) del piano per una data. */
     fun carbDayTypeFor(plan: NutritionPlan?, epochDay: Long): CarbDayType? =
         plan?.days?.firstOrNull { it.dayIndex == dayIndexFor(epochDay) }?.dayType

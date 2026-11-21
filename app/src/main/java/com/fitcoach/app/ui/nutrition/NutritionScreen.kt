@@ -239,6 +239,20 @@ fun NutritionScreen(
             }
         }
 
+        if (!state.isSelectedDayToday) {
+            item {
+                // Senza questo avviso un giorno diverso da oggi sembra "il piano
+                // di oggi": e' l'equivoco che faceva leggere il target sbagliato.
+                Text(
+                    "Stai consultando ${dayNames.getOrElse(state.selectedDayIndex) { "" }}: " +
+                        "i target e le spunte non riguardano oggi. " +
+                        "La Home mostra sempre il giorno corrente.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = CarbsColor
+                )
+            }
+        }
+
         if (day != null) {
             item {
                 SectionCard {
