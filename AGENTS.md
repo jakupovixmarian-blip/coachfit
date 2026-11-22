@@ -702,6 +702,24 @@ Il jar va verificato contro il `.sha512` scaricato. Mirror alternativi funzionan
 Robolectric richiedono `13-robolectric-9030017-i7`; quelli con `compileSdk 35`
 (`@Config(sdk = [35])`) richiedono `15-robolectric-12650502-i7`.
 
+### GRADLE_USER_HOME: usare `/workspace/gradle-home`
+
+La cache Gradle popolata in questo ambiente e' `/workspace/gradle-home`, non
+`~/.gradle`. Un terminale nuovo (o resettato) non la usa e Gradle tenta di riscaricare
+tutto da Maven Central, che risponde **429**: la build fallisce su
+`hiltAggregateDepsDebugUnitTest` o su un artefatto Robolectric prima ancora di eseguire
+i test. Ogni invocazione deve esportare entrambe le variabili e girare offline:
+
+```bash
+export JAVA_HOME=/workspace/toolchain/jdk-17
+export ANDROID_HOME=/workspace/toolchain/android-sdk
+export GRADLE_USER_HOME=/workspace/gradle-home
+./gradlew :app:testDebugUnitTest --offline
+```
+
+Con queste tre variabili i test girano anche senza rete.
+
+
 ## Il corpus InVictus: uno solo, e non nel prompt
 
 Due file facevano la stessa cosa con tassonomie diverse: `InvictusCorpus` (159 regole, 15
