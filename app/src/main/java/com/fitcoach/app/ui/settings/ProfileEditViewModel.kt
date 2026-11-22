@@ -73,6 +73,65 @@ class ProfileEditViewModel @Inject constructor(
         )
     }
 
+    // ---- Inventario attrezzatura dettagliato (spec §4) ----
+
+    /** Aggiunge o rimuove un preset del catalogo, mantenendo i dati gia' inseriti. */
+    fun toggleGearPreset(name: String) = update { p ->
+        val inv = p.gearInventory
+        val existing = inv.presets.firstOrNull { it.name.equals(name, ignoreCase = true) }
+        val presets = if (existing != null) {
+            inv.presets - existing
+        } else {
+            val preset = com.fitcoach.app.domain.model.GearCatalog.find(name)
+            inv.presets + com.fitcoach.app.domain.model.GearItem(
+                id = name,
+                name = name,
+                category = preset?.category ?: com.fitcoach.app.domain.model.GearCategory.CUSTOM,
+                minWeightKg = preset?.minWeightKg,
+                maxWeightKg = preset?.maxWeightKg,
+                incrementsKg = preset?.incrementsKg.orEmpty()
+            )
+        }
+        p.copy(gearInventory = inv.copy(presets = presets))
+    }
+
+    /** Aggiorna i dettagli di un attrezzo gia' presente (preset o custom). */
+    fun updateGearItem(item: com.fitcoach.app.domain.model.GearItem) = update { p ->
+        val inv = p.gearInventory
+        p.copy(
+            gearInventory = inv.copy(
+                presets = inv.presets.map { if (it.id == item.id) item else it },
+                custom = inv.custom.map { if (it.id == item.id) item else it }
+            )
+        )
+    }
+
+    fun addCustomGear(name: String) = update { p ->
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return@update p
+        val inv = p.gearInventory
+        if (inv.all.any { it.name.equals(trimmed, ignoreCase = true) }) return@update p
+        p.copy(
+            gearInventory = inv.copy(
+                custom = inv.custom + com.fitcoach.app.domain.model.GearItem(
+                    id = "custom:$trimmed",
+                    name = trimmed,
+                    category = com.fitcoach.app.domain.model.GearCategory.CUSTOM
+                )
+            )
+        )
+    }
+
+    fun removeGearItem(id: String) = update { p ->
+        val inv = p.gearInventory
+        p.copy(
+            gearInventory = inv.copy(
+                presets = inv.presets.filterNot { it.id == id },
+                custom = inv.custom.filterNot { it.id == id }
+            )
+        )
+    }
+
     fun save() {
         viewModelScope.launch {
             val current = _state.value.profile ?: return@launch

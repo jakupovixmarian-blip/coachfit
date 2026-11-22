@@ -44,26 +44,31 @@ cena.
 ### Creare, vedere e salvare una ricetta
 
 Oltre alle ricette del piano la sezione permette di comporre una ricetta a
-partire da un pasto reale e di conservarla.
+partire da un pasto reale e di conservarla. **La ricetta la scrive l'AI**: non
+esiste un testo predefinito presentato come ricetta.
 
-- **Crea ricetta**: si sceglie il giorno (1-7) e il pasto; il compositore
-  `RecipeComposer` riorganizza gli alimenti già previsti in un piatto, in tre
-  stili: Classica, Leggera (senza grassi aggiunti) e Ricca (aggiunge una fonte
-  extra). Le grammature restano quelle del piano: il piatto non è un pasto
-  diverso, i totali coincidono con gli alimenti usati.
-- Il ruolo di ogni alimento (fonte proteica, carboidrati, verdura, frutta,
-  grassi, latticini) si deduce dai macro, non dalla categoria del catalogo, che
-  non è omogenea. Per gli alimenti fuori anagrafica si usano i macro della
-  porzione effettiva; il nome da solo non basta a distinguere un piatto
-  proteico da uno di carboidrati.
+- **Crea ricetta**: si sceglie il giorno (1-7) e il pasto; `RecipeAiService`
+  riceve gli alimenti e le grammature che il piano ha già assegnato a quel pasto
+  e chiede al modello una preparazione reale, in tre stili: Classica, Leggera,
+  Ricca.
+- **Ingredienti e grammature restano quelli del piano.** Il modello scrive solo
+  nome del piatto e passi; kcal e macro sono ricalcolati dagli ingredienti, mai
+  presi dalla risposta.
+- **Nessun ripiego deterministico**: se il provider non è configurato, non
+  risponde o produce una risposta inutilizzabile, l'utente vede un errore
+  esplicito con il motivo. Una ricetta finta sarebbe peggio di nessuna ricetta.
+- **Parsing tollerante alle forme reali**: JSON dentro un blocco markdown,
+  oggetto incapsulato (`{"ricetta":{...}}`, `{"recipe":{...}}`), chiavi in
+  inglese (`name`/`steps`), `passi` come unica stringa numerata o su più righe.
+  I nomi degli alimenti sono confrontati per parole significative, così
+  "petto di pollo" corrisponde a "Pollo, petto".
+- **Correzione invece di scarto**: se il modello aggiunge un alimento estraneo
+  (olio, parmigiano) o traduce un ingrediente in un'altra lingua, gli si chiede
+  una nuova risposta dicendo cosa non andava. Dopo due correzioni fallite il
+  risultato è un errore, non una ricetta approssimativa.
 - **Anteprima**: ingredienti con grammi, crudo/cotto, kcal e macro, totali del
-  piatto e passi di assemblaggio. I passi non contengono dosaggi: i dosaggi sono
-  già nel piano.
-- **Salva**: la ricetta finisce in `saved_recipes` (Room, schema v15) con
-  ingredienti, passi e totali, e resta consultabile anche dopo il riavvio.
-- Se gli alimenti non bastano a comporre un piatto sensato (meno di due
-  ingredienti) il compositore restituisce `null` e l'app lo dice, invece di
-  proporre un piatto inventato.
+  piatto e passi. **Salva**: la ricetta finisce in `saved_recipes` e resta
+  consultabile anche dopo il riavvio.
 - Una riga corrotta nel database non fa fallire l'elenco: gli ingredienti non
   leggibili vengono scartati singolarmente.
 
@@ -223,6 +228,28 @@ Ogni modifica al piano si riflette automaticamente sulla spesa e sul diario.
 
 Il **Coach AI** riceve nel contesto anche il bilancio del giorno, il riepilogo settimanale,
 la lista della spesa e lo storico delle sostituzioni: risponde usando solo dati reali.
+
+## Inventario attrezzatura reale
+
+L'attrezzatura non è una categoria generica: è un **inventario** con sei famiglie
+(bilancieri e barre, strutture, manubri e pesi, macchine, attrezzi a corpo libero,
+accessori), preset della catalogo `GearCatalog` e voci personalizzate. Ogni voce può
+portare i dettagli che servono a calcolare i carichi: peso minimo, peso massimo,
+incrementi disponibili, note.
+
+- **Profilo e onboarding**: la sezione `GearInventorySection` è presente sia in
+  Impostazioni > Profilo sia nell'onboarding. Nessuna attrezzatura è preselezionata:
+  un default verrebbe letto dal motore come possesso reale (spec §4).
+- **Persistenza**: colonna `gearInventoryJson` su `user_profile` (migrazione Room
+  16 → 17, default `''`), codifica testuale compatta in `GearJson` senza dipendenze
+  di serializzazione nel layer dati. Un JSON corrotto non fa perdere il profilo.
+- **AI**: `declaredHeader` include l'inventario completo (`INVENTARIO ATTREZZATURA
+  REALE`, con `VINCOLO` esplicito) e il prompt di generazione vieta di prescrivere
+  esercizi non eseguibili con l'attrezzatura dichiarata. Il tool di anamnesi espone
+  lo stesso elenco al modello.
+- **Stato vuoto**: se l'inventario non è compilato il prompt lo dichiara
+  (`NON_COMPILATO`) e l'interfaccia avvisa che il coach potrebbe proporre esercizi
+  non eseguibili.
 
 ## Anamnesi guidata e gate di generazione
 

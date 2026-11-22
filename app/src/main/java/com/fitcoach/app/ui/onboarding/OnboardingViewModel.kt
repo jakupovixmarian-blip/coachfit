@@ -10,6 +10,10 @@ import com.fitcoach.app.domain.model.BudgetScope
 import com.fitcoach.app.domain.model.CookingTimeAvailable
 import com.fitcoach.app.domain.model.DietaryPreference
 import com.fitcoach.app.domain.model.Equipment
+import com.fitcoach.app.domain.model.GearCatalog
+import com.fitcoach.app.domain.model.GearCategory
+import com.fitcoach.app.domain.model.GearInventory
+import com.fitcoach.app.domain.model.GearItem
 import com.fitcoach.app.domain.model.Goal
 import com.fitcoach.app.domain.model.Level3
 import com.fitcoach.app.domain.model.MuscleGroup
@@ -46,7 +50,11 @@ data class OnboardingUiState(
     val experience: TrainingExperience = TrainingExperience.BEGINNER,
     val goal: Goal = Goal.RECOMP,
     val trainingDays: Int = 3,
-    val equipment: Set<Equipment> = setOf(Equipment.BARBELL, Equipment.DUMBBELL, Equipment.MACHINE),
+    // Nessun default: preselezionare attrezzatura farebbe credere al motore che
+    // l'utente la possieda davvero (spec §4: niente valori finti come reali).
+    val equipment: Set<Equipment> = emptySet(),
+    /** Inventario dettagliato compilato durante l'onboarding. */
+    val gearInventory: GearInventory = GearInventory(),
     // Stile di vita / recupero
     val workType: WorkType = WorkType.SEDENTARY,
     val workShift: WorkShift = WorkShift.NONE,
@@ -130,7 +138,8 @@ class OnboardingViewModel @Inject constructor(
                     experience = existing.experience,
                     goal = existing.goal,
                     trainingDays = existing.trainingDaysPerWeek,
-                    equipment = existing.availableEquipment.ifEmpty { _state.value.equipment },
+                    equipment = existing.availableEquipment,
+                    gearInventory = existing.gearInventory,
                     workType = existing.workType,
                     workShift = existing.workShift,
                     dailySteps = existing.dailySteps?.toString().orEmpty(),
@@ -186,6 +195,61 @@ class OnboardingViewModel @Inject constructor(
         )
     }
 
+    fun toggleGearPreset(name: String) = select("gearInventory") { s ->
+        val inv = s.gearInventory
+        val existing = inv.presets.firstOrNull { it.name.equals(name, ignoreCase = true) }
+        val presets = if (existing != null) inv.presets - existing else {
+            val preset = GearCatalog.find(name)
+            inv.presets + GearItem(
+                id = name,
+                name = name,
+                category = preset?.category ?: GearCategory.CUSTOM,
+                minWeightKg = preset?.minWeightKg,
+                maxWeightKg = preset?.maxWeightKg,
+                incrementsKg = preset?.incrementsKg.orEmpty()
+            )
+        }
+        s.copy(gearInventory = inv.copy(presets = presets))
+    }
+
+    fun updateGearItem(item: GearItem) = select("gearInventory") { s ->
+        val inv = s.gearInventory
+        s.copy(
+            gearInventory = inv.copy(
+                presets = inv.presets.map { if (it.id == item.id) item else it },
+                custom = inv.custom.map { if (it.id == item.id) item else it }
+            )
+        )
+    }
+
+    fun addCustomGear(name: String) = select("gearInventory") { s ->
+        val trimmed = name.trim()
+        val inv = s.gearInventory
+        if (trimmed.isEmpty() || inv.all.any { it.name.equals(trimmed, ignoreCase = true) }) {
+            s
+        } else {
+            s.copy(
+                gearInventory = inv.copy(
+                    custom = inv.custom + GearItem(
+                        id = "custom:$trimmed",
+                        name = trimmed,
+                        category = GearCategory.CUSTOM
+                    )
+                )
+            )
+        }
+    }
+
+    fun removeGearItem(id: String) = select("gearInventory") { s ->
+        val inv = s.gearInventory
+        s.copy(
+            gearInventory = inv.copy(
+                presets = inv.presets.filterNot { it.id == id },
+                custom = inv.custom.filterNot { it.id == id }
+            )
+        )
+    }
+
     fun togglePreference(p: DietaryPreference) = update { s ->
         val base = if (p == DietaryPreference.NONE) {
             setOf(DietaryPreference.NONE)
@@ -231,6 +295,7 @@ class OnboardingViewModel @Inject constructor(
                 goal = s.goal,
                 trainingDaysPerWeek = s.trainingDays,
                 availableEquipment = s.equipment,
+                gearInventory = s.gearInventory,
                 workType = s.workType,
                 workShift = s.workShift,
                 dailySteps = s.dailySteps.toIntOrNull()?.takeIf { it in 0..60000 },

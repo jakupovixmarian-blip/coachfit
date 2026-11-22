@@ -174,12 +174,20 @@ class RecipeAiService @Inject constructor(
         slot: MealSlot,
         style: RecipeStyle
     ): ParseOutcome {
-        val obj = extractJson(content)
+        val root = extractJson(content)
             ?: return ParseOutcome.Invalid("la risposta non contiene un oggetto JSON valido")
 
-        val name = obj["nome"].asText()
+        // Alcuni provider incapsulano la ricetta ("{"ricetta":{...}}" oppure
+        // "{"recipe":{...}}"): si cerca l'oggetto che contiene davvero i campi.
+        val obj = findRecipeObject(root)
+            ?: return ParseOutcome.Invalid(
+                "la risposta non contiene i campi \"nome\" e \"passi\""
+            )
+
+        val name = obj.text("nome", "name", "titolo", "title")
             ?: return ParseOutcome.Invalid("manca il campo \"nome\"")
-        val steps = obj["passi"].asTextList()
+
+        val steps = obj.list("passi", "steps", "procedimento", "preparazione")
         if (steps.size < MIN_STEPS) {
             return ParseOutcome.Invalid(
                 "il campo \"passi\" deve contenere almeno $MIN_STEPS passi (trovati ${steps.size})"
@@ -187,7 +195,7 @@ class RecipeAiService @Inject constructor(
         }
 
         val allowed = entries.map { it.foodName }
-        val mentioned = obj["ingredienti"].asTextList()
+        val mentioned = obj.list("ingredienti", "ingredients")
         val foreign = mentioned.filter { !refersToKnownFood(it, allowed) }
         if (foreign.isNotEmpty()) {
             return ParseOutcome.Invalid(
@@ -271,6 +279,63 @@ class RecipeAiService @Inject constructor(
             .toSet()
 
     private fun fmt(v: Double) = if (v % 1.0 == 0.0) v.toInt().toString() else "%.1f".format(v)
+
+    /**
+     * Trova l'oggetto che contiene i campi della ricetta, scendendo di un livello
+     * quando il provider incapsula la risposta.
+     */
+    private fun findRecipeObject(root: JsonObject): JsonObject? {
+        if (root.text("nome", "name", "titolo", "title") != null &&
+            root.list("passi", "steps", "procedimento", "preparazione").isNotEmpty()
+        ) {
+            return root
+        }
+        val nested = root.values.filterIsInstance<JsonObject>()
+            .firstOrNull {
+                it.text("nome", "name", "titolo", "title") != null &&
+                    it.list("passi", "steps", "procedimento", "preparazione").isNotEmpty()
+            }
+        if (nested != null) return nested
+        // Nessun oggetto completo: si restituisce la radice se ha almeno il nome,
+        // cosi' l'errore riportato all'utente parla dei passi e non del JSON.
+        return root.takeIf { it.text("nome", "name", "titolo", "title") != null }
+    }
+
+    private fun JsonObject.text(vararg keys: String): String? =
+        keys.firstNotNullOfOrNull { k -> this[k].asText() }
+
+    /**
+     * Legge una lista di stringhe. Accetta anche il caso in cui il modello
+     * scrive un'unica stringa con i passi numerati o separati da riga: e' una
+     * forma che i provider reali restituiscono spesso e non va scartata.
+     */
+    private fun JsonObject.list(vararg keys: String): List<String> {
+        keys.forEach { k ->
+            when (val el = this[k]) {
+                is JsonArray -> return el.mapNotNull { (it as? JsonPrimitive)?.contentOrNull?.trim() }
+                    .filter { it.isNotBlank() }
+                is JsonPrimitive -> {
+                    val raw = el.contentOrNull?.trim().orEmpty()
+                    if (raw.isNotBlank()) return splitSteps(raw)
+                }
+                else -> Unit
+            }
+        }
+        return emptyList()
+    }
+
+    /** Divide "1. Taglia... 2. Cuoci..." oppure un testo su piu' righe. */
+    private fun splitSteps(raw: String): List<String> {
+        val byLine = raw.lines().map { it.trim() }.filter { it.isNotBlank() }
+        if (byLine.size > 1) {
+            return byLine.map { it.replace(Regex("^\\s*\\d+[.)]\\s*"), "").trim() }
+                .filter { it.isNotBlank() }
+        }
+        val numbered = Regex("(?:^|\\s)\\d+[.)]\\s+").split(raw)
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+        return if (numbered.size > 1) numbered else listOf(raw)
+    }
 
     private fun JsonElement?.asText(): String? =
         (this as? JsonPrimitive)?.contentOrNull?.trim()?.takeIf { it.isNotBlank() }

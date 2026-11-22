@@ -288,9 +288,20 @@ class AiProgramGenerationService @Inject constructor(
                 else profile.currentLoads.entries.joinToString { "${it.key}=${it.value} kg" }
             )
             appendLine(
-                "ATTREZZATURA: " + profile.availableEquipment.joinToString { it.name }
+                "ATTREZZATURA (categorie): " + profile.availableEquipment.joinToString { it.name }
                     .ifBlank { "NON_DICHIARATA" }
             )
+            appendLine(
+                "INVENTARIO ATTREZZATURA REALE: " +
+                    profile.gearInventory.summary().ifBlank { "NON_COMPILATO" }
+            )
+            if (!profile.gearInventory.isEmpty) {
+                appendLine(
+                    "VINCOLO: prescrivi solo esercizi eseguibili con l'inventario qui sopra. " +
+                        "Se un esercizio richiede un attrezzo assente, scegli un'alternativa " +
+                        "compatibile con lo stesso gruppo muscolare e dichiarala."
+                )
+            }
         }
 
         private const val SUBMIT_TOOL = "submit_full_program"

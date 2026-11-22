@@ -661,6 +661,32 @@ controllo fuori dal checker, quel test cade.
   dentro il framework di test), **non** una regressione. Verificare con `git stash` prima
   di indagare: sul codice originale falliscono ugualmente.
 
+### Robolectric e la cache degli android-all
+
+Robolectric scarica a runtime `org.robolectric:android-all-instrumented` (~160-200 MB per
+API) in una directory temporanea. Se il download fallisce **tutti** i test Robolectric
+falliscono con `Failed to fetch maven artifact ... android-all-instrumented`, anche se il
+codice e' corretto: non e' una regressione.
+
+Causa tipica in questo ambiente: Maven Central risponde **429** (rate limit) e il jar non
+viene messo in cache. Rimedio, senza toccare la configurazione del progetto:
+
+```bash
+BASE=https://maven-central.storage-download.googleapis.com/maven2
+V=13-robolectric-9030017-i7   # e 15-robolectric-12650502-i7 (compileSdk 35)
+D="$HOME/.m2/repository/org/robolectric/android-all-instrumented/$V"
+mkdir -p "$D"
+for EXT in jar pom jar.sha512; do
+  curl -sfL "$BASE/org/robolectric/android-all-instrumented/$V/android-all-instrumented-$V.$EXT" -o "$D/android-all-instrumented-$V.$EXT"
+done
+```
+
+Il jar va verificato contro il `.sha512` scaricato. Mirror alternativi funzionanti:
+`maven.aliyun.com/repository/central`, `repo.huaweicloud.com/repository/maven`,
+`maven-central.storage-download.googleapis.com/maven2`. I test che usano solo Room +
+Robolectric richiedono `13-robolectric-9030017-i7`; quelli con `compileSdk 35`
+(`@Config(sdk = [35])`) richiedono `15-robolectric-12650502-i7`.
+
 ## Il corpus InVictus: uno solo, e non nel prompt
 
 Due file facevano la stessa cosa con tassonomie diverse: `InvictusCorpus` (159 regole, 15

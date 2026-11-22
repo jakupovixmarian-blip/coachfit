@@ -168,4 +168,42 @@ class MigrationTest {
         }
         db.close()
     }
+
+    @Test
+    fun `la migrazione 16 verso 17 aggiunge l'inventario senza perdere il profilo`() {
+        helper.createDatabase(TEST_DB, 16).use { db ->
+            db.execSQL(
+                "INSERT INTO user_profile (id, name, sex, experience, goal, trainingDaysPerWeek, " +
+                    "availableEquipment, dietaryPreferences, excludedFoods, allergies, " +
+                    "physicalLimitations, movementsToAvoid, mealsPerDay, workType, workShift, " +
+                    "transportMode, extraSportSessionsPerWeek, walkingMinutesPerWeek, sleepQuality, " +
+                    "bedtime, wakeTime, stressLevel, dailyEnergy, recoveryCapacity, " +
+                    "breakfastPreference, likedFoods, dislikedFoods, dietaryRestrictions, " +
+                    "cookingTimeAvailable, mealPrepPossible, prefersSimpleFoods, dietDifficulties, " +
+                    "preferredExercises, dislikedExercises, unknownExercises, technicalLevel, " +
+                    "priorityMuscles, currentLoadsJson, secondaryGoals, desiredOutcome, " +
+                    "budgetScope, budgetPersons, anamnesisCompleted, anamnesisSummary, " +
+                    "answeredQuestionIds, createdAt, updatedAt) VALUES " +
+                    "(1, 'Mario', 'MALE', 'INTERMEDIATE', 'HYPERTROPHY', 4, " +
+                    "'', '', '', '', '', '', " +
+                    "5, 'SEDENTARY', 'NONE', 'CAR', 0, 0, 'MEDIUM', " +
+                    "'23:00', '07:00', 'MEDIUM', 'MEDIUM', 'MEDIUM', " +
+                    "'SWEET', '', '', '', 'MEDIUM', 0, 1, '', " +
+                    "'', '', '', 'NOVICE', " +
+                    "'', 'Panca piana=80.0', '', '', " +
+                    "'PERSONAL_ONLY', 1, 1, 'ok', " +
+                    "'', 1700000000000, 1700000000000)"
+            )
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 17, true, MIGRATION_16_17)
+        db.query("SELECT name, currentLoadsJson, gearInventoryJson FROM user_profile").use { c ->
+            assertThat(c.moveToFirst()).isTrue()
+            assertThat(c.getString(0)).isEqualTo("Mario")
+            assertThat(c.getString(1)).isEqualTo("Panca piana=80.0")
+            // Default vuoto: l'inventario va compilato, non inventato.
+            assertThat(c.getString(2)).isEmpty()
+        }
+        db.close()
+    }
 }

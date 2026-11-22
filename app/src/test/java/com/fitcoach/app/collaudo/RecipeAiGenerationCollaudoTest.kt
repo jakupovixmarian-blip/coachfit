@@ -256,6 +256,91 @@ class RecipeAiGenerationCollaudoTest {
     }
 
     @Test
+    fun `la ricetta incapsulata in un oggetto esterno viene letta`() = runTest {
+        configureProvider()
+        val api = ScriptedApi(
+            mutableListOf(
+                textResponse(
+                    """{"ricetta":{"nome":"Pollo e riso","ingredienti":["Pollo, petto","Riso, bianco"],""" +
+                        """"passi":["Cuoci il riso 15 minuti.","Rosola il pollo in padella."]}}"""
+                )
+            )
+        )
+
+        val result = generate(api)
+
+        assertThat(result).isInstanceOf(RecipeAiResult.Success::class.java)
+        assertThat((result as RecipeAiResult.Success).recipe.name).isEqualTo("Pollo e riso")
+        // Nessuna correzione richiesta: la forma era accettabile.
+        assertThat(api.sent).hasSize(1)
+    }
+
+    @Test
+    fun `i campi in inglese vengono accettati`() = runTest {
+        configureProvider()
+        val api = ScriptedApi(
+            mutableListOf(
+                textResponse(
+                    """{"name":"Pollo e riso in padella","ingredients":["Pollo, petto","Riso, bianco"],""" +
+                        """"steps":["Cuoci il riso in acqua bollente 15 minuti.","Rosola il pollo 6 minuti per lato."]}"""
+                )
+            )
+        )
+
+        val result = generate(api)
+
+        assertThat(result).isInstanceOf(RecipeAiResult.Success::class.java)
+        assertThat((result as RecipeAiResult.Success).recipe.steps).hasSize(2)
+        assertThat(api.sent).hasSize(1)
+    }
+
+    @Test
+    fun `un ingrediente tradotto in un'altra lingua viene rifiutato`() = runTest {
+        configureProvider()
+        // Il modello traduce "Pollo, petto" in "chicken breast": non e' un
+        // alimento del piano e non e' verificabile, quindi va corretto.
+        val api = ScriptedApi(
+            mutableListOf(
+                textResponse(
+                    """{"nome":"Chicken and rice","ingredienti":["chicken breast","white rice"],""" +
+                        """"passi":["Boil the rice for 15 minutes.","Pan-sear the chicken 6 minutes per side."]}"""
+                )
+            )
+        )
+
+        val result = generate(api)
+
+        assertThat(result).isInstanceOf(RecipeAiResult.Failed::class.java)
+        // La correzione deve citare gli alimenti estranei.
+        val correction = api.sent.last().messages.last().content
+        assertThat(correction).contains("chicken breast")
+        assertThat(correction).contains("white rice")
+    }
+
+    @Test
+    fun `i passi scritti come unica stringa numerata vengono divisi`() = runTest {
+        configureProvider()
+        val api = ScriptedApi(
+            mutableListOf(
+                textResponse(
+                    """{"nome":"Pollo e riso","ingredienti":["Pollo, petto","Riso, bianco"],""" +
+                        """"passi":"1. Cuoci il riso in acqua bollente salata per 15 minuti. """ +
+                        """2. Rosola il pollo in padella 6 minuti per lato."}"""
+                )
+            )
+        )
+
+        val result = generate(api)
+
+        assertThat(result).isInstanceOf(RecipeAiResult.Success::class.java)
+        val steps = (result as RecipeAiResult.Success).recipe.steps
+        assertThat(steps).hasSize(2)
+        assertThat(steps[0]).startsWith("Cuoci il riso")
+        assertThat(steps[1]).startsWith("Rosola il pollo")
+        assertThat(api.sent).hasSize(1)
+    }
+
+    @Test
     fun `i passi insufficienti vengono corretti`() = runTest {
         configureProvider()
         val api = ScriptedApi(

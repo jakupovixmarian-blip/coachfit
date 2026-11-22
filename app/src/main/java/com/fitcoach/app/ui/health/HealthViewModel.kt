@@ -22,7 +22,9 @@ data class HealthUiState(
     val message: String? = null,
     /** Peso e composizione dalla bilancia BLE, se presenti per oggi. */
     val scaleWeightKg: Double? = null,
-    val scaleBodyFat: Double? = null
+    val scaleBodyFat: Double? = null,
+    /** Quali permessi mancano davvero, per non dire "tutti" quando ne basta uno. */
+    val missingPermissions: Int = 0
 )
 
 /**
@@ -48,6 +50,8 @@ class HealthViewModel @Inject constructor(
             _state.value = _state.value.copy(loading = true)
             val availability = healthReader.availability()
             val granted = runCatching { healthReader.grantedPermissions() }.getOrDefault(emptySet())
+            // Lettura nuova a ogni refresh: prima la schermata riusava lo
+            // snapshot precedente e il pulsante sembrava non fare nulla.
             val snapshot = if (availability == HealthConnectReader.Availability.AVAILABLE) {
                 runCatching { healthReader.read(LocalDate.now()) }.getOrNull()
             } else null
@@ -61,7 +65,8 @@ class HealthViewModel @Inject constructor(
                 snapshot = snapshot,
                 scaleWeightKg = latest?.weightKg,
                 scaleBodyFat = latest?.bodyFatPercent,
-                message = null
+                message = null,
+                missingPermissions = (healthReader.permissions - granted).size
             )
         }
     }
@@ -74,13 +79,17 @@ class HealthViewModel @Inject constructor(
     fun onPermissionsResult() {
         viewModelScope.launch {
             val granted = runCatching { healthReader.grantedPermissions() }.getOrDefault(emptySet())
-            if (granted.containsAll(healthReader.permissions)) {
-                refresh()
-            } else {
-                refresh()
+            refresh()
+            if (granted.isEmpty()) {
                 _state.value = _state.value.copy(
                     message = "Accesso non concesso. Health Connect richiede di selezionare " +
                         "le voci e confermare: senza permesso il report resta vuoto."
+                )
+            } else if (!granted.containsAll(healthReader.permissions)) {
+                val missing = healthReader.permissions - granted
+                _state.value = _state.value.copy(
+                    message = "Accesso parziale: ${missing.size} permessi non concessi. " +
+                        "I dati mancanti restano segnati come non autorizzati."
                 )
             }
         }

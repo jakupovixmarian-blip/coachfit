@@ -51,6 +51,8 @@ data class UserProfileEntity(
     val goal: Goal = Goal.RECOMP,
     val trainingDaysPerWeek: Int = 3,
     val availableEquipment: Set<Equipment> = emptySet(),
+    /** Inventario dettagliato attrezzatura, JSON. Vedi GearInventory. */
+    val gearInventoryJson: String = "",
     val dietaryPreferences: Set<DietaryPreference> = emptySet(),
     val excludedFoods: List<String> = emptyList(),
     val allergies: List<String> = emptyList(),

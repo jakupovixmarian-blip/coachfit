@@ -178,6 +178,14 @@ fun ProfileEditScreen(
                 SectionCard {
                     Column {
                         SectionHeader("Attrezzatura disponibile")
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Sintesi per categoria, usata dai controlli di compatibilita'. " +
+                                "Il dettaglio (marca, carichi, incrementi) si compila nella " +
+                                "sezione successiva.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         Spacer(Modifier.height(8.dp))
                         Equipment.entries.forEach { eq ->
                             FilterChip(
@@ -189,6 +197,16 @@ fun ProfileEditScreen(
                         }
                     }
                 }
+            }
+
+            item {
+                GearInventorySection(
+                    inventory = profile.gearInventory,
+                    onTogglePreset = { viewModel.toggleGearPreset(it) },
+                    onUpdateItem = { viewModel.updateGearItem(it) },
+                    onAddCustom = { viewModel.addCustomGear(it) },
+                    onRemove = { viewModel.removeGearItem(it) }
+                )
             }
 
             item {

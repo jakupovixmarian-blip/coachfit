@@ -17,6 +17,15 @@ data class UserProfile(
     val goal: Goal = Goal.RECOMP,
     val trainingDaysPerWeek: Int = 3,
     val availableEquipment: Set<Equipment> = emptySet(),
+    /**
+     * Inventario dettagliato dell'attrezzatura (P4).
+     *
+     * [availableEquipment] resta la sintesi per categoria usata dai motori di
+     * compatibilita'; questo e' il dettaglio reale (marca, modello, carichi,
+     * incrementi) che l'AI deve vedere per non prescrivere esercizi
+     * impossibili.
+     */
+    val gearInventory: GearInventory = GearInventory(),
     val dietaryPreferences: Set<DietaryPreference> = emptySet(),
     val excludedFoods: List<String> = emptyList(),
     val allergies: List<String> = emptyList(),

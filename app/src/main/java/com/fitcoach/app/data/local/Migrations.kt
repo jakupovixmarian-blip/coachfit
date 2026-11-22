@@ -382,3 +382,15 @@ val MIGRATION_15_16 = object : Migration(15, 16) {
         db.execSQL("ALTER TABLE user_preferences ADD COLUMN restAlarmVibration INTEGER NOT NULL DEFAULT 1")
     }
 }
+
+/**
+ * Inventario dettagliato dell'attrezzatura (spec §4).
+ *
+ * Colonna aggiunta con default vuoto: i profili esistenti restano leggibili e
+ * l'inventario risulta da compilare, invece di essere inventato.
+ */
+val MIGRATION_16_17 = object : Migration(16, 17) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE user_profile ADD COLUMN gearInventoryJson TEXT NOT NULL DEFAULT ''")
+    }
+}

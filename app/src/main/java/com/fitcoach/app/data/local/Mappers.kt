@@ -10,6 +10,7 @@ object Mappers {
         weightKg = weightKg, bodyFatPercent = bodyFatPercent, experience = experience,
         trainingStatus = trainingStatus,
         goal = goal, trainingDaysPerWeek = trainingDaysPerWeek, availableEquipment = availableEquipment,
+        gearInventory = decodeGear(gearInventoryJson),
         dietaryPreferences = dietaryPreferences, excludedFoods = excludedFoods, allergies = allergies,
         physicalLimitations = physicalLimitations, movementsToAvoid = movementsToAvoid,
         weeklyFoodBudgetEur = weeklyFoodBudgetEur, activityFactorOverride = activityFactorOverride,
@@ -44,6 +45,7 @@ object Mappers {
         weightKg = weightKg, bodyFatPercent = bodyFatPercent, experience = experience,
         trainingStatus = trainingStatus,
         goal = goal, trainingDaysPerWeek = trainingDaysPerWeek, availableEquipment = availableEquipment,
+        gearInventoryJson = encodeGear(gearInventory),
         dietaryPreferences = dietaryPreferences, excludedFoods = excludedFoods, allergies = allergies,
         physicalLimitations = physicalLimitations, movementsToAvoid = movementsToAvoid,
         weeklyFoodBudgetEur = weeklyFoodBudgetEur, activityFactorOverride = activityFactorOverride,
@@ -76,6 +78,19 @@ object Mappers {
     /** Carichi attuali serializzati come "nomeEsercizio=kg;...". */
     fun encodeLoads(loads: Map<String, Double>): String =
         loads.entries.joinToString(";") { "${it.key}=${it.value}" }
+
+    /**
+     * Inventario attrezzatura serializzato in JSON con kotlinx.serialization.
+     *
+     * Il JSON e' preferito al formato "chiave=valore" di [encodeLoads] perche'
+     * qui ogni attrezzo ha campi opzionali e liste (incrementi): un separatore
+     * testuale renderebbe i nomi con virgole o "=" non rappresentabili.
+     */
+    fun encodeGear(inventory: GearInventory): String =
+        if (inventory.all.isEmpty()) "" else GearJson.encode(inventory)
+
+    fun decodeGear(raw: String): GearInventory =
+        if (raw.isBlank()) GearInventory() else GearJson.decode(raw)
 
     fun decodeLoads(raw: String): Map<String, Double> =
         if (raw.isBlank()) emptyMap()

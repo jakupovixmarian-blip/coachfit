@@ -32,6 +32,7 @@ import com.fitcoach.app.domain.model.BudgetScope
 import com.fitcoach.app.domain.model.CookingTimeAvailable
 import com.fitcoach.app.domain.model.DietaryPreference
 import com.fitcoach.app.domain.model.Equipment
+import com.fitcoach.app.ui.settings.GearInventorySection
 import com.fitcoach.app.domain.model.Goal
 import com.fitcoach.app.domain.model.Level3
 import com.fitcoach.app.domain.model.MuscleGroup
@@ -254,18 +255,37 @@ private fun StepObiettivo(state: OnboardingUiState, vm: OnboardingViewModel) {
 
 @Composable
 private fun StepAttrezzatura(state: OnboardingUiState, vm: OnboardingViewModel) {
-    SectionCard {
-        Column {
-            SectionHeader("Attrezzatura disponibile", "Determina gli esercizi generabili")
-            Spacer(Modifier.height(12.dp))
-            Equipment.entries.forEach { eq ->
-                FilterChip(
-                    selected = eq in state.equipment,
-                    onClick = { vm.toggleEquipment(eq) },
-                    label = { Text(eq.label) },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                )
+    Column {
+        SectionCard {
+            Column {
+                SectionHeader("Attrezzatura disponibile", "Determina gli esercizi generabili")
+                Spacer(Modifier.height(12.dp))
+                Equipment.entries.forEach { eq ->
+                    FilterChip(
+                        selected = eq in state.equipment,
+                        onClick = { vm.toggleEquipment(eq) },
+                        label = { Text(eq.label) },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    )
+                }
             }
+        }
+        Spacer(Modifier.height(12.dp))
+        GearInventorySection(
+            inventory = state.gearInventory,
+            onTogglePreset = vm::toggleGearPreset,
+            onUpdateItem = vm::updateGearItem,
+            onAddCustom = vm::addCustomGear,
+            onRemove = vm::removeGearItem
+        )
+        if (state.gearInventory.isEmpty) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Inventario non compilato: il coach non conosce ancora i tuoi attrezzi e " +
+                    "potrebbe proporti esercizi non eseguibili. Puoi completarlo anche dopo.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
         }
     }
 }

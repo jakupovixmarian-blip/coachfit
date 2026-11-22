@@ -213,6 +213,8 @@ fun HealthScreen(
                                     } else {
                                         HealthMetrics(state.snapshot, state.scaleWeightKg,
                                             state.scaleBodyFat)
+                                        Spacer(Modifier.height(10.dp))
+                                        LastUpdateInfo(state.snapshot)
                                     }
                                 }
                             }
@@ -221,12 +223,22 @@ fun HealthScreen(
                 }
             }
 
-            if (state.permissionsGranted) {
+            if (state.permissionsGranted || state.missingPermissions > 0) {
                 item {
                     OutlinedButton(
                         onClick = { viewModel.refresh() },
+                        enabled = !state.loading,
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("Aggiorna report") }
+                    ) {
+                        Text(
+                            when {
+                                state.loading -> "Aggiornamento..."
+                                state.missingPermissions > 0 ->
+                                    "Aggiorna report (${state.missingPermissions} permessi mancanti)"
+                                else -> "Aggiorna report"
+                            }
+                        )
+                    }
                 }
             }
 
@@ -281,27 +293,109 @@ private fun HealthMetrics(
     scaleBodyFat: Double?
 ) {
     Column {
+        val s = snapshot
         MetricRow(Icons.Filled.DirectionsWalk, "Passi",
-            snapshot?.steps?.toString() ?: "non disponibili", snapshot?.steps != null)
+            s?.steps?.toString() ?: statusLabel(s, "steps"), s?.steps != null)
         MetricRow(Icons.Filled.LocalFireDepartment, "Calorie attive",
-            snapshot?.activeKcal?.let { "%.0f kcal".format(it) } ?: "non disponibili",
-            snapshot?.activeKcal != null)
+            s?.activeKcal?.let { "%.0f kcal".format(it) } ?: statusLabel(s, "activeKcal"),
+            s?.activeKcal != null)
+        MetricRow(Icons.Filled.LocalFireDepartment, "Calorie totali",
+            s?.totalKcal?.let { "%.0f kcal".format(it) } ?: statusLabel(s, "totalKcal"),
+            s?.totalKcal != null)
+        MetricRow(Icons.Filled.DirectionsWalk, "Distanza",
+            s?.distanceKm?.let { "%.2f km".format(it) } ?: statusLabel(s, "distance"),
+            s?.distanceKm != null)
+        MetricRow(Icons.Filled.MonitorHeart, "Attivita' fisica",
+            s?.exerciseMinutes?.let { m ->
+                "$m min" + if (s.exerciseSessions > 0) " (${s.exerciseSessions} sedute)" else ""
+            } ?: statusLabel(s, "exercise"), s?.exerciseMinutes != null)
         MetricRow(Icons.Filled.Bedtime, "Sonno",
-            snapshot?.sleepMinutes?.let { formatMinutes(it) } ?: "non disponibili",
-            snapshot?.sleepMinutes != null)
+            s?.sleepMinutes?.let { formatMinutes(it) } ?: statusLabel(s, "sleep"),
+            s?.sleepMinutes != null)
+        if (s?.sleepStages?.isNotEmpty() == true) {
+            val stages = s.sleepStages.entries.joinToString(", ") { "${it.key} ${it.value}m" }
+            Text("Fasi: $stages", style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary, modifier = Modifier.padding(start = 34.dp, bottom = 4.dp))
+        }
+        MetricRow(Icons.Filled.FavoriteBorder, "FC media",
+            s?.heartRateAvg?.let { a ->
+                val min = s.heartRateMin
+                val max = s.heartRateMax
+                if (min != null && max != null) "$a bpm (min $min, max $max)" else "$a bpm"
+            } ?: statusLabel(s, "heartRate"), s?.heartRateAvg != null)
         MetricRow(Icons.Filled.FavoriteBorder, "FC a riposo",
-            snapshot?.restingHeartRate?.let { "$it bpm" } ?: "non disponibili",
-            snapshot?.restingHeartRate != null)
+            s?.restingHeartRate?.let { "$it bpm" } ?: statusLabel(s, "restingHeartRate"),
+            s?.restingHeartRate != null)
         MetricRow(Icons.Filled.MonitorHeart, "HRV",
-            snapshot?.hrvMs?.let { "%.0f ms".format(it) } ?: "non disponibili",
-            snapshot?.hrvMs != null)
-        MetricRow(Icons.Filled.Scale, "Peso (bilancia)",
+            s?.hrvMs?.let { "%.0f ms".format(it) } ?: statusLabel(s, "hrv"), s?.hrvMs != null)
+        MetricRow(Icons.Filled.MonitorHeart, "Stress",
+            statusLabel(s, "stress"), false)
+        MetricRow(Icons.Filled.Scale, "Peso (Health Connect)",
+            s?.weightKg?.let { "%.1f kg".format(it) } ?: statusLabel(s, "weight"),
+            s?.weightKg != null)
+        MetricRow(Icons.Filled.Scale, "Massa grassa (Health Connect)",
+            s?.bodyFatPercent?.let { "%.1f %%".format(it) } ?: statusLabel(s, "bodyFat"),
+            s?.bodyFatPercent != null)
+        MetricRow(Icons.Filled.Scale, "Massa magra",
+            s?.leanMassKg?.let { "%.1f kg".format(it) } ?: statusLabel(s, "leanMass"),
+            s?.leanMassKg != null)
+        MetricRow(Icons.Filled.Scale, "Acqua corporea",
+            s?.bodyWaterKg?.let { "%.1f kg".format(it) } ?: statusLabel(s, "bodyWater"),
+            s?.bodyWaterKg != null)
+        MetricRow(Icons.Filled.Scale, "Massa ossea",
+            s?.boneMassKg?.let { "%.1f kg".format(it) } ?: statusLabel(s, "boneMass"),
+            s?.boneMassKg != null)
+        MetricRow(Icons.Filled.Scale, "Peso (bilancia FitCoach)",
             scaleWeightKg?.let { "%.1f kg".format(it) } ?: "nessuna misura",
             scaleWeightKg != null)
-        MetricRow(Icons.Filled.Scale, "Massa grassa (bilancia)",
+        MetricRow(Icons.Filled.Scale, "Massa grassa (bilancia FitCoach)",
             scaleBodyFat?.let { "%.1f %%".format(it) } ?: "nessuna misura",
             scaleBodyFat != null)
     }
+}
+
+/**
+ * Etichetta di un dato assente: distingue "permesso mancante" da "nessun dato",
+ * perche' le due situazioni richiedono azioni diverse dall'utente.
+ */
+private fun statusLabel(snapshot: DailyHealthSnapshot?, metric: String): String =
+    snapshot?.stateOf(metric)?.label ?: "non disponibili"
+
+
+/**
+ * Data e ora dell'ultima lettura e provenienza effettiva dei dati.
+ *
+ * Senza queste due righe l'utente non puo' distinguere un dato vecchio da un
+ * dato assente, ne' sapere se Samsung Health sta davvero scrivendo in Health
+ * Connect.
+ */
+@Composable
+private fun LastUpdateInfo(snapshot: DailyHealthSnapshot?) {
+    val readAt = snapshot?.readAtMillis?.takeIf { it > 0L }
+    val updatedAt = snapshot?.dataUpdatedAtMillis
+    Column {
+        Text(
+            readAt?.let { "Ultima lettura: ${formatDateTime(it)}" }
+                ?: "Nessuna lettura eseguita",
+            style = MaterialTheme.typography.bodySmall, color = TextSecondary
+        )
+        Text(
+            updatedAt?.let { "Ultimo dato scritto dalla sorgente: ${formatDateTime(it)}" }
+                ?: "La sorgente non ha indicato quando ha scritto i dati",
+            style = MaterialTheme.typography.bodySmall, color = TextSecondary
+        )
+        val origins = snapshot?.dataOrigins.orEmpty()
+        Text(
+            if (origins.isEmpty()) "Provenienza: nessuna app ha scritto i dati letti"
+            else "Provenienza: ${origins.joinToString(", ")}",
+            style = MaterialTheme.typography.bodySmall, color = TextSecondary
+        )
+    }
+}
+
+private fun formatDateTime(epochMillis: Long): String {
+    val fmt = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.ITALY)
+    return fmt.format(java.util.Date(epochMillis))
 }
 
 @Composable

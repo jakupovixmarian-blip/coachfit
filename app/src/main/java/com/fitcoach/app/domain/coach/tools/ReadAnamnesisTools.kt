@@ -114,6 +114,27 @@ class GetAnamnesisTool @Inject constructor(
             "frequenzaDichiarata" to JsonOut.num(p.trainingFrequencyPerWeek),
             "livelloTecnico" to JsonOut.str(p.technicalLevel.name),
             "attrezzatura" to JsonOut.strings(p.availableEquipment.map { it.name }),
+            // Inventario reale: senza questo l'AI prescrive esercizi su
+            // attrezzatura che l'utente non possiede (spec §5).
+            "inventarioAttrezzatura" to JsonOut.obj(
+                "totale" to JsonOut.num(p.gearInventory.usable.size),
+                "riepilogo" to JsonOut.str(p.gearInventory.summary()),
+                "voci" to JsonOut.arr(
+                    p.gearInventory.usable.map { g ->
+                        JsonOut.obj(
+                            "nome" to JsonOut.str(g.name),
+                            "categoria" to JsonOut.str(g.category.name),
+                            "quantita" to JsonOut.num(g.quantity),
+                            "marca" to JsonOut.str(g.brand.takeIf { it.isNotBlank() }),
+                            "modello" to JsonOut.str(g.model.takeIf { it.isNotBlank() }),
+                            "minKg" to JsonOut.num(g.minWeightKg),
+                            "maxKg" to JsonOut.num(g.maxWeightKg),
+                            "incrementiKg" to JsonOut.strings(g.incrementsKg.map { it.toString() }),
+                            "note" to JsonOut.str(g.notes.takeIf { it.isNotBlank() })
+                        )
+                    }
+                )
+            ),
             "gruppiPrioritari" to JsonOut.strings(p.priorityMuscles.map { it.name }),
             "eserciziPreferiti" to JsonOut.strings(p.preferredExercises),
             "eserciziNonGraditi" to JsonOut.strings(p.dislikedExercises),
