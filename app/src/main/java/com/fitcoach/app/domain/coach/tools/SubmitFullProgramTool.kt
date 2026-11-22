@@ -13,6 +13,7 @@ import com.fitcoach.app.domain.coach.AiProgramProposalJson
 import com.fitcoach.app.domain.coach.ProgramGenerationEngine
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
+import com.fitcoach.app.domain.nutrition.FoodCatalogSelector
 import com.fitcoach.app.domain.nutrition.FoodFilter
 import com.fitcoach.app.domain.nutrition.PortionResolution
 import kotlinx.serialization.json.Json
@@ -105,7 +106,10 @@ class SubmitFullProgramTool @Inject constructor(
             )
         )
 
-        val foods = FoodFilter.allowedFoods(foodRepository.getAll(), profile)
+        // Stessa selezione usata per costruire il prompt: se la validazione
+        // leggesse una lista diversa da quella mostrata, il modello verrebbe
+        // respinto per nomi che non ha mai potuto vedere.
+        val foods = FoodCatalogSelector.forGeneration(foodRepository.getAll(), profile)
         val exercises = exerciseRepository.getAll()
         if (foods.isEmpty()) return fail("Nessun alimento compatibile disponibile nel database.")
         if (exercises.isEmpty()) return fail("Database esercizi vuoto: impossibile validare la scheda.")
@@ -144,9 +148,11 @@ class SubmitFullProgramTool @Inject constructor(
                     // Il modello veniva respinto con "alimento X non presente"
                     // senza sapere cosa esiste: indovinava per 8 tentativi. Qui
                     // riceve i nomi validi e puo correggere subito.
-                    "alimenti_validi" to JsonOut.strings(
-                        foods.take(60).map { it.name }
-                    ),
+                    // Elenco COMPLETO di cio' che e' stato mostrato al modello:
+                    // troncarlo a 60 in ordine alfabetico gli nascondeva proprio
+                    // gli alimenti base (pollo, riso, uova, olio, yogurt), che
+                    // quindi non poteva scegliere e la diagnosi non gli indicava.
+                    "alimenti_validi" to JsonOut.strings(foods.map { it.name }),
                     "esercizi_validi" to JsonOut.strings(
                         exercises.take(60).map { it.name }
                     )

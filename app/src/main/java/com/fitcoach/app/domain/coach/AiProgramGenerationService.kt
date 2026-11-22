@@ -261,7 +261,12 @@ class AiProgramGenerationService @Inject constructor(
         appendLine(AnamnesisSummary.forProfile(profile))
         append(declaredHeader(profile))
         appendLine("ALIMENTI CONSENTITI (nome | kcal P C F per 100g):")
-        foods.take(90).forEach { f ->
+        // Nessun secondo troncamento: `foods` e' gia' selezionato e limitato da
+        // FoodCatalogSelector. Un take(90) qui tagliava di nuovo la lista in
+        // ordine alfabetico, lasciando fuori proprio gli alimenti base che
+        // servono a comporre un piano (Petto di pollo, Riso, Pasta, Uova,
+        // Yogurt, Olio stavano oltre la posizione 90 del catalogo).
+        foods.forEach { f ->
             appendLine("${f.name} | ${f.kcalPer100g} ${f.proteinPer100g} ${f.carbsPer100g} ${f.fatPer100g} | unità ${f.defaultUnit.name}")
         }
         // "CONSENTITI" era falso: la lista non era filtrata. Ora lo e', quindi

@@ -33,13 +33,21 @@ object FoodCatalogSelector {
         "Dolci"
     )
 
-    /** Un nome "di marca" contiene apostrofi, virgole o parole tipiche del confezionato. */
-    private val brandPattern = Regex("""['’,]|\b(INC|LLC|KRAFT|COMPANY|BRAND|RESTAURANT|MCDONALD)\b""")
+    /**
+     * Un nome "di marca" contiene una parola tutta maiuscola (i prodotti
+     * statunitensi sono scritti cosi: "APPLEBEE'S, french fries") oppure un
+     * suffisso societario.
+     *
+     * L'apostrofo e la virgola NON sono indizi di marca: in italiano sono
+     * normali ("Fiocchi d'avena", "Olio extravergine d'oliva"). Trattarli come
+     * tali escludeva alimenti base dal catalogo mostrato al modello.
+     */
+    private val brandPattern = Regex("""\b[A-Z]{4,}[A-Z'&.]*\b|\b(INC|LLC|KRAFT|COMPANY|BRAND|RESTAURANT|MCDONALD)\b""")
 
     fun forGeneration(
         all: List<FoodItem>,
         profile: UserProfile,
-        limit: Int = 90
+        limit: Int = 200
     ): List<FoodItem> {
         val allowed = FoodFilter.allowedFoods(all, profile)
         val italian = allowed.filter { isItalianSource(it) && it.category !in excludedCategories }

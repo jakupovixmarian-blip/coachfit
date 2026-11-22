@@ -267,6 +267,11 @@ data class AiNutritionDay(
 data class AiMeal(
     val slot: String = "",
     val time: String = "",
+    // "voci" e' la chiave con cui solve_meal_portions stampa gli alimenti di un
+    // pasto. Il modello copia quella risposta, quindi senza questo alias ogni
+    // pasto arrivava con entries vuoto e la diagnosi parlava di "nessun
+    // alimento" (0 kcal su 7 giorni) pur avendo il modello scelto tutto.
+    @JsonNames("voci", "foods", "items", "alimenti")
     val entries: List<AiFoodEntry> = emptyList()
 )
 
