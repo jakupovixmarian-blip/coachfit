@@ -20,6 +20,8 @@
     <string name="channel_checkin_desc">Promemoria per la valutazione settimanale</string>
     <string name="channel_timer">Recupero allenamento</string>
     <string name="channel_timer_desc">Allarme al termine del tempo di recupero tra le serie</string>
+    <string name="channel_ble_session">Dispositivo collegato</string>
+    <string name="channel_ble_session_desc">Notifica del collegamento Bluetooth attivo in background</string>
     <string name="notif_rest_title">Recupero terminato</string>
     <string name="notif_rest_body">Sono passati %1$d secondi: puoi iniziare la prossima serie.</string>
 

@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -44,9 +45,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import com.fitcoach.app.data.health.DailyHealthSnapshot
 import com.fitcoach.app.data.health.HealthConnectReader
 import com.fitcoach.app.ui.components.LoadingBox
+import com.fitcoach.app.ui.components.OnResumeRefresh
 import com.fitcoach.app.ui.components.SectionCard
 import com.fitcoach.app.ui.navigation.Routes
 import com.fitcoach.app.ui.theme.Emerald
@@ -64,6 +70,20 @@ fun HealthScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val snackbar = remember { SnackbarHostState() }
+
+    // Senza questo il messaggio del ViewModel non arrivava mai a schermo.
+    LaunchedEffect(state.message) {
+        state.message?.let {
+            snackbar.showSnackbar(it)
+            viewModel.consumeMessage()
+        }
+    }
+
+    // I dati di Health Connect cambiano anche mentre la schermata non e'
+    // visibile: senza refresh il report restava fermo finche non si chiudeva
+    // e riapriva l'app.
+    OnResumeRefresh { viewModel.refresh() }
 
     // I permessi di Health Connect NON sono permessi runtime Android: vanno
     // chiesti con il contratto della libreria, che apre la sua schermata.
@@ -99,6 +119,7 @@ fun HealthScreen(
         }
     }
 
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
@@ -226,6 +247,8 @@ fun HealthScreen(
                 }
             }
         }
+    }
+    SnackbarHost(snackbar, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 

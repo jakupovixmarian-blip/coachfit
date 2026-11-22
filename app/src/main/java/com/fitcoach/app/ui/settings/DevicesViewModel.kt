@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fitcoach.app.data.repository.ProgressRepository
 import com.fitcoach.app.domain.device.BleDeviceManager
+import com.fitcoach.app.domain.device.BleSessionManager
+import com.fitcoach.app.domain.device.BleSessionService
+import com.fitcoach.app.domain.device.BleSessionStatus
 import com.fitcoach.app.domain.device.BodyComposition
-import com.fitcoach.app.domain.device.ConnectionEvent
 import com.fitcoach.app.domain.device.DeviceKind
 import com.fitcoach.app.domain.device.DiscoveredDevice
 import com.fitcoach.app.domain.device.Measurement
@@ -35,7 +37,12 @@ data class DevicesUiState(
     val lastMeasurement: Measurement? = null,
     /** Composizione corporea completa, quando la bilancia la trasmette (BIA). */
     val lastComposition: BodyComposition? = null,
-    val message: String? = null
+    val message: String? = null,
+    /** Collegamento persistente attivo (foreground service), non solo la lettura. */
+    val sessionActive: Boolean = false,
+    val sessionStatus: BleSessionStatus = BleSessionStatus.IDLE,
+    val sessionDetail: String? = null,
+    val sessionName: String? = null
 )
 
 /**
@@ -46,6 +53,7 @@ data class DevicesUiState(
 @HiltViewModel
 class DevicesViewModel @Inject constructor(
     private val bleDeviceManager: BleDeviceManager,
+    private val sessionManager: BleSessionManager,
     private val progressRepository: ProgressRepository,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
@@ -58,6 +66,32 @@ class DevicesViewModel @Inject constructor(
 
     init {
         refreshCapabilities()
+        // Lo stato della sessione vive nel servizio: la UI lo segue invece di
+        // dedurlo dal proprio ciclo di vita, altrimenti sembra cadere quando
+        // si cambia schermata.
+        viewModelScope.launch {
+            sessionManager.state.collect { session ->
+                _state.value = _state.value.copy(
+                    sessionActive = session.active,
+                    sessionStatus = session.status,
+                    sessionDetail = session.detail,
+                    sessionName = session.name,
+                    connected = session.active && session.status != BleSessionStatus.CONNECTING,
+                    connecting = session.status == BleSessionStatus.CONNECTING,
+                    reading = session.status == BleSessionStatus.STREAMING
+                )
+            }
+        }
+        viewModelScope.launch {
+            sessionManager.measurements.collect { m ->
+                if (m == null) return@collect
+                _state.value = _state.value.copy(
+                    lastMeasurement = Measurement(m.kind, m.value, m.unit),
+                    lastComposition = m.composition ?: _state.value.lastComposition
+                )
+                sessionManager.consumeMeasurement()
+            }
+        }
     }
 
     fun refreshCapabilities() {
@@ -119,7 +153,12 @@ class DevicesViewModel @Inject constructor(
         _state.value = _state.value.copy(scanning = false)
     }
 
-    /** Si collega al dispositivo scelto e ne legge una misurazione reale. */
+    /**
+     * Avvia il collegamento persistente: il servizio in foreground tiene vivo
+     * il GATT anche a schermo spento, e le misurazioni arrivano in streaming.
+     * Una singola pesata non basta piu': una fascia cardio deve restare
+     * collegata durante tutto l'allenamento.
+     */
     fun connect(device: DiscoveredDevice) {
         stopScan()
         readJob?.cancel()
@@ -132,38 +171,30 @@ class DevicesViewModel @Inject constructor(
             lastComposition = null,
             message = null
         )
-        readJob = viewModelScope.launch {
-            bleDeviceManager.connect(device.address, device.kind)
-                .catch { e -> emit(ConnectionEvent.Failed(e.message ?: "Collegamento interrotto.")) }
-                .collect { event ->
-                    _state.value = when (event) {
-                        is ConnectionEvent.Connected ->
-                            _state.value.copy(connecting = false, connected = true, reading = true)
-                        // Il nome arriva solo dopo la connessione: aggiorna la scheda
-                        // invece di lasciare il MAC.
-                        is ConnectionEvent.DeviceName -> _state.value.copy(
-                            connectedDevice = _state.value.connectedDevice?.copy(name = event.name),
-                            devices = _state.value.devices.map {
-                                if (it.address == device.address) it.copy(name = event.name) else it
-                            }
-                        )
-                        is ConnectionEvent.Measured -> _state.value.copy(
-                            connecting = false, connected = true, reading = false,
-                            lastMeasurement = event.value, message = null
-                        )
-                        is ConnectionEvent.Body -> _state.value.copy(
-                            connecting = false, connected = true, reading = false,
-                            lastComposition = event.composition,
-                            lastMeasurement = Measurement(DeviceKind.SCALE, event.composition.weightKg, "kg"),
-                            message = null
-                        )
-                        is ConnectionEvent.Failed -> _state.value.copy(
-                            connecting = false, connected = false, reading = false,
-                            message = event.message
-                        )
-                    }
-                }
+        val started = BleSessionService.start(context, device.address, device.name, device.kind)
+        if (!started) {
+            _state.value = _state.value.copy(
+                connecting = false,
+                connected = false,
+                message = "Android non consente di avviare il collegamento in background " +
+                    "in questo momento. Apri l'app e riprova."
+            )
         }
+    }
+
+    /** Chiude il collegamento e ferma il servizio. */
+    fun disconnect() {
+        BleSessionService.stop(context)
+        sessionManager.stop()
+        _state.value = _state.value.copy(
+            connectedDevice = null,
+            connected = false,
+            connecting = false,
+            reading = false,
+            sessionActive = false,
+            sessionStatus = BleSessionStatus.IDLE,
+            sessionDetail = null
+        )
     }
 
     /** Salva il peso letto dalla bilancia nei progressi, alla data odierna. */

@@ -71,6 +71,7 @@ import com.fitcoach.app.domain.model.WorkoutDay
 import com.fitcoach.app.domain.model.WorkoutSet
 import com.fitcoach.app.ui.components.EmptyState
 import com.fitcoach.app.ui.components.LoadingBox
+import com.fitcoach.app.ui.components.OnResumeRefresh
 import com.fitcoach.app.ui.components.Pill
 import com.fitcoach.app.ui.components.SectionCard
 import com.fitcoach.app.ui.components.SectionHeader
@@ -90,6 +91,9 @@ fun WorkoutScreen(
     viewModel: WorkoutViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // Scheda e sessioni possono cambiare fuori da questa schermata.
+    OnResumeRefresh { viewModel.load() }
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(state.message) {
@@ -405,6 +409,10 @@ fun WorkoutScreen(
                         onSkipRest = { viewModel.skipRest() },
                         onAddRest = { viewModel.addRestTime(it) },
                         onManualRest = { viewModel.startRestWithSeconds(it) },
+                        restAlarmSound = state.restAlarmSound,
+                        restAlarmVibration = state.restAlarmVibration,
+                        onRestAlarmSound = viewModel::setRestAlarmSound,
+                        onRestAlarmVibration = viewModel::setRestAlarmVibration,
                         onLogSet = { viewModel.logSetFor(planned) },
                         onSubstitute = { viewModel.openSubstitution(planned) },
                         onRemove = { viewModel.removeExercise(planned) },
@@ -1078,6 +1086,10 @@ private fun ExerciseCard(
     onSkipRest: () -> Unit,
     onAddRest: (Int) -> Unit,
     onManualRest: (Int) -> Unit,
+    restAlarmSound: Boolean,
+    restAlarmVibration: Boolean,
+    onRestAlarmSound: (Boolean) -> Unit,
+    onRestAlarmVibration: (Boolean) -> Unit,
     onLogSet: () -> Unit,
     onSubstitute: () -> Unit,
     onRemove: () -> Unit,
@@ -1188,7 +1200,11 @@ private fun ExerciseCard(
                     reason = restReason,
                     onSkip = onSkipRest,
                     onAdd = onAddRest,
-                    onSetManual = onManualRest
+                    onSetManual = onManualRest,
+                    alarmSound = restAlarmSound,
+                    alarmVibration = restAlarmVibration,
+                    onAlarmSound = onRestAlarmSound,
+                    onAlarmVibration = onRestAlarmVibration
                 )
             }
 
@@ -1307,7 +1323,11 @@ private fun RestTimerInline(
     reason: String,
     onSkip: () -> Unit,
     onAdd: (Int) -> Unit,
-    onSetManual: (Int) -> Unit
+    onSetManual: (Int) -> Unit,
+    alarmSound: Boolean,
+    alarmVibration: Boolean,
+    onAlarmSound: (Boolean) -> Unit,
+    onAlarmVibration: (Boolean) -> Unit
 ) {
     val progress = if (total > 0) (total - remaining).toFloat() / total else 0f
     var manualInput by remember { mutableStateOf("") }
@@ -1356,6 +1376,25 @@ private fun RestTimerInline(
                 },
                 enabled = (manualInput.toIntOrNull() ?: 0) > 0
             ) { Text("Avvia") }
+        }
+        Spacer(Modifier.height(4.dp))
+        // Qui e non solo in Impostazioni: l'utente cerca l'avviso dove lo sente.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Avviso a fine recupero", style = MaterialTheme.typography.labelMedium,
+                color = TextSecondary)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Suono", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+                Spacer(Modifier.width(4.dp))
+                Switch(checked = alarmSound, onCheckedChange = onAlarmSound)
+                Spacer(Modifier.width(8.dp))
+                Text("Vibra", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+                Spacer(Modifier.width(4.dp))
+                Switch(checked = alarmVibration, onCheckedChange = onAlarmVibration)
+            }
         }
     }
 }

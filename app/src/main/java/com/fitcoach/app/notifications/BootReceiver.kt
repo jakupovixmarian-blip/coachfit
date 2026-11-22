@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.fitcoach.app.data.repository.NotificationRepository
+import com.fitcoach.app.domain.device.BleSessionService
 import com.fitcoach.app.data.repository.PreferencesRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -34,6 +35,9 @@ class BootReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 reschedule()
+                // Il foreground service non sopravvive al riavvio del telefono:
+                // se c'era un dispositivo collegato va ripreso.
+                BleSessionService.resumeIfSaved(context)
             } finally {
                 // goAsync() puo restituire null: chiamare finish() su null
                 // solleverebbe dentro la coroutine e chiuderebbe il processo.

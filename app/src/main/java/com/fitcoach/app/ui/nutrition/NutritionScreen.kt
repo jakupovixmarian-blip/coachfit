@@ -62,6 +62,7 @@ import com.fitcoach.app.domain.model.MealEntry
 import com.fitcoach.app.domain.nutrition.FoodSubstitutionEngine
 import com.fitcoach.app.ui.components.EmptyState
 import com.fitcoach.app.ui.components.LoadingBox
+import com.fitcoach.app.ui.components.OnResumeRefresh
 import com.fitcoach.app.ui.components.MacroBar
 import com.fitcoach.app.ui.components.MacroLegend
 import com.fitcoach.app.ui.components.Pill
@@ -83,6 +84,10 @@ fun NutritionScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+
+    // Il piano puo' cambiare mentre la schermata non e' visibile (modifica del
+    // coach, rigenerazione): senza refresh la scheda resterebbe quella vecchia.
+    OnResumeRefresh { viewModel.load() }
 
     LaunchedEffect(state.message) {
         state.message?.let {

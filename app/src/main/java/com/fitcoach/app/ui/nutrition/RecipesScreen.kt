@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,6 +52,7 @@ import com.fitcoach.app.domain.nutrition.Recipe
 import com.fitcoach.app.domain.nutrition.RecipeStyle
 import com.fitcoach.app.ui.components.LoadingBox
 import com.fitcoach.app.ui.components.SectionCard
+import com.fitcoach.app.ui.components.OnResumeRefresh
 import com.fitcoach.app.ui.theme.Emerald
 import com.fitcoach.app.ui.theme.TextSecondary
 
@@ -69,6 +71,10 @@ fun RecipesScreen(
     viewModel: RecipesViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // Piano e permessi cambiano fuori da questa schermata.
+    OnResumeRefresh {
+        viewModel.load()
+    }
     val snackbar = remember { SnackbarHostState() }
     var tab by remember { mutableIntStateOf(if (startOnCreate) 1 else 0) }
 
@@ -170,6 +176,50 @@ private fun PlanRecipesTab(state: RecipesUiState, viewModel: RecipesViewModel) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
+            // La ricetta scritta dall'AI va per prima: i template sotto sono
+            // un'alternativa, non il risultato principale.
+            if (state.aiGenerating) {
+                item {
+                    SectionCard {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.height(18.dp),
+                                color = Emerald,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text("Scrivo la ricetta per ${state.selectedSlot.label.lowercase()}...",
+                                style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        }
+                    }
+                }
+            }
+            state.aiRecipe?.let { ai ->
+                item {
+                    Column {
+                        Text("Ricetta del coach", style = MaterialTheme.typography.titleSmall,
+                            color = Emerald)
+                        Spacer(Modifier.height(6.dp))
+                        RecipeCard(ai)
+                    }
+                }
+            }
+            state.aiNote?.let { note ->
+                item {
+                    Text(note, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                }
+            }
+
+            if (state.recipes.isNotEmpty()) {
+                item {
+                    Text(
+                        "Altre combinazioni dagli alimenti del piano",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextSecondary
+                    )
+                }
+            }
+
             if (state.recipes.isEmpty()) {
                 item {
                     SectionCard {

@@ -66,7 +66,25 @@ class HealthViewModel @Inject constructor(
         }
     }
 
-    fun onPermissionsResult() = refresh()
+    /**
+     * Al ritorno dalla schermata dei permessi: se l'accesso manca ancora va
+     * detto esplicitamente, altrimenti l'utente vede la stessa schermata di
+     * prima e pensa che il pulsante non funzioni.
+     */
+    fun onPermissionsResult() {
+        viewModelScope.launch {
+            val granted = runCatching { healthReader.grantedPermissions() }.getOrDefault(emptySet())
+            if (granted.containsAll(healthReader.permissions)) {
+                refresh()
+            } else {
+                refresh()
+                _state.value = _state.value.copy(
+                    message = "Accesso non concesso. Health Connect richiede di selezionare " +
+                        "le voci e confermare: senza permesso il report resta vuoto."
+                )
+            }
+        }
+    }
 
     fun consumeMessage() { _state.value = _state.value.copy(message = null) }
 }

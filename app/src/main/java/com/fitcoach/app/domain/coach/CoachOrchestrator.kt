@@ -107,7 +107,64 @@ class CoachOrchestrator @Inject constructor(
         data class Done(val result: CoachTurnResult) : Step
     }
 
+    /**
+     * Esegue il turno e garantisce la coerenza tra testo e stato reale.
+     *
+     * Il modello a volte scrive "ho modificato il piano" dopo aver chiamato uno
+     * strumento `propose_*`, che pero' registra solo una proposta. Il testo
+     * veniva mostrato cosi' com'era e l'utente credeva alla modifica: qui la
+     * frase viene corretta in modo deterministico, senza dipendere dal modello.
+     */
     suspend fun run(
+        config: AiProviderConfig,
+        systemPrompt: String,
+        contextPrompt: String,
+        history: List<ChatMessageDto>,
+        userMessage: String,
+        maxIterations: Int = MAX_ITERATIONS,
+        requireTool: String? = null,
+        requiredPrerequisites: List<Prerequisite> = emptyList(),
+        deadlineMs: Long? = null,
+        onProgress: ((String) -> Unit)? = null
+    ): CoachTurnResult {
+        val result = runInternal(
+            config = config,
+            systemPrompt = systemPrompt,
+            contextPrompt = contextPrompt,
+            history = history,
+            userMessage = userMessage,
+            maxIterations = maxIterations,
+            requireTool = requireTool,
+            requiredPrerequisites = requiredPrerequisites,
+            deadlineMs = deadlineMs,
+            onProgress = onProgress
+        )
+        return result.copy(text = clarifyPendingProposal(result.text, result.pendingChangeIds.isNotEmpty()))
+    }
+
+    /**
+     * Se c'e' una proposta in attesa, il testo non puo' affermare che la modifica
+     * e' gia' attiva: si aggiunge una riga esplicita di conferma richiesta.
+     * Se invece non c'e' nessuna proposta ma il testo dice "ho modificato",
+     * la frase viene sostituita perche' sarebbe falsa.
+     */
+    internal fun clarifyPendingProposal(text: String, hasPending: Boolean): String {
+        val claimsApplied = APPLIED_CLAIM.containsMatchIn(text)
+        if (hasPending) {
+            if (text.isBlank()) {
+                return "Ho preparato una proposta di modifica. Confermala per applicarla."
+            }
+            if (!APPLIED_CLAIM.containsMatchIn(text)) return text
+            val corrected = text.replace(APPLIED_CLAIM, "ho preparato una proposta per")
+            return corrected + "\n\nLa modifica non e' ancora attiva: serve la tua conferma."
+        }
+        if (!claimsApplied) return text
+        // Nessuna proposta registrata: l'affermazione e' falsa in ogni caso.
+        return "Non ho applicato nessuna modifica: non risulta alcuna proposta registrata. " +
+            "Dimmi quale cambiamento vuoi e lo preparo."
+    }
+
+    private suspend fun runInternal(
         config: AiProviderConfig,
         systemPrompt: String,
         contextPrompt: String,
@@ -504,5 +561,14 @@ class CoachOrchestrator @Inject constructor(
 
     companion object {
         const val MAX_ITERATIONS = 6
+
+        /**
+         * Frasi con cui il modello dichiara una modifica gia' avvenuta. Volutamente
+         * ristrette: devono cogliere l'affermazione, non ogni uso del verbo.
+         */
+        internal val APPLIED_CLAIM = Regex(
+            "(?i)\\b(ho|abbiamo)\\s+(?:gia\\s+)?(?:modificat|aggiornat|applicat|sostituit|cambiat|" +
+                "spostat|impostat|regolat|adattat|rigenerat)\\w*"
+        )
     }
 }

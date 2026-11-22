@@ -4,12 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothGatt
-import android.bluetooth.BluetoothGattCallback
-import android.bluetooth.BluetoothGattCharacteristic
-import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
-import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
@@ -19,10 +14,8 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -158,183 +151,6 @@ class BleDeviceManager @Inject constructor(
         else -> DeviceKind.UNKNOWN
     }
 
-    /**
-     * Si collega al dispositivo e legge una misurazione reale.
-     *
-     * Le bilance **notificano** il peso (indications su 0x2A9D) invece di
-     * rispondere a una lettura diretta: `readCharacteristic` fallisce con
-     * "GATT_READ_NOT_PERMITTED" su quasi tutti i modelli, ed era la ragione per
-     * cui il collegamento sembrava non funzionare. Qui si abilita prima la
-     * notifica e si aspetta il dato; la lettura diretta resta come ripiego per i
-     * dispositivi che la supportano.
-     *
-     * Emette [ConnectionEvent] per raccontare lo stato alla UI (connessione,
-     * nome letto, misurazione, errore) e chiude dopo il primo dato o allo
-     * scadere di [timeoutMs].
-     */
-    @SuppressLint("MissingPermission")
-    fun connect(address: String, kind: DeviceKind, timeoutMs: Long = CONNECT_TIMEOUT_MS):
-        Flow<ConnectionEvent> = callbackFlow {
-        if (!isSupported() || !hasPermission()) {
-            trySend(ConnectionEvent.Failed("Bluetooth non disponibile o permessi mancanti."))
-            close()
-            return@callbackFlow
-        }
-        val device = runCatching { adapter?.getRemoteDevice(address) }.getOrNull()
-        if (device == null) {
-            trySend(ConnectionEvent.Failed("Indirizzo Bluetooth non valido."))
-            close()
-            return@callbackFlow
-        }
-
-        // Senza questo la UI resta su "Connessione..." per sempre quando il
-        // dispositivo non risponde (fuori portata, gia' connesso al telefono).
-        val watchdog = launch {
-            delay(timeoutMs)
-            trySend(ConnectionEvent.Failed("Timeout: il dispositivo non ha risposto."))
-            close()
-        }
-
-        val callback = object : BluetoothGattCallback() {
-            override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-                if (status != BluetoothGatt.GATT_SUCCESS && newState != BluetoothProfile.STATE_CONNECTED) {
-                    trySend(ConnectionEvent.Failed("Connessione rifiutata (codice $status)."))
-                    watchdog.cancel()
-                    close()
-                    return
-                }
-                when (newState) {
-                    BluetoothProfile.STATE_CONNECTED -> {
-                        trySend(ConnectionEvent.Connected)
-                        gatt.discoverServices()
-                    }
-                    BluetoothProfile.STATE_DISCONNECTED -> {
-                        watchdog.cancel()
-                        close()
-                    }
-                }
-            }
-
-            override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-                if (status != BluetoothGatt.GATT_SUCCESS) {
-                    trySend(ConnectionEvent.Failed("Servizi non leggibili (codice $status)."))
-                    watchdog.cancel(); close(); return
-                }
-                readDeviceName(gatt)
-
-                val serviceUuid = if (kind == DeviceKind.HEART_RATE) HEART_RATE_SERVICE else WEIGHT_SCALE_SERVICE
-                val charUuid = if (kind == DeviceKind.HEART_RATE) HEART_RATE_MEASUREMENT_CHAR else WEIGHT_MEASUREMENT_CHAR
-                // La bilancia BIA espone la composizione corporea; se c'e', va letta
-                // quella: contiene peso e massa grassa in un solo payload.
-                val bodyComposition = gatt.getService(BODY_COMPOSITION_SERVICE)
-                    ?.getCharacteristic(BODY_COMPOSITION_CHAR)
-                val target = bodyComposition ?: gatt.getService(serviceUuid)?.getCharacteristic(charUuid)
-                if (target == null) {
-                    trySend(
-                        ConnectionEvent.Failed(
-                            "Il dispositivo non espone il servizio atteso. " +
-                                "Molte bilance usano un protocollo proprietario."
-                        )
-                    )
-                    watchdog.cancel(); close(); return
-                }
-                gatt.setCharacteristicNotification(target, true)
-                val descriptor = target.getDescriptor(CLIENT_CONFIG_DESCRIPTOR)
-                val enable = if (target.properties and BluetoothGattCharacteristic.PROPERTY_INDICATE != 0) {
-                    BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
-                } else {
-                    BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                }
-                descriptor?.value = enable
-                val writeStarted = descriptor != null && gatt.writeDescriptor(descriptor)
-                if (!writeStarted) {
-                    // Nessun CCCD (o scrittura rifiutata): proviamo la lettura diretta.
-                    requestRead(gatt, target)
-                }
-            }
-
-            // Da Android 13 la lettura consegna il valore come parametro.
-            override fun onCharacteristicChanged(
-                gatt: BluetoothGatt,
-                characteristic: BluetoothGattCharacteristic,
-                value: ByteArray
-            ) {
-                handle(gatt, characteristic, value)
-            }
-
-            @Suppress("DEPRECATION")
-            override fun onCharacteristicChanged(
-                gatt: BluetoothGatt,
-                characteristic: BluetoothGattCharacteristic
-            ) {
-                characteristic.value?.let { handle(gatt, characteristic, it) }
-            }
-
-            override fun onCharacteristicRead(
-                gatt: BluetoothGatt,
-                characteristic: BluetoothGattCharacteristic,
-                value: ByteArray,
-                status: Int
-            ) {
-                if (characteristic.uuid == GAP_DEVICE_NAME_CHAR) {
-                    val name = runCatching { String(value, Charsets.UTF_8).trim() }.getOrNull()
-                    if (!name.isNullOrBlank()) trySend(ConnectionEvent.DeviceName(name))
-                    return
-                }
-                handle(gatt, characteristic, value)
-            }
-
-            @Suppress("DEPRECATION")
-            override fun onCharacteristicRead(
-                gatt: BluetoothGatt,
-                characteristic: BluetoothGattCharacteristic,
-                status: Int
-            ) {
-                characteristic.value?.let { onCharacteristicRead(gatt, characteristic, it, status) }
-            }
-
-            private fun requestRead(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
-                if (!gatt.readCharacteristic(characteristic)) {
-                    trySend(ConnectionEvent.Failed("Il dispositivo non consente la lettura del dato."))
-                    watchdog.cancel(); close()
-                }
-            }
-
-            private fun readDeviceName(gatt: BluetoothGatt) {
-                val nameChar = gatt.getService(GENERIC_ACCESS_SERVICE)?.getCharacteristic(GAP_DEVICE_NAME_CHAR)
-                if (nameChar != null) gatt.readCharacteristic(nameChar)
-            }
-
-            private fun handle(
-                gatt: BluetoothGatt,
-                characteristic: BluetoothGattCharacteristic,
-                value: ByteArray
-            ) {
-                if (characteristic.uuid == GAP_DEVICE_NAME_CHAR) return
-                val event = when (characteristic.uuid) {
-                    BODY_COMPOSITION_CHAR ->
-                        BleMeasurementParser.parseBodyComposition(value)?.let { ConnectionEvent.Body(it) }
-                    WEIGHT_MEASUREMENT_CHAR ->
-                        BleMeasurementParser.parseWeight(value)?.let { ConnectionEvent.Measured(it) }
-                    HEART_RATE_MEASUREMENT_CHAR ->
-                        BleMeasurementParser.parseHeartRate(value)?.let { ConnectionEvent.Measured(it) }
-                    else -> null
-                }
-                if (event != null) {
-                    trySend(event)
-                    watchdog.cancel()
-                    runCatching { gatt.disconnect() }
-                    close()
-                }
-            }
-        }
-
-        val gatt = device.connectGatt(context, false, callback, BluetoothDevice.TRANSPORT_LE)
-        awaitClose {
-            watchdog.cancel()
-            runCatching { gatt.close() }
-        }
-    }
 
 }
 

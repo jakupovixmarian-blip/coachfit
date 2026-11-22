@@ -707,3 +707,39 @@ difetto del fixture, non del codice.
 
 Effetto misurato sulla prova live: 4 consultazioni, `HA CONSULTATO INVICTUS: true`, 76-90s
 (prima 176s senza consultazioni: il modello non perdeva tempo a leggere).
+
+## BLE: una sola operazione GATT alla volta
+
+Il GATT di Android serializza le operazioni. Leggere il nome (0x2A00) e scrivere subito il
+CCCD faceva fallire la scrittura: la connessione sembrava rotta e il dato non arrivava mai.
+L'ordine corretto e' nome -> (alla risposta) CCCD -> notifiche. `BleSessionManager` rispetta
+questa sequenza; non sovrapporre mai due richieste GATT.
+
+## BLE a schermo spento: serve un foreground service
+
+`connectGatt` da solo non basta. A schermo spento Android sospende il processo entro pochi
+secondi e il GATT cade: una fascia cardio si scollega durante l'allenamento. Il collegamento
+persistente vive in `BleSessionService` (`foregroundServiceType="connectedDevice"`), che tiene
+vivo `BleSessionManager`. Con `autoConnect = true` e' il sistema a riprovare quando il
+dispositivo rientra in portata, senza un loop applicativo che consuma batteria.
+
+Dettagli che rompono il servizio se ignorati:
+
+- `startForeground()` va chiamato subito in `onStartCommand`, altrimenti Android chiude il
+  servizio per timeout.
+- Da Android 12 `startForegroundService` in background solleva
+  `ForegroundServiceStartNotAllowedException`: va intercettata e riportata come messaggio,
+  non lasciata crashare.
+- Il servizio non sopravvive al riavvio del telefono: `BootReceiver` chiama
+  `BleSessionService.resumeIfSaved`, che rilegge l'indirizzo dalle SharedPreferences.
+- Senza `POST_NOTIFICATIONS` (Android 13+) la notifica non si vede ma il servizio funziona:
+  lo stato resta valido, e la notifica lo dice.
+
+## Il testo dell'AI va reso coerente con lo stato reale
+
+Gli strumenti `propose_*` registrano una proposta, non applicano nulla. Il modello scriveva
+comunque "ho modificato il piano" e l'utente credeva alla modifica. `CoachOrchestrator.run`
+ora passa il testo in `clarifyPendingProposal`: se c'e' una proposta pendente la frase viene
+riscritta e si chiede conferma; se non c'e' alcuna proposta l'affermazione viene sostituita.
+La garanzia sta nel codice, non nella disciplina del modello. Coperto da
+`CoachProposalWordingCollaudoTest`.

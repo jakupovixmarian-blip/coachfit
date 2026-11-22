@@ -60,6 +60,9 @@ data class WorkoutUiState(
     val restTotalSeconds: Int = 0,
     val restReason: String = "",
     val resting: Boolean = false,
+    /** Preferenze dell'avviso di fine recupero, modificabili dal cronometro. */
+    val restAlarmSound: Boolean = true,
+    val restAlarmVibration: Boolean = true,
     /** Recupero associato all'esercizio aperto: il timer vive dentro la card. */
     val restExerciseId: Long? = null,
     /** Esercizio espanso nella lista: mostra serie, rep e carichi inline. */
@@ -133,6 +136,7 @@ class WorkoutViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch {
             val plan = workoutRepository.getActivePlan()
+            val prefs = runCatching { preferencesRepository.getOrCreate() }.getOrNull()
             val todayIndex = LocalDate.now().dayOfWeek.value - 1
             // Se oggi e riposo si mostra il prossimo giorno di allenamento:
             // altrimenti la schermata risultava vuota pur con una scheda valida.
@@ -164,7 +168,9 @@ class WorkoutViewModel @Inject constructor(
                 lastPerformances = lastPerformances,
                 history = history,
                 performancesByExercise = performancesByExercise,
-                plans = workoutRepository.getAllPlans()
+                plans = workoutRepository.getAllPlans(),
+                restAlarmSound = prefs?.restAlarmSound ?: _state.value.restAlarmSound,
+                restAlarmVibration = prefs?.restAlarmVibration ?: _state.value.restAlarmVibration
             )
             syncStopwatch(session)
         }
@@ -727,6 +733,28 @@ class WorkoutViewModel @Inject constructor(
                 sound = prefs?.restAlarmSound ?: true,
                 vibration = prefs?.restAlarmVibration ?: true
             )
+        }
+    }
+
+    /** Suono dell'avviso di fine recupero, senza uscire dal cronometro. */
+    fun setRestAlarmSound(enabled: Boolean) {
+        _state.value = _state.value.copy(restAlarmSound = enabled)
+        viewModelScope.launch {
+            runCatching {
+                val prefs = preferencesRepository.getOrCreate()
+                preferencesRepository.save(prefs.copy(restAlarmSound = enabled))
+            }
+        }
+    }
+
+    /** Vibrazione dell'avviso di fine recupero. */
+    fun setRestAlarmVibration(enabled: Boolean) {
+        _state.value = _state.value.copy(restAlarmVibration = enabled)
+        viewModelScope.launch {
+            runCatching {
+                val prefs = preferencesRepository.getOrCreate()
+                preferencesRepository.save(prefs.copy(restAlarmVibration = enabled))
+            }
         }
     }
 

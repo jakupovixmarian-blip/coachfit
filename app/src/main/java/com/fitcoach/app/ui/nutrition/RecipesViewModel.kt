@@ -13,6 +13,9 @@ import com.fitcoach.app.domain.nutrition.MealSlots
 import com.fitcoach.app.domain.nutrition.Recipe
 import com.fitcoach.app.domain.nutrition.RecipeComposer
 import com.fitcoach.app.domain.nutrition.RecipeEngine
+import com.fitcoach.app.domain.nutrition.RecipeIngredient
+import com.fitcoach.app.domain.nutrition.RecipeAiResult
+import com.fitcoach.app.domain.nutrition.RecipeAiService
 import com.fitcoach.app.domain.nutrition.RecipeStyle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,7 +44,12 @@ data class RecipesUiState(
     val draftStyle: RecipeStyle = RecipeStyle.CLASSIC,
     /** Messaggio dedicato al compositore, separato da quello dell'elenco. */
     val composeMessage: String? = null,
-    val composing: Boolean = false
+    val composing: Boolean = false,
+    /** Ricetta scritta dall'AI per il pasto selezionato, se disponibile. */
+    val aiRecipe: Recipe? = null,
+    val aiGenerating: Boolean = false,
+    /** Motivo per cui la ricetta AI non c'e': l'utente deve saperlo. */
+    val aiNote: String? = null
 )
 
 /**
@@ -53,7 +61,8 @@ class RecipesViewModel @Inject constructor(
     private val nutritionRepository: NutritionRepository,
     private val foodRepository: FoodRepository,
     private val userRepository: UserRepository,
-    private val recipeRepository: RecipeRepository
+    private val recipeRepository: RecipeRepository,
+    private val recipeAiService: RecipeAiService
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(RecipesUiState())
@@ -109,8 +118,61 @@ class RecipesViewModel @Inject constructor(
                     null
                 }
             )
+            generateAiRecipe(day, selected, profile)
         }
     }
+
+    /**
+     * Chiede all'AI la ricetta del pasto selezionato. I template di
+     * RecipeEngine restano visibili come alternative, ma il primo risultato
+     * che l'utente vede deve essere scritto, non un testo fisso.
+     *
+     * Il risultato e' memorizzato per (giorno, pasto): cambiare scheda e
+     * tornare non deve produrre una chiamata (e una spesa) ogni volta.
+     */
+    private suspend fun generateAiRecipe(
+        day: com.fitcoach.app.domain.model.NutritionDay,
+        slot: MealSlot,
+        profile: com.fitcoach.app.domain.model.UserProfile?
+    ) {
+        val meal = day.meals.firstOrNull { it.slot == slot }
+        if (meal == null || meal.entries.isEmpty()) {
+            _state.value = _state.value.copy(aiRecipe = null, aiNote = null, aiGenerating = false)
+            return
+        }
+        val key = "${day.id}|${slot.name}"
+        aiCache[key]?.let {
+            _state.value = _state.value.copy(aiRecipe = it, aiNote = null, aiGenerating = false)
+            return
+        }
+        _state.value = _state.value.copy(aiGenerating = true, aiNote = null)
+        val result = recipeAiService.generate(
+            entries = meal.entries,
+            slot = slot,
+            style = _state.value.draftStyle,
+            profile = profile
+        ) { null }
+        when (result) {
+            is RecipeAiResult.Success -> {
+                val recipe = result.recipe.toRecipe()
+                aiCache[key] = recipe
+                _state.value = _state.value.copy(
+                    aiRecipe = recipe, aiGenerating = false, aiNote = null
+                )
+            }
+            is RecipeAiResult.Fallback -> _state.value = _state.value.copy(
+                aiRecipe = null,
+                aiGenerating = false,
+                aiNote = "Ricetta non generata dall'AI (${result.reason}). " +
+                    "Qui sotto trovi le combinazioni dagli alimenti del piano."
+            )
+            is RecipeAiResult.Failed -> _state.value = _state.value.copy(
+                aiRecipe = null, aiGenerating = false, aiNote = result.message
+            )
+        }
+    }
+
+    private val aiCache = mutableMapOf<String, Recipe>()
 
     fun selectSlot(slot: MealSlot) {
         _state.value = _state.value.copy(selectedSlot = slot)
@@ -171,18 +233,40 @@ class RecipesViewModel @Inject constructor(
             val avoid = buildSet {
                 profile?.excludedFoods?.forEach { add(com.fitcoach.app.domain.model.FoodItem.normalizeName(it)) }
             }
-            val composed = RecipeComposer.create(
+            val style = _state.value.draftStyle
+            val result = recipeAiService.generate(
                 entries = meal.entries,
                 slot = slot,
-                foods = foods,
-                style = _state.value.draftStyle,
-                avoid = avoid
-            )
+                style = style,
+                profile = profile
+            ) {
+                RecipeComposer.create(
+                    entries = meal.entries,
+                    slot = slot,
+                    foods = foods,
+                    style = style,
+                    avoid = avoid
+                )
+            }
+            val draft = when (result) {
+                is RecipeAiResult.Success -> result.recipe
+                is RecipeAiResult.Fallback -> result.recipe
+                is RecipeAiResult.Failed -> null
+            }
+            val note = when (result) {
+                is RecipeAiResult.Success -> null
+                // L'utente deve sapere che questa ricetta non e' scritta dall'AI:
+                // altrimenti la giudica generica senza capire il perche'.
+                is RecipeAiResult.Fallback ->
+                    "Ricetta composta senza AI (${result.reason}). " +
+                        "Configura il provider per una preparazione scritta su misura."
+                is RecipeAiResult.Failed -> result.message
+            }
             _state.value = _state.value.copy(
                 composing = false,
-                draft = composed,
+                draft = draft,
                 draftSlot = slot,
-                composeMessage = if (composed == null) {
+                composeMessage = note ?: if (draft == null) {
                     "${slot.label}: servono almeno due alimenti utilizzabili per creare una ricetta."
                 } else {
                     null
@@ -215,3 +299,23 @@ class RecipesViewModel @Inject constructor(
 
     fun stepsOf(entity: SavedRecipeEntity) = recipeRepository.stepsOf(entity)
 }
+
+/** Converte la ricetta scritta dall'AI nel modello usato dall'elenco. */
+private fun ComposedRecipe.toRecipe(): Recipe = Recipe(
+    id = "ai|${slot.name}|${ingredients.joinToString("|") { it.foodName }}",
+    name = name,
+    slot = slot,
+    ingredients = ingredients.map {
+        RecipeIngredient(
+            foodName = it.foodName,
+            grams = it.grams,
+            unit = it.unit,
+            kcal = it.kcal,
+            protein = it.protein,
+            carbs = it.carbs,
+            fat = it.fat
+        )
+    },
+    coverage = 1.0,
+    steps = steps
+)

@@ -49,9 +49,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.fitcoach.app.domain.device.BodyComposition
+import com.fitcoach.app.domain.device.BleSessionStatus
 import com.fitcoach.app.domain.device.DeviceKind
 import com.fitcoach.app.ui.components.SectionCard
 import com.fitcoach.app.ui.components.SectionHeader
+import com.fitcoach.app.ui.components.OnResumeRefresh
 import com.fitcoach.app.ui.theme.Emerald
 import com.fitcoach.app.ui.theme.TextSecondary
 
@@ -66,6 +68,9 @@ fun DevicesScreen(
     viewModel: DevicesViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // I permessi possono essere stati concessi nelle impostazioni di sistema:
+    // al ritorno lo stato va riletto, altrimenti la schermata resta bloccata.
+    OnResumeRefresh { viewModel.refreshCapabilities() }
     val snackbar = remember { SnackbarHostState() }
 
     val context = LocalContext.current
@@ -235,7 +240,27 @@ fun DevicesScreen(
                 item {
                     SectionCard {
                         Column {
-                            SectionHeader("Dispositivo collegato", device.name)
+                            SectionHeader("Dispositivo collegato", state.sessionName ?: device.name)
+                            Spacer(Modifier.height(4.dp))
+                            // Il collegamento resta attivo anche a schermo spento:
+                            // l'utente deve saperlo, altrimenti sembra che l'app
+                            // stia consumando batteria senza motivo.
+                            Text(
+                                when (state.sessionStatus) {
+                                    BleSessionStatus.CONNECTING -> "Collegamento in corso..."
+                                    BleSessionStatus.CONNECTED -> "Connesso"
+                                    BleSessionStatus.STREAMING ->
+                                        "Connesso: ricezione dati attiva, anche a schermo spento"
+                                    BleSessionStatus.RECONNECTING ->
+                                        "Fuori portata: nuovo tentativo in corso..."
+                                    BleSessionStatus.DISCONNECTED -> "Disconnesso"
+                                    BleSessionStatus.FAILED ->
+                                        state.sessionDetail ?: "Collegamento non riuscito"
+                                    BleSessionStatus.IDLE -> "Nessun collegamento attivo"
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (state.sessionActive) Emerald else TextSecondary
+                            )
                             Spacer(Modifier.height(8.dp))
                             if (state.connecting) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -274,6 +299,11 @@ fun DevicesScreen(
                                     }
                                 }
                             }
+                            Spacer(Modifier.height(10.dp))
+                            OutlinedButton(
+                                onClick = { viewModel.disconnect() },
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text("Disconnetti") }
                         }
                     }
                 }

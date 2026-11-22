@@ -49,6 +49,7 @@ import com.fitcoach.app.ui.components.LoadingBox
 import com.fitcoach.app.ui.components.Pill
 import com.fitcoach.app.ui.components.SectionCard
 import com.fitcoach.app.ui.navigation.Routes
+import com.fitcoach.app.ui.components.OnResumeRefresh
 import com.fitcoach.app.ui.theme.Emerald
 import com.fitcoach.app.ui.theme.ErrorRed
 import com.fitcoach.app.ui.theme.FitSurfaceVariant
@@ -60,6 +61,7 @@ fun CoachScreen(
     viewModel: CoachViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    OnResumeRefresh { viewModel.load() }
     val snackbar = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
 
@@ -70,8 +72,14 @@ fun CoachScreen(
         }
     }
 
-    LaunchedEffect(state.messages.size) {
-        if (state.messages.isNotEmpty()) listState.animateScrollToItem(state.messages.size - 1)
+    // La lista deve arrivare fino in fondo: la card di conferma e' registrata
+    // DOPO i messaggi, quindi scorrere all'ultimo messaggio la lasciava fuori
+    // dallo schermo. L'utente leggeva la risposta del coach e non vedeva il
+    // pulsante "Approva e applica", concludendo che la modifica fosse gia attiva.
+    LaunchedEffect(state.messages.size, state.pendingChange?.id) {
+        val extra = if (state.pendingChange != null) 1 else 0
+        val last = state.messages.size - 1 + extra
+        if (last >= 0) listState.animateScrollToItem(last)
     }
 
     if (state.loading) {
@@ -276,6 +284,12 @@ private fun ProposalCard(
                     color = MaterialTheme.colorScheme.onSurface)
                 Pill(change.domain.name, Emerald)
             }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Non e' ancora attiva: confermala qui sotto per applicarla al programma.",
+                style = MaterialTheme.typography.labelMedium,
+                color = Emerald
+            )
             Spacer(Modifier.height(8.dp))
             ProposalRow("Situazione", change.situation)
             ProposalRow("Problema", change.problem)

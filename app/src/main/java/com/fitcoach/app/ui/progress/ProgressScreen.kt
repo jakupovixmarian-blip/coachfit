@@ -55,6 +55,7 @@ import com.fitcoach.app.ui.components.LoadingBox
 import com.fitcoach.app.ui.components.Pill
 import com.fitcoach.app.ui.components.SectionCard
 import com.fitcoach.app.ui.components.SectionHeader
+import com.fitcoach.app.ui.components.OnResumeRefresh
 import com.fitcoach.app.ui.theme.CarbsColor
 import com.fitcoach.app.ui.theme.Emerald
 import com.fitcoach.app.ui.theme.ErrorRed
@@ -73,6 +74,7 @@ fun ProgressScreen(
     viewModel: ProgressViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    OnResumeRefresh { viewModel.load() }
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
     val deleteCandidate = remember { mutableStateOf<com.fitcoach.app.domain.model.ProgressPhoto?>(null) }
