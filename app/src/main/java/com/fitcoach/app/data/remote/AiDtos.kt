@@ -111,6 +111,13 @@ data class ChatCompletionRequest(
         }
 
         /**
+         * Rimuove `response_format`: il modello rispondera' in prosa, e il
+         * chiamante deve estrarre il JSON dal testo.
+         */
+        fun withoutResponseFormat(request: ChatCompletionRequest): ChatCompletionRequest =
+            request.copy(responseFormat = null)
+
+        /**
          * Rimuove la temperatura (i modelli che accettano solo il valore di default
          * la rifiutano): il payload viene inviato senza `temperature`.
          */

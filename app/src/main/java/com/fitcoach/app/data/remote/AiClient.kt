@@ -128,6 +128,14 @@ class AiClient @Inject constructor(
             request = ChatCompletionRequest.withoutReasoningEffort(request)
             result = sendOnce(config, request)
         }
+        // Alcuni modelli rifiutano `response_format`: si ripete senza il campo e
+        // il chiamante estrae il JSON dal testo libero.
+        if (result is AiResult.Failure && request.responseFormat != null &&
+            AiParameterPolicy.isUnsupportedResponseFormatError((result as AiResult.Failure).message)
+        ) {
+            request = ChatCompletionRequest.withoutResponseFormat(request)
+            result = sendOnce(config, request)
+        }
         // DeepSeek in Thinking mode accetta solo `tool_choice = auto`: se la
         // richiesta forzava uno strumento, la si ripete con la scelta automatica
         // invece di perdere il tool calling.

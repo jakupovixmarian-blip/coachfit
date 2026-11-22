@@ -743,3 +743,36 @@ ora passa il testo in `clarifyPendingProposal`: se c'e' una proposta pendente la
 riscritta e si chiede conferma; se non c'e' alcuna proposta l'affermazione viene sostituita.
 La garanzia sta nel codice, non nella disciplina del modello. Coperto da
 `CoachProposalWordingCollaudoTest`.
+
+## Ricette AI: niente ripiego deterministico
+
+`RecipeAiService` produceva una ricetta con `RecipeComposer` quando il parsing della risposta
+falliva, e la UI la mostrava come "Ricetta composta senza AI (Risposta AI non interpretabile)".
+Due difetti sommati: l'utente riceveva un testo fisso al posto di una ricetta, e la causa vera
+del fallimento restava invisibile.
+
+Cause reali del parsing fallito, entrambe coperte da test:
+
+1. Il piano scrive gli alimenti come "Pollo, petto" e il modello risponde "petto di pollo".
+   Il confronto testuale esatto scartava una risposta corretta. Ora `refersToKnownFood`
+   confronta le parole significative, ignorando articoli e qualificatori di stato
+   (crudo/cotto/intero/scremato...).
+2. Il JSON arrivava dentro un blocco markdown o preceduto da una frase. Ora `extractJson`
+   isola il primo oggetto bilanciato, contando le graffe e saltando le stringhe.
+
+Regole applicate a valle della risposta, non delegate al modello: gli ingredienti sono solo
+quelli del pasto con le grammature del piano, e kcal/macro sono ricalcolati dagli ingredienti.
+Se il modello aggiunge un alimento estraneo o scrive meno di due passi, la risposta viene
+respinta e gli si chiede la correzione (fino a due volte) dicendogli cosa non andava. Se anche
+l'ultimo tentativo fallisce il risultato e' `RecipeAiResult.Failed`: l'utente vede il motivo,
+non una ricetta inventata. `RecipeComposer` resta nel codice ed e' usato dai suoi test, ma non
+e' piu' un ripiego silenzioso.
+
+`AiParameterPolicy.isUnsupportedResponseFormatError` copre i provider che rifiutano
+`response_format` (frequente su OpenRouter con modelli piccoli): `AiClient` ripete la richiesta
+senza il campo e il parsing dal testo libero funziona comunque.
+
+Prova live eseguita con successo su OpenRouter (`qwen/qwen3.5-35b-a3b`): ricetta in 8,3 s,
+ingredienti e grammature del piano invariati. Il probe e' `RecipeAiLiveProbe` e richiede
+`FITCOACH_LIVE_KEY`, quindi non gira nella suite automatica. I test con provider scriptato
+sono in `RecipeAiGenerationCollaudoTest` (8 casi, database Room reale in memoria).

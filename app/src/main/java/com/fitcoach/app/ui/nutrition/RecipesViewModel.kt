@@ -11,7 +11,6 @@ import com.fitcoach.app.domain.model.MealSlot
 import com.fitcoach.app.domain.nutrition.ComposedRecipe
 import com.fitcoach.app.domain.nutrition.MealSlots
 import com.fitcoach.app.domain.nutrition.Recipe
-import com.fitcoach.app.domain.nutrition.RecipeComposer
 import com.fitcoach.app.domain.nutrition.RecipeEngine
 import com.fitcoach.app.domain.nutrition.RecipeIngredient
 import com.fitcoach.app.domain.nutrition.RecipeAiResult
@@ -151,7 +150,7 @@ class RecipesViewModel @Inject constructor(
             slot = slot,
             style = _state.value.draftStyle,
             profile = profile
-        ) { null }
+        )
         when (result) {
             is RecipeAiResult.Success -> {
                 val recipe = result.recipe.toRecipe()
@@ -160,14 +159,10 @@ class RecipesViewModel @Inject constructor(
                     aiRecipe = recipe, aiGenerating = false, aiNote = null
                 )
             }
-            is RecipeAiResult.Fallback -> _state.value = _state.value.copy(
+            is RecipeAiResult.Failed -> _state.value = _state.value.copy(
                 aiRecipe = null,
                 aiGenerating = false,
-                aiNote = "Ricetta non generata dall'AI (${result.reason}). " +
-                    "Qui sotto trovi le combinazioni dagli alimenti del piano."
-            )
-            is RecipeAiResult.Failed -> _state.value = _state.value.copy(
-                aiRecipe = null, aiGenerating = false, aiNote = result.message
+                aiNote = listOfNotNull(result.message, result.detail).joinToString(" ")
             )
         }
     }
@@ -229,48 +224,23 @@ class RecipesViewModel @Inject constructor(
                 return@launch
             }
             val profile = userRepository.get()
-            val foods = foodRepository.getAll()
-            val avoid = buildSet {
-                profile?.excludedFoods?.forEach { add(com.fitcoach.app.domain.model.FoodItem.normalizeName(it)) }
-            }
             val style = _state.value.draftStyle
             val result = recipeAiService.generate(
                 entries = meal.entries,
                 slot = slot,
                 style = style,
                 profile = profile
-            ) {
-                RecipeComposer.create(
-                    entries = meal.entries,
-                    slot = slot,
-                    foods = foods,
-                    style = style,
-                    avoid = avoid
-                )
-            }
-            val draft = when (result) {
-                is RecipeAiResult.Success -> result.recipe
-                is RecipeAiResult.Fallback -> result.recipe
-                is RecipeAiResult.Failed -> null
-            }
-            val note = when (result) {
-                is RecipeAiResult.Success -> null
-                // L'utente deve sapere che questa ricetta non e' scritta dall'AI:
-                // altrimenti la giudica generica senza capire il perche'.
-                is RecipeAiResult.Fallback ->
-                    "Ricetta composta senza AI (${result.reason}). " +
-                        "Configura il provider per una preparazione scritta su misura."
-                is RecipeAiResult.Failed -> result.message
-            }
+            )
+            // Nessun ripiego deterministico: se l'AI non produce la ricetta si
+            // mostra l'errore, non un testo fisso spacciato per ricetta.
+            val draft = (result as? RecipeAiResult.Success)?.recipe
+            val note = (result as? RecipeAiResult.Failed)
+                ?.let { listOfNotNull(it.message, it.detail).joinToString(" ") }
             _state.value = _state.value.copy(
                 composing = false,
                 draft = draft,
                 draftSlot = slot,
-                composeMessage = note ?: if (draft == null) {
-                    "${slot.label}: servono almeno due alimenti utilizzabili per creare una ricetta."
-                } else {
-                    null
-                }
+                composeMessage = note
             )
         }
     }

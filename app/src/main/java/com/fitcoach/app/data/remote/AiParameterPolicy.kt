@@ -108,6 +108,21 @@ object AiParameterPolicy {
         return m.contains("tool_choice") || m.contains("tool choice")
     }
 
+    /**
+     * Rileva il rifiuto di `response_format` (alcuni modelli su OpenRouter o
+     * endpoint custom non supportano la modalita JSON e rispondono 400
+     * "response_format is not supported").
+     */
+    fun isUnsupportedResponseFormatError(message: String): Boolean {
+        val m = message.lowercase()
+        if (!m.contains("response_format") && !m.contains("response format") &&
+            !m.contains("json_object") && !m.contains("json mode")
+        ) return false
+        return m.contains("unsupported") || m.contains("not supported") ||
+            m.contains("unknown") || m.contains("unrecognized") ||
+            m.contains("invalid") || m.contains("does not support")
+    }
+
     /** Rileva il rifiuto del campo `reasoning_effort` (endpoint che non lo conosce). */
     fun isUnknownReasoningEffortError(message: String): Boolean {
         val m = message.lowercase()
