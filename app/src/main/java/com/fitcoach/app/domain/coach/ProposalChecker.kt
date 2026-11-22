@@ -54,8 +54,13 @@ object ProposalChecker {
         val includeNutrition = scope != ProgramGenerationEngine.Scope.WORKOUT
         val includeWorkout = scope != ProgramGenerationEngine.Scope.NUTRITION
 
-        val trainingDays = proposal.workout.days.map { it.dayIndex }.distinct().sorted()
-        checkTrainingCalendar(profile, trainingDays, violations)
+        // Il calendario riguarda solo la scheda: in scope NUTRITION il modello
+        // non ha motivo di compilare workout.days, e pretendere i giorni qui
+        // faceva fallire ogni rigenerazione del solo piano alimentare.
+        if (includeWorkout) {
+            val trainingDays = proposal.workout.days.map { it.dayIndex }.distinct().sorted()
+            checkTrainingCalendar(profile, trainingDays, violations)
+        }
 
         if (includeNutrition) {
             checkNutrition(profile, proposal, foods, violations)

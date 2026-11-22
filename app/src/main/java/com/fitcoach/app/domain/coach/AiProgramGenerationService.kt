@@ -371,6 +371,21 @@ class AiProgramGenerationService @Inject constructor(
                 "CARICHI DICHIARATI: " + if (profile.currentLoads.isEmpty()) "NON_DICHIARATI"
                 else profile.currentLoads.entries.joinToString { "${it.key}=${it.value} kg" }
             )
+            // Senza questa riga l'elenco dei graditi era solo informativo: il
+            // modello componeva pasti standard (pollo, riso, uova) anche quando
+            // l'utente aveva dichiarato cosa mangia davvero.
+            if (profile.likedFoods.isNotEmpty()) {
+                appendLine(
+                    "ALIMENTI GRADITI (usali come base delle fonti principali, non ignorarli): " +
+                        profile.likedFoods.joinToString()
+                )
+            }
+            if (profile.dislikedFoods.isNotEmpty()) {
+                appendLine(
+                    "ALIMENTI NON GRADITI (non usarli se esiste un'alternativa compatibile): " +
+                        profile.dislikedFoods.joinToString()
+                )
+            }
             appendLine(
                 "ATTREZZATURA (categorie): " + profile.availableEquipment.joinToString { it.name }
                     .ifBlank { "NON_DICHIARATA" }

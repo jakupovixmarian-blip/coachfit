@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -143,16 +144,27 @@ fun CoachScreen(
                 )
             }
 
-            state.pendingChange?.let { change ->
+            // Tutte le proposte in attesa, non solo l'ultima: un turno puo
+            // registrarne piu di una e le altre restavano invisibili.
+            val queue = state.pendingQueue.ifEmpty { listOfNotNull(state.pendingChange) }
+            if (queue.size > 1) {
                 item {
-                    ProposalCard(
-                        change = change,
-                        applying = state.applying,
-                        progress = state.applyingProgress,
-                        onApprove = viewModel::approvePending,
-                        onReject = viewModel::rejectPending
+                    Text(
+                        "${queue.size} proposte in attesa di conferma",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextSecondary,
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
                 }
+            }
+            items(queue, key = { it.id }) { change ->
+                ProposalCard(
+                    change = change,
+                    applying = state.applying,
+                    progress = state.applyingProgress,
+                    onApprove = { viewModel.approveChange(change.id) },
+                    onReject = { viewModel.rejectChange(change.id) }
+                )
             }
 
             if (state.appliedChanges.isNotEmpty()) {

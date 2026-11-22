@@ -67,5 +67,11 @@ data class CoachReply(
     val proposedAction: CoachAction? = null,
     val providerError: String? = null,
     /** Proposta gia registrata (PROPOSED) da uno strumento di scrittura, da confermare. */
-    val pendingChange: com.fitcoach.app.domain.model.ProgramChange? = null
+    val pendingChange: com.fitcoach.app.domain.model.ProgramChange? = null,
+    /**
+     * Tutte le proposte registrate nel turno. Un turno puo applicare piu
+     * strumenti di scrittura: senza questo elenco le proposte oltre la prima
+     * restavano registrate ma non mostrate, quindi impossibili da confermare.
+     */
+    val pendingChanges: List<com.fitcoach.app.domain.model.ProgramChange> = emptyList()
 )

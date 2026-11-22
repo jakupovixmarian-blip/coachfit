@@ -381,9 +381,10 @@ class CoachActionExecutor @Inject constructor(
      */
     private suspend fun applyIntensityTechnique(action: CoachAction): Map<String, String> {
         val plannedId = action.payload.require("plannedId").toLong()
-        val technique = action.payload["intensityTechnique"]
-            ?.trim()?.uppercase()
-            ?.let { runCatching { IntensityTechnique.valueOf(it) }.getOrNull() }
+        // Stesso parser tollerante della generazione: qui il valueOf esatto
+        // rifiutava "DROP SET" con un'eccezione che l'utente vedeva come
+        // "impossibile applicare la modifica" dopo averla confermata.
+        val technique = IntensityTechnique.parse(action.payload["intensityTechnique"])
             ?: throw IllegalArgumentException(
                 "Tecnica d'intensita' non riconosciuta: '${action.payload["intensityTechnique"]}'."
             )

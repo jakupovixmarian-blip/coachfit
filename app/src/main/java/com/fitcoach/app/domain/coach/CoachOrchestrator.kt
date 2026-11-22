@@ -185,12 +185,12 @@ class CoachOrchestrator @Inject constructor(
      * la frase viene sostituita perche' sarebbe falsa.
      */
     internal fun clarifyPendingProposal(text: String, hasPending: Boolean): String {
-        val claimsApplied = APPLIED_CLAIM.containsMatchIn(text)
+        val claimsApplied = claimsApplied(text)
         if (hasPending) {
             if (text.isBlank()) {
                 return "Ho preparato una proposta di modifica. Confermala per applicarla."
             }
-            if (!APPLIED_CLAIM.containsMatchIn(text)) return text
+            if (!claimsApplied) return text
             val corrected = text.replace(APPLIED_CLAIM, "ho preparato una proposta per")
             return corrected + "\n\nLa modifica non e' ancora attiva: serve la tua conferma."
         }
@@ -199,6 +199,14 @@ class CoachOrchestrator @Inject constructor(
         return "Non ho applicato nessuna modifica: non risulta alcuna proposta registrata. " +
             "Dimmi quale cambiamento vuoi e lo preparo."
     }
+
+    /**
+     * "La modifica verra applicata dopo la conferma" e' un'affermazione
+     * corretta: senza questa esclusione la guardia la riscriverebbe come se il
+     * modello avesse mentito.
+     */
+    private fun claimsApplied(text: String): Boolean =
+        APPLIED_CLAIM.containsMatchIn(text) && !FUTURE_CLAIM.containsMatchIn(text)
 
     private suspend fun runInternal(
         config: AiProviderConfig,
@@ -634,13 +642,28 @@ class CoachOrchestrator @Inject constructor(
                 "spostando|impostando|regolando|adattando|rigenerando|aggiungendo|inserendo|" +
                 "aumentando|riducendo)" +
                 // Annuncio di esecuzione: "procedo con la modifica", "vado ad aggiornare".
-                "|(?:procedo|procediamo|vado|andiamo)\\s+(?:con|ad?|a)\\s+(?:la\\s+|il\\s+|le\\s+|lo\\s+)?" +
+                // La preposizione articolata e' obbligatoria: senza, "procedo alla
+                // modifica" (la forma piu usata) non veniva riconosciuta.
+                "|(?:procedo|procediamo|vado|andiamo|passo|passiamo)\\s+" +
+                "(?:(?:con|su)\\s+(?:la\\s+|il\\s+|le\\s+|lo\\s+|i\\s+|gli\\s+)?|a(?:lla|llo|lle|ll|gli|i|d)?\\s*)" +
                 "(?:modific|aggiorn|applic|sostitu|regol|adatt|rigener|aggiung|inser|aument|riduc|" +
                 "diminu|camb)" +
-                // "modifica avvenuta / applicata / completata".
-                "|(?:modific|aggiornament|cambi|sostituzion|applicazion)\\w*\\s+(?:e\\s+)?(?:stat|son\\s+stat)\\w*\\s+" +
-                "(?:applicat|completat|eseguit|fatt|inserit|aggiunt)\\w*" +
+                // "modifica eseguita / avvenuta / applicata", anche senza "e stata".
+                "|(?:modific|aggiornament|cambi|sostituzion|applicazion|rigenerazion)\\w*\\s+" +
+                "(?:(?:e|sono)\\s+stat\\w*\\s+|(?=eseguit|applicat|completat|fatt|avvenut|effettuat))" +
+                "(?:applicat|completat|eseguit|fatt|inserit|aggiunt|avvenut|effettuat)\\w*" +
+                // "fatto, ho aggiornato", "modifica fatta".
+                "|(?:modifica|cambiamento|sostituzione|aggiornamento)\\s+(?:fatt|eseguit|applicat)\\w*" +
                 ")"
+        )
+
+        /**
+         * Enunciati al futuro o condizionale: descrivono cio' che accadra dopo la
+         * conferma e non sono dichiarazioni di modifica avvenuta.
+         */
+        internal val FUTURE_CLAIM = Regex(
+            "(?i)\\b(?:verra|verranno|sara|saranno|potra|potranno|dovra|dovranno|" +
+                "applichere|applichero|provvedero|procedero|ti\\s+chiedero)\\b"
         )
     }
 }

@@ -46,9 +46,25 @@ object FoodCatalogSelector {
         val generic = allowed.filter {
             !isItalianSource(it) && it.category !in excludedCategories && !brandPattern.containsMatchIn(it.name)
         }
-        return (italian + generic)
+        val ordered = (italian + generic).distinctBy { FoodItem.normalizeName(it.name) }
+
+        // I gusti vanno applicati PRIMA del troncamento: con ~173 voci e un tetto
+        // di 90, un alimento gradito che stava oltre la posizione 90 non arrivava
+        // mai al modello, che quindi componeva pasti standard ignorando le
+        // preferenze dichiarate dall'utente.
+        val liked = profile.likedFoods.map { it.trim() }.filter { it.isNotEmpty() }
+        if (liked.isEmpty()) return ordered.take(limit)
+
+        fun matches(food: FoodItem, term: String): Boolean =
+            food.name.contains(term, ignoreCase = true) || food.category.contains(term, ignoreCase = true)
+
+        val preferred = ordered.filter { food -> liked.any { matches(food, it) } }
+        // Rispetta l'ordine in cui l'utente ha elencato i gusti.
+        val ranked = liked.flatMap { term -> preferred.filter { matches(it, term) } }
             .distinctBy { FoodItem.normalizeName(it.name) }
-            .take(limit)
+        val rest = ordered.filterNot { food -> liked.any { matches(food, it) } }
+
+        return (ranked + rest).take(limit)
     }
 
     private fun isItalianSource(food: FoodItem): Boolean =

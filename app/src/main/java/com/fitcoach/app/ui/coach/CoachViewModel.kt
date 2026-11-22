@@ -27,6 +27,12 @@ data class CoachUiState(
     val input: String = "",
     val sending: Boolean = false,
     val pendingChange: ProgramChange? = null,
+    /**
+     * Tutte le proposte in attesa. Un turno della chat puo registrare piu
+     * proposte: mostrarne una sola lasciava le altre registrate ma invisibili,
+     * quindi impossibili da confermare.
+     */
+    val pendingQueue: List<ProgramChange> = emptyList(),
     /** Modifiche gia applicate, con possibilita di annullamento (rollback). */
     val appliedChanges: List<ProgramChange> = emptyList(),
     val message: String? = null,
@@ -66,9 +72,10 @@ class CoachViewModel @Inject constructor(
             val messages = chatRepository.getRecent(limit = 100)
             val settings = chatRepository.getAiSettings()
             val allChanges = changeRepository.getAll()
-            val pending = allChanges
+            val pendingAll = allChanges
                 .filter { it.status == ChangeStatus.PROPOSED }
-                .maxByOrNull { it.createdAt }
+                .sortedBy { it.createdAt }
+            val pending = pendingAll.lastOrNull()
             val applied = allChanges
                 .filter { it.status == ChangeStatus.APPLIED }
                 .sortedByDescending { it.appliedAt ?: it.createdAt }
@@ -77,6 +84,7 @@ class CoachViewModel @Inject constructor(
                 loading = false,
                 messages = messages,
                 pendingChange = pending,
+                pendingQueue = pendingAll,
                 appliedChanges = applied,
                 providerConfigured = settings.provider != AiProvider.OPENAI || settings.model.isNotBlank(),
                 providerLabel = "${settings.provider.label} · ${settings.model.ifBlank { settings.provider.defaultModel }}"
@@ -134,9 +142,14 @@ class CoachViewModel @Inject constructor(
             chatRepository.add(ChatMessage(role = ChatRole.ASSISTANT, content = assistantText))
 
             // Le proposte degli strumenti di scrittura arrivano gia registrate (PROPOSED).
-            val pendingFromTool = reply.pendingChange
-            if (pendingFromTool != null) {
-                _state.value = _state.value.copy(pendingChange = pendingFromTool)
+            val pendingFromTool = reply.pendingChanges.ifEmpty {
+                listOfNotNull(reply.pendingChange)
+            }
+            if (pendingFromTool.isNotEmpty()) {
+                _state.value = _state.value.copy(
+                    pendingChange = pendingFromTool.last(),
+                    pendingQueue = pendingFromTool
+                )
             } else {
                 reply.proposedAction?.let { action ->
                     val changeId = actionExecutor.registerProposal(action)
@@ -164,6 +177,11 @@ class CoachViewModel @Inject constructor(
 
     fun approvePending() {
         val change = _state.value.pendingChange ?: return
+        approveChange(change.id)
+    }
+
+    /** Applica la proposta indicata, lasciando in coda le altre. */
+    fun approveChange(changeId: Long) {
         if (_state.value.applying) return
         _state.value = _state.value.copy(
             applying = true,
@@ -172,7 +190,7 @@ class CoachViewModel @Inject constructor(
         )
         viewModelScope.launch {
             val result = try {
-                actionExecutor.apply(change.id)
+                actionExecutor.apply(changeId)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -183,7 +201,8 @@ class CoachViewModel @Inject constructor(
                     applying = false,
                     applyingProgress = null,
                     message = "Modifica applicata: ${result.message}",
-                    pendingChange = null
+                    pendingChange = null,
+                    pendingQueue = _state.value.pendingQueue.filterNot { it.id == changeId }
                 )
                 is ApplyResult.Failed -> _state.value.copy(
                     applying = false,
@@ -201,9 +220,17 @@ class CoachViewModel @Inject constructor(
 
     fun rejectPending() {
         val change = _state.value.pendingChange ?: return
+        rejectChange(change.id)
+    }
+
+    fun rejectChange(changeId: Long) {
         viewModelScope.launch {
-            changeRepository.updateStatus(change.id, ChangeStatus.REJECTED)
-            _state.value = _state.value.copy(pendingChange = null, message = "Proposta rifiutata.")
+            changeRepository.updateStatus(changeId, ChangeStatus.REJECTED)
+            _state.value = _state.value.copy(
+                pendingChange = null,
+                pendingQueue = _state.value.pendingQueue.filterNot { it.id == changeId },
+                message = "Proposta rifiutata."
+            )
             load()
         }
     }

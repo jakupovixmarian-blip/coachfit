@@ -119,12 +119,15 @@ class CoachService @Inject constructor(
             return CoachReply(text = "", providerError = turn.providerError)
         }
         // Le modifiche proposte dagli strumenti di scrittura sono gia registrate come
-        // PROPOSED: ritorna la piu recente per il flusso di conferma esistente.
-        val pendingChange = turn.pendingChangeIds.lastOrNull()?.let { changeRepository.getById(it) }
+        // PROPOSED. Un turno puo contenerne piu di una (per esempio tecnica su due
+        // esercizi): mostrarne solo l'ultima lasciava le altre registrate ma
+        // invisibili, quindi non confermabili.
+        val pendingChanges = turn.pendingChangeIds.mapNotNull { changeRepository.getById(it) }
         return CoachReply(
             text = turn.text,
             proposedAction = null,
-            pendingChange = pendingChange
+            pendingChange = pendingChanges.lastOrNull(),
+            pendingChanges = pendingChanges
         )
     }
 
