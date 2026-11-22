@@ -235,10 +235,16 @@ object ProposalChecker {
             // il multiarticolare non stimola (deltoide laterale/posteriore,
             // bicipiti, tricipiti, femorali, polpacci). Prima passava la
             // validazione: il modello non veniva mai richiamato sull'isolamento.
+            // L'obbligo scatta solo se il catalogo ha un isolamento eseguibile
+            // con l'attrezzatura dichiarata: chi ha solo corpo libero non ha
+            // alternative e resterebbe bloccato senza poter correggere nulla.
             val resolved = day.exercises.mapNotNull { findExercise(it.exerciseName) }
             val hasIsolation = resolved.any { it.category == ExerciseCategory.ISOLATION }
             val hasCompound = resolved.any { it.category == ExerciseCategory.COMPOUND }
-            if (hasCompound && !hasIsolation && resolved.size >= 3) {
+            val isolationAvailable = exercises.any {
+                it.category == ExerciseCategory.ISOLATION && allowedExercise(it, profile)
+            }
+            if (hasCompound && !hasIsolation && resolved.size >= 3 && isolationAvailable) {
                 violations += "giorno workout ${day.dayIndex}: nessun esercizio di isolamento " +
                     "(${resolved.size} esercizi, tutti multiarticolari). Aggiungi almeno un " +
                     "isolamento per i gruppi che restano scoperti."

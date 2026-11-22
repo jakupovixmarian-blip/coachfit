@@ -233,6 +233,123 @@ class GenerationFidelityTest {
     }
 
     @Test
+    fun `con solo corpo libero l'isolamento non e un obbligo impossibile`() {
+        // Nessun esercizio di isolamento del catalogo e' a corpo libero: se
+        // l'obbligo fosse incondizionato, chi ha solo il proprio corpo non
+        // potrebbe mai generare una scheda valida e non avrebbe come rimediare.
+        val bodyweightOnly = ExerciseSeedData.exercises.filter {
+            it.bodyweightOnly || it.equipment.isEmpty() || Equipment.BODYWEIGHT in it.equipment
+        }
+        assertThat(bodyweightOnly.none { it.category == ExerciseCategory.ISOLATION }).isTrue()
+
+        // Un profilo a corpo libero non ha alcun multiarticolare disponibile:
+        // la scheda che puo' realmente comporre e' fatta di BODYWEIGHT.
+        val proposal = AiProgramProposal(
+            workout = AiWorkoutProposal(
+                split = "FULL_BODY",
+                days = (0..2).map { index ->
+                    AiWorkoutDay(
+                        dayIndex = index,
+                        exercises = bodyweightOnly.take(3).map {
+                            AiPlannedExercise(
+                                exerciseName = it.name, sets = 3, minReps = 8, maxReps = 12,
+                                restSeconds = 120, targetRir = 2
+                            )
+                        }
+                    )
+                }
+            ),
+            calendar = AiCalendarProposal(
+                workoutDayIndices = listOf(0, 1, 2),
+                restDayIndices = listOf(3, 4, 5, 6)
+            )
+        )
+        val profile = baseProfile().copy(availableEquipment = setOf(Equipment.BODYWEIGHT))
+
+        val violations = ProposalChecker
+            .check(profile, proposal, FoodSeedData.foods, ExerciseSeedData.exercises)
+            .violations
+
+        assertThat(violations.none { it.contains("nessun esercizio di isolamento") }).isTrue()
+    }
+
+    @Test
+    fun `chi esclude tutti gli isolamenti non resta bloccato senza via d'uscita`() {
+        // Caso reale: l'utente dichiara "non mi piace" o "movimento da evitare"
+        // su tutti gli esercizi di isolamento. Con l'obbligo incondizionato la
+        // scheda non puo' mai essere valida: l'AI non ha un isolamento lecito da
+        // inserire e l'utente non ha modo di correggere. Il vincolo deve
+        // rassegnarsi quando non esiste un isolamento ammesso.
+        val isolationNames = ExerciseSeedData.exercises
+            .filter { it.category == ExerciseCategory.ISOLATION }
+            .map { it.name }
+        assertThat(isolationNames).isNotEmpty()
+
+        val compound = ExerciseSeedData.exercises.filter { it.category == ExerciseCategory.COMPOUND }
+        val proposal = AiProgramProposal(
+            workout = AiWorkoutProposal(
+                split = "FULL_BODY",
+                days = (0..2).map { index ->
+                    AiWorkoutDay(
+                        dayIndex = index,
+                        exercises = compound.take(3).map {
+                            AiPlannedExercise(
+                                exerciseName = it.name, sets = 3, minReps = 8, maxReps = 12,
+                                restSeconds = 120, targetRir = 2
+                            )
+                        }
+                    )
+                }
+            ),
+            calendar = AiCalendarProposal(
+                workoutDayIndices = listOf(0, 1, 2),
+                restDayIndices = listOf(3, 4, 5, 6)
+            )
+        )
+        val profile = baseProfile().copy(
+            availableEquipment = Equipment.entries.toSet(),
+            dislikedExercises = isolationNames
+        )
+
+        val violations = ProposalChecker
+            .check(profile, proposal, FoodSeedData.foods, ExerciseSeedData.exercises)
+            .violations
+
+        assertThat(violations.none { it.contains("nessun esercizio di isolamento") }).isTrue()
+    }
+
+    @Test
+    fun `con i manubri disponibili l'isolamento torna obbligatorio`() {
+        // Il vincolo non e' stato indebolito: con l'attrezzatura giusta resta.
+        val compound = ExerciseSeedData.exercises.filter { it.category == ExerciseCategory.COMPOUND }
+        val days = (0..2).map { index ->
+            AiWorkoutDay(
+                dayIndex = index,
+                exercises = compound.take(3).map {
+                    AiPlannedExercise(
+                        exerciseName = it.name, sets = 3, minReps = 8, maxReps = 12,
+                        restSeconds = 120, targetRir = 2
+                    )
+                }
+            )
+        }
+        val proposal = AiProgramProposal(
+            workout = AiWorkoutProposal(split = "FULL_BODY", days = days),
+            calendar = AiCalendarProposal(
+                workoutDayIndices = listOf(0, 1, 2),
+                restDayIndices = listOf(3, 4, 5, 6)
+            )
+        )
+        val profile = baseProfile().copy(availableEquipment = Equipment.entries.toSet())
+
+        val violations = ProposalChecker
+            .check(profile, proposal, FoodSeedData.foods, ExerciseSeedData.exercises)
+            .violations
+
+        assertThat(violations.any { it.contains("nessun esercizio di isolamento") }).isTrue()
+    }
+
+    @Test
     fun `il database contiene isolamento per i gruppi scoperti dai multiarticolari`() {
         val isolationMuscles = ExerciseSeedData.exercises
             .filter { it.category == ExerciseCategory.ISOLATION }
