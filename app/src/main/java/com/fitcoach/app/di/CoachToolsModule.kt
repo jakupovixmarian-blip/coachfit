@@ -22,6 +22,7 @@ import com.fitcoach.app.domain.coach.tools.ListFoodsTool
 import com.fitcoach.app.domain.coach.tools.MoveWorkoutTool
 import com.fitcoach.app.domain.coach.tools.ProposeDeloadTool
 import com.fitcoach.app.domain.coach.tools.ProposeRegeneratePlanTool
+import com.fitcoach.app.domain.coach.tools.SetIntensityTechniqueTool
 import com.fitcoach.app.domain.coach.tools.SubstituteExerciseTool
 import com.fitcoach.app.domain.coach.tools.SubstituteFoodTool
 import com.fitcoach.app.domain.coach.tools.ValidateWorkoutPlanTool
@@ -77,6 +78,7 @@ object CoachToolsModule {
     // ---- Scrittura controllata (propongono, non applicano) ----
     @Provides @IntoSet fun substituteFood(t: SubstituteFoodTool): CoachTool = t
     @Provides @IntoSet fun substituteExercise(t: SubstituteExerciseTool): CoachTool = t
+    @Provides @IntoSet fun setIntensity(t: SetIntensityTechniqueTool): CoachTool = t
     @Provides @IntoSet fun moveWorkout(t: MoveWorkoutTool): CoachTool = t
     @Provides @IntoSet fun adjustCalories(t: AdjustCaloriesTool): CoachTool = t
     @Provides @IntoSet fun adjustVolume(t: AdjustVolumeTool): CoachTool = t

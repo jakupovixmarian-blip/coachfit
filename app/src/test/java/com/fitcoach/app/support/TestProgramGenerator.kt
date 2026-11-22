@@ -59,6 +59,7 @@ object TestProgramGenerator {
             mutableListOf(
                 toolCallResponse("consult_invictus", """{"area":"allenamento"}"""),
                 toolCallResponse("consult_invictus", """{"area":"nutrizione"}"""),
+                toolCallResponse("consult_invictus", """{"area":"tecniche"}"""),
                 toolCallResponse("submit_full_program", SimulatedAiPrograms.json(json, proposal, scope.name)),
                 textResponse("Programma generato e verificato.")
             )

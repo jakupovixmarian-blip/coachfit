@@ -231,6 +231,18 @@ object ProposalChecker {
                 violations += "giorno workout ${day.dayIndex}: $sessionSets serie, " +
                     "minimo ${VolumeGuidelines.MIN_SETS_PER_SESSION} per seduta"
             }
+            // Una seduta di soli multiarticolari lascia scoperti i distretti che
+            // il multiarticolare non stimola (deltoide laterale/posteriore,
+            // bicipiti, tricipiti, femorali, polpacci). Prima passava la
+            // validazione: il modello non veniva mai richiamato sull'isolamento.
+            val resolved = day.exercises.mapNotNull { findExercise(it.exerciseName) }
+            val hasIsolation = resolved.any { it.category == ExerciseCategory.ISOLATION }
+            val hasCompound = resolved.any { it.category == ExerciseCategory.COMPOUND }
+            if (hasCompound && !hasIsolation && resolved.size >= 3) {
+                violations += "giorno workout ${day.dayIndex}: nessun esercizio di isolamento " +
+                    "(${resolved.size} esercizi, tutti multiarticolari). Aggiungi almeno un " +
+                    "isolamento per i gruppi che restano scoperti."
+            }
             day.exercises.forEach { item ->
                 // Un JSON con nomi di campo diversi produceva esercizi con nome
                 // vuoto e 0 ripetizioni: la diagnosi parlava di "esercizio ''".

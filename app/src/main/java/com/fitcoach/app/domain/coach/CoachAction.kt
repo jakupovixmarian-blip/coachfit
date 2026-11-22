@@ -29,6 +29,14 @@ data class CoachAction(
     companion object {
         const val ACTION_SUBSTITUTE_FOOD = "SUBSTITUTE_FOOD"
         const val ACTION_SUBSTITUTE_EXERCISE = "SUBSTITUTE_EXERCISE"
+        /**
+         * Cambia solo la tecnica d'intensita' di un esercizio gia' in scheda,
+         * lasciando esercizio, serie e carico invariati. Prima per applicare una
+         * tecnica bisognava sostituire l'esercizio: la chat chiedeva di
+         * aggiungere un drop set e l'unico strumento disponibile cambiava anche
+         * l'esercizio, oppure non faceva nulla.
+         */
+        const val ACTION_SET_INTENSITY = "SET_INTENSITY_TECHNIQUE"
         const val ACTION_MOVE_WORKOUT = "MOVE_WORKOUT"
         const val ACTION_ADJUST_CALORIES = "ADJUST_CALORIES"
         const val ACTION_ADJUST_VOLUME = "ADJUST_VOLUME"
@@ -46,9 +54,9 @@ data class CoachAction(
         const val ACTION_NONE = "NONE"
 
         val VALID = setOf(
-            ACTION_SUBSTITUTE_FOOD, ACTION_SUBSTITUTE_EXERCISE, ACTION_MOVE_WORKOUT,
-            ACTION_ADJUST_CALORIES, ACTION_ADJUST_VOLUME, ACTION_ADJUST_FREQUENCY, ACTION_DELOAD,
-            ACTION_REGENERATE_PLAN
+            ACTION_SUBSTITUTE_FOOD, ACTION_SUBSTITUTE_EXERCISE, ACTION_SET_INTENSITY,
+            ACTION_MOVE_WORKOUT, ACTION_ADJUST_CALORIES, ACTION_ADJUST_VOLUME,
+            ACTION_ADJUST_FREQUENCY, ACTION_DELOAD, ACTION_REGENERATE_PLAN
         )
     }
 }

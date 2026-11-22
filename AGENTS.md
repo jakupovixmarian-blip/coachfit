@@ -655,6 +655,21 @@ controllo fuori dal checker, quel test cade.
   `BreakfastConstraint.flavorOf`), altrimenti i test falliscono per un difetto del fixture
   e non del codice. Non legare i test a nomi di alimento hardcoded ("Petto di pollo"):
   cercare per ruolo (macro dominante) rende il test indipendente dal fixture.
+  Vale anche per la scheda: ogni seduta deve contenere almeno un `ISOLATION`, quindi il
+  fixture ne inserisce uno quando la selezione per gruppo satura i sei slot di soli
+  multiarticolari. Senza, `ProposalChecker` respinge la scheda e ~40 test falliscono.
+
+- `Prerequisite.consultations` esige tre aree (`allenamento`, `nutrizione`, `tecniche`).
+  Ogni script di generazione nei test deve quindi includere tre `consult_invictus`:
+  `GenerationScript.consultations()` e `TestProgramGenerator` sono i punti condivisi,
+  aggiornarli copre quasi tutta la suite. Un fixture con due sole aree fa fallire la
+  generazione con "Prima di consegnare devi consultare la metodologia".
+
+- L'attrezzatura si deriva dall'inventario con `EquipmentFit.equipmentFor(profile)`.
+  Un `availableEquipment` vuoto significa "non dichiarato", non "niente attrezzatura":
+  non e' un vincolo e non deve bloccare la generazione. `WorkoutPlanValidator.isCompatible`
+  e `ProposalChecker` passano entrambi da li'.
+
 
 - `NavigationFlowCollaudoTest`, `DashboardRenderCollaudoTest`, `AnamnesisLayoutTest`
   falliscono a rotazione: e' flakiness di Robolectric/Compose (`ArrayIndexOutOfBounds`

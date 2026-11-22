@@ -112,9 +112,10 @@ class AiProgramGenerationService @Inject constructor(
             requiredPrerequisites = listOf(
                 Prerequisite.consultations(
                     toolName = CONSULT_TOOL,
-                    areas = listOf("allenamento", "nutrizione"),
+                    areas = listOf("allenamento", "nutrizione", "tecniche"),
                     description = "split, volume, RIR e recuperi per la scheda; calorie, " +
-                        "proteine e carboidrati per il piano alimentare."
+                        "proteine e carboidrati per il piano alimentare; tecniche d'intensita " +
+                        "(drop set, rest-pause, myo-reps) e quando applicarle."
                 )
             ),
             deadlineMs = GENERATION_TIMEOUT_MS,
@@ -214,6 +215,28 @@ class AiProgramGenerationService @Inject constructor(
         exercises.take(120).forEach { e ->
             appendLine("${e.name} | ${e.primaryMuscle.name} | ${e.equipment.joinToString { it.name }} | ${e.minReps}-${e.maxReps} | ${e.restSeconds}s | ${e.targetRir}")
         }
+        // Senza queste tre righe il modello non sapeva di poter prescrivere
+        // tecniche d'intensita (il campo esisteva nello schema ma nessun prompt
+        // lo citava), ne che la seduta dovesse contenere lavoro di isolamento:
+        // produceva schede di soli multiarticolari con "technique: NONE".
+        appendLine(
+            "TECNICHE D'INTENSITA (campo 'technique' di ogni esercizio). Valori ammessi: " +
+                "NONE, DROP_SET, REST_PAUSE, MYO_REPS, SUPERSET, BACK_OFF_SET, CLUSTER_SET, " +
+                "FAILURE, ECCENTRIC_EMPHASIS. Usale dove hanno senso metodologico e dichiara " +
+                "sempre in 'techniqueReason' perche' su QUEL gruppo muscolare e QUEL livello: " +
+                "la ragione viene mostrata nella scheda. Non metterle su tutti gli esercizi."
+        )
+        appendLine(
+            "COMPOSIZIONE DI OGNI SEDUTA (verificata al salvataggio): ogni giorno di allenamento " +
+                "deve contenere almeno un esercizio ISOLATION oltre ai multiarticolari. Una scheda " +
+                "di soli multiarticolari non copre i distretti che restano indietro."
+        )
+        appendLine(
+            "ISOLAMENTO PER OBIETTIVO: i multiarticolari fanno il carico, l'isolamento completa il " +
+                "lavoro sui capi muscolari e sui gruppi che il multiarticolare non stimola a " +
+                "sufficienza (deltoide laterale e posteriore, bicipiti, tricipiti, femorali, polpacci). " +
+                "Non sostituire un multiarticolare con un isolamento: aggiungilo."
+        )
         val energy = EnergyCalculator.compute(profile)
         if (energy != null) {
             val cycling = if (CarbCyclingEngine.shouldApplyCarbCycling(profile)) {
@@ -368,6 +391,18 @@ class AiProgramGenerationService @Inject constructor(
             - Ogni seduta: 6-24 serie allenanti totali; lo stesso esercizio non oltre 24 serie
               settimanali; nessun esercizio vietato. Giornate diverse quando lo split lo consente.
               Non assegnare una serie completa ai muscoli secondari.
+            - Ogni seduta deve contenere ALMENO UN esercizio ISOLATION oltre ai multiarticolari.
+              Una seduta di soli multiarticolari viene respinta: aggiungi l'isolamento per i
+              gruppi che il multiarticolare non stimola (deltoide laterale e posteriore, bicipiti,
+              tricipiti, femorali, polpacci), non sostituire un multiarticolare.
+            - Le tecniche d'intensita' sono un campo della scheda, non un suggerimento a parole:
+              compila `technique` per gli esercizi a cui le prescrivi, con `techniqueReason`.
+              Valori ammessi: NONE, DROP_SET, REST_PAUSE, MYO_REPS, SUPERSET, BACK_OFF_SET,
+              CLUSTER_SET, FAILURE, ECCENTRIC_EMPHASIS. Non metterle su tutti gli esercizi:
+              abbinale dove la metodologia consultata le giustifica.
+            - Ogni esercizio prescritto deve essere eseguibile con l'attrezzatura dichiarata.
+              Se un esercizio richiede un attrezzo assente dall'inventario, scegli un'alternativa
+              compatibile con lo stesso gruppo muscolare: non prescriverlo comunque.
             - Non sei un medico: nessuna diagnosi, farmaco, ormone o sostanza dopante. Nessun deficit
               calorico estremo o volume irragionevole.
         """.trimIndent()

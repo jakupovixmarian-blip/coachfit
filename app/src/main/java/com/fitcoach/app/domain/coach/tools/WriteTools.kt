@@ -154,6 +154,85 @@ class SubstituteExerciseTool @Inject constructor(
     }
 }
 
+/**
+ * Propone di applicare (o togliere) una tecnica d'intensita' su un esercizio
+ * gia' in scheda, senza sostituire l'esercizio.
+ *
+ * Prima questo strumento non esisteva: chiedendo in chat "aggiungi un drop set
+ * sul curl", il modello non aveva modo di registrare la modifica e si limitava
+ * a rispondere che l'avrebbe fatta.
+ */
+@Singleton
+class SetIntensityTechniqueTool @Inject constructor(
+    private val executor: CoachActionExecutor
+) : WriteTool() {
+    override val name = "propose_intensity_technique"
+    override val description =
+        "Propone di applicare una tecnica d'intensita' (drop set, rest-pause, myo-reps, superset, " +
+            "back-off, cluster, cedimento, enfasi eccentrica) a un esercizio gia' presente nella " +
+            "scheda. Non cambia esercizio, serie ne' carico. Usa get_active_workout_plan per il " +
+            "plannedId. Consulta prima consult_invictus con area=tecniche per la metodologia."
+
+    override val parameters: JsonObject = Schema.obj(
+        "plannedId" to Schema.integer("Id dell'esercizio pianificato (da get_active_workout_plan)."),
+        "intensityTechnique" to Schema.enumOf(
+            "Tecnica da applicare.",
+            "DROP_SET", "REST_PAUSE", "MYO_REPS", "SUPERSET", "BACK_OFF_SET",
+            "CLUSTER_SET", "FAILURE", "ECCENTRIC_EMPHASIS", "NONE"
+        ),
+        "techniqueReason" to Schema.string(
+            "Perche' quella tecnica su quel gruppo muscolare: viene mostrata nella scheda."
+        ),
+        "title" to Schema.string("Titolo breve della proposta."),
+        "rationale" to Schema.string("Motivazione estesa."),
+        "expectedOutcome" to Schema.string("Risultato atteso."),
+        "contraindications" to Schema.string("Controindicazioni."),
+        required = listOf("plannedId", "intensityTechnique", "techniqueReason")
+    )
+
+    override suspend fun execute(arguments: JsonObject): String {
+        val a = JsonArgs(arguments)
+        val raw = a.string("intensityTechnique")?.trim()?.uppercase()
+            ?: return err("intensityTechnique mancante")
+        if (raw !in INTENSITY_TECHNIQUES) {
+            return err(
+                "Tecnica '$raw' non valida. Valori ammessi: ${INTENSITY_TECHNIQUES.joinToString()}"
+            )
+        }
+        val reason = a.string("techniqueReason")?.trim().orEmpty()
+        if (reason.isBlank()) {
+            return err(
+                "techniqueReason obbligatorio: senza la motivazione la tecnica non e' verificabile."
+            )
+        }
+        val action = CoachAction(
+            action = CoachAction.ACTION_SET_INTENSITY,
+            domain = "WORKOUT",
+            title = a.string("title") ?: "Tecnica d'intensita'",
+            rationale = a.string("rationale") ?: reason,
+            proposedChange = "Applicare $raw",
+            expectedOutcome = a.string("expectedOutcome") ?: "",
+            contraindications = a.string("contraindications") ?: "",
+            payload = mapOf(
+                "plannedId" to (a.int("plannedId")?.toString() ?: return err("plannedId mancante")),
+                "intensityTechnique" to raw,
+                "techniqueReason" to reason
+            )
+        )
+        return proposalJson(executor.registerProposal(action), "Tecnica d'intensita' proposta.")
+    }
+
+    private fun err(m: String) = """{"ok":false,"error":"$m"}"""
+
+    private companion object {
+        /** Allineati a IntensityTechnique: altro non sarebbe applicabile. */
+        val INTENSITY_TECHNIQUES = setOf(
+            "NONE", "DROP_SET", "REST_PAUSE", "MYO_REPS", "SUPERSET",
+            "BACK_OFF_SET", "CLUSTER_SET", "FAILURE", "ECCENTRIC_EMPHASIS"
+        )
+    }
+}
+
 /** Propone lo spostamento di una seduta a un altro giorno della settimana. */
 @Singleton
 class MoveWorkoutTool @Inject constructor(

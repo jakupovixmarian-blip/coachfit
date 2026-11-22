@@ -273,6 +273,19 @@ object SimulatedAiPrograms {
             chosen += candidate
             used += candidate.id
         }
+        // La scheda reale deve contenere isolamento: un fixture di soli
+        // multiarticolari non rappresenta cio' che il validatore accetta.
+        if (chosen.none { it.category == ExerciseCategory.ISOLATION } &&
+            chosen.size > 1 &&
+            compatible.any { it.category == ExerciseCategory.ISOLATION }
+        ) {
+            val isolation = rotated(compatible.filter { it.category == ExerciseCategory.ISOLATION })
+                .firstOrNull { it.id !in used }
+            if (isolation != null) {
+                chosen.removeAt(chosen.lastIndex)
+                chosen += isolation
+            }
+        }
         return chosen
     }
 

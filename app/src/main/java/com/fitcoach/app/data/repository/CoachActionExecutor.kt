@@ -116,6 +116,7 @@ class CoachActionExecutor @Inject constructor(
                 when (action.action) {
                     CoachAction.ACTION_SUBSTITUTE_FOOD -> applyFoodSubstitution(action)
                     CoachAction.ACTION_SUBSTITUTE_EXERCISE -> applyExerciseSubstitution(action)
+                    CoachAction.ACTION_SET_INTENSITY -> applyIntensityTechnique(action)
                     CoachAction.ACTION_MOVE_WORKOUT -> applyMoveWorkout(action)
                     CoachAction.ACTION_ADJUST_CALORIES -> applyCalorieAdjustment(action)
                     CoachAction.ACTION_ADJUST_VOLUME -> applyVolumeAdjustment(action)
@@ -242,6 +243,19 @@ class CoachActionExecutor @Inject constructor(
                     reps = revert["reps"]?.toIntOrNull()
                 )
             }
+            "PLANNED_EXERCISE_TECHNIQUE" -> {
+                val plannedId = revert.require("plannedId").toLong()
+                plannedDao.getById(plannedId)?.let { current ->
+                    plannedDao.update(
+                        current.copy(
+                            intensityTechnique = revert["intensityTechnique"]
+                                ?.let { runCatching { IntensityTechnique.valueOf(it) }.getOrNull() }
+                                ?: IntensityTechnique.NONE,
+                            techniqueReason = revert["techniqueReason"].orEmpty()
+                        )
+                    )
+                } ?: throw IllegalStateException("Esercizio pianificato non trovato.")
+            }
             "PLANNED_SETS" -> revert.filterKeys { it.startsWith("sets_") }.forEach { (key, value) ->
                 val plannedId = key.removePrefix("sets_").toLong()
                 plannedDao.updateSets(plannedId, value.toInt())
@@ -355,6 +369,42 @@ class CoachActionExecutor @Inject constructor(
             "technique" to (existing?.technique ?: ""),
             "intensityTechnique" to (existing?.intensityTechnique?.name ?: "NONE"),
             "techniqueReason" to (existing?.techniqueReason ?: "")
+        )
+    }
+
+    /**
+     * Applica una tecnica d'intensita' a un esercizio gia' in scheda.
+     *
+     * Tocca solo i tre campi della tecnica: esercizio, serie, range e carico
+     * restano quelli decisi dal programma. Il revert ripristina i valori
+     * precedenti, quindi annullare la modifica rimette la scheda com'era.
+     */
+    private suspend fun applyIntensityTechnique(action: CoachAction): Map<String, String> {
+        val plannedId = action.payload.require("plannedId").toLong()
+        val technique = action.payload["intensityTechnique"]
+            ?.trim()?.uppercase()
+            ?.let { runCatching { IntensityTechnique.valueOf(it) }.getOrNull() }
+            ?: throw IllegalArgumentException(
+                "Tecnica d'intensita' non riconosciuta: '${action.payload["intensityTechnique"]}'."
+            )
+        val reason = action.payload["techniqueReason"].orEmpty()
+        if (technique == IntensityTechnique.NONE && reason.isBlank()) {
+            throw IllegalArgumentException("Nessuna tecnica indicata da applicare.")
+        }
+
+        val existing = plannedDao.getById(plannedId)
+            ?: throw IllegalArgumentException("Esercizio pianificato $plannedId non trovato.")
+        plannedDao.update(
+            existing.copy(
+                intensityTechnique = technique,
+                techniqueReason = reason
+            )
+        )
+        return mapOf(
+            "kind" to "PLANNED_EXERCISE_TECHNIQUE",
+            "plannedId" to plannedId.toString(),
+            "intensityTechnique" to existing.intensityTechnique.name,
+            "techniqueReason" to existing.techniqueReason
         )
     }
 

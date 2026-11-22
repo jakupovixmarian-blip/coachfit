@@ -156,7 +156,7 @@ object WorkoutPlanValidator {
 
     /** Compatibilita con attrezzatura, limitazioni, esclusioni e livello tecnico del soggetto. */
     fun isCompatible(ex: Exercise, profile: UserProfile): Boolean {
-        val equipment = profile.availableEquipment.ifEmpty { null }
+        val equipment = EquipmentFit.equipmentFor(profile)
         val excluded = profile.movementsToAvoid.map { it.lowercase() }
         val disliked = profile.dislikedExercises.map { it.lowercase() }
         val unknown = profile.unknownExercises.map { it.lowercase() }
@@ -165,7 +165,7 @@ object WorkoutPlanValidator {
             com.fitcoach.app.domain.model.TechnicalLevel.COMPETENT -> 3
             com.fitcoach.app.domain.model.TechnicalLevel.PROFICIENT -> 3
         }
-        return EquipmentFit.isAvailable(ex, equipment ?: emptySet()) &&
+        return EquipmentFit.isAvailable(ex, equipment) &&
             excluded.none { ex.name.lowercase().contains(it) || ex.primaryMuscle.label.lowercase().contains(it) } &&
             disliked.none { ex.name.lowercase().contains(it) } &&
             unknown.none { ex.name.lowercase().contains(it) } &&

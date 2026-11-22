@@ -23,5 +23,68 @@ object EquipmentFit {
     }
 
     fun isAvailable(exercise: Exercise, profile: UserProfile): Boolean =
-        isAvailable(exercise, profile.availableEquipment)
+        isAvailable(exercise, equipmentFor(profile))
+
+    /**
+     * Attrezzatura effettiva del profilo: le categorie spuntate PIU' quelle
+     * deducibili dall'inventario dettagliato.
+     *
+     * Serve perche i due campi si compilano in passi diversi dell'onboarding e
+     * non erano collegati: chi compilava solo l'inventario (o solo le chip)
+     * lasciava l'altro vuoto, e con l'insieme vuoto [isAvailable] permette ogni
+     * esercizio. Il risultato era una scheda indipendente dall'attrezzatura
+     * dichiarata, senza alcun errore visibile.
+     *
+     * Se ENTRAMBI sono vuoti l'insieme resta vuoto: significa "non dichiarato",
+     * e in quel caso non si inventa un vincolo. A quel punto pero' la scheda e
+     * gia' bloccata da [UserProfile.isAnamnesisReady].
+     */
+    fun equipmentFor(profile: UserProfile): Set<Equipment> {
+        val declared = profile.availableEquipment.toMutableSet()
+        profile.gearInventory.usable.forEach { item ->
+            fromGearName(item.name)?.let { declared += it }
+        }
+        return declared
+    }
+
+    /**
+     * Deducce la categoria [Equipment] dal nome dell'attrezzo.
+     *
+     * Il nome e' libero (l'utente puo' scrivere qualsiasi cosa), quindi il
+     * confronto e' per parola chiave e non per uguaglianza: "Panca regolabile"
+     * e "Panca inclinabile" devono valere entrambe [Equipment.BENCH].
+     * L'ordine dei controlli conta: "Sbarra per trazioni" e' una struttura ma
+     * vale come [Equipment.PULLUP_BAR], e "Barra tricipiti" e' un bilanciere
+     * anche se contiene "barra".
+     */
+    fun fromGearName(rawName: String): Equipment? {
+        val n = rawName.lowercase()
+        return when {
+            n.contains("trazion") || n.contains("pull-up") || n.contains("pullup") ->
+                Equipment.PULLUP_BAR
+            n.contains("parallele") || n.contains("dip station") || n.contains("anelli") ->
+                Equipment.DIP_STATION
+            n.contains("panca") -> Equipment.BENCH
+            n.contains("kettlebell") -> Equipment.KETTLEBELL
+            n.contains("elastic") || n.contains("mini band") || n.contains("band") ->
+                Equipment.RESISTANCE_BAND
+            n.contains("cavo") || n.contains("cavi") || n.contains("crossover") ||
+                n.contains("pulley") || n.contains("carrucola") || n.contains("lat machine") ||
+                n.contains("cable") || n.contains("maniglia") || n.contains("corda") ||
+                n.contains("cavigliera per cavi") -> Equipment.CABLE
+            n.contains("manubri") || n.contains("manubrio") -> Equipment.DUMBBELL
+            n.contains("bilanciere") || n.contains("barr") || n.contains("trap bar") ||
+                n.contains("squat bar") || n.contains("swiss bar") ||
+                n.contains("dischi") -> Equipment.BARBELL
+            // Macchine e stazioni: dopo i cavi, perche "lat machine" e "pulley"
+            // sono gia' stati assegnati a CABLE.
+            n.contains("machine") || n.contains("multipower") || n.contains("smith") ||
+                n.contains("press") || n.contains("rack") || n.contains("squat stand") ||
+                n.contains("leg extension") || n.contains("leg curl") ||
+                n.contains("pec deck") || n.contains("calf") || n.contains("hack") ||
+                n.contains("stazione") || n.contains("back extension") -> Equipment.MACHINE
+            n.contains("corpo libero") || n.contains("bodyweight") -> Equipment.BODYWEIGHT
+            else -> null
+        }
+    }
 }

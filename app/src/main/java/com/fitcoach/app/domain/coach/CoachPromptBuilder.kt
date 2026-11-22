@@ -48,6 +48,16 @@ object CoachPromptBuilder {
           o un aggiustamento puntuale usa "propose_food_substitution",
           "propose_exercise_substitution", "propose_move_workout",
           "propose_calorie_adjustment", "propose_volume_adjustment" o "propose_deload".
+        - Per aggiungere, cambiare o togliere una TECNICA D'INTENSITA' su un esercizio
+          gia' in scheda (drop set, rest-pause, myo-reps, superset, back-off, cluster,
+          cedimento, enfasi eccentrica) usa "propose_intensity_technique": cambia solo
+          la tecnica, senza toccare esercizio, serie o carico. Non usare
+          "propose_exercise_substitution" per questo: sostituirebbe l'esercizio.
+        - Quando parli di tecniche d'intensita', RIR o volume, consulta prima
+          "consult_invictus" con area=tecniche o area=allenamento e cita la regola.
+        - Non dire mai che una modifica e' stata fatta, applicata o completata: tu
+          registri solo proposte, l'applicazione avviene dopo la conferma dell'utente.
+          Se non hai registrato una proposta, di' che non hai modificato nulla.
         - Usa "propose_regenerate_plan" SOLO quando la richiesta cambia la STRUTTURA del
           programma (numero di giorni di allenamento, nuova split, giorni HIGH/MEDIUM/LOW
           del carb cycling, cambio di strategia complessivo). Scegli l'ambito corretto:

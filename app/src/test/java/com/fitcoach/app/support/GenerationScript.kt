@@ -6,8 +6,8 @@ import retrofit2.Response
 /**
  * Script del modello per la generazione di un programma.
  *
- * La generazione esige che `consult_invictus` sia stato chiamato per entrambe le
- * aree prima di `submit_full_program` (`Prerequisite.consultations`). Un fixture
+ * La generazione esige che `consult_invictus` sia stato chiamato per tutte le
+ * aree richieste prima di `submit_full_program` (`Prerequisite.consultations`). Un fixture
  * che consegna subito non riproduce il comportamento di un modello reale: viene
  * bloccato, e il test fallisce per un difetto del fixture e non del codice.
  */
@@ -16,7 +16,8 @@ object GenerationScript {
     /** Consultazioni che un modello reale effettua prima di consegnare. */
     fun consultations(): List<Response<ChatCompletionResponse>> = listOf(
         toolCallResponse("consult_invictus", """{"area":"allenamento"}"""),
-        toolCallResponse("consult_invictus", """{"area":"nutrizione"}""")
+        toolCallResponse("consult_invictus", """{"area":"nutrizione"}"""),
+        toolCallResponse("consult_invictus", """{"area":"tecniche"}""")
     )
 
     /** Consultazioni seguite dalla consegna e dalla chiusura del turno. */

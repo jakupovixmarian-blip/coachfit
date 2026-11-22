@@ -563,12 +563,34 @@ class CoachOrchestrator @Inject constructor(
         const val MAX_ITERATIONS = 6
 
         /**
-         * Frasi con cui il modello dichiara una modifica gia' avvenuta. Volutamente
-         * ristrette: devono cogliere l'affermazione, non ogni uso del verbo.
+         * Frasi con cui il modello dichiara una modifica gia' avvenuta o in corso
+         * di esecuzione. Volutamente ristrette: devono cogliere l'affermazione,
+         * non ogni uso del verbo.
+         *
+         * Copre anche "procedo con la modifica", "vado ad aggiornare",
+         * "sto applicando": erano le formule con cui il modello annunciava un
+         * lavoro che non aveva modo di svolgere (nessuno strumento per le
+         * tecniche d'intensita'), e restavano visibili all'utente come se la
+         * modifica fosse stata fatta.
          */
         internal val APPLIED_CLAIM = Regex(
-            "(?i)\\b(ho|abbiamo)\\s+(?:gia\\s+)?(?:modificat|aggiornat|applicat|sostituit|cambiat|" +
-                "spostat|impostat|regolat|adattat|rigenerat)\\w*"
+            "(?i)\\b(?:" +
+                // Passato: "ho/abbiamo modificato".
+                "(?:ho|abbiamo)\\s+(?:gia\\s+)?(?:modificat|aggiornat|applicat|sostituit|cambiat|" +
+                "spostat|impostat|regolat|adattat|rigenerat|aggiunt|inserit|rimoss|eliminat|" +
+                "aumentat|ridott|diminuit)\\w*" +
+                // Presente progressivo: "sto modificando", "stiamo applicando".
+                "|(?:sto|stiamo)\\s+(?:modificando|aggiornando|applicando|sostituendo|cambiando|" +
+                "spostando|impostando|regolando|adattando|rigenerando|aggiungendo|inserendo|" +
+                "aumentando|riducendo)" +
+                // Annuncio di esecuzione: "procedo con la modifica", "vado ad aggiornare".
+                "|(?:procedo|procediamo|vado|andiamo)\\s+(?:con|ad?|a)\\s+(?:la\\s+|il\\s+|le\\s+|lo\\s+)?" +
+                "(?:modific|aggiorn|applic|sostitu|regol|adatt|rigener|aggiung|inser|aument|riduc|" +
+                "diminu|camb)" +
+                // "modifica avvenuta / applicata / completata".
+                "|(?:modific|aggiornament|cambi|sostituzion|applicazion)\\w*\\s+(?:e\\s+)?(?:stat|son\\s+stat)\\w*\\s+" +
+                "(?:applicat|completat|eseguit|fatt|inserit|aggiunt)\\w*" +
+                ")"
         )
     }
 }
