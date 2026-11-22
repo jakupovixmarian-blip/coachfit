@@ -7,6 +7,7 @@ import com.fitcoach.app.domain.model.GearCategory
 import com.fitcoach.app.domain.model.GearInventory
 import com.fitcoach.app.domain.model.GearItem
 import com.fitcoach.app.domain.model.Goal
+import com.fitcoach.app.domain.model.IntensityTechnique
 import com.fitcoach.app.domain.model.MuscleGroup
 import com.fitcoach.app.domain.model.Sex
 import com.fitcoach.app.data.remote.AiClient
@@ -18,6 +19,7 @@ import com.fitcoach.app.domain.workout.EquipmentFit
 import com.fitcoach.app.domain.workout.ExerciseSeedData
 import com.fitcoach.app.domain.workout.WorkoutPlanValidator
 import com.fitcoach.app.support.ScriptedApi
+import com.fitcoach.app.support.SimulatedAiPrograms
 import kotlinx.serialization.json.Json
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -58,6 +60,29 @@ class GenerationFidelityTest {
         equipment = equipment, technique = "", defaultSets = 3,
         minReps = 8, maxReps = 12, restSeconds = 120, targetRir = 2
     )
+
+    /**
+     * Proposta valida costruita dai motori reali, con la tecnica imposta su ogni
+     * esercizio. Serve a verificare la mappatura che la UI legge davvero
+     * (`intensityTechnique`), non il DTO che conserva la stringa comunque.
+     */
+    private fun validProposal(technique: String): AiProgramProposal {
+        val profile = baseProfile()
+        val base = SimulatedAiPrograms.proposal(
+            profile, FoodSeedData.foods, ExerciseSeedData.exercises
+        )
+        return base.copy(
+            workout = base.workout.copy(
+                days = base.workout.days.map { day ->
+                    day.copy(
+                        exercises = day.exercises.map {
+                            it.copy(technique = technique, techniqueReason = "Scelta del coach per il gruppo.")
+                        }
+                    )
+                }
+            )
+        )
+    }
 
     // ---------------- Attrezzatura ----------------
 
@@ -388,14 +413,43 @@ class GenerationFidelityTest {
     @Test
     fun `la tecnica scritta dall'AI arriva sul campo della scheda`() {
         // Il contratto JSON usa 'technique'; il campo mostrato dalla UI e'
-        // intensityTechnique. Se la mappatura si rompe, la scheda mostra NONE.
-        val dto = AiPlannedExercise(
-            exerciseName = "Croci ai cavi", sets = 3, minReps = 12, maxReps = 15,
-            restSeconds = 75, targetRir = 1,
-            technique = "DROP_SET", techniqueReason = "Cedimento locale in sicurezza"
+        // intensityTechnique. La mappatura passa da validate(): testare il solo
+        // DTO non provava nulla, perche' il DTO conserva la stringa comunque.
+        val proposal = validProposal(technique = "DROP_SET")
+        val validated = ProgramGenerationEngine.validate(
+            baseProfile(), proposal, FoodSeedData.foods, ExerciseSeedData.exercises
         )
-        assertThat(dto.technique).isEqualTo("DROP_SET")
-        assertThat(dto.techniqueReason.trim()).isNotEmpty()
+        assertThat(validated).isNotNull()
+        val planned = validated!!.workout!!.days.flatMap { it.exercises }
+        assertThat(planned).isNotEmpty()
+        assertThat(planned.map { it.intensityTechnique }.distinct())
+            .containsExactly(IntensityTechnique.DROP_SET)
+        assertThat(planned.map { it.techniqueReason }.filter { it.isNotBlank() }).isNotEmpty()
+    }
+
+    @Test
+    fun `le varianti di scrittura della tecnica non si perdono`() {
+        // Il modello scrive la stessa tecnica in forme diverse. Il valueOf esatto
+        // scartava tutto cio' che non era maiuscolo con underscore, e il
+        // fallback silenzioso mostrava "Nessuna" al posto della tecnica.
+        assertThat(IntensityTechnique.parse("DROP SET")).isEqualTo(IntensityTechnique.DROP_SET)
+        assertThat(IntensityTechnique.parse("drop-set")).isEqualTo(IntensityTechnique.DROP_SET)
+        assertThat(IntensityTechnique.parse("Dropset")).isEqualTo(IntensityTechnique.DROP_SET)
+        assertThat(IntensityTechnique.parse(" drop_set ")).isEqualTo(IntensityTechnique.DROP_SET)
+        assertThat(IntensityTechnique.parse("Rest Pause")).isEqualTo(IntensityTechnique.REST_PAUSE)
+        assertThat(IntensityTechnique.parse("myo reps")).isEqualTo(IntensityTechnique.MYO_REPS)
+        assertThat(IntensityTechnique.parse("Nessuna")).isNull()
+        assertThat(IntensityTechnique.parse("")).isNull()
+    }
+
+    @Test
+    fun `una tecnica inventata viene respinta invece di sparire in silenzio`() {
+        val proposal = validProposal(technique = "SUPER_TECNICA_SEGRETA")
+        val report = ProposalChecker.check(
+            baseProfile(), proposal, FoodSeedData.foods, ExerciseSeedData.exercises
+        )
+        assertThat(report.isValid).isFalse()
+        assertThat(report.violations.joinToString()).contains("non riconosciuta")
     }
 
     @Test

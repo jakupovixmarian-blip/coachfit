@@ -24,7 +24,14 @@ data class CoachTurnResult(
     val providerError: String? = null,
     val toolTrace: List<String> = emptyList(),
     /** Output strutturato di ogni strumento eseguito (nome -> JSON), nell'ordine di chiamata. */
-    val toolResults: List<CoachToolResult> = emptyList()
+    val toolResults: List<CoachToolResult> = emptyList(),
+    /**
+     * `finish_reason` dell'ultima risposta ricevuta. Distingue "il modello ha
+     * finito di parlare senza consegnare" da "la risposta e' stata troncata":
+     * nel primo caso serve un'istruzione piu' ferma, nel secondo un budget di
+     * token piu' alto. Senza questo dato la diagnosi e' un'ipotesi.
+     */
+    val lastFinishReason: String? = null
 )
 
 /** Risultato grezzo dell'esecuzione di uno strumento durante il turno agentico. */
@@ -47,7 +54,17 @@ data class SatisfiedPrerequisite(
 class Prerequisite(
     val toolName: String,
     val description: String,
-    private val predicate: (List<SatisfiedPrerequisite>) -> Boolean
+    private val predicate: (List<SatisfiedPrerequisite>) -> Boolean,
+    /**
+     * Cosa manca concretamente, in termini che il modello possa eseguire.
+     *
+     * Senza, il rifiuto diceva solo "consulta la metodologia (una o piu' volte,
+     * per ogni area che ti serve)": un modello che aveva gia' consultato
+     * allenamento e nutrizione si considerava a posto, ripeteva quelle aree e
+     * non arrivava mai a `tecniche`. Il turno consumava tutte le iterazioni
+     * senza mai consegnare, e la generazione falliva per QUALUNQUE utente.
+     */
+    val missingDetail: (List<SatisfiedPrerequisite>) -> String = { "" }
 ) {
     fun isSatisfiedBy(calls: List<SatisfiedPrerequisite>): Boolean = predicate(calls)
 
@@ -61,15 +78,34 @@ class Prerequisite(
          * nutrizione, e il modello costruirebbe i macro senza averli letti.
          */
         fun consultations(toolName: String, areas: List<String>, description: String): Prerequisite =
-            Prerequisite(toolName, description) { calls ->
-                areas.all { area ->
-                    calls.any { c ->
-                        c.toolName == toolName &&
-                            c.arguments?.let { argArea(it) } == area &&
-                            outputHasArea(c.output, area)
+            Prerequisite(
+                toolName,
+                description,
+                predicate = { calls ->
+                    areas.all { area ->
+                        calls.any { c ->
+                            c.toolName == toolName &&
+                                c.arguments?.let { argArea(it) } == area &&
+                                outputHasArea(c.output, area)
+                        }
+                    }
+                },
+                missingDetail = { calls ->
+                    val missing = areas.filterNot { area ->
+                        calls.any { c ->
+                            c.toolName == toolName &&
+                                c.arguments?.let { argArea(it) } == area &&
+                                outputHasArea(c.output, area)
+                        }
+                    }
+                    if (missing.isEmpty()) {
+                        ""
+                    } else {
+                        "Aree ancora da consultare: ${missing.joinToString()}. " +
+                            "Chiama '$toolName' con area=${missing.first()} adesso."
                     }
                 }
-            }
+            )
 
         private fun argArea(arguments: JsonObject): String? =
             (arguments["area"] as? kotlinx.serialization.json.JsonPrimitive)
@@ -238,12 +274,14 @@ class CoachOrchestrator @Inject constructor(
         val satisfiedCalls = mutableListOf<SatisfiedPrerequisite>()
         /** Quante volte il modello ha risposto in prosa senza consegnare lo strumento obbligatorio. */
         var proseMisses = 0
+        var lastFinishReason: String? = null
         /** Quante volte lo strumento obbligatorio e stato chiamato ma respinto dalla validazione. */
         var rejectedDeliveries = 0
 
         /** Applica una risposta di successo del modello ai buffer del turno. */
         suspend fun consumeSuccess(result: AiResult.Success): Step {
             if (result.content.isNotBlank()) lastText = result.content
+            result.finishReason?.let { lastFinishReason = it }
             if (result.toolCalls.isEmpty()) {
                 // Se uno strumento era obbligatorio e il modello ha risposto in
                 // prosa (o e stato troncato), sollecitalo: una risposta senza
@@ -290,9 +328,9 @@ class CoachOrchestrator @Inject constructor(
                 }
                 val output = if (unmet != null) {
                     """{"ok":false,"error":"Prima di consegnare devi consultare la metodologia con """ +
-                        """'${unmet.toolName}': ${unmet.description} Chiama '${unmet.toolName}' adesso """ +
-                        """(una o piu' volte, per ogni area che ti serve), poi richiama """ +
-                        """${call.function.name} con l'oggetto completo."}"""
+                        """'${unmet.toolName}': ${unmet.description} """ +
+                        unmet.missingDetail(satisfiedCalls) +
+                        """ Poi richiama ${call.function.name} con l'oggetto completo."}"""
                 } else {
                     val args = parseArgs(call.function.arguments)
                     // Argomenti non parsabili = chiamata troncata (finish_reason
@@ -379,6 +417,17 @@ class CoachOrchestrator @Inject constructor(
                 escalateForce -> ToolChoice.force(requireTool)
                 else -> ToolChoice.auto
             }
+            // `tool_choice` impone il NOME dello strumento, non i suoi argomenti:
+            // un modello forzato su consult_invictus puo' ripetere l'area che ha
+            // gia' consultato e non soddisfare mai il prerequisito. Qui gli si
+            // dice, in un messaggio a parte, quale area manca esattamente.
+            if (escalateForce && missingPrerequisite != null) {
+                val unmet = requiredPrerequisites.firstOrNull { !it.isSatisfiedBy(satisfiedCalls) }
+                val detail = unmet?.missingDetail?.invoke(satisfiedCalls).orEmpty()
+                if (detail.isNotBlank()) {
+                    messages += ChatMessageDto(role = "user", content = detail)
+                }
+            }
             // Il budget residuo limita la SINGOLA chiamata, non solo il ciclo:
             // senza questo un provider che non risponde mai lascia la schermata
             // su "Generazione..." per sempre, perche il controllo del deadline
@@ -461,7 +510,8 @@ class CoachOrchestrator @Inject constructor(
                     "$requireTool entro $maxIterations tentativi (risposta troncata o senza chiamata " +
                     "allo strumento).",
                 toolTrace = trace,
-                toolResults = toolResults
+                toolResults = toolResults,
+                lastFinishReason = lastFinishReason
             )
         }
         // Limite iterazioni: chiedi una sintesi finale senza strumenti.

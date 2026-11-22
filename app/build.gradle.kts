@@ -100,6 +100,34 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
         unitTests.isIncludeAndroidResources = true
+        // I test che chiamano un provider AI reale leggono la chiave
+        // dall'ambiente. Senza questo passaggio la variabile non raggiunge la
+        // JVM di test e il test si salta silenziosamente: sembrerebbe verde
+        // senza aver mai contattato il modello.
+        unitTests.all { test ->
+            // Dichiarati come INPUT del task, non solo letti: Gradle non traccia
+            // le variabili d'ambiente, quindi senza questo cambiare REAL_AI_MODEL
+            // riuserebbe l'esito del modello precedente.
+            //
+            // Della chiave si dichiara l'HASH, mai il valore: `inputs.property`
+            // finisce nei log e nei report di build, e ci scriverebbe la chiave
+            // in chiaro. L'hash cambia quando cambia la chiave, che e' tutto
+            // cio' che serve alla cache.
+            listOf("REAL_AI_MODEL", "REAL_AI_SCOPE").forEach { name ->
+                val value = System.getenv(name) ?: ""
+                test.systemProperty(name, value)
+                test.inputs.property(name, value)
+            }
+            // La chiave NON si passa come system property: finirebbe nella riga
+            // di comando del processo di test, che Gradle scrive nei log con
+            // --info. La JVM di test eredita gia' l'ambiente del daemon, quindi
+            // basta dichiararne l'hash come input per invalidare la cache.
+            val apiKey = System.getenv("OPENROUTER_API_KEY") ?: ""
+            test.inputs.property(
+                "OPENROUTER_API_KEY_hash",
+                apiKey.hashCode().toString()
+            )
+        }
     }
 
     sourceSets {

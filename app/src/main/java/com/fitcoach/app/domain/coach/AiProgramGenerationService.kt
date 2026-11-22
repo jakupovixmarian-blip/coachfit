@@ -15,6 +15,7 @@ import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.FoodCatalogSelector
 import com.fitcoach.app.domain.nutrition.MealSlots
+import com.fitcoach.app.domain.workout.EquipmentFit
 import kotlin.math.roundToInt
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -62,7 +63,8 @@ class AiProgramGenerationService @Inject constructor(
              * di un secondo submit: senza, `[submit, submit]` e' indistinguibile
              * da un doppio salvataggio.
              */
-            val toolResults: List<CoachToolResult> = emptyList()
+            val toolResults: List<CoachToolResult> = emptyList(),
+            val lastFinishReason: String? = null
         ) : Result
 
         /**
@@ -74,7 +76,16 @@ class AiProgramGenerationService @Inject constructor(
         data class Failure(
             val message: String,
             val canRetry: Boolean = true,
-            val rawResponse: String? = null
+            val rawResponse: String? = null,
+            /**
+             * Strumenti chiamati prima del fallimento. Senza, "il modello non ha
+             * consegnato" non distingue un modello che non ha chiamato nulla da
+             * uno che ha consultato e poi si e' fermato: la correzione e'
+             * opposta nei due casi.
+             */
+            val toolTrace: List<String> = emptyList(),
+            val toolResults: List<CoachToolResult> = emptyList(),
+            val lastFinishReason: String? = null
         ) : Result
     }
 
@@ -88,9 +99,23 @@ class AiProgramGenerationService @Inject constructor(
             return Result.Failure("Completa e conferma l'anamnesi prima di generare il programma.", false)
         }
         val foods = FoodCatalogSelector.forGeneration(foodRepository.getAll(), profile)
-        val exercises = exerciseRepository.getAll()
+        val allExercises = exerciseRepository.getAll()
         if (foods.isEmpty()) return Result.Failure("Nessun alimento compatibile disponibile nel database.", false)
-        if (exercises.isEmpty()) return Result.Failure("Database esercizi vuoto: impossibile validare la scheda.", false)
+        if (allExercises.isEmpty()) return Result.Failure("Database esercizi vuoto: impossibile validare la scheda.", false)
+
+        // Il modello riceve SOLO gli esercizi prescrivibili per questo profilo:
+        // passargli la lista intera con l'etichetta "ESERCIZI CONSENTITI" lo
+        // induceva a prescrivere esercizi incompatibili con la sua attrezzatura.
+        // La validazione usa la stessa lista, cosi' cio' che vede coincide con
+        // cio' che viene accettato.
+        val exercises = EquipmentFit.allowedFor(profile, allExercises)
+        if (exercises.isEmpty()) {
+            return Result.Failure(
+                "Nessun esercizio compatibile con l'attrezzatura e le limitazioni dichiarate. " +
+                    "Aggiungi l'attrezzatura disponibile nel profilo.",
+                false
+            )
+        }
 
         val config = resolveConfig()
             ?: return Result.Failure(
@@ -112,7 +137,15 @@ class AiProgramGenerationService @Inject constructor(
             requiredPrerequisites = listOf(
                 Prerequisite.consultations(
                     toolName = CONSULT_TOOL,
-                    areas = listOf("allenamento", "nutrizione", "tecniche"),
+                    // Le aree seguono lo scope: chiedere le regole di nutrizione per
+                    // generare solo la scheda bruciava iterazioni su un vincolo che
+                    // non serviva al risultato richiesto.
+                    areas = when (scope) {
+                        ProgramGenerationEngine.Scope.NUTRITION -> listOf("nutrizione")
+                        ProgramGenerationEngine.Scope.WORKOUT -> listOf("allenamento", "tecniche")
+                        ProgramGenerationEngine.Scope.BOTH ->
+                            listOf("allenamento", "nutrizione", "tecniche")
+                    },
                     description = "split, volume, RIR e recuperi per la scheda; calorie, " +
                         "proteine e carboidrati per il piano alimentare; tecniche d'intensita " +
                         "(drop set, rest-pause, myo-reps) e quando applicarle."
@@ -126,16 +159,26 @@ class AiProgramGenerationService @Inject constructor(
             ?: return Result.Failure(
                 turn.providerError
                     ?: "Il Coach AI non ha consegnato il programma. Riprova: se il problema persiste, " +
-                    "verifica il provider AI o prova un modello con il supporto agli strumenti."
+                    "verifica il provider AI o prova un modello con il supporto agli strumenti.",
+                rawResponse = turn.text.takeIf { it.isNotBlank() },
+                toolTrace = turn.toolTrace,
+                toolResults = turn.toolResults,
+                lastFinishReason = turn.lastFinishReason
             )
 
-        return interpretSubmission(submission.output, turn.toolTrace, turn.toolResults)
+        return interpretSubmission(
+            submission.output,
+            turn.toolTrace,
+            turn.toolResults,
+            turn.lastFinishReason
+        )
     }
 
     private fun interpretSubmission(
         output: String,
         toolTrace: List<String> = emptyList(),
-        toolResults: List<CoachToolResult> = emptyList()
+        toolResults: List<CoachToolResult> = emptyList(),
+        lastFinishReason: String? = null
     ): Result {
         val obj = runCatching { json.parseToJsonElement(output) as? JsonObject }.getOrNull()
             ?: return Result.Failure("Risposta dello strumento non leggibile. Riprova.")
@@ -151,7 +194,17 @@ class AiProgramGenerationService @Inject constructor(
                     violations.joinToString(separator = " ", prefix = "Controlli falliti: ")
                 else -> "Il programma AI non e valido e non e stato salvato."
             }
-            return Result.Failure(message, rawResponse = output)
+            // La traccia va propagata anche qui: senza, un programma respinto
+            // dalla validazione arrivava alla diagnosi con `strumenti=[]` e non
+            // si poteva distinguere "il modello non ha consultato" da "ha
+            // consultato e ha sbagliato i numeri".
+            return Result.Failure(
+                message,
+                rawResponse = output,
+                toolTrace = toolTrace,
+                toolResults = toolResults,
+                lastFinishReason = lastFinishReason
+            )
         }
         val nutritionId = (obj["nutritionPlanId"] as? JsonPrimitive)?.content?.toLongOrNull() ?: 0L
         val workoutId = (obj["workoutPlanId"] as? JsonPrimitive)?.content?.toLongOrNull() ?: 0L
@@ -190,7 +243,7 @@ class AiProgramGenerationService @Inject constructor(
         return config.takeIf { it.isConfigured }
     }
 
-    private fun buildGenerationContext(
+    internal fun buildGenerationContext(
         profile: UserProfile,
         foods: List<FoodItem>,
         exercises: List<Exercise>,
@@ -211,7 +264,15 @@ class AiProgramGenerationService @Inject constructor(
         foods.take(90).forEach { f ->
             appendLine("${f.name} | ${f.kcalPer100g} ${f.proteinPer100g} ${f.carbsPer100g} ${f.fatPer100g} | unità ${f.defaultUnit.name}")
         }
-        appendLine("ESERCIZI CONSENTITI (nome | muscolo | attrezzatura | range | recupero | RIR):")
+        // "CONSENTITI" era falso: la lista non era filtrata. Ora lo e', quindi
+        // l'etichetta descrive davvero il contenuto e il modello non ha motivi
+        // per cercare alternative fuori elenco.
+        appendLine(
+            "ESERCIZI CONSENTITI (nome | muscolo | attrezzatura | range | recupero | RIR). " +
+                "Questa e' la lista COMPLETA degli esercizi prescrivibili per questo utente: " +
+                "sono gia' filtrati per attrezzatura, limitazioni, esercizi esclusi e livello " +
+                "tecnico. Usa SOLO nomi presenti qui: qualunque altro nome viene rifiutato."
+        )
         exercises.take(120).forEach { e ->
             appendLine("${e.name} | ${e.primaryMuscle.name} | ${e.equipment.joinToString { it.name }} | ${e.minReps}-${e.maxReps} | ${e.restSeconds}s | ${e.targetRir}")
         }

@@ -72,7 +72,25 @@ enum class IntensityTechnique(val label: String) {
     BACK_OFF_SET("Back-off set"),
     CLUSTER_SET("Cluster set"),
     FAILURE("Serie a cedimento"),
-    ECCENTRIC_EMPHASIS("Enfasi eccentrica")
+    ECCENTRIC_EMPHASIS("Enfasi eccentrica");
+
+    companion object {
+        /**
+         * Interpreta il valore scritto dal modello.
+         *
+         * Il confronto e' tollerante perche' i modelli scrivono la stessa tecnica
+         * in forme diverse ("DROP SET", "drop-set", "Dropset", "drop_set") e il
+         * `valueOf` esatto le scartava tutte: la tecnica spariva dalla scheda
+         * senza errore, perche' il fallback era silenzioso.
+         */
+        fun parse(raw: String?): IntensityTechnique? {
+            val normalized = raw?.trim()?.uppercase()?.replace(Regex("[\\s-]+"), "_")
+            if (normalized.isNullOrEmpty()) return null
+            entries.firstOrNull { it.name == normalized }?.let { return it }
+            val compact = normalized.replace("_", "")
+            return entries.firstOrNull { it.name.replace("_", "") == compact }
+        }
+    }
 }
 
 /** Tipo di fonte scientifica, per distinguere l'autorevolezza. */

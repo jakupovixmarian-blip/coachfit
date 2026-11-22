@@ -2,6 +2,7 @@ package com.fitcoach.app.domain.workout
 
 import com.fitcoach.app.domain.model.Equipment
 import com.fitcoach.app.domain.model.Exercise
+import com.fitcoach.app.domain.model.TechnicalLevel
 import com.fitcoach.app.domain.model.UserProfile
 
 /**
@@ -24,6 +25,38 @@ object EquipmentFit {
 
     fun isAvailable(exercise: Exercise, profile: UserProfile): Boolean =
         isAvailable(exercise, equipmentFor(profile))
+
+    /**
+     * Unico punto di verita' su "questo esercizio e prescrivibile a questo utente".
+     *
+     * La regola era duplicata in [WorkoutPlanValidator] e in `ProposalChecker`,
+     * e il prompt di generazione non la applicava affatto: al modello veniva
+     * passata l'etichetta "ESERCIZI CONSENTITI" su una lista NON filtrata, cosi'
+     * leggeva come leciti anche gli esercizi impossibili per il suo profilo e li
+     * prescriveva. Filtrare qui, e usare la stessa funzione per validare, fa
+     * coincidere per costruzione cio' che il modello vede con cio' che l'app
+     * accetta: non e' piu' una raccomandazione nel prompt ma un vincolo.
+     */
+    fun isAllowed(exercise: Exercise, profile: UserProfile): Boolean {
+        if (!isAvailable(exercise, profile)) return false
+        val name = exercise.name.lowercase()
+        val muscle = exercise.primaryMuscle.label.lowercase()
+        if (profile.movementsToAvoid.any { name.contains(it.lowercase()) || muscle.contains(it.lowercase()) }) {
+            return false
+        }
+        if (profile.dislikedExercises.any { name.contains(it.lowercase()) }) return false
+        if (profile.unknownExercises.any { name.contains(it.lowercase()) }) return false
+        val maxDifficulty = when (profile.technicalLevel) {
+            TechnicalLevel.NOVICE -> 2
+            TechnicalLevel.COMPETENT -> 3
+            TechnicalLevel.PROFICIENT -> 3
+        }
+        return exercise.difficulty <= maxDifficulty
+    }
+
+    /** Esercizi realmente prescrivibili: e' questa la lista da mostrare al modello. */
+    fun allowedFor(profile: UserProfile, exercises: List<Exercise>): List<Exercise> =
+        exercises.filter { isAllowed(it, profile) }
 
     /**
      * Attrezzatura effettiva del profilo: le categorie spuntate PIU' quelle

@@ -4,6 +4,7 @@ import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.ExerciseCategory
 import com.fitcoach.app.domain.model.FoodItem
+import com.fitcoach.app.domain.model.IntensityTechnique
 import com.fitcoach.app.domain.model.MacroTotals
 import com.fitcoach.app.domain.model.MealSlot
 import com.fitcoach.app.domain.model.UserProfile
@@ -265,6 +266,15 @@ object ProposalChecker {
                 if (item.minReps < 1 || item.maxReps < item.minReps) {
                     violations += "giorno workout ${day.dayIndex}: '${item.exerciseName}' con ripetizioni " +
                         "non valide (${item.minReps}-${item.maxReps}): indica minReps e maxReps"
+                    return@forEach
+                }
+                // Un valore di tecnica non riconosciuto veniva convertito in NONE
+                // senza avviso: il modello annunciava la tecnica, la scheda
+                // mostrava "Nessuna" e nulla spiegava la discrepanza.
+                if (item.technique.isNotBlank() && IntensityTechnique.parse(item.technique) == null) {
+                    violations += "giorno workout ${day.dayIndex}: '${item.exerciseName}' con tecnica " +
+                        "'${item.technique}' non riconosciuta. Valori ammessi: " +
+                        IntensityTechnique.entries.joinToString { it.name }
                     return@forEach
                 }
                 val exercise = findExercise(item.exerciseName)

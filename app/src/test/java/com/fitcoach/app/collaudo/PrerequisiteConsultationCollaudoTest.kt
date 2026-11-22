@@ -240,6 +240,45 @@ class PrerequisiteConsultationCollaudoTest {
     }
 
     @Test
+    fun `il rifiuto nomina l'area mancante invece di chiedere genericamente la metodologia`() = runTest {
+        val consult = StubTool("consult", """{"ok":true,"area":"allenamento","regole":[{"regola":"x"}]}""")
+        val submit = StubTool("submit", """{"ok":true,"stato":"PROGRAMMA_SALVATO"}""")
+        val api = ScriptedApi(
+            mutableListOf(
+                // Il modello consulta una sola area e prova a consegnare: senza il
+                // dettaglio sull'area mancante ripeteva all'infinito la stessa.
+                toolCallResponse("consult", """{"area":"allenamento"}"""),
+                toolCallResponse("submit", """{"giorni":[]}"""),
+                textResponse("Fatto.")
+            )
+        )
+
+        val result = orchestrator(consult, submit, api = api).run(
+            config = config,
+            systemPrompt = "system",
+            contextPrompt = "context",
+            history = emptyList(),
+            userMessage = "genera",
+            maxIterations = 3,
+            requireTool = "submit",
+            requiredPrerequisites = listOf(
+                Prerequisite.consultations(
+                    toolName = "consult",
+                    areas = listOf("allenamento", "nutrizione", "tecniche"),
+                    description = "metodologia"
+                )
+            )
+        )
+
+        // La consegna resta bloccata: il prerequisito non e' soddisfatto.
+        assertThat(submit.executions).isEqualTo(0)
+        // Ma il modello riceve i nomi esatti delle aree che gli mancano.
+        val feedback = result.toolResults.joinToString { it.output }
+        assertThat(feedback).contains("nutrizione")
+        assertThat(feedback).contains("tecniche")
+    }
+
+    @Test
     fun `senza prerequisiti il comportamento resta quello di prima`() = runTest {
         val submit = StubTool("submit", """{"ok":true,"stato":"PROGRAMMA_SALVATO"}""")
         val api = ScriptedApi(

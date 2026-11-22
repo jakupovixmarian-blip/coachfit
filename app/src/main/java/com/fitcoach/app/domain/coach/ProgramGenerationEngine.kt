@@ -234,9 +234,10 @@ object ProgramGenerationEngine {
     private fun parseMuscle(raw: String): MuscleGroup? =
         runCatching { MuscleGroup.valueOf(raw.trim().uppercase()) }.getOrNull()
 
-    private fun parseTechnique(raw: String): IntensityTechnique = runCatching {
-        IntensityTechnique.valueOf(raw.trim().uppercase().replace("-", "_"))
-    }.getOrDefault(IntensityTechnique.NONE)
+    // Delega al parser tollerante dell'enum: il valueOf esatto scartava
+    // "DROP SET" e "drop-set", e la tecnica spariva dalla scheda in silenzio.
+    private fun parseTechnique(raw: String): IntensityTechnique =
+        IntensityTechnique.parse(raw) ?: IntensityTechnique.NONE
 
 }
 
