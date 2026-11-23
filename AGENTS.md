@@ -867,3 +867,56 @@ Percorsi da tenere presenti nell'audit:
   `fallbackToDestructiveMigration`, quindi i dati non vengono cancellati a un upgrade.
 - Modifiche del coach: ciclo `PROPOSED -> APPLIED -> REVERTED/REJECTED`, con revert che
   ripristina il payload salvato (`CoachActionExecutor.revert`).
+
+## Test avversariali: cinque difetti reali (sessione collaudo contrario)
+
+I test sono stati scritti per rompere le funzioni, non per confermarle. Ogni
+difetto sotto e' stato prima riprodotto con un test rosso, poi corretto.
+
+1. `DatabaseBackupRepository.restoreBackup` copiava il file scelto sopra il
+   database DOPO averlo chiuso, senza validarlo. Un documento qualsiasi o un
+   backup troncato distruggeva tutti i dati, senza ritorno. Ora la validazione
+   (magic SQLite, apertura read-only, tabelle `user_profile` e `weight_records`)
+   avviene su una copia temporanea e la chiusura e' l'ultimo passo.
+   Regola generale: mai chiudere una risorsa prima di sapere che il sostituto
+   e' valido.
+
+2. Export CSV: `"%.1f".format()` usa la locale del dispositivo. Su un telefono
+   italiano produce "1218,0", che in una cella non quotata spezza la riga in
+   due campi. Usare sempre `String.format(Locale.ROOT, ...)` nei file
+   esportati.
+
+3. Export CSV: formula injection. Un testo che inizia con `=`, `+`, `-` o `@`
+   viene eseguito da Excel/LibreOffice. `escape()` ora antepone un apostrofo,
+   ma solo ai testi: i numeri veri (anche negativi) restano numeri, altrimenti
+   le colonne non sarebbero piu' sommabili.
+
+4. Export JSON: l'escaping CSV raddoppia le virgolette, quello JSON le precede
+   con backslash. Sono due funzioni diverse e non vanno scambiate. `jsonEscape`
+   gestisce anche backslash, newline, tab e caratteri di controllo.
+
+5. SQLite accetta `Infinity` ma rifiuta `NaN`. Un `Infinity` finiva nel CSV come
+   testo in una colonna numerica. Ora i valori non finiti diventano cella vuota
+   nel CSV e `null` nel JSON.
+
+### Note pratiche sui test di questo progetto
+
+- I test che usano Room o `ApplicationProvider` devono avere
+  `@RunWith(RobolectricTestRunner::class)` e `@Config(sdk = [33])`, altrimenti
+  falliscono con "No instrumentation registered".
+- `WorkoutSession.totalVolumeKg` e' una proprieta' calcolata dalle serie
+  (esclusi riscaldamento e serie non completate): nei test va costruita con
+  `sets`, non passata come campo.
+- `ExerciseTrendCalculator` richiede 6 campioni (`MIN_SAMPLES`) e usa una banda
+  del 5%: sotto quella soglia risponde `INSUFFICIENT_DATA`, che non e'
+  "stagnazione".
+- Un ViewModel che osserva un Flow di Room non avanza con
+  `StandardTestDispatcher`: usare `UnconfinedTestDispatcher` e attendere la
+  condizione reale con polling.
+- Attenzione alle lambda in coda: `f(cond: () -> Boolean, timeout: Long = ...)`
+  non accetta `f { ... }`, perche' la lambda finisce sull'ultimo parametro.
+  Mettere la lambda per ultima.
+- Le 3 classi Compose note (`AnamnesisLayoutTest`, `GenerateButtonClickTest`,
+  `FirstRunRoutingCollaudoTest`) falliscono nella suite completa per carico
+  parallelo e passano in isolamento: verificare sempre in isolamento prima di
+  attribuire il difetto al codice.
