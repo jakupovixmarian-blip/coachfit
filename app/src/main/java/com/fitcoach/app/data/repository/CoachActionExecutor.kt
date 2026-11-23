@@ -306,6 +306,25 @@ class CoachActionExecutor @Inject constructor(
                     entryDao.updateEntry(entry.id, entry.grams, entry.kcal, entry.protein, entry.carbs, entry.fat)
                 }
             }
+            "WORKOUT_DAY_MOVE" -> db.withTransaction {
+                val dayId = revert.require("dayId").toLong()
+                val previous = revert.require("previousDayIndex").toInt()
+                val day = workoutDayDao.getById(dayId)
+                    ?: throw IllegalStateException("Seduta da ripristinare non trovata.")
+                val swappedId = revert["swappedDayId"]?.toLongOrNull()
+                val swappedIndex = revert["swappedToIndex"]?.toIntOrNull()
+                if (swappedId != null && swappedIndex != null) {
+                    workoutDayDao.insertAll(listOf(day.copy(dayIndex = 7)))
+                    workoutDayDao.insertAll(listOf(day.copy(dayIndex = previous)))
+                    workoutDayDao.getById(swappedId)?.let {
+                        workoutDayDao.insertAll(listOf(it.copy(dayIndex = swappedIndex)))
+                    }
+                } else {
+                    workoutDayDao.insertAll(listOf(day.copy(dayIndex = previous)))
+                }
+            }
+            // Ripristino del vecchio formato, ancora presente nelle modifiche
+            // registrate prima della correzione: non va perso nello storico.
             "WORKOUT_DAY_INDEX" -> dayDao.updateWorkoutDayIndex(
                 id = revert.require("dayId").toLong(),
                 workoutDayIndex = revert["workoutDayIndex"]?.toIntOrNull()
@@ -482,17 +501,54 @@ class CoachActionExecutor @Inject constructor(
         )
     }
 
+    /**
+     * Sposta una seduta nel calendario scrivendo `workout_days.dayIndex`, che e'
+     * il campo che dashboard e scheda leggono davvero. Scrivere
+     * `nutrition_days.workoutDayIndex` produceva una conferma senza effetto
+     * visibile, perche' nessuna schermata legge quel campo.
+     *
+     * Se il giorno di destinazione e' occupato da un'altra seduta, le due si
+     * scambiano: altrimenti la scheda mostrerebbe due allenamenti lo stesso
+     * giorno e il conteggio delle sedute settimanali salirebbe.
+     */
     private suspend fun applyMoveWorkout(action: CoachAction): Map<String, String> {
         val dayId = action.payload.require("dayId").toLong()
-        val newIndex = action.payload.require("newDayIndex").toInt()
-        val day = dayDao.getById(dayId) ?: throw IllegalArgumentException("Giorno nutrizionale non trovato.")
-        val previous = day.workoutDayIndex
-        dayDao.updateWorkoutDayIndex(dayId, newIndex)
-        return mapOf(
-            "kind" to "WORKOUT_DAY_INDEX",
-            "dayId" to dayId.toString(),
-            "workoutDayIndex" to (previous?.toString() ?: "")
-        )
+        val newIndex = action.payload.require("newDayIndex").toIntOrNull()
+            ?: throw IllegalArgumentException("Giorno di destinazione non valido.")
+        if (newIndex !in 0..6) {
+            throw IllegalArgumentException(
+                "Giorno $newIndex fuori settimana: i valori ammessi sono 0 (lunedi) .. 6 (domenica)."
+            )
+        }
+        return db.withTransaction {
+            val day = workoutDayDao.getById(dayId)
+                ?: throw IllegalArgumentException("Seduta $dayId non trovata nella scheda attiva.")
+            val previous = day.dayIndex
+            if (previous == newIndex) return@withTransaction mapOf(
+                "kind" to "WORKOUT_DAY_MOVE",
+                "dayId" to dayId.toString(),
+                "previousDayIndex" to previous.toString(),
+                "swappedDayId" to "",
+                "swappedToIndex" to ""
+            )
+
+            val target = workoutDayDao.getForMesocycle(day.mesocycleId)
+                .firstOrNull { it.dayIndex == newIndex && it.id != dayId }
+
+            // Lo scambio passa da un indice provvisorio (7) per non violare
+            // nessun vincolo di unicita' durante l'aggiornamento intermedio.
+            target?.let { workoutDayDao.insertAll(listOf(it.copy(dayIndex = 7))) }
+            workoutDayDao.insertAll(listOf(day.copy(dayIndex = newIndex)))
+            target?.let { workoutDayDao.insertAll(listOf(it.copy(dayIndex = previous))) }
+
+            mapOf(
+                "kind" to "WORKOUT_DAY_MOVE",
+                "dayId" to dayId.toString(),
+                "previousDayIndex" to previous.toString(),
+                "swappedDayId" to (target?.id?.toString() ?: ""),
+                "swappedToIndex" to (if (target != null) previous.toString() else "")
+            )
+        }
     }
 
     /**

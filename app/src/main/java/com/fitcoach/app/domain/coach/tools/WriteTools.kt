@@ -240,12 +240,17 @@ class MoveWorkoutTool @Inject constructor(
 ) : WriteTool() {
     override val name = "propose_move_workout"
     override val description =
-        "Propone di spostare una seduta a un altro giorno (0=lunedi .. 6=domenica). " +
-            "Usa get_active_workout_plan per gli indici correnti."
+        "Propone di spostare una seduta a un altro giorno della settimana " +
+            "(0=lunedi .. 6=domenica). Se il giorno e' occupato da un'altra seduta, le due " +
+            "si scambiano. Usa get_active_workout_plan per leggere il campo 'giorno' di " +
+            "ogni seduta."
 
     override val parameters: JsonObject = Schema.obj(
-        "dayId" to Schema.integer("Id del giorno di allenamento."),
-        "newDayIndex" to Schema.integer("Nuovo giorno 0..6."),
+        "dayId" to Schema.integer(
+            "Id della seduta da spostare (plannedId no: e' l'id della workout_day, " +
+                "cioe' il campo 'giorno' di get_active_workout_plan)."
+        ),
+        "newDayIndex" to Schema.integer("Nuovo giorno, 0 (lunedi) .. 6 (domenica)."),
         "title" to Schema.string("Titolo breve della proposta."),
         "rationale" to Schema.string("Motivazione."),
         required = listOf("dayId", "newDayIndex")

@@ -109,6 +109,7 @@ class GetActiveWorkoutPlanTool @Inject constructor(
             ?: return JsonOut.encode(JsonOut.obj("ok" to JsonOut.bool(true), "pianoPresente" to JsonOut.bool(false)))
         val days = plan.days.filter { withRest || !it.isRestDay }.map { d ->
             JsonOut.obj(
+                "dayId" to JsonOut.num(d.id),
                 "giorno" to JsonOut.num(d.dayIndex),
                 "titolo" to JsonOut.str(d.title),
                 "riposo" to JsonOut.bool(d.isRestDay),

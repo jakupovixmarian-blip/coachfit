@@ -973,6 +973,19 @@ difetto sotto e' stato prima riprodotto con un test rosso, poi corretto.
     Il DAO resta uno storico: non deduplica, perche' sovrascrivere perderebbe
     la prima misurazione.
 
+11. **"Sposta la seduta" non spostava nulla.** `applyMoveWorkout` scriveva
+    `nutrition_days.workoutDayIndex`, un campo che nessuna schermata legge (la
+    dashboard usa `workout_days.dayIndex` e `WorkoutDaySelection`). Il tool
+    esponeva `giorno` (l'indice) mentre l'executor si aspettava `dayId` (l'id
+    della seduta). Risultato: conferma verde, scheda invariata. Ora scrive
+    `workout_days.dayIndex`, valida 0..6, scambia le due sedute se il giorno e'
+    occupato, e il revert ripristina il giorno reale. `get_active_workout_plan`
+    espone anche `dayId`.
+
+    Lezione: quando un percorso di scrittura tocca la UI, il test deve
+    verificare **l'esito visibile** (il campo che la schermata legge), non il
+    valore di ritorno dell'executor. `Applied(...)` non e' una prova.
+
 ### Come misurare invece di indovinare
 
 - Per la copertura reale: elencare i file di `app/src/main/java` non citati in
