@@ -183,8 +183,8 @@ dependencies {
     implementation(libs.androidx.health.connect)
     implementation(libs.guava)
 
-    implementation(libs.vico.compose.m3)
     implementation(libs.androidx.security.crypto)
+    implementation(libs.androidx.appcompat)
 
     // Fotocamera e lettura codice a barre (stesso approccio di Yazio).
     implementation(libs.androidx.camera.core)

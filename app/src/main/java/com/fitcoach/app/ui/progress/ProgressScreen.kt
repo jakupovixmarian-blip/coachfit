@@ -180,6 +180,29 @@ fun ProgressScreen(
                             )
                         }
                     }
+                    val seriesBySite = state.circumferences
+                        .groupBy { it.site }
+                        .filterValues { it.size >= 2 }
+                    seriesBySite.toSortedMap().forEach { (site, records) ->
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            "Andamento $site",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        LineChart(
+                            points = records.sortedBy { it.dateEpochDay }.map {
+                                ChartPoint(
+                                    LocalDate.ofEpochDay(it.dateEpochDay).format(dayFmt),
+                                    it.valueCm
+                                )
+                            },
+                            lineColor = Emerald,
+                            unitSuffix = " cm",
+                            heightDp = 150
+                        )
+                    }
                 }
             }
         }
@@ -537,6 +560,64 @@ private fun AdvancedStatisticsSection(
                     points = stats.weightSeries.map { ChartPoint(it.label, it.value) },
                     lineColor = ProteinColor,
                     unitSuffix = " kg"
+                )
+            }
+            if (stats.strengthSeries.size >= 2) {
+                Spacer(Modifier.height(12.dp))
+                Text("Progressione forza (1RM stimato)", style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(6.dp))
+                LineChart(
+                    points = stats.strengthSeries.map { ChartPoint(it.label, it.value) },
+                    lineColor = Emerald,
+                    unitSuffix = " kg"
+                )
+            }
+            if (stats.repsSeries.size >= 2) {
+                Spacer(Modifier.height(12.dp))
+                Text("Ripetizioni per seduta", style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(6.dp))
+                BarChart(
+                    values = stats.repsSeries.map { it.value.toFloat() },
+                    labels = stats.repsSeries.map { it.label },
+                    color = CarbsColor
+                )
+            }
+            if (stats.proteinSeries.size >= 2) {
+                Spacer(Modifier.height(12.dp))
+                Text("Proteine per giorno (g)", style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(6.dp))
+                LineChart(
+                    points = stats.proteinSeries.map { ChartPoint(it.label, it.value) },
+                    lineColor = ProteinColor,
+                    unitSuffix = " g",
+                    heightDp = 150
+                )
+            }
+            if (stats.carbsSeries.size >= 2) {
+                Spacer(Modifier.height(12.dp))
+                Text("Carboidrati per giorno (g)", style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(6.dp))
+                LineChart(
+                    points = stats.carbsSeries.map { ChartPoint(it.label, it.value) },
+                    lineColor = CarbsColor,
+                    unitSuffix = " g",
+                    heightDp = 150
+                )
+            }
+            if (stats.fatSeries.size >= 2) {
+                Spacer(Modifier.height(12.dp))
+                Text("Grassi per giorno (g)", style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(6.dp))
+                LineChart(
+                    points = stats.fatSeries.map { ChartPoint(it.label, it.value) },
+                    lineColor = TextSecondary,
+                    unitSuffix = " g",
+                    heightDp = 150
                 )
             }
         }

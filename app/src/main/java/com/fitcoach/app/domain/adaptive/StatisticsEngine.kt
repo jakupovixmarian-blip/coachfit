@@ -52,7 +52,12 @@ data class RangeStatistics(
     val bestLift: BestLift?,
     val caloriesSeries: List<DailyStatPoint>,
     val volumeSeries: List<DailyStatPoint>,
-    val weightSeries: List<DailyStatPoint>
+    val weightSeries: List<DailyStatPoint>,
+    val proteinSeries: List<DailyStatPoint> = emptyList(),
+    val carbsSeries: List<DailyStatPoint> = emptyList(),
+    val fatSeries: List<DailyStatPoint> = emptyList(),
+    val repsSeries: List<DailyStatPoint> = emptyList(),
+    val strengthSeries: List<DailyStatPoint> = emptyList()
 )
 
 /**
@@ -136,7 +141,33 @@ object StatisticsEngine {
             },
             weightSeries = rangeWeights.map { record ->
                 DailyStatPoint(record.dateEpochDay, dayLabel(record.dateEpochDay), record.weightKg)
-            }
+            },
+            proteinSeries = trackedDays.map { day ->
+                DailyStatPoint(day, dayLabel(day), byDay.getValue(day).sumOf { e -> e.protein })
+            },
+            carbsSeries = trackedDays.map { day ->
+                DailyStatPoint(day, dayLabel(day), byDay.getValue(day).sumOf { e -> e.carbs })
+            },
+            fatSeries = trackedDays.map { day ->
+                DailyStatPoint(day, dayLabel(day), byDay.getValue(day).sumOf { e -> e.fat })
+            },
+            // Ripetizioni totali per seduta: somma delle serie realmente
+            // registrate, non di quelle prescritte.
+            repsSeries = rangePerformances
+                .groupBy { it.dateEpochDay }
+                .toSortedMap()
+                .map { (day, perfs) ->
+                    DailyStatPoint(day, dayLabel(day), perfs.sumOf { it.totalReps }.toDouble())
+                },
+            // 1RM stimato: massimo del giorno. Sommare esercizi diversi
+            // produrrebbe un numero senza significato fisiologico.
+            strengthSeries = rangePerformances
+                .filter { it.estimated1Rm != null }
+                .groupBy { it.dateEpochDay }
+                .toSortedMap()
+                .map { (day, perfs) ->
+                    DailyStatPoint(day, dayLabel(day), perfs.maxOf { it.estimated1Rm!! })
+                }
         )
     }
 
