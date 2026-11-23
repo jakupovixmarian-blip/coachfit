@@ -180,6 +180,10 @@ object CatalogNameResolver {
         "olive oil" to "olio extravergine d oliva",
         "oats" to "fiocchi d avena",
         "oatmeal" to "fiocchi d avena",
+        // "Avena" da sola e' l'inglese "oats"; senza questa voce il tiebreak
+        // sceglieva "Latte d'avena" (46 kcal) invece di "Fiocchi d'avena"
+        // (367 kcal), un errore di otto volte sulle calorie del pasto.
+        "avena" to "fiocchi d avena",
         "ricotta" to "ricotta vaccina",
         "grana" to "grana padano",
         "parmigiano" to "grana padano",

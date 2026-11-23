@@ -133,6 +133,11 @@ object ProgressiveOverloadEngine {
     /**
      * Incremento proporzionale: per carichi alti l'incremento base cresce
      * leggermente, ma resta prudente.
+     *
+     * L'extra sostituisce l'incremento base, non si somma: sommando, a 101 kg
+     * si passava da +2.5 a +5.0 kg rispetto a 100 kg, cioe' un raddoppio a
+     * cavallo della soglia. Il doppio progressione serve a salire di poco
+     * quando si e' al limite, non a raddoppiare il salto.
      */
     fun increaseFor(category: ExerciseCategory, currentWeightKg: Double): Double {
         val base = when (category) {
@@ -140,11 +145,12 @@ object ProgressiveOverloadEngine {
             ExerciseCategory.ISOLATION -> ISOLATION_INCREASE_KG
             ExerciseCategory.BODYWEIGHT -> 0.0
         }
-        // Per carichi > 100 kg, aggiungi un ulteriore 2.5% arrotondato a 0.5 kg.
-        val extra = if (currentWeightKg > 100) {
-            ((currentWeightKg * 0.025) / 0.5).roundToInt() * 0.5
-        } else 0.0
-        return base + extra
+        if (category == ExerciseCategory.BODYWEIGHT) return 0.0
+        // Per carichi > 100 kg l'incremento segue il 2.5% del carico, mai meno
+        // del base e sempre arrotondato a 0.5 kg (i dischi reali).
+        if (currentWeightKg <= 100) return base
+        val proportional = ((currentWeightKg * 0.025) / 0.5).roundToInt() * 0.5
+        return maxOf(base, proportional)
     }
 
     /** Stima 1RM con formula di Epley. */

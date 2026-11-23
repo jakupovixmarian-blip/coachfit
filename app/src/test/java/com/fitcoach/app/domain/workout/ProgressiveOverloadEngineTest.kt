@@ -99,4 +99,31 @@ class ProgressiveOverloadEngineTest {
         val d = ProgressiveOverloadEngine.decide(70.0, working + warmups, 8, 10, ExerciseCategory.COMPOUND)
         assertThat(d.increaseApplied).isTrue()
     }
+
+    @Test
+    fun `l incremento non raddoppia al passaggio sopra i 100 kg`() {
+        val at100 = ProgressiveOverloadEngine.increaseFor(ExerciseCategory.COMPOUND, 100.0)
+        val at101 = ProgressiveOverloadEngine.increaseFor(ExerciseCategory.COMPOUND, 101.0)
+        assertThat(at100).isWithin(0.001).of(2.5)
+        // Un kg in piu' non puo' raddoppiare il salto prescritto.
+        assertThat(at101).isAtMost(at100 + 0.5)
+    }
+
+    @Test
+    fun `gli incrementi restano su valori caricabili con i dischi`() {
+        listOf(40.0, 80.0, 100.0, 120.0, 140.0, 200.0).forEach { kg ->
+            val inc = ProgressiveOverloadEngine.increaseFor(ExerciseCategory.COMPOUND, kg)
+            assertThat(inc * 2).isEqualTo(Math.round(inc * 2).toDouble())
+            // Il salto resta prudente: mai oltre il 5% del carico. Sotto i 50 kg
+            // il vincolo non si applica, perche' 2.5 kg (il disco piu' piccolo)
+            // e' gia' oltre il 5% e non esiste un salto piu' fine.
+            if (kg >= 50) assertThat(inc).isAtMost(kg * 0.05 + 0.001)
+        }
+    }
+
+    @Test
+    fun `un esercizio a corpo libero non riceve incrementi di carico`() {
+        assertThat(ProgressiveOverloadEngine.increaseFor(ExerciseCategory.BODYWEIGHT, 0.0)).isEqualTo(0.0)
+        assertThat(ProgressiveOverloadEngine.increaseFor(ExerciseCategory.BODYWEIGHT, 120.0)).isEqualTo(0.0)
+    }
 }
