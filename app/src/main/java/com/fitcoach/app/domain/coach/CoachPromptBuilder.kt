@@ -217,10 +217,14 @@ object CoachPromptBuilder {
             if (p.likedFoods.isNotEmpty()) sb.appendLine("- Alimenti graditi: ${p.likedFoods.joinToString()}")
             if (p.dislikedFoods.isNotEmpty()) sb.appendLine("- Alimenti poco graditi: ${p.dislikedFoods.joinToString()}")
             if (p.weeklyFoodBudgetEur != null) sb.appendLine("- Budget alimentare: %.0f EUR/settimana".format(p.weeklyFoodBudgetEur))
-            p.monthlyFoodBudgetEur?.let {
+            p.monthlyFoodBudgetEur?.let { budget ->
+                // Il .format() va applicato alla stringa INTERA: con la
+                // concatenazione si applicava solo all'ultimo pezzo e il
+                // modello leggeva il segnaposto "%.0f" al posto del budget.
                 sb.appendLine(
-                    "- Budget alimentare mensile: %.0f EUR (ambito: ${p.budgetScope.label}, " +
-                        "${p.budgetPersons} persone)".format(it)
+                    "- Budget alimentare mensile: %.0f EUR (ambito: %s, %d persone)".format(
+                        Locale.ROOT, budget, p.budgetScope.label, p.budgetPersons
+                    )
                 )
             }
             sb.appendLine(
@@ -302,9 +306,16 @@ object CoachPromptBuilder {
             sb.appendLine()
             sb.appendLine("PRESTAZIONI RECENTI")
             context.recentPerformances.take(15).forEach { perf ->
+                // Stesso errore di prima: il .format() sulla sola seconda parte
+                // lasciava "%.0f" letterale al posto del volume.
                 sb.appendLine(
-                    "- ${perf.exerciseName}: ${"%.1f".format(perf.topWeightKg)} kg x ${perf.topReps} " +
-                        "(volume %.0f kg, 1RM stimato ${perf.estimated1Rm?.let { "%.1f".format(it) } ?: "n/d"})"
+                    "- ${perf.exerciseName}: %.1f kg x %d (volume %.0f kg, 1RM stimato %s)".format(
+                        Locale.ROOT,
+                        perf.topWeightKg,
+                        perf.topReps,
+                        perf.volumeKg,
+                        perf.estimated1Rm?.let { "%.1f".format(Locale.ROOT, it) } ?: "n/d"
+                    )
                 )
             }
         }

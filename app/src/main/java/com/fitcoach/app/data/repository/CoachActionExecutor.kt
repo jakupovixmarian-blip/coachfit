@@ -5,6 +5,7 @@ import com.fitcoach.app.data.local.FitCoachDatabase
 import com.fitcoach.app.domain.coach.CoachAction
 import com.fitcoach.app.domain.model.ChangeDomain
 import com.fitcoach.app.domain.model.ChangeStatus
+import com.fitcoach.app.domain.nutrition.FoodFilter
 import com.fitcoach.app.domain.model.IntensityTechnique
 import com.fitcoach.app.domain.model.ProgramChange
 import com.fitcoach.app.domain.usecase.ProgramGenerationResult
@@ -96,6 +97,17 @@ class CoachActionExecutor @Inject constructor(
          * calcolato su un piano con decimali: senza, il confine inclusivo non basta.
          */
         const val RATIO_EPSILON = 0.001
+
+        /** Limite di una singola voce di pasto: oltre non e' una porzione. */
+        const val MAX_ENTRY_GRAMS = 5_000.0
+        const val MAX_ENTRY_KCAL = 10_000.0
+
+        /**
+         * Scarto ammesso fra kcal dichiarate e 4-4-9 dei macro. Sul catalogo
+         * reale la deviazione massima e' del 24% (vegetali, per le fibre).
+         */
+        const val MACRO_KCAL_REL_TOLERANCE = 0.25
+        const val MACRO_KCAL_ABS_TOLERANCE = 30.0
 
         /** Tolleranza in kcal sul floor di sicurezza (arrotondamenti del modello). */
         const val KCAL_EPSILON = 1.0
@@ -334,11 +346,53 @@ class CoachActionExecutor @Inject constructor(
         val newFoodId = action.payload["newFoodId"]?.toLongOrNull() ?: 0L
         val newFoodName = action.payload["newFoodName"] ?: action.payload["foodName"]
             ?: throw IllegalArgumentException("newFoodName mancante.")
+
+        // Allergie ed esclusioni valgono anche in chat. La generazione filtra il
+        // catalogo, ma la sostituzione puntuale no: un allergico al lattosio
+        // riceveva lo yogurt perche' il modello lo ha proposto.
+        val profilo = userRepository.get()
+        if (profilo != null) {
+            val candidato = db.foodDao().getAll().firstOrNull { it.name == newFoodName }
+                ?.let { com.fitcoach.app.data.local.Mappers.run { it.toDomain() } }
+            require(candidato == null || FoodFilter.isAllowed(candidato, profilo)) {
+                "$newFoodName non e' compatibile con allergie, esclusioni o preferenze del profilo."
+            }
+        }
         val grams = action.payload.require("grams").toDouble()
         val kcal = action.payload.require("kcal").toDouble()
         val protein = action.payload.require("protein").toDouble()
         val carbs = action.payload.require("carbs").toDouble()
         val fat = action.payload.require("fat").toDouble()
+
+        // I numeri della proposta li scrive il modello, ma li conferma l'utente:
+        // se non sono validati, l'utente approva una porzione da -250 g o da
+        // -500 kcal senza poterlo vedere. Il resto del file valida gia' (vedi
+        // applyCalorieAdjustment): qui mancava.
+        require(grams.isFinite() && kcal.isFinite() && protein.isFinite() &&
+            carbs.isFinite() && fat.isFinite()) {
+            "La sostituzione contiene valori non finiti."
+        }
+        require(grams > 0.0) { "La quantita' deve essere positiva." }
+        require(grams in 1.0..MAX_ENTRY_GRAMS) {
+            "La quantita' deve stare fra 1 e ${MAX_ENTRY_GRAMS.toInt()} g."
+        }
+        require(kcal >= 0.0 && protein >= 0.0 && carbs >= 0.0 && fat >= 0.0) {
+            "Calorie e macronutrienti non possono essere negativi."
+        }
+        require(kcal <= MAX_ENTRY_KCAL) {
+            "Una singola voce non puo' superare ${MAX_ENTRY_KCAL.toInt()} kcal."
+        }
+        // 4-4-9 sul catalogo reale non torna per i vegetali: le fibre pesano
+        // nelle kcal ma non nei carboidrati, e broccoli e zucchine arrivano al
+        // 24% di scarto. Serve quindi una tolleranza assoluta oltre a quella
+        // relativa, altrimenti si rifiutano alimenti veri. Il controllo resta
+        // utile per il caso che conta: 500 kcal con zero macro.
+        val kcalDaMacro = protein * 4.0 + carbs * 4.0 + fat * 9.0
+        val tolleranza = maxOf(MACRO_KCAL_ABS_TOLERANCE, kcalDaMacro * MACRO_KCAL_REL_TOLERANCE)
+        require(kcalDaMacro > 0.0 && kotlin.math.abs(kcalDaMacro - kcal) <= tolleranza) {
+            "Le calorie dichiarate ($kcal) non corrispondono ai macronutrienti (%.0f kcal)."
+                .format(kcalDaMacro)
+        }
 
         val updated = entryDao.replaceEntry(
             entryId, newFoodId, newFoodName, grams, kcal, protein, carbs, fat

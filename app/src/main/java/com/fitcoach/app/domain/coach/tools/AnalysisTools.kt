@@ -95,8 +95,29 @@ class ComputeCarbCyclingTool @Inject constructor(
                 JsonOut.obj("ok" to JsonOut.bool(false), "error" to JsonOut.str("Dati insufficienti per il calcolo."))
             )
         val args = JsonArgs(arguments)
+        // Le giornate richieste dal modello venivano solo ripetute nell'output:
+        // il piano restava quello di default e il modello credeva di aver
+        // personalizzato la settimana. Ora vengono applicate, ma solo se la
+        // somma e' 7: una settimana di 5 giorni non esiste.
+        val richieste = listOfNotNull(
+            args.int("giornateHigh"), args.int("giornateMedium"), args.int("giornateLow")
+        )
+        val personalizzazione = if (richieste.size == 3 && richieste.sum() == 7 && richieste.all { it >= 0 }) {
+            Triple(richieste[0], richieste[1], richieste[2])
+        } else {
+            null
+        }
         val cycling = if (CarbCyclingEngine.shouldApplyCarbCycling(profile)) {
-            CarbCyclingEngine.build(profile, energy)
+            if (personalizzazione != null) {
+                CarbCyclingEngine.build(
+                    profile, energy,
+                    highDays = personalizzazione.first,
+                    mediumDays = personalizzazione.second,
+                    lowDays = personalizzazione.third
+                )
+            } else {
+                CarbCyclingEngine.build(profile, energy)
+            }
         } else {
             CarbCyclingEngine.buildUniform(profile, energy)
         }
@@ -121,7 +142,8 @@ class ComputeCarbCyclingTool @Inject constructor(
                 "richiestaPersonalizzazione" to JsonOut.obj(
                     "high" to JsonOut.num(args.int("giornateHigh")),
                     "medium" to JsonOut.num(args.int("giornateMedium")),
-                    "low" to JsonOut.num(args.int("giornateLow"))
+                    "low" to JsonOut.num(args.int("giornateLow")),
+                    "applicata" to JsonOut.bool(personalizzazione != null)
                 ),
                 "kcalSettimanali" to JsonOut.num(cycling.weeklyKcal),
                 "target" to JsonOut.arr(targets),

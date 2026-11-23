@@ -928,6 +928,63 @@ difetto sotto e' stato prima riprodotto con un test rosso, poi corretto.
    dell'app. Nei test unitari verificare il contenuto prodotto
    (`exportAllJson`, `exportWeightsCsv`), non la condivisione via `Intent`.
 
+### Difetti trovati dall'audit avversariale (coach, statistiche, dati)
+
+6. `ComputeCarbCyclingTool` dichiarava `giornateHigh/Medium/Low` nei parametri
+   ma non li passava a `CarbCyclingEngine.build`: restituiva l'eco della
+   richiesta e il piano di default. Il modello credeva di aver personalizzato
+   la settimana. Ora i giorni vengono applicati solo se sommano 7, e l'output
+   dichiara `richiestaPersonalizzazione.applicata`. Regola: un parametro
+   accettato ma non usato e' peggio di un parametro assente, perche' produce
+   una falsa conferma.
+
+7. `CoachActionExecutor.applyFoodSubstitution` non validava i numeri della
+   proposta: grammi negativi, kcal negative, `Infinity`, 50 kg in una porzione
+   e macro incoerenti finivano nel piano alla conferma dell'utente. I numeri li
+   scrive il modello, ma li approva l'utente: vanno validati come input
+   esterno. Ora c'e' `MAX_ENTRY_GRAMS` (5000), `MAX_ENTRY_KCAL` (10000) e un
+   controllo di coerenza 4-4-9 con tolleranza **assoluta + relativa**.
+
+   Attenzione alla tolleranza: sul catalogo reale (254 alimenti) il 4-4-9 non
+   torna per i vegetali, perche' le fibre contano nelle kcal ma non nei
+   carboidrati. Lo scarto massimo misurato e' **24%** (broccoli 34 kcal vs 41
+   macro, zucchine 16 vs 19). Una tolleranza del 10% avrebbe rifiutato alimenti
+   veri: servono `MACRO_KCAL_ABS_TOLERANCE = 30` e
+   `MACRO_KCAL_REL_TOLERANCE = 0.25`. Non stringerle senza rimisurare.
+
+8. **Allergie aggirate via chat.** La generazione filtra il catalogo con
+   `FoodCatalogSelector.forGeneration` (che usa `FoodFilter.allowedFoods`), ma
+   la sostituzione puntuale proposta in chat no: un profilo allergico al
+   lattosio riceveva lo yogurt perche' il modello lo aveva proposto. Ogni
+   scrittura di un alimento deve ripassare da `FoodFilter.isAllowed`, non solo
+   la generazione massiva.
+
+9. `ConsultInvictusTool` restituiva `esecuzione/errori/varianti` vuoti per 25
+   voci su 65 (fra cui **Panca piana**), che nell'archivio sono solo il titolo
+   di un articolo. Tre array vuoti senza spiegazione invitano il modello a
+   inventare la tecnica. Ora ogni voce porta `contenutoDisponibile` e la
+   risposta include `senzaContenuto` e una `nota` che vieta di inventare.
+
+10. `StatisticsEngine.compute` calcolava `avgWeightKg` su **tutti** i record.
+    Pesarsi due volte nello stesso giorno (normalissimo) fa contare quel giorno
+    il doppio nella media settimanale, e la media e' cio' che decide "il peso e'
+    fermo". Ora si tiene una pesata per `dateEpochDay` (l'ultima, cioe' la
+    correzione dell'utente). `weightSamples` conta i giorni, non le righe.
+    Il DAO resta uno storico: non deduplica, perche' sovrascrivere perderebbe
+    la prima misurazione.
+
+### Come misurare invece di indovinare
+
+- Per la copertura reale: elencare i file di `app/src/main/java` non citati in
+  `app/src/test/java`. Un file dati grande (es. `InvictusExercises`, 2582 righe)
+  non si testa riga per riga: si testano gli invarianti (nomi unici, URL sul
+  dominio della fonte, muscoli normalizzati, lookup case-insensitive).
+- Per le tolleranze numeriche: scrivere un test-probe temporaneo che stampa lo
+  scarto massimo sul catalogo reale, poi cancellarlo. La tolleranza si sceglie
+  sul dato, non a intuito.
+- `assertEquals` su double: usare il delta. `116.67` vs `116.7` e' precisione
+  del test, non un bug: il motore arrotonda a un decimale.
+
 ### Note pratiche sui test di questo progetto
 
 - I test che usano Room o `ApplicationProvider` devono avere

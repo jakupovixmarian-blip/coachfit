@@ -74,7 +74,15 @@ object StatisticsEngine {
         val from = todayEpochDay - (range.days - 1)
         val inRange = { day: Long -> day in from..todayEpochDay }
 
-        val rangeWeights = weights.filter { inRange(it.dateEpochDay) }.sortedBy { it.dateEpochDay }
+        // Una pesata al giorno. Pesarsi due volte lo stesso giorno e' normale, ma
+        // ogni record e' un campione della media: due pesate di lunedi' contano
+        // il doppio di una di martedi' e spostano la media settimanale. Si tiene
+        // l'ultima pesata del giorno, che e' quella che l'utente ha corretto.
+        val rangeWeights = weights
+            .filter { inRange(it.dateEpochDay) }
+            .groupBy { it.dateEpochDay }
+            .map { (_, sameDay) -> sameDay.maxBy { it.id } }
+            .sortedBy { it.dateEpochDay }
         val rangeDiary = diary.filter { inRange(it.dateEpochDay) && it.active }
         val rangeSessions = sessions.filter {
             inRange(it.dateEpochDay) && it.status == com.fitcoach.app.domain.model.SessionStatus.COMPLETED

@@ -145,6 +145,10 @@ class ConsultInvictusTool @Inject constructor() : CoachTool {
         if (filtered.isEmpty()) return fail("Nessun esercizio documentato per '$topic'.")
 
         val items = filtered.take(limit).map { e ->
+            // Alcune voci dell'archivio sono solo il titolo di un articolo:
+            // esecuzione, errori e varianti sono vuoti. Restituire tre array
+            // vuoti senza dirlo invita il modello a inventare la tecnica.
+            val senzaContenuto = e.execution.isEmpty() && e.errors.isEmpty() && e.variants.isEmpty()
             JsonOut.obj(
                 "nome" to JsonOut.str(e.name),
                 "muscoli" to JsonOut.strings(e.primaryMuscles),
@@ -152,14 +156,26 @@ class ConsultInvictusTool @Inject constructor() : CoachTool {
                 "errori" to JsonOut.strings(e.errors),
                 "varianti" to JsonOut.strings(e.variants),
                 "fonte" to JsonOut.str(e.articleTitle),
-                "url" to JsonOut.str(e.url)
+                "url" to JsonOut.str(e.url),
+                "contenutoDisponibile" to JsonOut.bool(!senzaContenuto)
             )
+        }
+        val senzaContenuto = filtered.take(limit).count {
+            it.execution.isEmpty() && it.errors.isEmpty() && it.variants.isEmpty()
         }
         return JsonOut.encode(
             JsonOut.obj(
                 "ok" to JsonOut.bool(true),
                 "area" to JsonOut.str("esercizi"),
                 "totaleTrovati" to JsonOut.num(filtered.size),
+                "senzaContenuto" to JsonOut.num(senzaContenuto),
+                "nota" to JsonOut.str(
+                    if (senzaContenuto == 0) ""
+                    else "$senzaContenuto voci su ${filtered.take(limit).size} hanno solo il " +
+                        "rimando all'articolo: esecuzione, errori e varianti non sono " +
+                        "documentati. Non inventarli: cita la fonte o dichiara che il " +
+                        "dettaglio tecnico non e' disponibile nell'archivio."
+                ),
                 "esercizi" to JsonOut.arr(items)
             )
         )

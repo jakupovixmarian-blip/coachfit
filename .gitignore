@@ -32,3 +32,6 @@ keystore.properties
 # Build artifacts / dist
 /dist/
 __pycache__/
+
+# Cache locale di download (APK/toolchain): non va versionata
+.download/
