@@ -73,5 +73,12 @@ data class CoachReply(
      * strumenti di scrittura: senza questo elenco le proposte oltre la prima
      * restavano registrate ma non mostrate, quindi impossibili da confermare.
      */
-    val pendingChanges: List<com.fitcoach.app.domain.model.ProgramChange> = emptyList()
+    val pendingChanges: List<com.fitcoach.app.domain.model.ProgramChange> = emptyList(),
+    /**
+     * `finish_reason` dell'ultima risposta del provider e strumenti eseguiti nel
+     * turno. Servono a distinguere una risposta troncata da una risposta che il
+     * modello ha deciso di chiudere senza chiamare alcuno strumento.
+     */
+    val lastFinishReason: String? = null,
+    val toolTrace: List<String> = emptyList()
 )

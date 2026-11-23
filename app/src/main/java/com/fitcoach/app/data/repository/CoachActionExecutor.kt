@@ -90,6 +90,17 @@ class CoachActionExecutor @Inject constructor(
 
     private val stringMapSerializer = MapSerializer(String.serializer(), String.serializer())
 
+    private companion object {
+        /**
+         * Tolleranza sul rapporto calorico. Copre l'arrotondamento di un +/-10%
+         * calcolato su un piano con decimali: senza, il confine inclusivo non basta.
+         */
+        const val RATIO_EPSILON = 0.001
+
+        /** Tolleranza in kcal sul floor di sicurezza (arrotondamenti del modello). */
+        const val KCAL_EPSILON = 1.0
+    }
+
     /** Registra la proposta come PROPOSED senza applicarla. Ritorna l'id della modifica. */
     suspend fun registerProposal(action: CoachAction): Long =
         changeRepository.add(action.toProgramChange(ChangeStatus.PROPOSED))
@@ -329,7 +340,10 @@ class CoachActionExecutor @Inject constructor(
         val carbs = action.payload.require("carbs").toDouble()
         val fat = action.payload.require("fat").toDouble()
 
-        entryDao.replaceEntry(entryId, newFoodId, newFoodName, grams, kcal, protein, carbs, fat)
+        val updated = entryDao.replaceEntry(
+            entryId, newFoodId, newFoodName, grams, kcal, protein, carbs, fat
+        )
+        check(updated > 0) { "Il pasto non e' stato aggiornato: voce $entryId inesistente." }
 
         return mapOf(
             "kind" to "FOOD_ENTRY",
@@ -356,19 +370,24 @@ class CoachActionExecutor @Inject constructor(
         // Prima veniva letto solo se il payload conteneva dayId, che il tool non
         // invia, quindi annullare una sostituzione non rimetteva l'esercizio.
         val existing = plannedDao.getById(plannedId)
-        plannedDao.substituteExercise(
+            ?: throw IllegalArgumentException("Esercizio pianificato $plannedId non trovato.")
+        // L'id puo essere inventato dal modello. Se l'UPDATE non tocca righe la
+        // scheda resta identica: senza questo controllo apply() rispondeva
+        // "Modifica applicata" e l'utente vedeva la scheda invariata.
+        val updated = plannedDao.substituteExercise(
             plannedId, exerciseId, name, technique, intensity, techniqueReason
         )
+        check(updated > 0) { "La scheda non e' stata aggiornata: esercizio $plannedId inesistente." }
         return mapOf(
             "kind" to "PLANNED_EXERCISE",
             "plannedId" to plannedId.toString(),
-            "weight" to (existing?.targetWeightKg?.toString() ?: ""),
-            "reps" to (existing?.targetReps?.toString() ?: ""),
-            "exerciseId" to (existing?.exerciseId?.toString() ?: ""),
-            "exerciseName" to (existing?.exerciseName ?: ""),
-            "technique" to (existing?.technique ?: ""),
-            "intensityTechnique" to (existing?.intensityTechnique?.name ?: "NONE"),
-            "techniqueReason" to (existing?.techniqueReason ?: "")
+            "weight" to (existing.targetWeightKg?.toString() ?: ""),
+            "reps" to (existing.targetReps?.toString() ?: ""),
+            "exerciseId" to existing.exerciseId.toString(),
+            "exerciseName" to existing.exerciseName,
+            "technique" to existing.technique,
+            "intensityTechnique" to existing.intensityTechnique.name,
+            "techniqueReason" to existing.techniqueReason
         )
     }
 
@@ -452,9 +471,17 @@ class CoachActionExecutor @Inject constructor(
         val newWeekly = action.payload.require("weeklyKcal").toDouble()
         require(newWeekly > 0.0) { "Il target calorico deve essere positivo." }
         val ratio = newWeekly / plan.weeklyCalories
-        require(ratio in 0.90..1.10) { "La variazione calorica massima è del 10%." }
+        // Il confine e' inclusivo ma va assorbito l'arrotondamento di chi calcola il
+        // 10% a mano. Il piano ha decimali (es. 17637.769604): un "-10%" arrotondato
+        // a 15873 da' 0.899944 e veniva rifiutato con "la variazione massima e del
+        // 10%", cioe' l'utente si vedeva negare esattamente cio' che aveva chiesto.
+        require(ratio in (0.90 - RATIO_EPSILON)..(1.10 + RATIO_EPSILON)) {
+            "La variazione calorica massima è del 10%."
+        }
         if (plan.bmr > 0.0) {
-            require(newWeekly / 7.0 >= plan.bmr * 0.85) { "Il target scenderebbe sotto la soglia di sicurezza." }
+            require(newWeekly / 7.0 >= plan.bmr * 0.85 - KCAL_EPSILON) {
+                "Il target scenderebbe sotto la soglia di sicurezza."
+            }
         }
 
         val days = dayDao.getForPlan(planId)
@@ -526,13 +553,15 @@ class CoachActionExecutor @Inject constructor(
         val reduction = action.payload["volumeReductionPercent"]?.toDoubleOrNull() ?: 20.0
         require(reduction in -30.0..80.0) { "Variazione volume fuori dai limiti." }
         val result = mutableMapOf("kind" to "PLANNED_SETS", "mesocycleId" to mesocycleId.toString())
+        var touched = 0
         workoutDayDao.getForMesocycle(mesocycleId).forEach { day ->
             plannedDao.getForDay(day.id).forEach { exercise ->
                 val updated = (exercise.sets * (1.0 - reduction / 100.0)).roundToInt().coerceIn(1, 30)
                 result["sets_${exercise.id}"] = exercise.sets.toString()
-                plannedDao.updateSets(exercise.id, updated)
+                touched += plannedDao.updateSets(exercise.id, updated)
             }
         }
+        check(touched > 0) { "Nessuna serie aggiornata: il mesociclo $mesocycleId non ha esercizi." }
         return result
     }
 
@@ -550,13 +579,15 @@ class CoachActionExecutor @Inject constructor(
             "kind" to "PLANNED_SETS",
             "mesocycleId" to mesocycleId.toString()
         )
+        var touched = 0
         workoutDayDao.getForMesocycle(mesocycleId).forEach { day ->
             plannedDao.getForDay(day.id).forEach { ex ->
                 val reduced = (ex.sets * (1 - percent / 100.0)).toInt().coerceAtLeast(1)
                 result["sets_${ex.id}"] = ex.sets.toString()
-                plannedDao.updateSets(ex.id, reduced)
+                touched += plannedDao.updateSets(ex.id, reduced)
             }
         }
+        check(touched > 0) { "Nessuna serie aggiornata: il mesociclo $mesocycleId non ha esercizi." }
         return result
     }
 

@@ -46,7 +46,13 @@ object TestProgramGenerator {
         db: FitCoachDatabase,
         profile: UserProfile,
         scope: ProgramGenerationEngine.Scope = ProgramGenerationEngine.Scope.BOTH,
-        trainingDays: List<Int> = WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek)
+        trainingDays: List<Int> = WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek),
+        /**
+         * Archivio chiavi da usare. In Robolectric il Keystore Android non esiste,
+         * quindi un test che ha gia' scritto la chiave su un archivio di prova deve
+         * poterlo passare qui: altrimenti la generazione non trova il provider.
+         */
+        keyStore: SecureKeyStore? = null
     ): AiProgramGenerationService.Result {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val foods = FoodFilter.allowedFoods(foodRepository.getAll(), profile)
@@ -74,7 +80,7 @@ object TestProgramGenerator {
                 CoachToolRegistry(setOf(submitTool, ConsultInvictusTool())),
                 json
             ),
-            chatRepository, SecureKeyStore(context), json, foodRepository, exerciseRepository
+            chatRepository, keyStore ?: SecureKeyStore(context), json, foodRepository, exerciseRepository
         )
         return service.generate(profile, scope)
     }

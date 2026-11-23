@@ -96,7 +96,13 @@ data class AiProviderSettings(
     val useBackendProxy: Boolean = false,
     val backendBaseUrl: String = "",
     val temperature: Double = 0.4,
-    val maxTokens: Int = 1200,
+        /**
+     * Token massimi di risposta. Con i modelli "reasoning" il budget copre anche
+     * il ragionamento interno: a 1200 il modello veniva troncato a meta' frase
+     * mentre spiegava la richiesta, quindi non arrivava mai a chiamare lo
+     * strumento e l'utente vedeva "ho analizzato..." senza alcuna modifica.
+     */
+    val maxTokens: Int = 4000,
     val lastTestOk: Boolean? = null,
     val lastTestMessage: String = "",
     val lastTestAt: Long? = null

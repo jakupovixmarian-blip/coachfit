@@ -127,7 +127,9 @@ class CoachService @Inject constructor(
             text = turn.text,
             proposedAction = null,
             pendingChange = pendingChanges.lastOrNull(),
-            pendingChanges = pendingChanges
+            pendingChanges = pendingChanges,
+            lastFinishReason = turn.lastFinishReason,
+            toolTrace = turn.toolTrace
         )
     }
 

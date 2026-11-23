@@ -220,7 +220,7 @@ interface MealEntryDao {
     suspend fun replaceEntry(
         id: Long, foodItemId: Long, foodName: String, grams: Double,
         kcal: Double, protein: Double, carbs: Double, fat: Double
-    )
+    ): Int
 
     @Query("UPDATE meal_entries SET grams = :grams, kcal = :kcal, protein = :protein, carbs = :carbs, fat = :fat WHERE id = :id")
     suspend fun updateEntry(id: Long, grams: Double, kcal: Double, protein: Double, carbs: Double, fat: Double)
@@ -361,10 +361,10 @@ interface PlannedExerciseDao {
         technique: String,
         intensityTechnique: IntensityTechnique,
         techniqueReason: String
-    )
+    ): Int
 
     @Query("UPDATE planned_exercises SET sets = :sets WHERE id = :id")
-    suspend fun updateSets(id: Long, sets: Int)
+    suspend fun updateSets(id: Long, sets: Int): Int
 
 
     @Query("UPDATE planned_exercises SET orderIndex = :orderIndex WHERE id = :id")

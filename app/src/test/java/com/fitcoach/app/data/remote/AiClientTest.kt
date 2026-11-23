@@ -70,12 +70,13 @@ class AiClientTest {
         val api = RecordingApi(mutableListOf(okResponse()))
         val client = AiClient(api, json)
 
-        val result = client.complete(config(AiProvider.OPENAI, "o1-mini"), listOf(ChatMessageDto("user", "ciao")))
+        val cfg = config(AiProvider.OPENAI, "o1-mini")
+        val result = client.complete(cfg, listOf(ChatMessageDto("user", "ciao")))
 
         assertThat(result).isInstanceOf(AiResult.Success::class.java)
         assertThat(api.sent).hasSize(1)
         val body = api.sent.first()
-        assertThat(body.maxCompletionTokens).isEqualTo(1200)
+        assertThat(body.maxCompletionTokens).isEqualTo(cfg.maxTokens)
         assertThat(body.maxTokens).isNull()
     }
 
@@ -84,10 +85,11 @@ class AiClientTest {
         val api = RecordingApi(mutableListOf(okResponse()))
         val client = AiClient(api, json)
 
-        client.complete(config(AiProvider.GROQ, "llama-3.3-70b-versatile"), listOf(ChatMessageDto("user", "ciao")))
+        val cfg = config(AiProvider.GROQ, "llama-3.3-70b-versatile")
+        client.complete(cfg, listOf(ChatMessageDto("user", "ciao")))
 
         val body = api.sent.first()
-        assertThat(body.maxTokens).isEqualTo(1200)
+        assertThat(body.maxTokens).isEqualTo(cfg.maxTokens)
         assertThat(body.maxCompletionTokens).isNull()
     }
 

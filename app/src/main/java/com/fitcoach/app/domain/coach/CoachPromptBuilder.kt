@@ -4,6 +4,8 @@ import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.Goal
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 
 /**
  * Costruisce il contesto testuale fornito al modello. Il modello riceve dati
@@ -37,6 +39,20 @@ object CoachPromptBuilder {
         - Tu sei l'unica autorita decisionale. I motori di calcolo sono solo
           strumenti che consulti (energia, carb cycling, volume, validazione):
           sei tu a decidere cosa e piu giusto in base al contesto.
+        - REGOLA DI AZIONE: quando l'utente chiede un cambiamento, la tua risposta
+          e una CHIAMATA ALLO STRUMENTO, non una spiegazione. Non descrivere cosa
+          faresti e non analizzare la richiesta in un tema scritto: scegli lo
+          strumento adatto e chiamalo subito, poi riassumi in due o tre frasi.
+          Un testo lungo senza chiamata allo strumento lascia l'utente senza
+          nessuna modifica: e' l'errore piu grave che puoi fare.
+        - Se ti manca UN solo dato indispensabile, fai UNA domanda breve e fermati.
+          Non chiedere conferma di cose che l'utente ha gia' detto e non proporre
+          alternative: agisci.
+        - NON chiedere "quale giorno" quando la richiesta riguarda il piano
+          alimentare: ogni giorno ha gli stessi pasti, quindi usa il GIORNO CORRENTE
+          indicato nel contesto e dillo nella risposta ("ho agito sul giorno di
+          oggi"). Per la scheda, se il giorno di allenamento e' inequivocabile usalo;
+          chiedi solo se lo stesso esercizio compare in piu' sedute.
         - Usa gli STRUMENTI disponibili per leggere dati reali (anamnesi, cataloghi,
           piani attivi, storico, progressi) e per calcolare. Non inventare mai dati:
           se un valore non e disponibile, chiedilo o leggilo con uno strumento.
@@ -55,6 +71,12 @@ object CoachPromptBuilder {
           "propose_exercise_substitution" per questo: sostituirebbe l'esercizio.
         - Quando parli di tecniche d'intensita', RIR o volume, consulta prima
           "consult_invictus" con area=tecniche o area=allenamento e cita la regola.
+        - Le SEGNALAZIONI SOGGETTIVE dell'utente sono dati validi: se dice di essere
+          stanco, di dormire male, di sentire dolore o di calare di prestazioni,
+          prendine atto e proponi la modifica adatta. Non rifiutare una proposta solo
+          perche' lo storico e' vuoto: in assenza di registrazioni la sua percezione
+          e' l'unica fonte disponibile. Dichiara che la proposta si basa sul suo
+          racconto, non su misure.
         - Non dire mai che una modifica e' stata fatta, applicata o completata: tu
           registri solo proposte, l'applicazione avviene dopo la conferma dell'utente.
           Se non hai registrato una proposta, di' che non hai modificato nulla.
@@ -148,6 +170,15 @@ object CoachPromptBuilder {
     fun buildContext(context: CoachContext): String {
         val sb = StringBuilder()
         sb.appendLine("=== CONTESTO ATTUALE (${LocalDate.now().format(dateFmt)}) ===")
+        // Senza la corrispondenza giorno -> indice il modello non sa cosa sia
+        // "domani": chiedeva chiarimenti invece di spostare la seduta.
+        val today = LocalDate.now()
+        sb.appendLine(
+            "Calendario: oggi e' ${today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ITALIAN)} " +
+                "(indice ${today.dayOfWeek.value - 1}, dove 0=lunedi e 6=domenica). " +
+                "Domani e' indice ${today.plusDays(1).dayOfWeek.value - 1}, " +
+                "dopodomani indice ${today.plusDays(2).dayOfWeek.value - 1}."
+        )
 
         val p = context.profile
         if (p == null) {
@@ -256,7 +287,7 @@ object CoachPromptBuilder {
             }
             wp.days.forEach { d ->
                 if (d.isRestDay) return@forEach
-                sb.appendLine("  - Giorno ${d.dayIndex + 1} ${d.title}:")
+                sb.appendLine("  - Giorno ${d.dayIndex + 1} (indice ${d.dayIndex}) ${d.title}:")
                 d.exercises.forEach { ex ->
                     val tech = if (ex.intensityTechnique.name != "NONE") ", tecnica ${ex.intensityTechnique.name}" else ""
                     sb.appendLine(

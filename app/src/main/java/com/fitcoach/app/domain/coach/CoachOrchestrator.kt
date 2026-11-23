@@ -14,6 +14,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -285,6 +286,8 @@ class CoachOrchestrator @Inject constructor(
         var lastFinishReason: String? = null
         /** Quante volte lo strumento obbligatorio e stato chiamato ma respinto dalla validazione. */
         var rejectedDeliveries = 0
+        /** Quante volte si e' sollecitata un'azione dopo una risposta troncata senza strumenti. */
+        var actionMisses = 0
 
         /** Applica una risposta di successo del modello ai buffer del turno. */
         suspend fun consumeSuccess(result: AiResult.Success): Step {
@@ -307,12 +310,61 @@ class CoachOrchestrator @Inject constructor(
                     )
                     return Step.Continue
                 }
+                // Chat: il modello ha scritto un tema ed e' stato troncato a meta'
+                // frase senza chiamare alcuno strumento. E' il caso in cui l'utente
+                // legge "ho analizzato..." e non trova nessuna modifica. Si sollecita
+                // ad agire, invece di mostrare un testo tagliato.
+                if (requireTool == null && result.truncated && actionMisses < MAX_ACTION_NUDGES) {
+                    actionMisses++
+                    messages += ChatMessageDto(
+                        role = "user",
+                        content = "La tua risposta e' stata interrotta e non hai chiamato alcuno " +
+                            "strumento. Non scrivere un'analisi: se serve una modifica chiama ORA " +
+                            "lo strumento propose_* adatto con pochi argomenti; altrimenti rispondi " +
+                            "in massimo tre frasi."
+                    )
+                    return Step.Continue
+                }
+                // Il modello ha letto i dati e ha chiuso il turno annunciando cosa
+                // fara' ("ora devo applicare...", "ho trovato le patate...") senza
+                // chiamare lo strumento di scrittura. L'utente non riceve nessuna
+                // proposta ma legge che la modifica e' in corso: e' la falsa
+                // dichiarazione piu' frequente. Si sollecita ad agire davvero.
+                if (requireTool == null &&
+                    pendingChangeIds.isEmpty() &&
+                    trace.none { it in toolRegistry.writeToolNames } &&
+                    actionMisses < MAX_ACTION_NUDGES &&
+                    (
+                        announcesActionWithoutActing(result.content) ||
+                            (userAsksForChange(userMessage) && !asksForInformation(result.content))
+                        )
+                ) {
+                    actionMisses++
+                    messages += ChatMessageDto(
+                        role = "user",
+                        content = "Hai descritto cosa intendi fare ma non hai chiamato nessuno " +
+                            "strumento, quindi non esiste alcuna proposta. Chiama ORA lo strumento " +
+                            "propose_* adatto con gli argomenti completi. Se davvero non serve una " +
+                            "modifica, di' esplicitamente che non hai modificato nulla."
+                    )
+                    return Step.Continue
+                }
                 return Step.Done(
                     CoachTurnResult(
-                        text = result.content,
+                        // Un testo troncato a meta' frase non e' una risposta: meglio
+                        // dirlo che mostrare un periodo interrotto. Vale solo quando il
+                        // turno non ha prodotto nemmeno una proposta.
+                        text = if (result.truncated && pendingChangeIds.isEmpty()) {
+                            result.content.trimEnd().trimEnd(',', ';', ':', '-') +
+                                "\n\n(La risposta si e' interrotta per limite di token. " +
+                                "Chiedimi di procedere e completo l'operazione.)"
+                        } else {
+                            result.content
+                        },
                         pendingChangeIds = pendingChangeIds,
                         toolTrace = trace,
-                        toolResults = toolResults
+                        toolResults = toolResults,
+                        lastFinishReason = lastFinishReason
                     )
                 )
             }
@@ -423,6 +475,23 @@ class CoachOrchestrator @Inject constructor(
                 escalateForce && missingPrerequisite != null ->
                     ToolChoice.force(missingPrerequisite)
                 escalateForce -> ToolChoice.force(requireTool)
+                // Chat con richiesta di modifica: il modello ha gia' letto i dati e
+                // chiuso il turno senza proporre nulla. Si impone UNA chiamata a
+                // strumento (quale lo decide il modello). Non si forza un nome
+                // preciso perche' solo lui sa quale serve: la sostituzione di un
+                // alimento e quella di un esercizio richiedono strumenti diversi.
+                // `required` obbliga UNA chiamata qualsiasi: il modello ha usato
+                // list_foods ancora una volta e non ha mai proposto nulla. Si forza
+                // lo strumento di scrittura dedotto dalla richiesta; se non e'
+                // deducibile si ripiega su `required`.
+                // Solo finche' non esiste una proposta: forzare di nuovo dopo il
+                // successo creava proposte duplicate (tre sostituzioni identiche).
+                requireTool == null &&
+                    actionMisses >= 1 &&
+                    pendingChangeIds.isEmpty() &&
+                    trace.none { it in toolRegistry.writeToolNames } &&
+                    userAsksForChange(userMessage) ->
+                    inferWriteTool(userMessage)?.let { ToolChoice.force(it) } ?: ToolChoice.required
                 else -> ToolChoice.auto
             }
             // `tool_choice` impone il NOME dello strumento, non i suoi argomenti:
@@ -567,6 +636,67 @@ class CoachOrchestrator @Inject constructor(
         raw?.let { runCatching { json.parseToJsonElement(it) as? JsonObject }.getOrNull() }
 
     /**
+     * True se il testo annuncia un'azione imminente invece di compierla.
+     *
+     * Il caso reale: il modello legge i dati e chiude il turno con "Ho trovato le
+     * patate... " oppure "ora devo applicare questa tecnica", senza chiamare lo
+     * strumento. L'utente legge che la modifica sta arrivando e non trova nulla.
+     * Si cercano solo formule di intento esplicito e si escludono le frasi che
+     * negano un'azione, per non sollecitare risposte legittime (domande, rifiuti,
+     * spiegazioni).
+     */
+    /**
+     * True se il messaggio dell'utente chiede di cambiare qualcosa. E' il segnale
+     * piu' affidabile: con una richiesta di modifica e nessuna proposta creata il
+     * turno e' incompleto, qualunque cosa abbia scritto il modello.
+     */
+    private fun userAsksForChange(message: String): Boolean {
+        val lower = message.lowercase(Locale.ROOT)
+        return CHANGE_REQUEST.containsMatchIn(lower)
+    }
+
+    /**
+     * Strumento di scrittura corrispondente alla richiesta, dedotto dalle parole
+     * dell'utente. Null se la richiesta e' ambigua: in quel caso non si forza un
+     * nome preciso, perche' sbagliarlo produce una proposta senza senso.
+     */
+    private fun inferWriteTool(message: String): String? {
+        val m = message.lowercase(Locale.ROOT)
+        fun has(vararg keys: String) = keys.any { m.contains(it) }
+        return when {
+            has("esercizio", "panca", "squat", "curl", "lat machine", "stacco", "trazion") &&
+                has("sostituisc", "sostitui", "cambia", "al posto di", "invece di", "non ho", "non posso fare") ->
+                "propose_exercise_substitution"
+            has("riso", "pollo", "pasta", "patate", "pasto", "alimento", "colazione", "pranzo", "cena", "spuntino", "mangia") &&
+                has("sostituisc", "sostitui", "cambia", "togli", "metti", "al posto di", "invece di", "non ho") ->
+                "propose_food_substitution"
+            has("deload", "scarico", "stanc", "affaticat", "recupero") -> "propose_deload"
+            has("volume", "serie") -> "propose_volume_adjustment"
+            has("calorie", "kcal", "deficit", "surplus") -> "propose_calorie_adjustment"
+            has("drop set", "dropset", "rest pause", "superserie", "tecnica", "intensita", "intensità") ->
+                "propose_intensity_technique"
+            has("sposta", "spostare", "giorno") && has("allenamento", "seduta", "scheda") ->
+                "propose_move_workout"
+            has("rigenera", "rifai", "nuovo programma", "da capo") -> "propose_regenerate_plan"
+            else -> null
+        }
+    }
+
+    /** Il modello ha risposto con una domanda o un diniego: e' una risposta valida. */
+    private fun asksForInformation(text: String): Boolean =
+        text.lowercase(Locale.ROOT).let { it.contains("?") || NEGATED_ACTION.containsMatchIn(it) }
+
+    private fun announcesActionWithoutActing(text: String): Boolean {
+        if (text.isBlank()) return false
+        val lower = text.lowercase(Locale.ROOT)
+        // Una domanda al modello all'utente e' una risposta valida: non sollecitare.
+        if (lower.trimEnd().endsWith("?")) return false
+        // "non ho modificato nulla" / "non posso" sono risposte corrette.
+        if (NEGATED_ACTION.containsMatchIn(lower)) return false
+        return ACTION_INTENT.containsMatchIn(lower)
+    }
+
+    /**
      * True se l'output di uno strumento riporta `ok=true`. Uno strumento di
      * consegna che risponde `ok=false` NON conta come consegna riuscita: la
      * proposta e stata respinta e il modello deve correggersi.
@@ -619,6 +749,51 @@ class CoachOrchestrator @Inject constructor(
 
     companion object {
         const val MAX_ITERATIONS = 6
+
+        /**
+         * Quante volte insistere perche' il modello AGISCA invece di scrivere un
+         * tema. Oltre, si restituisce il testo: meglio una risposta imperfetta che
+         * un turno che consuma tutte le iterazioni senza mai rispondere.
+         */
+        const val MAX_ACTION_NUDGES = 2
+
+        /**
+         * Formule con cui il modello annuncia un'azione invece di compierla.
+         * Volutamente strette: solo intento operativo esplicito.
+         */
+        private val ACTION_INTENT = Regex(
+            "(ora (devo|procedo|applico|registro|effettuo|sposto|sostituisco)" +
+                "|devo (ora )?(applicare|registrare|procedere|effettuare|spostare|sostituire)" +
+                "|procedo (con|ad|a) (applicare|registrare|la|il|lo)" +
+                "|applico (ora|subito)" +
+                "|(registro|inserisco|sposto|sostituisco) (ora|subito)" +
+                "|ecco (la|il) (proposta|modifica|sostituzione)" +
+                "|ho (trovato|individuato|selezionato) .{0,80}(ora|procedo|applico|sostituisco)" +
+                "|ecco come (procedo|faccio)|procedo con la (modifica|sostituzione))"
+        )
+
+        /** Verbi con cui l'utente chiede una modifica concreta al programma. */
+        private val CHANGE_REQUEST = Regex(
+            "\\b(sostituisc\\w*|sostitui\\w*|togli\\w*|togliere|metti\\w*|mettere" +
+                "|cambia\\w*|cambiare|sposta\\w*|spostare" +
+                "|aggiungi\\w*|aggiungere|inserisci\\w*|inserire" +
+                "|elimina\\w*|eliminare|rimuovi\\w*|rimuovere" +
+                "|riduci\\w*|ridurre|aumenta\\w*|aumentare" +
+                "|modifica\\w*|modificare|programma\\w*|programmare" +
+                "|applica\\w*|applicare|ricalcola\\w*|ricalcolare" +
+                "|diminuisci\\w*|diminuire" +
+                "|non ho|al posto di|invece di|scambia\\w*|scambiare|sostituzione)\\b"
+        )
+
+        /** Frasi che negano un'azione: sono risposte corrette, non vanno sollecitate. */
+        private val NEGATED_ACTION = Regex(
+            "(non ho (modificato|applicato|registrato|trovato|proposto)" +
+                "|non (posso|riesco|e possibile|ho la possibilit)" +
+                "|nessuna (modifica|proposta|sostituzione)" +
+                "|non c'e (nessuna|alcuna)|non esiste|non sono (riuscito|in grado)" +
+                "|dimmi|puoi (dirmi|indicarmi|specificare)|mi serve (sapere|un altra)" +
+                "|quale (giorno|esercizio|pasto)|a quale giorno|precisare)"
+        )
 
         /**
          * Frasi con cui il modello dichiara una modifica gia' avvenuta o in corso
