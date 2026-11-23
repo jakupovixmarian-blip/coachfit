@@ -165,13 +165,13 @@ object FoodSeedData {
             subs = listOf("Pomodori pelati")),
         f("Insalata lattuga", "Verdura", 19.0, 1.4, 2.9, 0.3, SRC_CREA,
             subs = listOf("Rucola")),
-        f("Rucola", "Verdura", 25.0, 2.6, 3.7, 0.7, SRC_CREA,
+        f("Rucola", "Verdura", 25.0, 2.6, 2.1, 0.7, SRC_CREA,
             subs = listOf("Insalata lattuga")),
         f("Peperoni", "Verdura", 26.0, 1.0, 5.0, 0.3, SRC_CREA,
             subs = listOf("Pomodori")),
         f("Carote", "Verdura", 41.0, 0.9, 9.6, 0.2, SRC_CREA,
             subs = listOf("Zucchine")),
-        f("Funghi champignon", "Verdura", 22.0, 3.1, 3.3, 0.3, SRC_CREA,
+        f("Funghi champignon", "Verdura", 22.0, 3.1, 2.3, 0.3, SRC_CREA,
             subs = listOf("Zucchine")),
         f("Fagiolini", "Verdura", 31.0, 1.8, 7.0, 0.2, SRC_CREA,
             subs = listOf("Broccoli")),
@@ -339,7 +339,7 @@ object FoodSeedData {
             subs = listOf("Pomodori")),
         f("Piselli (freschi)", "Verdura", 81.0, 5.4, 14.0, 0.4, SRC_CREA,
             subs = listOf("Fagiolini")),
-        f("Asparagi", "Verdura", 20.0, 2.2, 3.9, 0.1, SRC_CREA,
+        f("Asparagi", "Verdura", 20.0, 2.2, 1.8, 0.1, SRC_CREA,
             subs = listOf("Fagiolini")),
         f("Radicchio", "Verdura", 23.0, 1.4, 4.5, 0.2, SRC_CREA,
             subs = listOf("Insalata lattuga")),
@@ -394,7 +394,100 @@ object FoodSeedData {
         f("Cioccolato fondente 85%", "Dolci", 598.0, 10.0, 22.0, 50.0, SRC_USDA,
             subs = listOf("Cioccolato fondente 70%")),
         f("Cioccolato fondente 70%", "Dolci", 546.0, 7.8, 45.9, 31.0, SRC_USDA,
-            subs = listOf("Cioccolato fondente 85%"))
+            subs = listOf("Cioccolato fondente 85%")),
+
+        // ---------- Ampliamento catalogo ----------
+        // Voci aggiunte per colmare lacune reali del catalogo italiano: mancavano
+        // ortaggi di uso quotidiano (cipolla, porri, cavoli), frutta comune
+        // (ciliegie, mango, melagrana) e diversi tagli di carne e pesce.
+        //
+        // Valori per 100 g di parte edibile da USDA FoodData Central (SR Legacy);
+        // la dicitura originale della fonte e' nel commento per verifica.
+        // Dove la fibra e' inclusa nei carboidrati della fonte, i carboidrati
+        // sono riportati al netto: il calcolo 4/4/9 resta cosi coerente con le
+        // kcal dichiarate entro il 20%, la stessa tolleranza usata dalla
+        // validazione dei piani generati.
+        f("Cipolla", "Verdura", 40.0, 1.1, 9.3, 0.1, SRC_USDA, fiber = 1.7), // Onions, raw
+        f("Cipollotto", "Verdura", 32.0, 1.8, 7.3, 0.2, SRC_USDA, fiber = 2.6), // Onions, spring or scallions (includes tops and
+        f("Aglio", "Verdura", 149.0, 6.4, 33.1, 0.5, SRC_USDA, fiber = 2.1), // Garlic, raw
+        f("Carciofi", "Verdura", 47.0, 3.3, 10.5, 0.1, SRC_USDA, fiber = 5.4), // Artichokes, (globe or french), raw
+        f("Barbabietole", "Verdura", 43.0, 1.6, 9.6, 0.2, SRC_USDA, fiber = 2.8), // Beets, raw
+        f("Cavolo bianco", "Verdura", 25.0, 1.3, 5.8, 0.1, SRC_USDA, fiber = 2.5), // Cabbage, raw
+        f("Cavolo rosso", "Verdura", 31.0, 1.4, 7.4, 0.2, SRC_USDA, fiber = 2.1), // Cabbage, red, raw
+        f("Cavolini di Bruxelles", "Verdura", 43.0, 3.4, 5.1, 0.3, SRC_USDA, fiber = 3.8), // Brussels sprouts, raw
+        f("Indivia", "Verdura", 17.0, 1.2, 3.4, 0.2, SRC_USDA, fiber = 3.1), // Endive, raw
+        f("Lattuga", "Verdura", 14.0, 0.9, 3.0, 0.1, SRC_USDA, fiber = 1.2), // Lettuce, iceberg (includes crisphead types), r
+        f("Rape", "Verdura", 28.0, 0.9, 6.4, 0.1, SRC_USDA, fiber = 1.8), // Turnips, raw
+        f("Ravanelli", "Verdura", 16.0, 0.7, 3.4, 0.1, SRC_USDA, fiber = 1.6), // Radishes, raw
+        f("Prezzemolo", "Verdura", 36.0, 3.0, 3.0, 0.8, SRC_USDA, fiber = 3.3), // Parsley, fresh
+        f("Basilico", "Verdura", 23.0, 3.1, 1.0, 0.6, SRC_USDA, fiber = 1.6), // Basil, fresh
+        f("Erba cipollina", "Verdura", 30.0, 3.3, 1.8, 0.7, SRC_USDA, fiber = 2.5), // Chives, raw
+        f("Taccole", "Verdura", 42.0, 2.8, 7.5, 0.2, SRC_USDA, fiber = 2.6), // Peas, edible-podded, raw
+        f("Funghi pleurotus", "Verdura", 33.0, 3.3, 3.8, 0.4, SRC_USDA, fiber = 2.3), // Mushrooms, oyster, raw
+        f("Zucca butternut", "Verdura", 45.0, 1.0, 11.7, 0.1, SRC_USDA, fiber = 2.0), // Squash, winter, butternut, raw
+        f("Pomodorini", "Verdura", 18.0, 0.9, 3.9, 0.2, SRC_USDA, fiber = 1.2), // Tomatoes, red, ripe, raw, year round average
+        f("Germogli di soia", "Verdura", 30.0, 3.0, 4.1, 0.2, SRC_USDA, fiber = 1.8), // Mung beans, mature seeds, sprouted, raw
+        f("Mais dolce", "Verdura", 86.0, 3.3, 18.7, 1.4, SRC_USDA, fiber = 2.0), // Corn, sweet, yellow, raw
+        f("Peperoncino", "Verdura", 40.0, 1.9, 8.8, 0.4, SRC_USDA, fiber = 1.5), // Peppers, hot chili, red, raw
+        f("Sedano rapa", "Verdura", 42.0, 1.5, 9.2, 0.3, SRC_USDA, fiber = 1.8), // Celeriac, raw
+        f("Ciliegie", "Frutta", 63.0, 1.1, 16.0, 0.2, SRC_USDA, fiber = 2.1), // Cherries, sweet, raw
+        f("More", "Frutta", 43.0, 1.4, 9.6, 0.5, SRC_USDA, fiber = 5.3), // Blackberries, raw
+        f("Ribes", "Frutta", 63.0, 1.4, 15.4, 0.4, SRC_USDA), // Currants, european black, raw
+        f("Prugne fresche", "Frutta", 46.0, 0.7, 11.4, 0.3, SRC_USDA, fiber = 1.4), // Plums, raw
+        f("Nettarine", "Frutta", 44.0, 1.1, 10.6, 0.3, SRC_USDA, fiber = 1.7), // Nectarines, raw
+        f("Fichi freschi", "Frutta", 74.0, 0.8, 19.2, 0.3, SRC_USDA, fiber = 2.9), // Figs, raw
+        f("Cocomero", "Frutta", 30.0, 0.6, 7.5, 0.1, SRC_USDA, fiber = 0.4), // Watermelon, raw
+        f("Mango", "Frutta", 60.0, 0.8, 15.0, 0.4, SRC_USDA, fiber = 1.6), // Mangos, raw
+        f("Melagrana", "Frutta", 83.0, 1.7, 18.7, 1.2, SRC_USDA, fiber = 4.0), // Pomegranates, raw
+        f("Limoni", "Frutta", 29.0, 1.1, 6.5, 0.3, SRC_USDA, fiber = 2.8), // Lemons, raw, without peel
+        f("Uvetta", "Frutta secca", 299.0, 3.3, 79.3, 0.2, SRC_USDA, fiber = 4.5), // Raisins, dark, seedless (Includes foods for US
+        f("Prugne secche", "Frutta secca", 240.0, 2.2, 63.9, 0.4, SRC_USDA, fiber = 7.1), // Plums, dried (prunes), uncooked
+        f("Noci pecan", "Frutta secca", 691.0, 9.2, 13.9, 72.0, SRC_USDA, fiber = 9.6), // Nuts, pecans
+        f("Noci macadamia", "Frutta secca", 718.0, 7.9, 13.8, 75.8, SRC_USDA, fiber = 8.6), // Nuts, macadamia nuts, raw
+        f("Semi di sesamo", "Frutta secca", 573.0, 17.7, 23.4, 49.7, SRC_USDA, fiber = 11.8), // Seeds, sesame seeds, whole, dried
+        f("Riso parboiled", "Cereali", 374.0, 7.5, 80.9, 1.0, SRC_USDA, fiber = 1.8), // Rice, white, long-grain, parboiled, unenriched
+        f("Farina di frumento (tipo 00)", "Cereali", 364.0, 10.3, 76.3, 1.0, SRC_USDA, fiber = 2.7), // Wheat flour, white, all-purpose, enriched, ble
+        f("Grano saraceno", "Cereali", 343.0, 13.2, 71.5, 3.4, SRC_USDA, fiber = 10.0), // Buckwheat
+        f("Miglio", "Cereali", 378.0, 11.0, 72.8, 4.2, SRC_USDA, fiber = 8.5), // Millet, raw
+        f("Amaranto", "Cereali", 371.0, 13.6, 65.2, 7.0, SRC_USDA, fiber = 6.7), // Amaranth grain, uncooked
+        f("Pane azzimo", "Cereali", 275.0, 9.1, 55.7, 1.2, SRC_USDA, fiber = 2.2), // Bread, pita, white, unenriched
+        f("Crusca d'avena", "Cereali", 379.0, 13.2, 67.7, 6.5, SRC_USDA, fiber = 10.1), // Cereals, oats, regular and quick, not fortifie
+        f("Germe di grano", "Cereali", 360.0, 23.1, 51.8, 9.7, SRC_USDA, fiber = 13.2), // Wheat germ, crude
+        f("Fagioli neri", "Legumi", 341.0, 21.6, 62.4, 1.4, SRC_USDA, fiber = 15.5), // Beans, black, mature seeds, raw
+        f("Fagioli rossi", "Legumi", 337.0, 22.5, 61.3, 1.1, SRC_USDA, fiber = 15.2), // Beans, kidney, red, mature seeds, raw
+        f("Fagioli azuki", "Legumi", 329.0, 19.9, 62.9, 0.5, SRC_USDA, fiber = 12.7), // Beans, adzuki, mature seeds, raw
+        f("Soia secca", "Legumi", 446.0, 36.5, 30.2, 19.9, SRC_USDA, fiber = 9.3), // Soybeans, mature seeds, raw
+        f("Lupini", "Legumi", 371.0, 36.2, 40.4, 9.7, SRC_USDA, fiber = 18.9), // Lupins, mature seeds, raw
+        f("Coniglio", "Carne", 136.0, 20.1, 0.0, 5.5, SRC_USDA), // Game meat, rabbit, domesticated, composite of 
+        f("Anatra", "Carne", 135.0, 18.3, 0.9, 6.0, SRC_USDA), // Duck, domesticated, meat only, raw
+        f("Petto di anatra", "Carne", 140.0, 27.6, 0.0, 2.5, SRC_USDA), // Duck, young duckling, domesticated, White Peki
+        f("Fegato di vitello", "Carne", 140.0, 19.9, 2.9, 4.8, SRC_USDA), // Veal, variety meats and by-products, liver, ra
+        f("Aringa", "Pesce", 158.0, 18.0, 0.0, 9.0, SRC_USDA), // Fish, herring, Atlantic, raw
+        f("Salmone affumicato", "Pesce", 117.0, 18.3, 0.0, 4.3, SRC_USDA), // Fish, salmon, chinook, smoked
+        f("Cernia", "Pesce", 92.0, 19.4, 0.0, 1.0, SRC_USDA), // Fish, grouper, mixed species, raw
+        f("Triglia", "Pesce", 117.0, 19.4, 0.0, 3.8, SRC_USDA), // Fish, mullet, striped, raw
+        f("Rana pescatrice", "Pesce", 76.0, 14.5, 0.0, 1.5, SRC_USDA), // Fish, monkfish, raw
+        f("Ippoglosso", "Pesce", 186.0, 14.4, 0.0, 13.8, SRC_USDA), // Fish, halibut, Greenland, raw
+        f("Scampi", "Pesce", 77.0, 16.5, 0.0, 0.8, SRC_USDA), // Crustaceans, lobster, northern, raw
+        f("Uovo sodo", "Uova", 155.0, 12.6, 1.1, 10.6, SRC_USDA), // Egg, whole, cooked, hard-boiled
+        f("Panna fresca", "Latticini", 340.0, 2.8, 2.8, 36.1, SRC_USDA), // Cream, fluid, heavy whipping
+        f("Kefir", "Latticini", 43.0, 3.8, 4.8, 1.0, SRC_USDA), // Kefir, lowfat, plain, LIFEWAY
+        f("Latte di capra", "Latticini", 69.0, 3.6, 4.5, 4.1, SRC_USDA), // Milk, goat, fluid, with added vitamin D
+        f("Fontina", "Latticini", 389.0, 25.6, 1.6, 31.1, SRC_USDA), // Cheese, fontina
+        f("Pecorino romano", "Latticini", 387.0, 31.8, 3.6, 26.9, SRC_USDA), // Cheese, romano
+        f("Grana padano", "Latticini", 420.0, 28.4, 13.9, 27.8, SRC_USDA), // Cheese, parmesan, grated
+        f("Gorgonzola", "Latticini", 353.0, 21.4, 2.3, 28.7, SRC_USDA), // Cheese, blue
+        f("Mortadella", "Salumi", 311.0, 16.4, 3.0, 25.4, SRC_USDA), // Mortadella, beef, pork
+        f("Salame", "Salumi", 336.0, 21.9, 2.4, 25.9, SRC_USDA), // Salami, cooked, beef and pork
+        f("Pancetta", "Salumi", 393.0, 13.7, 0.0, 37.1, SRC_USDA), // Pork, cured, bacon, unprepared
+        f("Salsiccia di suino", "Salumi", 396.0, 13.8, 2.7, 36.2, SRC_USDA), // Sausage, pork and beef, fresh, cooked
+        f("Olio di arachidi", "Grassi", 884.0, 0.0, 0.0, 100.0, SRC_USDA), // Oil, peanut, salad or cooking
+        f("Strutto", "Grassi", 902.0, 0.0, 0.0, 100.0, SRC_USDA), // Lard
+        f("Margarina", "Grassi", 717.0, 0.2, 0.7, 80.7, SRC_USDA), // Margarine, regular, 80% fat, composite, stick,
+        f("Porri", "Verdura", 61.0, 1.5, 14.2, 0.3, SRC_USDA, fiber = 1.8), // Leeks, raw
+        f("Farina integrale", "Cereali", 340.0, 13.2, 72.0, 2.5, SRC_USDA, fiber = 10.7), // Wheat flour, whole-grain
+        f("Agnello", "Carne", 126.0, 20.0, 0.0, 4.7, SRC_USDA), // Lamb, domestic, leg, lean only, raw
+        f("Topinambur", "Tuberi", 73.0, 2.0, 17.4, 0.0, SRC_USDA, fiber = 1.6), // Jerusalem-artichokes, raw
     )
 
 

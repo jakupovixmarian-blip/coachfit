@@ -88,9 +88,10 @@ class FoodCatalogCollaudoTest {
         // Nessun alimento da ristorazione o fast food.
         assertThat(selected.map { it.category }).doesNotContain("Ristorazione")
         assertThat(selected.map { it.category }).doesNotContain("Fast food")
-        // La maggior parte sono alimenti italiani riconoscibili (fonte CREA).
-        val italian = selected.count { it.source.startsWith("CREA") }
-        assertThat(italian.toDouble() / selected.size).isAtLeast(0.8)
+        // Tutti gli alimenti hanno nome italiano: le voci USDA dell'import
+        // globale sono escluse dalla generazione (vedi FoodCatalogSelector).
+        val italianNamed = selected.count { !it.source.startsWith("USDA FoodData Central (SR Legacy)") }
+        assertThat(italianNamed).isEqualTo(selected.size)
         // Il pollo italiano e presente; il nome brandizzato americano no.
         assertThat(selected.map { it.name }).contains("Petto di pollo")
         assertThat(selected.map { it.name }).doesNotContain("APPLEBEE'S, french fries")

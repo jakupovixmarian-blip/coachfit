@@ -76,14 +76,34 @@ object CatalogNameResolver {
 
         // 3. Le parole scritte compaiono tutte nel nome del catalogo, o viceversa:
         //    "uova intere" dentro "uovo intero di gallina", "riso" dentro "riso
-        //    bianco (crudo)". Vince il nome più corto, cioè il meno qualificato.
+        //    bianco (crudo)".
+        //
+        //    A parita' di corrispondenza vince il nome la cui PRIMA parola
+        //    significativa coincide con la prima parola cercata: senza questo
+        //    criterio vinceva il nome piu' corto, e "Riso" finiva su "Gallette di
+        //    riso" (2 parole) invece che su "Riso bianco (crudo)" (3), "Uova" su
+        //    "Albume d'uovo" invece che su "Uovo intero di gallina". Sono
+        //    alimenti diversi: sbagliare cambia calorie e macro del piano.
+        val qHead3 = qWords.first()
         items
-            .map { it to significantWords(singularize(FoodItem.normalizeName(name(it)))) }
-            .filter { (_, cWords) ->
+            .map {
+                Triple(
+                    it,
+                    significantWords(singularize(FoodItem.normalizeName(name(it)))),
+                    FoodItem.normalizeName(name(it)).length
+                )
+            }
+            .filter { (_, cWords, _) ->
                 cWords.isNotEmpty() &&
                     (cWords.containsAll(qWords) || qWords.containsAll(cWords))
             }
-            .minWithOrNull(compareBy({ it.second.size }, { FoodItem.normalizeName(name(it.first)).length }))
+            .minWithOrNull(
+                compareBy(
+                    { (_, cWords, _) -> if (cWords.first() == qHead3) 0 else 1 },
+                    { (_, cWords, _) -> cWords.size },
+                    { (_, _, len) -> len }
+                )
+            )
             ?.let { return it.first }
 
         // 4. Stessa testa (ultima parola significativa): "tagliata di manzo" e
@@ -152,6 +172,8 @@ object CatalogNameResolver {
         "chicken breast" to "petto di pollo",
         "salmon" to "salmone",
         "tuna" to "tonno in scatola al naturale",
+        "uova" to "uovo intero di gallina",
+        "uovo" to "uovo intero di gallina",
         "whole eggs" to "uovo intero di gallina",
         "eggs" to "uovo intero di gallina",
         "egg whites" to "albume d uovo",
@@ -162,6 +184,11 @@ object CatalogNameResolver {
         "grana" to "grana padano",
         "parmigiano" to "grana padano",
         "yogurt" to "yogurt greco",
+        "riso" to "riso bianco",
+        "pasta" to "pasta di semola",
+        "pane" to "pane bianco",
+        "farina" to "farina di frumento",
+        "olio" to "olio extravergine d oliva",
         "fagioli" to "fagioli borlotti",
         "lenticchie" to "lenticchie secche",
     )
