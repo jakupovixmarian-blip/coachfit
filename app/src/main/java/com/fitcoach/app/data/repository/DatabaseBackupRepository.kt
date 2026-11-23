@@ -2,12 +2,14 @@ package com.fitcoach.app.data.repository
 
 import android.content.Context
 import android.net.Uri
+import android.database.sqlite.SQLiteDatabase
 import com.fitcoach.app.data.local.FitCoachDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,18 +29,71 @@ class DatabaseBackupRepository @Inject constructor(
         target
     }
 
+    /**
+     * Il ripristino e' l'unica operazione irreversibile dell'app: sovrascrive il
+     * database e poi riavvia. Se il file scelto non e' un database FitCoach,
+     * i dati originali sono gia' chiusi e persi. Per questo il file viene
+     * copiato in un'area temporanea e VALIDATO prima di toccare l'originale:
+     * la chiusura del database avviene solo a validazione superata.
+     */
     suspend fun restoreBackup(uri: Uri) = withContext(Dispatchers.IO) {
         val target = context.getDatabasePath(FitCoachDatabase.DB_NAME)
         val temp = File(context.cacheDir, "restore_${System.currentTimeMillis()}.db")
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            temp.outputStream().use { output -> input.copyTo(output) }
-        } ?: throw IOException("Impossibile leggere il file di backup.")
+        try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                temp.outputStream().use { output -> input.copyTo(output) }
+            } ?: throw IOException("Impossibile leggere il file di backup.")
 
-        database.close()
-        temp.copyTo(target, overwrite = true)
-        File(target.path + "-wal").delete()
-        File(target.path + "-shm").delete()
-        temp.delete()
+            validateBackupFile(temp)
+
+            database.close()
+            temp.copyTo(target, overwrite = true)
+            File(target.path + "-wal").delete()
+            File(target.path + "-shm").delete()
+        } finally {
+            temp.delete()
+        }
+    }
+
+    /**
+     * Un backup accettabile deve essere un database SQLite leggibile e deve
+     * contenere le tabelle di FitCoach. Il solo magic number non basta: un
+     * file troncato lo conserva ma non e' interrogabile.
+     */
+    private fun validateBackupFile(file: File) {
+        if (file.length() < 100) {
+            throw IOException("Il file scelto non e' un backup valido (troppo piccolo).")
+        }
+        val magic = file.inputStream().use { input ->
+            val buffer = ByteArray(16)
+            val letti = input.read(buffer)
+            if (letti < 16) ByteArray(0) else buffer
+        }
+        val atteso = "SQLite format 3".toByteArray(StandardCharsets.US_ASCII)
+        if (!magic.copyOfRange(0, 15).contentEquals(atteso)) {
+            throw IOException("Il file scelto non e' un database FitCoach.")
+        }
+
+        val sonda = SQLiteDatabase.openDatabase(
+            file.path, null, SQLiteDatabase.OPEN_READONLY
+        )
+        try {
+            val tabelle = mutableSetOf<String>()
+            sonda.rawQuery(
+                "SELECT name FROM sqlite_master WHERE type='table'", null
+            ).use { cursor ->
+                while (cursor.moveToNext()) tabelle.add(cursor.getString(0))
+            }
+            val richieste = listOf("user_profile", "weight_records")
+            val mancanti = richieste.filterNot { tabelle.contains(it) }
+            if (mancanti.isNotEmpty()) {
+                throw IOException(
+                    "Il file non e' un backup FitCoach: mancano le tabelle ${mancanti.joinToString(", ")}."
+                )
+            }
+        } finally {
+            sonda.close()
+        }
     }
 
     private fun checkpointWal() {
