@@ -10,7 +10,17 @@ import kotlinx.serialization.json.Json
  */
 object CoachActionParser {
 
-    private val json = Json { ignoreUnknownKeys = true; isLenient = true }
+    /**
+     * `coerceInputValues` trasforma un `null` in un campo non nullable nel
+     * valore di default. Senza, un solo `"title": null` scritto dal modello
+     * faceva fallire il decode dell'intero oggetto: la proposta spariva e
+     * l'utente vedeva solo il testo, senza poter confermare nulla.
+     */
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        coerceInputValues = true
+    }
 
     fun parse(raw: String): CoachReply {
         val block = extractJsonBlock(raw) ?: return CoachReply(text = raw.trim())
@@ -24,9 +34,11 @@ object CoachActionParser {
         )
     }
 
+    private val FENCED =
+        Regex("```(?:json)?\\s*(\\{.*?\\})\\s*```", RegexOption.DOT_MATCHES_ALL)
+
     private fun extractJsonBlock(raw: String): String? {
-        val fence = Regex("```(?:json)?\\s*(\\{.*?\\})\\s*```", RegexOption.DOT_MATCHES_ALL)
-        fence.find(raw)?.let { return it.groupValues[1] }
+        FENCED.find(raw)?.let { return it.groupValues[1] }
         // Fallback: primo oggetto JSON bilanciato che contiene "action".
         val start = raw.indexOf('{')
         while (start >= 0) {
@@ -61,10 +73,29 @@ object CoachActionParser {
         return -1
     }
 
-    /** Rimuove il blocco JSON dalla risposta mostrata all'utente. */
+    /**
+     * Rimuove dalla risposta mostrata all'utente sia i blocchi in code fence sia
+     * gli oggetti JSON isolati. Prima venivano tolti solo i blocchi con fence:
+     * quando il modello scriveva il JSON senza backtick, l'utente si trovava
+     * `{"action": "DELOAD"}` in mezzo alla frase.
+     */
     private fun cleanText(raw: String): String {
-        val withoutFence = Regex("```(?:json)?\\s*\\{.*?\\}\\s*```", RegexOption.DOT_MATCHES_ALL)
-            .replace(raw, "")
-        return withoutFence.trim()
+        var out = FENCED.replace(raw, "")
+        var start = out.indexOf('{')
+        while (start >= 0) {
+            val end = matchingBrace(out, start)
+            if (end > start && out.substring(start, end + 1).contains("\"action\"")) {
+                out = out.removeRange(start, end + 1)
+                start = out.indexOf('{')
+            } else {
+                val next = out.indexOf('{', start + 1)
+                if (next <= start) break
+                start = next
+            }
+        }
+        return out
+            .replace(Regex("\\s+"), " ")
+            .replace(Regex("\\s+([.,;:!?])"), "$1")
+            .trim()
     }
 }

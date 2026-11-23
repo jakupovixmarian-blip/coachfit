@@ -135,8 +135,23 @@ class ProfileEditViewModel @Inject constructor(
     fun save() {
         viewModelScope.launch {
             val current = _state.value.profile ?: return@launch
-            val newWeight = _state.value.weightKg.replace(',', '.').toDoubleOrNull()
+            // Gli stessi limiti dell'onboarding: una modifica successiva non deve
+            // poter inserire misure che il primo inserimento rifiuterebbe.
+            val grezzo = _state.value.weightKg.replace(',', '.').toDoubleOrNull()
+            val newWeight = grezzo?.takeIf { it in 30.0..300.0 }
+            if (grezzo != null && newWeight == null) {
+                _state.value = _state.value.copy(
+                    message = "Peso fuori intervallo (30-300 kg): non salvato."
+                )
+                return@launch
+            }
             val newBf = _state.value.bodyFat.replace(',', '.').toDoubleOrNull()?.takeIf { it in 1.0..70.0 }
+            if (current.trainingDaysPerWeek !in 2..6) {
+                _state.value = _state.value.copy(
+                    message = "Servono da 2 a 6 giorni di allenamento a settimana."
+                )
+                return@launch
+            }
             val updated = current.copy(
                 weightKg = newWeight ?: current.weightKg,
                 bodyFatPercent = newBf ?: current.bodyFatPercent,

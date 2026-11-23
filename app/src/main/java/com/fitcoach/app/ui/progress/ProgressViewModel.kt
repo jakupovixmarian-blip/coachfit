@@ -225,6 +225,14 @@ class ProgressViewModel @Inject constructor(
 
 
     fun addPhoto(uri: String) {
+        // Un URI remoto farebbe fallire il require() del repository dentro la
+        // coroutine: l'eccezione chiuderebbe l'app invece di mostrare un errore.
+        if (!uri.startsWith("content://") && !uri.startsWith("file://")) {
+            _state.value = _state.value.copy(
+                message = "La foto deve essere un file locale del dispositivo."
+            )
+            return
+        }
         viewModelScope.launch {
             photoRepository.add(uri, System.currentTimeMillis(), pose = "", note = "", consentForAi = false)
             _state.value = _state.value.copy(message = "Foto salvata solo sul dispositivo.")

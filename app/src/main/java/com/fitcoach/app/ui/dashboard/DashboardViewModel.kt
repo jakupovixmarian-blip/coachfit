@@ -160,6 +160,12 @@ class DashboardViewModel @Inject constructor(
     }
 
     fun logWeight(weightKg: Double) {
+        // Il dialog limita gia' l'input, ma il ViewModel e' chiamabile anche
+        // altrove: una pesata fuori scala falserebbe medie e trend.
+        if (weightKg !in 20.0..400.0) {
+            _events.value = "Inserisci un peso valido in kg."
+            return
+        }
         viewModelScope.launch {
             progressRepository.addWeight(
                 WeightRecord(dateEpochDay = LocalDate.now().toEpochDay(), weightKg = weightKg)

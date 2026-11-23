@@ -899,6 +899,35 @@ difetto sotto e' stato prima riprodotto con un test rosso, poi corretto.
    testo in una colonna numerica. Ora i valori non finiti diventano cella vuota
    nel CSV e `null` nel JSON.
 
+### Difetti trovati dall'audit avversariale (dashboard, profilo, dispositivi)
+
+1. `DashboardViewModel.logWeight` non validava il peso: il dialog limita a
+   20-400 kg, ma il ViewModel e' chiamabile da qualsiasi punto e una pesata a
+   zero falsa medie settimanali e trend. La validazione va nel ViewModel, non
+   solo nella UI.
+
+2. `ProfileEditViewModel.save()` non riapplicava i limiti dell'onboarding:
+   peso 900 kg e giorni di allenamento 0 entravano nel profilo e da li' nel
+   calcolo del TDEE e nella generazione della scheda. Ogni scrittura di misura
+   deve passare dagli stessi intervalli del primo inserimento (peso 30-300 kg,
+   giorni 2-6), altrimenti il "modifica profilo" e' una porta laterale.
+
+3. `ProgressViewModel.addPhoto` lasciava propagare l'`IllegalArgumentException`
+   di `ProgressPhotoRepository.add` (require su URI content://file://) dentro
+   `viewModelScope.launch`: eccezione non gestita, app chiusa. Un `require` in
+   un repository e' un contratto per il chiamante, quindi il chiamante deve
+   validare prima, oppure l'errore va convertito in messaggio.
+
+4. Il doppio `require` non basta: un ViewModel che lancia dentro
+   `viewModelScope.launch` senza `runCatching` chiude l'app anche quando
+   l'errore e' prevedibile. La regola generale e' validare l'input ai bordi.
+
+5. `FileProvider` in Robolectric funziona in isolamento ma nella stessa JVM
+   fallisce con "Failed to find configured root" dopo che altri test hanno
+   usato un `Context` diverso: la cache dei provider e' statica. Non e' un bug
+   dell'app. Nei test unitari verificare il contenuto prodotto
+   (`exportAllJson`, `exportWeightsCsv`), non la condivisione via `Intent`.
+
 ### Note pratiche sui test di questo progetto
 
 - I test che usano Room o `ApplicationProvider` devono avere
