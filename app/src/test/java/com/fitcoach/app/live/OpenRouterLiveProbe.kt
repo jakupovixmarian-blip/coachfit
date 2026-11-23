@@ -33,6 +33,7 @@ import com.fitcoach.app.domain.model.Sex
 import com.fitcoach.app.domain.model.TrainingExperience
 import com.fitcoach.app.domain.model.UserProfile
 import com.fitcoach.app.domain.nutrition.BreakfastConstraint
+import com.fitcoach.app.domain.nutrition.FoodFilter
 import com.fitcoach.app.domain.nutrition.FoodSeedData
 import com.fitcoach.app.domain.workout.ExerciseSeedData
 import kotlinx.coroutines.runBlocking
@@ -87,7 +88,7 @@ class OpenRouterLiveProbe {
         "sleepQuality" to "MEDIUM", "stressLevel" to "HIGH", "dailyEnergy" to "MEDIUM",
         "recoveryCapacity" to "MEDIUM", "mealsPerDay" to "5", "breakfastPreference" to "SWEET",
         "dietaryPreferences" to "MEDITERRANEAN", "likedFoods" to "Yogurt greco, Avena",
-        "dislikedFoods" to "Fegato", "allergies" to "Arachidi", "excludedFoods" to "Maiale",
+        "dislikedFoods" to "Fegato", "allergies" to "Arachidi, Lattosio, Glutine", "excludedFoods" to "Maiale",
         "cookingTimeAvailable" to "MEDIUM", "mealPrepPossible" to "true",
         "monthlyFoodBudgetEur" to "320", "budgetScope" to "PERSONAL_ONLY", "budgetPersons" to "1",
         "trainingStatus" to "CURRENTLY_TRAINING", "experience" to "INTERMEDIATE",
@@ -267,8 +268,24 @@ class OpenRouterLiveProbe {
             assertWithMessage("esercizi inesistenti nel catalogo")
                 .that(sessions.flatMap { it.exercises }.filter { it.exerciseId !in catalog }).isEmpty()
 
+            // 6. Il piano deve rispettare allergie ed esclusioni dell'anamnesi.
+            // Il filtro deterministico le applica al catalogo, ma il modello
+            // sceglie i nomi: questa e' l'unica verifica sul piano reale.
+            val servedNames = days.flatMap { it.meals }.flatMap { it.entries }.map { it.foodName }
+            val allergenTerms = profile.allergies + profile.excludedFoods
+            val violations = servedNames.filter { name ->
+                allergenTerms.any { term ->
+                    val food = foodRepo.getAll().firstOrNull { it.name == name }
+                    food != null && !FoodFilter.isAllowed(food, profile)
+                }
+            }
+            assertWithMessage(
+                "alimenti vietati dal profilo (allergie=${profile.allergies}, " +
+                    "esclusi=${profile.excludedFoods}) finiti nel piano: $violations"
+            ).that(violations).isEmpty()
+
             println("=== COERENZA VERIFICATA: 7 giorni, ${sessions.size} sedute, " +
-                "dirette=$direct")
+                "dirette=$direct, alimenti vietati=$violations")
         } finally {
             db.close()
         }

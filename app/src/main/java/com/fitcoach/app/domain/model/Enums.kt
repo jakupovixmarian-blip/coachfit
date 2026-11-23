@@ -88,7 +88,28 @@ enum class IntensityTechnique(val label: String) {
             if (normalized.isNullOrEmpty()) return null
             entries.firstOrNull { it.name == normalized }?.let { return it }
             val compact = normalized.replace("_", "")
-            return entries.firstOrNull { it.name.replace("_", "") == compact }
+            entries.firstOrNull { it.name.replace("_", "") == compact }?.let { return it }
+            // Un refuso del modello ("SUPERSER") faceva fallire l'intera
+            // generazione. Oltre una certa distanza il valore resta sconosciuto:
+            // "FAILURE" non deve diventare "NONE" solo perche' e' corto.
+            val closest = entries.minByOrNull { editDistance(it.name, normalized) } ?: return null
+            val distance = editDistance(closest.name, normalized)
+            val allowed = if (normalized.length <= 6) 1 else 2
+            return closest.takeIf { distance <= allowed }
+        }
+
+        private fun editDistance(a: String, b: String): Int {
+            val previous = IntArray(b.length + 1) { it }
+            val current = IntArray(b.length + 1)
+            for (i in 1..a.length) {
+                current[0] = i
+                for (j in 1..b.length) {
+                    val cost = if (a[i - 1] == b[j - 1]) 0 else 1
+                    current[j] = minOf(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + cost)
+                }
+                previous.indices.forEach { previous[it] = current[it] }
+            }
+            return previous[b.length]
         }
     }
 }

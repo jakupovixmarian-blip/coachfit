@@ -30,6 +30,55 @@ object FoodFilter {
     private val dairyCategories = setOf("Latticini")
 
     /**
+     * L'utente scrive l'allergene, non l'alimento: "lattosio", "glutine",
+     * "frutta a guscio". Il confronto per sottostringa non trova nulla, perche'
+     * nessun alimento si chiama cosi', e l'allergia veniva ignorata: un utente
+     * allergico al lattosio riceveva comunque latte e yogurt nel piano.
+     * Ogni voce elenca cio' che quell'allergene rende vietato.
+     */
+    private val allergenRules: List<Pair<List<String>, (FoodItem) -> Boolean>> = listOf(
+        listOf("lattosio", "latte", "latticini", "dairy") to { food ->
+            food.category == "Latticini" ||
+                listOf("latte", "yogurt", "ricotta", "cottage", "formaggio", "parmigian", "grana")
+                    .any { food.name.contains(it, true) }
+        },
+        listOf("glutine", "celiac", "grano", "frumento") to { food ->
+            glutenFoods.contains(food.name) ||
+                listOf("pasta", "pane", "farina", "cous cous", "seitan", "orzo", "farro",
+                    "crackers", "fette biscottate", "piadina", "gnocchi", "polenta", "muesli",
+                    "cornflakes", "crusca", "germe di grano", "biscott")
+                    .any { food.name.contains(it, true) }
+        },
+        listOf("uovo", "uova", "ovoalbumin") to { food ->
+            food.category == "Uova" || food.name.contains("uovo", true) || food.name.contains("albume", true)
+        },
+        listOf("frutta a guscio", "frutta secca", "nuts", "nocciole") to { food ->
+            listOf("mandorl", "nocciol", "noci", "anacardi", "arachidi", "pistacch", "pecan", "macadamia")
+                .any { food.name.contains(it, true) }
+        },
+        listOf("pesce", "ittico") to { food -> food.category == "Pesce" },
+        listOf("crostacei", "molluschi", "frutti di mare") to { food ->
+            food.category in setOf("Crostacei", "Molluschi") ||
+                listOf("gamber", "calamar", "polpo", "cozze", "vongole", "granchio")
+                    .any { food.name.contains(it, true) }
+        },
+        listOf("soia", "soia e derivati") to { food ->
+            food.name.contains("soia", true) || food.name.contains("tofu", true) ||
+                food.name.contains("edamame", true)
+        },
+        listOf("arachidi") to { food -> food.name.contains("arachid", true) }
+    )
+
+    private fun allergenHit(term: String, food: FoodItem): Boolean {
+        val t = term.trim().lowercase()
+        if (t.isEmpty()) return false
+        allergenRules.forEach { (keys, rule) ->
+            if (keys.any { t == it || t.contains(it) }) return rule(food)
+        }
+        return food.name.contains(t, true) || food.category.contains(t, true)
+    }
+
+    /**
      * Un'esclusione dichiarata dall'utente vale se compare nel nome o nella
      * categoria dell'alimento. Il confronto e' per sottostringa perche' nessuno
      * scrive "Petto di pollo": scrive "pollo". Il confronto esatto lascerebbe
@@ -45,16 +94,16 @@ object FoodFilter {
     fun isAllowed(food: FoodItem, profile: UserProfile): Boolean {
         if (profile.excludedFoods.any { matches(it, food) }) return false
 
-        // Allergie / intolleranze: confronto case-insensitive su nome e categoria.
-        val allergyHit = profile.allergies.any { a ->
-            food.name.contains(a, ignoreCase = true) || food.category.contains(a, ignoreCase = true)
-        }
-        if (allergyHit) return false
+        // Allergie / intolleranze: l'allergene scritto dall'utente va tradotto
+        // negli alimenti che lo contengono.
+        if (profile.allergies.any { allergenHit(it, food) }) return false
 
         val prefs = profile.dietaryPreferences
 
         if (DietaryPreference.VEGAN in prefs) {
+            // La categoria non basta: "Pasta all'uovo" sta in Cereali e passava.
             if (food.category in animalCategories) return false
+            if (animalIngredient(food)) return false
         }
         if (DietaryPreference.VEGETARIAN in prefs) {
             if (food.category in meatCategories || food.category in fishCategories) return false
@@ -73,6 +122,18 @@ object FoodFilter {
         }
         // Restrizione latticini generica via allergie (es. "lattosio") gia coperta sopra.
         return true
+    }
+
+    /**
+     * Ingredienti animali nascosti in alimenti classificati altrove: la pasta
+     * all'uovo sta nei Cereali, il pesto contiene formaggio, i gnocchi possono
+     * contenere uovo. Il solo controllo di categoria li lasciava passare.
+     */
+    private fun animalIngredient(food: FoodItem): Boolean {
+        val hidden = listOf("uovo", "albume", "tuorlo", "latte", "burro", "formaggio",
+            "parmigian", "grana", "ricotta", "panna", "miele", "pesce", "tonno",
+            "acciugh", "carne", "pollo", "prosciutto", "salame")
+        return hidden.any { food.name.contains(it, true) }
     }
 
     fun allowedFoods(all: List<FoodItem>, profile: UserProfile): List<FoodItem> =

@@ -5,6 +5,7 @@ import com.fitcoach.app.domain.coach.AiNutritionProposal
 import com.fitcoach.app.domain.model.CarbCyclingPlan
 import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.FoodItem
+import kotlin.math.roundToInt
 
 /**
  * Sostituisce le grammature scelte dall'AI con quelle calcolate dal solver.
@@ -72,8 +73,19 @@ object PortionResolution {
 
             val result = MealPortionSolver.solve(target, structure, initial)
             if (!result.ok) {
-                notes += "giorno ${day.dayIndex}: il solver non centra il target " +
-                    "(${result.warnings.joinToString("; ")})"
+                // Senza lo scostamento la nota era "il solver non centra il
+                // target ()": il modello non sapeva di quanto ne' su quale macro.
+                val gaps = buildList {
+                    fun gap(label: String, actual: Double, targetMacro: Double) {
+                        if (targetMacro > 0) add("$label ${(actual - targetMacro).roundToInt()}")
+                    }
+                    gap("kcal", result.actual.kcal, result.target.kcal)
+                    gap("P", result.actual.protein, result.target.protein)
+                    gap("C", result.actual.carbs, result.target.carbs)
+                    gap("F", result.actual.fat, result.target.fat)
+                }.joinToString(", ")
+                notes += "giorno ${day.dayIndex}: grammature fuori tolleranza (scarto: $gaps)" +
+                    if (result.warnings.isEmpty()) "" else " - ${result.warnings.joinToString("; ")}"
             }
 
             // Le grammature calcolate vengono ricomposte nella stessa struttura
