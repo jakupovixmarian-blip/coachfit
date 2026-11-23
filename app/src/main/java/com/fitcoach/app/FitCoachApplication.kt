@@ -7,7 +7,9 @@ import androidx.work.Configuration
 import com.fitcoach.app.data.repository.NotificationRepository
 import com.fitcoach.app.diagnostics.CrashLog
 import com.fitcoach.app.data.repository.PreferencesRepository
+import com.fitcoach.app.data.repository.NutritionRepository
 import com.fitcoach.app.data.repository.SeedInitializer
+import com.fitcoach.app.data.repository.WorkoutRepository
 import com.fitcoach.app.notifications.NotificationScheduler
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -35,6 +37,12 @@ open class FitCoachApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var notificationRepository: NotificationRepository
 
+    @Inject
+    lateinit var workoutRepository: WorkoutRepository
+
+    @Inject
+    lateinit var nutritionRepository: NutritionRepository
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val workManagerConfiguration: Configuration
@@ -51,6 +59,11 @@ open class FitCoachApplication : Application(), Configuration.Provider {
             // l'app all'avvio: va registrato e l'avvio prosegue.
             runCatching {
                 seedInitializer.seedIfNeeded()
+                // Riparazione una volta per avvio dei piani legacy con piu'
+                // "attivi": e' una scrittura, quindi vive qui e non dentro le
+                // letture (getActivePlan), dove contenderebbe la transazione.
+                workoutRepository.normalizeActivePlanState()
+                nutritionRepository.normalizeActivePlanState()
                 val prefs = preferencesRepository.getOrCreate()
                 val records = notificationRepository.getAll()
                 notificationScheduler.scheduleAll(prefs, records)

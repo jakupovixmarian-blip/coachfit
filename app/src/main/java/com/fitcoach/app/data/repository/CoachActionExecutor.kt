@@ -279,9 +279,22 @@ class CoachActionExecutor @Inject constructor(
                     )
                 } ?: throw IllegalStateException("Esercizio pianificato non trovato.")
             }
-            "PLANNED_SETS" -> revert.filterKeys { it.startsWith("sets_") }.forEach { (key, value) ->
-                val plannedId = key.removePrefix("sets_").toLong()
-                plannedDao.updateSets(plannedId, value.toInt())
+            "PLANNED_SETS" -> {
+                revert.filterKeys { it.startsWith("sets_") }.forEach { (key, value) ->
+                    val plannedId = key.removePrefix("sets_").toLong()
+                    plannedDao.updateSets(plannedId, value.toInt())
+                }
+                // Un deload marca anche il mesociclo: annullarlo senza togliere
+                // il flag lascerebbe la scheda per sempre "in deload".
+                val focusPrecedente = revert["previousFocus"]
+                val mesocycleId = revert["mesocycleId"]?.toLongOrNull()
+                if (focusPrecedente != null && mesocycleId != null) {
+                    mesoDao.updateDeload(
+                        id = mesocycleId,
+                        isDeload = revert["wasDeload"]?.toBoolean() ?: false,
+                        focus = focusPrecedente
+                    )
+                }
             }
             "PLAN_CALORIES" -> planDao.getById(revert.require("planId").toLong())?.let { plan ->
                 planDao.update(
@@ -314,13 +327,13 @@ class CoachActionExecutor @Inject constructor(
                 val swappedId = revert["swappedDayId"]?.toLongOrNull()
                 val swappedIndex = revert["swappedToIndex"]?.toIntOrNull()
                 if (swappedId != null && swappedIndex != null) {
-                    workoutDayDao.insertAll(listOf(day.copy(dayIndex = 7)))
-                    workoutDayDao.insertAll(listOf(day.copy(dayIndex = previous)))
+                    workoutDayDao.updateDayIndex(dayId, 7)
+                    workoutDayDao.updateDayIndex(dayId, previous)
                     workoutDayDao.getById(swappedId)?.let {
-                        workoutDayDao.insertAll(listOf(it.copy(dayIndex = swappedIndex)))
+                        workoutDayDao.updateDayIndex(it.id, swappedIndex)
                     }
                 } else {
-                    workoutDayDao.insertAll(listOf(day.copy(dayIndex = previous)))
+                    workoutDayDao.updateDayIndex(dayId, previous)
                 }
             }
             // Ripristino del vecchio formato, ancora presente nelle modifiche
@@ -350,7 +363,10 @@ class CoachActionExecutor @Inject constructor(
         snapshot.workoutPlanId?.let { id ->
             workoutPlanDao.getById(id)?.let { previous ->
                 workoutPlanDao.deactivateAll()
-                workoutPlanDao.insert(previous.copy(isActive = true))
+                // `insert` usa REPLACE e workout_plans ha onDelete CASCADE su
+                // mesocycles: riattivare il piano con REPLACE ne cancellava
+                // l'intera struttura, lasciando l'utente con una scheda vuota.
+                workoutPlanDao.update(previous.copy(isActive = true))
             }
         }
     }
@@ -537,9 +553,11 @@ class CoachActionExecutor @Inject constructor(
 
             // Lo scambio passa da un indice provvisorio (7) per non violare
             // nessun vincolo di unicita' durante l'aggiornamento intermedio.
-            target?.let { workoutDayDao.insertAll(listOf(it.copy(dayIndex = 7))) }
-            workoutDayDao.insertAll(listOf(day.copy(dayIndex = newIndex)))
-            target?.let { workoutDayDao.insertAll(listOf(it.copy(dayIndex = previous))) }
+            // Si usa updateDayIndex: insertAll e' un REPLACE, e la cascata su
+            // planned_exercises cancellerebbe gli esercizi delle due sedute.
+            target?.let { workoutDayDao.updateDayIndex(it.id, 7) }
+            workoutDayDao.updateDayIndex(dayId, newIndex)
+            target?.let { workoutDayDao.updateDayIndex(it.id, previous) }
 
             mapOf(
                 "kind" to "WORKOUT_DAY_MOVE",
@@ -677,17 +695,25 @@ class CoachActionExecutor @Inject constructor(
 
     private suspend fun applyDeload(action: CoachAction): Map<String, String> {
         val percent = action.payload["volumeReductionPercent"]?.toDoubleOrNull() ?: 40.0
+        // Stesso limite di applyVolumeAdjustment: una percentuale negativa
+        // AUMENTEREBBE il volume in un deload, cioe' nel momento in cui
+        // l'utente e' piu' affaticato.
+        require(percent in 0.0..80.0) {
+            "Riduzione volume del $percent% fuori dai limiti (0..80)."
+        }
         val mesocycleId = resolveMesocycleId(action.payload["mesocycleId"]?.toLongOrNull())
         val planId = action.payload["planId"]?.toLongOrNull()
         val meso = (planId?.let { mesoDao.getForPlan(it) }
             ?: workoutPlanDao.getActive()?.let { mesoDao.getForPlan(it.id) })
             ?.firstOrNull { it.id == mesocycleId }
             ?: throw IllegalArgumentException("Mesociclo non trovato.")
-        mesoDao.insert(meso.copy(isDeload = true, focus = "${meso.focus} (deload)"))
+        mesoDao.updateDeload(mesocycleId, isDeload = true, focus = "${meso.focus} (deload)")
 
         val result = mutableMapOf(
             "kind" to "PLANNED_SETS",
-            "mesocycleId" to mesocycleId.toString()
+            "mesocycleId" to mesocycleId.toString(),
+            "previousFocus" to meso.focus,
+            "wasDeload" to meso.isDeload.toString()
         )
         var touched = 0
         workoutDayDao.getForMesocycle(mesocycleId).forEach { day ->

@@ -182,6 +182,25 @@ class MoveWorkoutBugTest {
     }
 
     @Test
+    fun `spostare una seduta non ne cancella gli esercizi`() = runTest {
+        val seduta = primaSeduta()
+        val eserciziPrima = seduta.exercises.size
+        assertTrue("La seduta di prova deve avere esercizi", eserciziPrima > 0)
+
+        val nuovo = (seduta.dayIndex + 2) % 7
+        executor.apply(executor.registerProposal(proposta(seduta.id, nuovo)))
+
+        val dopo = workoutRepository.getActivePlan()!!.days.first { it.id == seduta.id }
+        assertTrue(
+            "Dopo lo spostamento la seduta ha ${dopo.exercises.size} esercizi invece di " +
+                "$eserciziPrima: workout_days e' @Insert(REPLACE) e planned_exercises ha " +
+                "onDelete CASCADE, quindi riscrivere la riga per cambiarne il giorno " +
+                "cancella gli esercizi pianificati.",
+            dopo.exercises.size == eserciziPrima
+        )
+    }
+
+    @Test
     fun `un giorno fuori 0-6 viene rifiutato`() = runTest {
         val seduta = primaSeduta()
         val id = executor.registerProposal(proposta(seduta.id, 99))

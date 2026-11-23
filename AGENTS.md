@@ -1019,3 +1019,78 @@ difetto sotto e' stato prima riprodotto con un test rosso, poi corretto.
   `FirstRunRoutingCollaudoTest`) falliscono nella suite completa per carico
   parallelo e passano in isolamento: verificare sempre in isolamento prima di
   attribuire il difetto al codice.
+
+## REPLACE su un padre con figli CASCADE cancella i figli (quattro bug reali)
+
+`@Insert(onConflict = OnConflictStrategy.REPLACE)` su una riga che esiste gia'
+esegue **DELETE + INSERT**. Se quella tabella e' padre di un `ForeignKey`
+`onDelete = CASCADE`, la DELETE cancella a cascata tutti i figli: la riga
+"riscritta" torna, il contenuto no. In FitCoach e' successo quattro volte.
+
+Padri con figli CASCADE in questo schema: `nutrition_plans` -> `nutrition_days`
+-> `meals` -> `meal_entries`, `workout_plans` -> `mesocycles` -> `workout_days`
+-> `planned_exercises`, `workout_sessions` -> `workout_sets`.
+
+**Regola**: per modificare un campo di un padre esistente si usa un
+`@Query("UPDATE ... WHERE id = :id")` dedicato. `insert` si usa solo quando
+l'id e' nuovo (`id = 0L`).
+
+### Bug 1 e 2 - `applyDeload` non funzionava mai
+
+`CoachActionExecutor.applyDeload` faceva `mesoDao.insert(meso.copy(isDeload = true))`.
+Il REPLACE cancellava le sedute e gli esercizi, poi `updateSets` non trovava piu'
+niente e l'azione falliva con "il mesociclo non ha esercizi": il deload era
+inservibile per **qualsiasi** percentuale, non solo per quelle fuori range.
+Il test "il deload non deve cancellare la scheda" passava per il motivo
+sbagliato: il rollback della transazione rimetteva tutto a posto.
+Fix: `MesocycleDao.updateDeload(id, isDeload, focus)`; il revert ora toglie
+anche il flag `isDeload` (prima lo lasciava acceso per sempre).
+Aggiunta anche la validazione `volumeReductionPercent in 0..80`, che mancava:
+una percentuale negativa **aumentava** il volume durante il deload.
+
+### Bug 3 - spostare una seduta ne cancellava gli esercizi
+
+`moveWorkoutDay` e `applyMoveWorkout` riscrivevano `workout_days` con
+`insertAll` per cambiarne il `dayIndex`. La cascata su `planned_exercises`
+svuotava le due sedute coinvolte nello scambio.
+Fix: `WorkoutDayDao.updateDayIndex(id, dayIndex)`, usato in tutti i punti
+(esecuzione, revert, `WorkoutRepository.moveWorkoutDay`).
+
+### Bug 4 - annullare una rigenerazione svuotava la scheda
+
+`restoreRegeneratedPlans` riattivava il piano precedente con
+`workoutPlanDao.insert(previous.copy(isActive = true))`, cioe' un REPLACE
+sull'id esistente: mesocicli, sedute ed esercizi sparivano. Il ramo nutrizione
+usava gia' `update`, quello allenamento no. Fix: `update`.
+
+### Test di regressione
+
+- `DeloadAdversarialTest` - il deload riduce il volume, e' annullabile, e una
+  percentuale negativa non lo trasforma in un aumento.
+- `CascadeReplaceAdversarialTest` - isola il comportamento del DAO: REPLACE
+  cancella i figli, `updateDayIndex` li conserva.
+- `MoveWorkoutBugTest` - include "spostare una seduta non ne cancella gli
+  esercizi".
+
+## Una lettura non deve scrivere: `normalizeActivePlan` nei percorsi di lettura
+
+`WorkoutRepository.getActivePlan()` e `NutritionRepository.getActivePlan()`
+chiamavano `normalizeActivePlan()`, che apriva `db.withTransaction` a **ogni**
+lettura. `getActivePlan` e' chiamata da dashboard, progressi, coach e
+nutrizione, spesso in parallelo: due letture concorrenti si contendevano la
+transazione e Room falliva con "Cannot perform this operation because there is
+no current transaction" (visto come test intermittente in
+`ProgressAndProfileAdversarialTest`).
+
+La normalizzazione era anche superflua: `getActive()` e' gia'
+`ORDER BY createdAt DESC LIMIT 1`, quindi con piu' piani attivi l'utente vede
+comunque il piu recente.
+
+Fix: la riparazione dei database legacy e' diventata
+`normalizeActivePlanState()`, esplicita, invocata una volta in
+`FitCoachApplication.onCreate` dentro il blocco di avvio. I percorsi di lettura
+non scrivono piu'.
+
+`ConcurrentReadAdversarialTest` dimostra il difetto: con due piani attivi,
+`getActivePlan()` cambiava lo stato del database. Il test cattura lo stato
+**prima** della chiamata (catturarlo dopo rendeva il test incapace di fallire).

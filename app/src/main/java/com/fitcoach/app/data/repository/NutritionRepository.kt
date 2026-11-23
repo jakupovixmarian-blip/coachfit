@@ -33,14 +33,12 @@ class NutritionRepository @Inject constructor(
     }
 
     suspend fun getActivePlan(): NutritionPlan? {
-        normalizeActivePlan()
         val entity = planDao.getActive() ?: return null
         return loadFullPlan(entity.id)
     }
 
     /** Tutti i piani salvati (AI e manuali), dal piu recente. */
     suspend fun getAllPlans(): List<NutritionPlan> {
-        normalizeActivePlan()
         return planDao.getAll().mapNotNull { loadFullPlan(it.id) }
     }
 
@@ -52,18 +50,19 @@ class NutritionRepository @Inject constructor(
     }
 
     /** Ripara database creati da versioni precedenti che lasciavano piu piani attivi. */
-    private suspend fun normalizeActivePlan() = db.withTransaction {
+    /** Vedi [WorkoutRepository.normalizeActivePlanState]: scrittura, non lettura. */
+    suspend fun normalizeActivePlanState(): Int {
         val all = planDao.getAll()
         val active = all.filter { it.isActive }
-        val keep = when {
-            active.size == 1 -> null
-            active.isNotEmpty() -> active.maxWithOrNull(compareBy({ it.createdAt }, { it.id }))
-            else -> all.maxWithOrNull(compareBy({ it.createdAt }, { it.id }))
-        }
-        if (keep != null) {
+        if (active.size == 1) return 0
+        val keep = active.maxWithOrNull(compareBy({ it.createdAt }, { it.id }))
+            ?: all.maxWithOrNull(compareBy({ it.createdAt }, { it.id }))
+            ?: return 0
+        db.withTransaction {
             planDao.deactivateAll()
             planDao.setActive(keep.id, true)
         }
+        return if (active.size > 1) active.size - 1 else 0
     }
 
     suspend fun renamePlan(planId: Long, name: String): Boolean {

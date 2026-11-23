@@ -294,8 +294,16 @@ interface MesocycleDao {
     @Query("SELECT * FROM mesocycles WHERE planId = :planId ORDER BY startWeekIndex")
     suspend fun getForPlan(planId: Long): List<MesocycleEntity>
 
+    /**
+     * `insert` usa REPLACE, e `workout_days` ha onDelete CASCADE: riscrivere il
+     * mesociclo con REPLACE cancella tutte le sedute e gli esercizi pianificati.
+     * Per modificare i soli campi del mesociclo serve un UPDATE.
+     */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(mesocycle: MesocycleEntity): Long
+
+    @Query("UPDATE mesocycles SET isDeload = :isDeload, focus = :focus WHERE id = :id")
+    suspend fun updateDeload(id: Long, isDeload: Boolean, focus: String): Int
 
     @Query("DELETE FROM mesocycles WHERE planId = :planId")
     suspend fun deleteForPlan(planId: Long)
@@ -317,6 +325,14 @@ interface WorkoutDayDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(days: List<WorkoutDayEntity>): List<Long>
+
+    /**
+     * Cambia il giorno della settimana di una seduta SENZA riscriverne la riga.
+     * `insertAll` usa REPLACE e `planned_exercises` ha onDelete CASCADE:
+     * riusarlo per spostare una seduta ne cancellava tutti gli esercizi.
+     */
+    @Query("UPDATE workout_days SET dayIndex = :dayIndex WHERE id = :id")
+    suspend fun updateDayIndex(id: Long, dayIndex: Int): Int
 
     @Query("DELETE FROM workout_days WHERE mesocycleId = :mesocycleId")
     suspend fun deleteForMesocycle(mesocycleId: Long)

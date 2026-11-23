@@ -53,15 +53,33 @@ class WorkoutRepository @Inject constructor(
     }
 
     suspend fun getActivePlan(): WorkoutPlan? {
-        normalizeActivePlan()
         val entity = planDao.getActive() ?: return null
         return loadFullPlan(entity.id)
     }
 
     /** Tutte le schede salvate (AI e manuali), dalla piu recente. */
     suspend fun getAllPlans(): List<WorkoutPlan> {
-        normalizeActivePlan()
         return planDao.getAll().mapNotNull { loadFullPlan(it.id) }
+    }
+
+    /**
+     * Ripara i database creati da versioni precedenti che potevano lasciare piu
+     * schede attive. E' una scrittura, quindi va invocata all'avvio e mai da un
+     * percorso di lettura: `getActive()` ordina gia per createdAt, quindi una
+     * sola scheda attiva e' quella che l'utente vede comunque.
+     */
+    suspend fun normalizeActivePlanState(): Int {
+        val all = planDao.getAll()
+        val active = all.filter { it.isActive }
+        if (active.size == 1) return 0
+        val keep = active.maxWithOrNull(compareBy({ it.createdAt }, { it.id }))
+            ?: all.maxWithOrNull(compareBy({ it.createdAt }, { it.id }))
+            ?: return 0
+        db.withTransaction {
+            planDao.deactivateAll()
+            planDao.setActive(keep.id, true)
+        }
+        return if (active.size > 1) active.size - 1 else 0
     }
 
     /** Rende attiva una scheda esistente (avvio della scheda scelta dall'utente). */
@@ -72,20 +90,6 @@ class WorkoutRepository @Inject constructor(
     }
 
     /** Ripara database creati da versioni precedenti che lasciavano piu schede attive. */
-    private suspend fun normalizeActivePlan() = db.withTransaction {
-        val all = planDao.getAll()
-        val active = all.filter { it.isActive }
-        val keep = when {
-            active.size == 1 -> null
-            active.isNotEmpty() -> active.maxWithOrNull(compareBy({ it.createdAt }, { it.id }))
-            else -> all.maxWithOrNull(compareBy({ it.createdAt }, { it.id }))
-        }
-        if (keep != null) {
-            planDao.deactivateAll()
-            planDao.setActive(keep.id, true)
-        }
-    }
-
     suspend fun renamePlan(planId: Long, name: String): Boolean {
         val plan = planDao.getById(planId) ?: return false
         val normalized = name.trim()
@@ -349,10 +353,13 @@ class WorkoutRepository @Inject constructor(
         val day = dayDao.getById(dayId) ?: return@withTransaction false
         val siblings = dayDao.getForMesocycle(day.mesocycleId)
         val target = siblings.firstOrNull { it.dayIndex == newDayIndex && it.id != dayId }
+        // updateDayIndex, non insertAll: insertAll e' un REPLACE e la cascata su
+        // planned_exercises cancellerebbe gli esercizi delle sedute spostate.
         if (target != null) {
-            dayDao.insertAll(listOf(day.copy(dayIndex = 7), target.copy(dayIndex = day.dayIndex)))
+            dayDao.updateDayIndex(target.id, 7)
+            dayDao.updateDayIndex(dayId, day.dayIndex)
         }
-        dayDao.insertAll(listOf(day.copy(dayIndex = newDayIndex)))
+        dayDao.updateDayIndex(dayId, newDayIndex)
         true
     }
 
