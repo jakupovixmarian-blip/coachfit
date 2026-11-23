@@ -835,3 +835,35 @@ Prova live eseguita con successo su OpenRouter (`qwen/qwen3.5-35b-a3b`): ricetta
 ingredienti e grammature del piano invariati. Il probe e' `RecipeAiLiveProbe` e richiede
 `FITCOACH_LIVE_KEY`, quindi non gira nella suite automatica. I test con provider scriptato
 sono in `RecipeAiGenerationCollaudoTest` (8 casi, database Room reale in memoria).
+
+## Audit di conformita' alla spec: due bug reali (sessione audit)
+
+Suite completa: 741 test, 0 fallimenti (`./gradlew :app:testDebugUnitTest --offline`).
+
+Bug trovati leggendo il codice e confermati da un test che falliva, non ipotizzati:
+
+1. `CatalogNameResolver` risolveva "Avena" su "Latte d'avena" (46 kcal) invece di
+   "Fiocchi d'avena" (367 kcal): errore di otto volte sulle calorie del pasto. Causa: il
+   passo 3 sceglie il nome piu' corto fra quelli che contengono le parole cercate, e
+   "latte d'avena" e' piu' corto. La mappa `SYNONYMS` aveva solo le voci inglesi
+   (`oats`, `oatmeal`). Quando si aggiungono sinonimi, aggiungerli in italiano E in inglese:
+   il modello scrive in italiano, il catalogo USDA e' in inglese.
+
+2. `ProgressiveOverloadEngine.increaseFor` sommava l'incremento proporzionale alla base:
+   100 kg -> +2.5 kg ma 101 kg -> +5.0 kg, un raddoppio a cavallo della soglia. Ora usa
+   `maxOf(base, proporzionale)`. Sotto i 50 kg il vincolo del 5% non e' applicabile, perche'
+   2.5 kg (il disco piu' piccolo) e' gia' oltre il 5%: i test lo escludono esplicitamente.
+
+Nota sui test Compose: `AnamnesisLayoutTest` puo' fallire con `AppNotIdleException` quando
+l'intera suite gira in parallelo, ma passa in isolamento e in coppia. Non e' un loop di
+composizione dell'app: e' instabilita' da carico. Verificare in isolamento prima di
+attribuire il difetto al codice di produzione.
+
+Percorsi da tenere presenti nell'audit:
+- Notifiche: `SeedInitializer.defaultNotifications()` copre tutti i `MealSlot`; gli orari
+  dei pasti pero' restano ai default finche' l'utente non li cambia in Impostazioni, perche'
+  l'anamnesi non li chiede.
+- Migrazioni: 16 migrazioni (1->17) tutte registrate in `DatabaseModule`, nessun
+  `fallbackToDestructiveMigration`, quindi i dati non vengono cancellati a un upgrade.
+- Modifiche del coach: ciclo `PROPOSED -> APPLIED -> REVERTED/REJECTED`, con revert che
+  ripristina il payload salvato (`CoachActionExecutor.revert`).
