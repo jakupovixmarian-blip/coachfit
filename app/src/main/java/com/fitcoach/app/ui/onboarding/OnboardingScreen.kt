@@ -410,11 +410,11 @@ private fun StepNutrizione(state: OnboardingUiState, vm: OnboardingViewModel) {
                 Text("Persone coperte dal budget: ", style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary)
                 OutlinedButton(onClick = {
-                    vm.update { it.copy(budgetPersons = (it.budgetPersons - 1).coerceAtLeast(1)) }
+                    vm.setBudgetPersons(state.budgetPersons - 1)
                 }) { Text("−") }
                 Text("  ${state.budgetPersons}  ", color = MaterialTheme.colorScheme.onBackground)
                 OutlinedButton(onClick = {
-                    vm.update { it.copy(budgetPersons = (it.budgetPersons + 1).coerceAtMost(12)) }
+                    vm.setBudgetPersons(state.budgetPersons + 1)
                 }) { Text("+") }
             }
         }

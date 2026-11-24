@@ -92,6 +92,13 @@ class AiProgramGenerationService @Inject constructor(
     suspend fun generate(
         profile: UserProfile,
         scope: ProgramGenerationEngine.Scope = ProgramGenerationEngine.Scope.BOTH,
+        /**
+         * Richiesta esplicita dell'utente (es. "aggiungi tecniche d'intensita' e
+         * isolamento, riduci le serie"). Senza questo canale la rigenerazione
+         * ripartiva dagli stessi dati di anamnesi e produceva lo stesso piano:
+         * l'utente confermava una modifica e ritrovava la scheda identica.
+         */
+        directive: String? = null,
         /** Avanzamento leggibile, mostrato all'utente durante l'attesa. */
         onProgress: ((String) -> Unit)? = null
     ): Result {
@@ -122,7 +129,7 @@ class AiProgramGenerationService @Inject constructor(
                 "Provider AI non configurato. Inserisci una chiave o configura il backend proxy nelle Impostazioni."
             )
 
-        val contextPrompt = buildGenerationContext(profile, foods, exercises, scope)
+        val contextPrompt = buildGenerationContext(profile, foods, exercises, scope, directive)
         // Il tetto di tempo vive nell'orchestratore: deadline tra le iterazioni e
         // budget per la singola chiamata. Qui non serve un timeout aggiuntivo.
         val turn = orchestrator.run(
@@ -131,7 +138,11 @@ class AiProgramGenerationService @Inject constructor(
             contextPrompt = contextPrompt,
             history = emptyList(),
             userMessage = "Genera ora la parte richiesta del mio programma e consegnala con " +
-                "submit_full_program (scope=${scope.name}). Non fermarti prima: devi arrivare a ok=true.",
+                "submit_full_program (scope=${scope.name}). Non fermarti prima: devi arrivare a ok=true." +
+                (directive?.takeIf { it.isNotBlank() }
+                    ?.let { " RISPETTA QUESTA RICHIESTA DELL'UTENTE, che prevale sulle scelte " +
+                        "precedenti a parita' di vincoli di sicurezza: $it" }
+                    ?: ""),
             maxIterations = GENERATION_MAX_ITERATIONS,
             requireTool = SUBMIT_TOOL,
             requiredPrerequisites = listOf(
@@ -247,7 +258,8 @@ class AiProgramGenerationService @Inject constructor(
         profile: UserProfile,
         foods: List<FoodItem>,
         exercises: List<Exercise>,
-        scope: ProgramGenerationEngine.Scope
+        scope: ProgramGenerationEngine.Scope,
+        directive: String? = null
     ): String = buildString {
         appendLine("Genera la parte richiesta del programma COMPLETO per FitCoach usando SOLO gli identificativi testuali elencati.")
         appendLine("AMBITO RICHIESTO: ${scope.name} " + when (scope) {
@@ -255,6 +267,14 @@ class AiProgramGenerationService @Inject constructor(
             ProgramGenerationEngine.Scope.NUTRITION -> "(SOLO nutrizione: compila comunque i giorni di allenamento e il calendario, ma verranno usati solo per i controlli)"
             ProgramGenerationEngine.Scope.WORKOUT -> "(SOLO allenamento: compila comunque la nutrizione, ma verrà usata solo per i controlli)"
         })
+        directive?.takeIf { it.isNotBlank() }?.let {
+            appendLine()
+            appendLine("RICHIESTA ESPLICITA DELL'UTENTE (vincolante, entro i limiti di sicurezza):")
+            appendLine("  $it")
+            appendLine("  Il piano deve differire dal precedente proprio su questo punto. Se un vincolo")
+            appendLine("  di sicurezza impedisce di soddisfarla, dichiaralo in warnings invece di ignorarla.")
+            appendLine()
+        }
         appendLine("PASTI OBBLIGATORI (esattamente questi, in quest'ordine, ogni giorno):")
         appendLine("  " + MealSlots.describe(profile.mealsPerDay))
         appendLine("DATI ANAMNESI CONFERMATI:")

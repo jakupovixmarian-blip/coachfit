@@ -32,9 +32,11 @@ class ProgramGenerationCoordinator @Inject constructor(
     suspend fun generate(
         profile: UserProfile,
         scope: Scope = Scope.BOTH,
+        /** Richiesta esplicita dell'utente da rispettare nella rigenerazione. */
+        directive: String? = null,
         dispatcher: CoroutineDispatcher = Dispatchers.IO
     ): ProgramGenerationResult = try {
-        withContext(dispatcher) { generateBlocking(profile, scope) }
+        withContext(dispatcher) { generateBlocking(profile, scope, directive) }
     } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
         // Rete di sicurezza unica per ogni chiamante (schermate, chat, azioni
@@ -47,7 +49,8 @@ class ProgramGenerationCoordinator @Inject constructor(
 
     private suspend fun generateBlocking(
         profile: UserProfile,
-        scope: Scope
+        scope: Scope,
+        directive: String?
     ): ProgramGenerationResult {
         if (!profile.isAnamnesisReady) {
             return ProgramGenerationResult.AnamnesisNotConfirmed(
@@ -71,7 +74,7 @@ class ProgramGenerationCoordinator @Inject constructor(
         }
         if (missing.isNotEmpty()) return ProgramGenerationResult.MissingData(missing)
 
-        return when (val result = aiGeneration.generate(profile, scope.toEngineScope())) {
+        return when (val result = aiGeneration.generate(profile, scope.toEngineScope(), directive)) {
             is AiProgramGenerationService.Result.Success -> ProgramGenerationResult.Success(
                 nutritionPlanId = result.nutritionPlanId,
                 workoutPlanId = result.workoutPlanId,

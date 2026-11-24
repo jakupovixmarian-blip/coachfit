@@ -267,6 +267,14 @@ class OnboardingViewModel @Inject constructor(
         )
     }
 
+    /**
+     * Il contatore delle persone a carico e' un dato che l'utente sceglie qui:
+     * senza dichiararlo, l'anamnesi guidata lo richiedeva di nuovo subito dopo.
+     */
+    fun setBudgetPersons(count: Int) = select("budgetPersons") {
+        it.copy(budgetPersons = count.coerceIn(1, 12))
+    }
+
     fun finish() {
         viewModelScope.launch {
             val s = _state.value
@@ -384,6 +392,7 @@ class OnboardingViewModel @Inject constructor(
                 if (s.excludedFoods.isNotBlank()) add("excludedFoods")
                 if (s.likedFoods.isNotBlank()) add("likedFoods")
                 if (s.dislikedFoods.isNotBlank()) add("dislikedFoods")
+                if (s.budgetEur.isNotBlank()) add("weeklyFoodBudgetEur")
                 if (s.monthlyBudgetEur.isNotBlank()) add("monthlyFoodBudgetEur")
                 if (s.preferredExercises.isNotBlank()) add("preferredExercises")
                 if (s.dislikedExercises.isNotBlank()) add("dislikedExercises")

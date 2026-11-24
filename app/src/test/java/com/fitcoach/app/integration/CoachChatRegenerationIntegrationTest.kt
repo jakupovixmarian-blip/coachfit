@@ -177,21 +177,32 @@ class CoachChatRegenerationIntegrationTest {
         )
     }
 
-    private suspend fun proposal(scope: String): String {
+    private suspend fun proposal(
+        scope: String,
+        setsPerExercise: Int = 4,
+        technique: String = "NONE"
+    ): String {
         val foods = FoodFilter.allowedFoods(foodRepository.getAll(), profile)
         val exercises = exerciseRepository.getAll()
         val built = SimulatedAiPrograms.proposal(
             profile, foods, exercises,
-            WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek)
+            WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek),
+            setsPerExercise = setsPerExercise,
+            technique = technique
         )
         return SimulatedAiPrograms.json(json, built, scope)
     }
 
-    private fun regenerateArgs(scope: String) = json.encodeToString(
+    private fun regenerateArgs(
+        scope: String,
+        directive: String = "Aggiungi una tecnica d'intensita' per ogni gruppo muscolare, " +
+            "inserisci almeno un esercizio di isolamento per gruppo e riduci il volume settimanale."
+    ) = json.encodeToString(
         JsonObject.serializer(),
         JsonObject(
             mapOf(
                 "scope" to JsonPrimitive(scope),
+                "directive" to JsonPrimitive(directive),
                 "title" to JsonPrimitive("Rigenerazione $scope"),
                 "problem" to JsonPrimitive("Richiesta dell'utente di cambiare la struttura.")
             )
@@ -236,7 +247,9 @@ class CoachChatRegenerationIntegrationTest {
         val changeId = askCoachToRegenerate("WORKOUT")
         val exec = buildExecutor(
             ScriptedApi(GenerationScript.consultationsThen(
-                toolCallResponse("submit_full_program", proposal("WORKOUT")),
+                // 5 serie e una tecnica: la richiesta dell'utente ha avuto effetto,
+                // quindi la scheda DEVE risultare diversa da quella precedente.
+                toolCallResponse("submit_full_program", proposal("WORKOUT", setsPerExercise = 3, technique = "DROP_SET")),
                 textResponse("Scheda rigenerata.")
             ))
         )
@@ -245,6 +258,16 @@ class CoachChatRegenerationIntegrationTest {
         assertThat(result).isInstanceOf(com.fitcoach.app.data.repository.ApplyResult.Applied::class.java)
         assertThat(workoutRepository.getActivePlan()!!.id).isNotEqualTo(originalWorkoutId)
         assertThat(nutritionRepository.getActivePlan()!!.id).isEqualTo(originalNutritionId)
+        // La scheda nuova deve contenere davvero le serie e le tecniche richieste.
+        val activeWorkout = workoutRepository.getActivePlan()!!
+        val days = db.workoutDayDao().getForMesocycles(
+            db.mesocycleDao().getForPlan(activeWorkout.id).map { it.id }
+        )
+        val planned = db.plannedExerciseDao().getForDays(days.map { it.id })
+        assertThat(planned).isNotEmpty()
+        assertThat(planned.map { it.sets }.distinct()).containsExactly(3)
+        assertThat(planned.map { it.intensityTechnique.name }.distinct())
+            .containsExactly("DROP_SET")
     }
 
     @Test
@@ -291,6 +314,73 @@ class CoachChatRegenerationIntegrationTest {
 
         assertThat(nutritionRepository.getActivePlan()!!.id).isNotEqualTo(originalNutritionId)
         assertThat(workoutRepository.getActivePlan()!!.id).isNotEqualTo(originalWorkoutId)
+    }
+
+    @Test
+    fun `la direttiva dell'utente arriva al motore di generazione`() = runTest {
+        coordinator(ScriptedApi(GenerationScript.consultationsThen(
+            toolCallResponse("submit_full_program", proposal("BOTH")),
+            textResponse("Programma generato.")
+        ))).generate(profile)
+
+        // Una rigenerazione che riceve la stessa scheda dell'ultima volta deve
+        // essere segnalata come NON applicata: prima l'utente leggeva "modifica
+        // applicata" e ritrovava la scheda identica.
+        val changeId = askCoachToRegenerate("WORKOUT")
+        val exec = buildExecutor(
+            ScriptedApi(GenerationScript.consultationsThen(
+                toolCallResponse("submit_full_program", proposal("WORKOUT")),
+                textResponse("Scheda rigenerata.")
+            ))
+        )
+        // Il proposal("WORKOUT") e' deterministico: stessa struttura di prima.
+        val result = exec.apply(changeId)
+
+        assertThat(result)
+            .isInstanceOf(com.fitcoach.app.data.repository.ApplyResult.Failed::class.java)
+        val messaggio = (result as com.fitcoach.app.data.repository.ApplyResult.Failed).message
+        assertThat(messaggio).contains("identica")
+    }
+
+    @Test
+    fun `la direttiva compare nel testo che il modello riceve`() = runTest {
+        // Verifica il canale vero, non il risultato finale: la richiesta
+        // dell'utente deve essere presente nel prompt di generazione. Senza
+        // questo passaggio il modello rigenerava dagli stessi dati di anamnesi.
+        val richiesta = "Aggiungi tecniche d'intensita' e un esercizio di isolamento per gruppo"
+        val foods = FoodFilter.allowedFoods(foodRepository.getAll(), profile)
+        val context = aiGenerationService(ScriptedApi(mutableListOf())).buildGenerationContext(
+            profile, foods, exerciseRepository.getAll(),
+            ProgramGenerationEngine.Scope.WORKOUT, richiesta
+        )
+        assertThat(context).contains(richiesta)
+        assertThat(context).contains("RICHIESTA ESPLICITA DELL'UTENTE")
+
+        // Controprova: senza direttiva il blocco non compare.
+        val senza = aiGenerationService(ScriptedApi(mutableListOf())).buildGenerationContext(
+            profile, foods, exerciseRepository.getAll(),
+            ProgramGenerationEngine.Scope.WORKOUT, null
+        )
+        assertThat(senza).doesNotContain("RICHIESTA ESPLICITA DELL'UTENTE")
+    }
+
+    @Test
+    fun `una proposta senza direttiva non viene registrata`() = runTest {
+        val api = ScriptedApi(
+            mutableListOf(
+                toolCallResponse(
+                    "propose_regenerate_plan",
+                    json.encodeToString(
+                        JsonObject.serializer(),
+                        JsonObject(mapOf("scope" to JsonPrimitive("WORKOUT")))
+                    )
+                ),
+                textResponse("Fatto.")
+            )
+        )
+        val reply = coachService(api).send("Cambia la scheda.")
+        // Senza direttiva il tool risponde con errore: nessuna proposta in attesa.
+        assertThat(reply.pendingChange).isNull()
     }
 
     @Test

@@ -434,6 +434,14 @@ class ProposeRegeneratePlanTool @Inject constructor(
             "Cosa rigenerare: WORKOUT (solo allenamento), NUTRITION (solo nutrizione) o BOTH (entrambi).",
             "WORKOUT", "NUTRITION", "BOTH"
         ),
+        "directive" to Schema.string(
+            "OBBLIGATORIO. La richiesta concreta dell'utente da rispettare alla lettera, in forma " +
+                "operativa (es. 'aggiungi una tecnica d'intensita per ogni gruppo muscolare, inserisci " +
+                "almeno un esercizio di isolamento per gruppo, riduci il volume settimanale a 14 serie " +
+                "per gruppo'). Non riassumere la conversazione: scrivi il vincolo che il nuovo piano " +
+                "deve soddisfare, altrimenti la rigenerazione riparte dagli stessi dati e produce " +
+                "la stessa scheda."
+        ),
         "title" to Schema.string("Titolo breve della proposta."),
         "situation" to Schema.string("Situazione attuale."),
         "problem" to Schema.string("Problema identificato."),
@@ -442,14 +450,21 @@ class ProposeRegeneratePlanTool @Inject constructor(
         "rationale" to Schema.string("Motivazione."),
         "expectedOutcome" to Schema.string("Risultato atteso."),
         "contraindications" to Schema.string("Possibili controindicazioni."),
-        required = listOf("scope")
+        required = listOf("scope", "directive")
     )
 
     override suspend fun execute(arguments: JsonObject): String {
         val a = JsonArgs(arguments)
         val scope = (a.string("scope") ?: "BOTH").trim().uppercase()
         if (scope !in REGENERATE_SCOPES) return err("scope non valido: usa WORKOUT, NUTRITION o BOTH.")
-        val payload = mapOf("scope" to scope)
+        val directive = a.string("directive")?.trim().orEmpty()
+        if (directive.isBlank()) {
+            return err(
+                "directive mancante: descrivi in modo operativo cosa deve cambiare nel nuovo piano. " +
+                    "Senza direttiva la rigenerazione riparte dagli stessi dati e restituisce la stessa scheda."
+            )
+        }
+        val payload = mapOf("scope" to scope, "directive" to directive)
         val action = CoachAction(
             action = CoachAction.ACTION_REGENERATE_PLAN,
             domain = scope,

@@ -179,8 +179,20 @@ class CoachActionExecutor @Inject constructor(
             workoutPlanId = workoutPlanDao.getActive()?.id
         )
 
+        // La direttiva e' il motivo per cui l'utente ha chiesto la modifica:
+        // senza di essa la rigenerazione riparte dagli stessi dati di anamnesi
+        // e restituisce la stessa scheda, pur risultando "applicata".
+        val directive = action.payload["directive"]?.takeIf { it.isNotBlank() }
+            ?: return ApplyResult.Failed(
+                "Questa proposta non contiene la richiesta da applicare (directive): " +
+                    "rigenerare senza istruzioni produrrebbe lo stesso programma. " +
+                    "Rifai la richiesta al Coach indicando cosa deve cambiare."
+            )
+
+        val beforeSignature = workoutSignature(before.workoutPlanId)
+
         val result = try {
-            generationCoordinator.get().generate(profile, scope)
+            generationCoordinator.get().generate(profile, scope, directive)
         } catch (e: Exception) {
             return ApplyResult.Failed("Rigenerazione non riuscita: ${e.message ?: e::class.simpleName}")
         }
@@ -199,13 +211,52 @@ class CoachActionExecutor @Inject constructor(
                     )
                 )
                 val extra = result.warnings.firstOrNull()?.let { " $it" } ?: ""
-                ApplyResult.Applied("Programma rigenerato (${scope.name}).$extra")
+                // Una rigenerazione che restituisce la stessa scheda non e' una
+                // modifica: dirlo "applicata" e' esattamente il falso successo
+                // che l'utente vedeva. Meglio segnalarlo, cosi' la richiesta si
+                // puo' riformulare invece di credere che sia andata.
+                val afterSignature = workoutSignature(result.workoutPlanId)
+                val unchangedWorkout = scope != ProgramGenerationCoordinator.Scope.NUTRITION &&
+                    beforeSignature != null && beforeSignature == afterSignature
+                if (unchangedWorkout) {
+                    ApplyResult.Failed(
+                        "La rigenerazione ha prodotto una scheda identica alla precedente: la richiesta " +
+                            "non e' stata applicata. Riformulala indicando cosa deve cambiare " +
+                            "(esercizi, serie, tecniche d'intensita' per gruppo muscolare).$extra"
+                    )
+                } else {
+                    ApplyResult.Applied("Programma rigenerato (${scope.name}).$extra")
+                }
             }
             is ProgramGenerationResult.MissingData ->
                 ApplyResult.Failed("Dati mancanti per rigenerare: ${result.missing.joinToString()}.")
             is ProgramGenerationResult.AnamnesisNotConfirmed ->
                 ApplyResult.Failed("Anamnesi non confermata: impossibile rigenerare il programma.")
             is ProgramGenerationResult.Error -> ApplyResult.Failed(result.message)
+        }
+    }
+
+    /**
+     * Firma strutturale della scheda attiva: esercizi pianificati con serie,
+     * ripetizioni, RIR e tecnica d'intensita'. Serve a distinguere una
+     * rigenerazione reale da una copia identica.
+     */
+    private suspend fun workoutSignature(planId: Long?): String? {
+        val id = planId ?: return null
+        val mesocycles = mesoDao.getForPlan(id)
+        if (mesocycles.isEmpty()) return null
+        val days = workoutDayDao.getForMesocycles(mesocycles.map { it.id }).sortedBy { it.dayIndex }
+        // L'id del giorno cambia a ogni rigenerazione: la firma deve usare
+        // l'indice settimanale, altrimenti due schede identiche risultano sempre
+        // diverse e il confronto non segnala nulla.
+        val dayIndexById = days.associate { it.id to it.dayIndex }
+        val exercises = plannedDao.getForDays(days.map { it.id })
+            .sortedWith(compareBy({ dayIndexById[it.workoutDayId] ?: Int.MAX_VALUE }, { it.orderIndex }))
+        if (exercises.isEmpty()) return null
+        return exercises.joinToString("|") { item ->
+            "${dayIndexById[item.workoutDayId]}:${item.exerciseName}:" +
+                "${item.sets}x${item.minReps}-${item.maxReps}" +
+                ":rir${item.targetRir}:${item.intensityTechnique}"
         }
     }
 

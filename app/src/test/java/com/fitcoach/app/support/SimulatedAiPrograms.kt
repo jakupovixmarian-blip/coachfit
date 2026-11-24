@@ -52,7 +52,15 @@ object SimulatedAiPrograms {
         profile: UserProfile,
         foods: List<FoodItem>,
         exercises: List<Exercise>,
-        trainingDays: List<Int> = WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek)
+        trainingDays: List<Int> = WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek),
+        /**
+         * Serie per esercizio. Serve ai test per produrre una scheda DIVERSA da
+         * quella precedente: il generatore e' deterministico, quindi senza una
+         * variazione esplicita ogni rigenerazione restituisce la stessa scheda.
+         */
+        setsPerExercise: Int = 4,
+        /** Tecnica applicata a ogni esercizio, per testare le tecniche d'intensita'. */
+        technique: String = "NONE"
     ): AiProgramProposal {
         val energy = EnergyCalculator.compute(profile)
             ?: error("Profilo senza dati energetici sufficienti: il profilo di test deve essere completo.")
@@ -110,13 +118,13 @@ object SimulatedAiPrograms {
                 exercises = chosen.map { ex ->
                     AiPlannedExercise(
                         exerciseName = ex.name,
-                        sets = 4,
+                        sets = setsPerExercise,
                         minReps = ex.minReps.coerceIn(1, 30),
                         maxReps = ex.maxReps.coerceIn(ex.minReps.coerceIn(1, 30), 30),
                         restSeconds = ex.restSeconds.coerceIn(15, 600),
                         targetRir = ex.targetRir.coerceIn(0, 5),
-                        technique = "NONE",
-                        techniqueReason = ""
+                        technique = technique,
+                        techniqueReason = if (technique == "NONE") "" else "Richiesta dell'utente."
                     )
                 }
             )
