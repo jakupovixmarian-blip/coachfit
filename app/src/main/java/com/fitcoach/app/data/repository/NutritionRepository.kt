@@ -300,7 +300,15 @@ class NutritionRepository @Inject constructor(
         planId: Long,
         dayTransform: (NutritionDayEntity) -> NutritionDayEntity = { it },
         mealTransform: (MealEntity) -> MealEntity = { it },
-        entryTransform: (MealEntryEntity) -> MealEntryEntity = { it }
+        entryTransform: (MealEntryEntity) -> MealEntryEntity = { it },
+        /**
+         * Eseguito dentro la stessa transazione, dopo che il nuovo piano e i suoi
+         * pasti esistono. Serve alle modifiche che devono toccare gli alimenti
+         * clonati (es. riscalare le grammature sui nuovi target): farlo fuori
+         * dalla transazione lascerebbe una finestra in cui il piano attivo ha i
+         * target nuovi ma le grammature vecchie.
+         */
+        afterClone: (suspend (Long, Map<Long, Long>) -> Unit)? = null
     ): Pair<Long, Map<Long, Long>>? = db.withTransaction {
         val currentPlan = planDao.getById(planId) ?: return@withTransaction null
         val oldDays = dayDao.getForPlan(planId)
@@ -314,10 +322,12 @@ class NutritionRepository @Inject constructor(
             )
         )
         val entryMap = mutableMapOf<Long, Long>()
+        val dayMap = mutableMapOf<Long, Long>()
         oldDays.forEach { oldDay ->
             val newDayId = dayDao.insertAll(
                 listOf(dayTransform(oldDay.copy(id = 0L, planId = newPlanId)))
             ).first()
+            dayMap[oldDay.id] = newDayId
             mealDao.getForDay(oldDay.id).forEach { oldMeal ->
                 val newMealId = mealDao.insertAll(
                     listOf(mealTransform(oldMeal.copy(id = 0L, nutritionDayId = newDayId)))
@@ -334,7 +344,92 @@ class NutritionRepository @Inject constructor(
                 }
             }
         }
+        afterClone?.invoke(newPlanId, dayMap)
         newPlanId to entryMap
+    }
+
+    /**
+     * Ricalcola le grammature degli alimenti gia' presenti nel piano sui target
+     * correnti dei giorni.
+     *
+     * Gli alimenti NON vengono cambiati: la struttura dei pasti (quali cibi, in
+     * quale pasto, in che ordine) resta quella scelta dall'utente o dal Coach.
+     * Cambia solo il QUANTO, con lo stesso solver usato in generazione, che
+     * lavora sui valori del catalogo. Una giornata senza alimenti viene
+     * saltata: non c'e' nulla da riscalare e inventare porzioni sarebbe peggio
+     * di lasciarla vuota.
+     */
+    private suspend fun rescalePlanEntries(
+        planId: Long,
+        dayTypesByIndex: Map<Int, com.fitcoach.app.domain.model.CarbDayType>,
+        cycling: CarbCyclingPlan
+    ) {
+        dayDao.getForPlan(planId).forEach { day ->
+            val type = dayTypesByIndex[day.dayIndex] ?: day.dayType
+            val target = cycling.targets[type] ?: return@forEach
+            rescaleDay(day.id, target)
+        }
+    }
+
+    /**
+     * Riscala le grammature degli alimenti di una singola giornata sul target
+     * indicato, lasciando invariata la scelta degli alimenti.
+     */
+    private suspend fun rescaleDay(
+        dayId: Long,
+        target: com.fitcoach.app.domain.model.CarbDayTarget
+    ) {
+        val foodDao = db.foodDao()
+        val meals = mealDao.getForDay(dayId)
+        if (meals.isEmpty()) return
+
+        val structure = mutableListOf<Pair<String, List<com.fitcoach.app.domain.model.FoodItem>>>()
+        val initial = mutableMapOf<String, Double>()
+        val entriesByMeal: Map<Long, List<MealEntryEntity>> =
+            meals.associate { meal -> meal.id to entryDao.getForMeal(meal.id) }
+        meals.forEach { meal ->
+            val foods = entriesByMeal[meal.id].orEmpty().mapNotNull { entry ->
+                val food = foodDao.getById(entry.foodItemId)?.toDomain()
+                    ?: foodDao.getByNormalizedName(
+                        com.fitcoach.app.domain.model.FoodItem.normalizeName(entry.foodName)
+                    )?.toDomain()
+                if (food != null && entry.grams > 0.0) {
+                    // La grammatura attuale e' il punto di partenza: il solver la
+                    // corregge comunque, ma partire da li' evita di stravolgere
+                    // porzioni gia' sensate.
+                    initial.putIfAbsent(food.name, entry.grams)
+                }
+                food
+            }
+            if (foods.isNotEmpty()) structure += meal.slot.name to foods
+        }
+        if (structure.isEmpty()) return
+
+        val solved = com.fitcoach.app.domain.nutrition.MealPortionSolver
+            .solve(target, structure, initial)
+        val solvedBySlot = solved.meals.associateBy { it.slot }
+
+        meals.forEach { meal ->
+            val solvedMeal = solvedBySlot[meal.slot.name] ?: return@forEach
+            val byName = solvedMeal.entries.groupBy { it.foodName }
+                .mapValues { (_, list) -> list.first() }
+            entriesByMeal[meal.id].orEmpty().forEach { entry ->
+                val solvedEntry = byName[entry.foodName]
+                    ?: byName.entries.firstOrNull {
+                        com.fitcoach.app.domain.model.FoodItem.normalizeName(it.key) ==
+                            com.fitcoach.app.domain.model.FoodItem.normalizeName(entry.foodName)
+                    }?.value
+                    ?: return@forEach
+                entryDao.updateEntry(
+                    id = entry.id,
+                    grams = solvedEntry.grams,
+                    kcal = solvedEntry.kcal,
+                    protein = solvedEntry.protein,
+                    carbs = solvedEntry.carbs,
+                    fat = solvedEntry.fat
+                )
+            }
+        }
     }
 
     private suspend fun relinkCurrentDiary(
@@ -367,6 +462,24 @@ class NutritionRepository @Inject constructor(
                     targetCarbs = carbs,
                     targetFat = fat
                 ) else day
+            },
+            afterClone = { _, dayMap ->
+                // Stesso motivo della ciclicita: cambiare il target lasciando le
+                // grammature di prima mostra un giorno "modificato" che in pratica
+                // contiene gli stessi alimenti e le stesse calorie.
+                dayMap[dayId]?.let { newDayId ->
+                    val newDay = dayDao.getById(newDayId) ?: return@let
+                    rescaleDay(
+                        newDayId,
+                        com.fitcoach.app.domain.model.CarbDayTarget(
+                            type = newDay.dayType,
+                            kcal = kcal,
+                            protein = protein,
+                            carbs = carbs,
+                            fat = fat
+                        )
+                    )
+                }
             }
         ) ?: return false
         relinkCurrentDiary(result.second, result.first, diaryEpochDay)
@@ -375,11 +488,15 @@ class NutritionRepository @Inject constructor(
 
     /**
      * Riapplica la ciclicita dei carboidrati al piano attivo senza passare
-     * dall'AI: cambia tipo di giornata e target dei sette giorni, lasciando
-     * intatti pasti e alimenti gia' scelti. Serve perche' la distribuzione
-     * personalizzata (sez. 5.2) deve valere anche offline: senza questo,
-     * l'utente salverebbe la terna e vedrebbe il piano invariato fino alla
-     * prossima generazione con rete.
+     * dall'AI: cambia tipo di giornata e target dei sette giorni. Serve perche'
+     * la distribuzione personalizzata (sez. 5.2) deve valere anche offline:
+     * senza questo, l'utente salverebbe la terna e vedrebbe il piano invariato
+     * fino alla prossima generazione con rete.
+     *
+     * I pasti gia' scelti restano gli stessi (nessun alimento viene aggiunto,
+     * tolto o sostituito), ma le grammature vengono ricalcolate sui nuovi
+     * target: aggiornare solo l'intestazione del giorno lasciava l'utente con
+     * un piano dichiarato a 2400 kcal e alimenti che ne coprivano 1900.
      */
     suspend fun applyCarbCyclingAsNewPlanVersion(
         planId: Long,
@@ -401,6 +518,10 @@ class NutritionRepository @Inject constructor(
                     targetCarbs = target.carbs,
                     targetFat = target.fat
                 )
+            },
+            afterClone = { newPlanId, _ ->
+                val types = dayDao.getForPlan(newPlanId).associate { it.dayIndex to it.dayType }
+                rescalePlanEntries(newPlanId, types, cycling)
             }
         ) ?: return false
         val newPlanId = result.first
