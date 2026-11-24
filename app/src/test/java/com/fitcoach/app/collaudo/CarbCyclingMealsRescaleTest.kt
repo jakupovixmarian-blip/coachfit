@@ -146,8 +146,15 @@ class CarbCyclingMealsRescaleTest {
                 )
             )
         )
+        val trainingDays = (0..3).toList()
+        val tipi = CarbCyclingEngine.assignDayTypes(
+            highDays = cycling.highDays,
+            mediumDays = cycling.mediumDays,
+            lowDays = cycling.lowDays,
+            trainingDayIndices = trainingDays
+        )
         val giorni = (0..6).map { idx ->
-            val tipo = CarbDayType.MEDIUM
+            val tipo = tipi[idx]
             val target = cycling.targets[tipo]!!
             MealPlanGenerator.GeneratedDay(
                 dayIndex = idx, dayType = tipo, target = target, meals = pasti,
@@ -158,8 +165,8 @@ class CarbCyclingMealsRescaleTest {
         }
         return nutrition.savePlan(
             profile = profilo, energy = energy, cycling = cycling,
-            generatedDays = giorni, dayTypes = List(7) { CarbDayType.MEDIUM },
-            trainingDayIndices = (0..3).toList()
+            generatedDays = giorni, dayTypes = tipi,
+            trainingDayIndices = trainingDays
         )
     }
 
@@ -248,5 +255,29 @@ class CarbCyclingMealsRescaleTest {
         // ferme a quelle di prima e il giorno risultava "modificato" solo in testa.
         assertThat(kcalDopo).isNotWithin(1.0).of(kcalPrima)
         assertThat(kotlin.math.abs(kcalDopo - nuovoTarget) / nuovoTarget).isLessThan(0.10)
+    }
+
+    @Test
+    fun `cambiare il tipo di un giorno porta il target del tipo giusto`() = runTest {
+        val planId = creaPianoConAlimenti()
+        val prima = nutrition.getActivePlan()!!
+        val giornoHigh = prima.days.first { it.dayType == CarbDayType.HIGH }
+        val giornoLow = prima.days.first { it.dayType == CarbDayType.LOW }
+        assertThat(giornoHigh.targetKcal).isNotWithin(1.0).of(giornoLow.targetKcal)
+
+        // Il giorno HIGH diventa LOW: il target deve seguire il tipo, non restare
+        // quello di un HIGH con l'etichetta cambiata.
+        nutrition.updateDayTypeAsNewPlanVersion(
+            planId = planId,
+            dayId = giornoHigh.id,
+            dayType = CarbDayType.LOW,
+            diaryEpochDay = 20_000L
+        )
+
+        val dopo = nutrition.getActivePlan()!!.days.first { it.dayIndex == giornoHigh.dayIndex }
+        assertThat(dopo.dayType).isEqualTo(CarbDayType.LOW)
+        assertThat(dopo.targetKcal).isWithin(1.0).of(giornoLow.targetKcal)
+        val kcalAlimenti = dopo.meals.flatMap { it.entries }.sumOf { it.kcal }
+        assertThat(kotlin.math.abs(kcalAlimenti - dopo.targetKcal) / dopo.targetKcal).isLessThan(0.10)
     }
 }

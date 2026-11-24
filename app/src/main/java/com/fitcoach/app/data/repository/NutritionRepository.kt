@@ -324,18 +324,22 @@ class NutritionRepository @Inject constructor(
         val entryMap = mutableMapOf<Long, Long>()
         val dayMap = mutableMapOf<Long, Long>()
         oldDays.forEach { oldDay ->
+            // La transform riceve la riga ORIGINALE: i chiamanti identificano il
+            // giorno con day.id == dayId. Azzerare l'id prima della transform
+            // rendeva quel confronto sempre falso e la modifica puntuale una
+            // copia identica del piano.
             val newDayId = dayDao.insertAll(
-                listOf(dayTransform(oldDay.copy(id = 0L, planId = newPlanId)))
+                listOf(dayTransform(oldDay).copy(id = 0L, planId = newPlanId))
             ).first()
             dayMap[oldDay.id] = newDayId
             mealDao.getForDay(oldDay.id).forEach { oldMeal ->
                 val newMealId = mealDao.insertAll(
-                    listOf(mealTransform(oldMeal.copy(id = 0L, nutritionDayId = newDayId)))
+                    listOf(mealTransform(oldMeal).copy(id = 0L, nutritionDayId = newDayId))
                 ).first()
                 val oldEntries = entryDao.getForMeal(oldMeal.id)
                 if (oldEntries.isNotEmpty()) {
                     val newEntries = oldEntries.map { oldEntry ->
-                        entryTransform(oldEntry.copy(id = 0L, mealId = newMealId))
+                        entryTransform(oldEntry).copy(id = 0L, mealId = newMealId)
                     }
                     val newIds = entryDao.insertAll(newEntries)
                     oldEntries.zip(newIds).forEach { (oldEntry, newEntryId) ->
@@ -548,7 +552,35 @@ class NutritionRepository @Inject constructor(
     ): Boolean {
         val result = clonePlanVersion(
             planId = planId,
-            dayTransform = { day -> if (day.id == dayId) day.copy(dayType = dayType) else day }
+            dayTransform = { day -> if (day.id == dayId) day.copy(dayType = dayType) else day },
+            afterClone = { newPlanId, dayMap ->
+                // Il tipo di giornata e' solo un'etichetta se il target resta
+                // quello di prima: un giorno ribattezzato LOW con le calorie di
+                // un HIGH e' un piano incoerente. Il target si copia da un
+                // giorno gemello dello stesso tipo gia' presente nel piano.
+                val newDayId = dayMap[dayId]
+                if (newDayId != null) {
+                    val sibling = dayDao.getForPlan(newPlanId)
+                        .firstOrNull { it.id != newDayId && it.dayType == dayType }
+                    if (sibling != null) {
+                        val target = com.fitcoach.app.domain.model.CarbDayTarget(
+                            type = dayType,
+                            kcal = sibling.targetKcal,
+                            protein = sibling.targetProtein,
+                            carbs = sibling.targetCarbs,
+                            fat = sibling.targetFat
+                        )
+                        dayDao.updateTargets(
+                            newDayId,
+                            target.kcal,
+                            target.protein,
+                            target.carbs,
+                            target.fat
+                        )
+                        rescaleDay(newDayId, target)
+                    }
+                }
+            }
         ) ?: return false
         relinkCurrentDiary(result.second, result.first, diaryEpochDay)
         return true
