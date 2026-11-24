@@ -1094,3 +1094,20 @@ non scrivono piu'.
 `ConcurrentReadAdversarialTest` dimostra il difetto: con due piani attivi,
 `getActivePlan()` cambiava lo stato del database. Il test cattura lo stato
 **prima** della chiamata (catturarlo dopo rendeva il test incapace di fallire).
+
+## Cambiare i target di un piano deve riscalare gli alimenti
+
+`applyCarbCyclingAsNewPlanVersion` e `updateDayTargetsAsNewPlanVersion`
+aggiornavano tipo e target del giorno ma **non** le grammature delle voci di
+pasto. L'utente leggeva "Distribuzione applicata al piano" e ritrovava pasti
+identici: il piano cambiava solo in intestazione.
+
+Ora `clonePlanVersion` accetta un hook `afterClone(planId, dayMap)` eseguito
+**dentro la stessa transazione**: `rescalePlanEntries` / `rescaleDay`
+ricalcolano le grammature con `MealPortionSolver` sui valori del catalogo,
+lasciando invariata la scelta degli alimenti.
+
+Trappola dei test: `createManualPlan` crea pasti **vuoti**, quindi un test su
+quello non puo' accorgersi del difetto. `CarbCyclingMealsRescaleTest` costruisce
+un piano con alimenti reali (e li inserisce nel catalogo `food_database`,
+altrimenti il riscalamento non trova nulla).
