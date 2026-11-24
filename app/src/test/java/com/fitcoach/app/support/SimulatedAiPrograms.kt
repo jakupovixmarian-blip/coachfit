@@ -60,7 +60,13 @@ object SimulatedAiPrograms {
          */
         setsPerExercise: Int = 4,
         /** Tecnica applicata a ogni esercizio, per testare le tecniche d'intensita'. */
-        technique: String = "NONE"
+        technique: String = "NONE",
+        /**
+         * Scostamento dei giorni usato per scegliere gli alimenti. A 0 il
+         * generatore e' deterministico; un valore diverso produce un piano
+         * alimentare diverso, come farebbe il modello su richiesta dell'utente.
+         */
+        foodOffset: Int = 0
     ): AiProgramProposal {
         val energy = EnergyCalculator.compute(profile)
             ?: error("Profilo senza dati energetici sufficienti: il profilo di test deve essere completo.")
@@ -82,7 +88,7 @@ object SimulatedAiPrograms {
             // L'AI simulata sceglie SOLO gli alimenti per ogni pasto; le grammature
             // le risolve MealPortionSolver, esattamente come in produzione.
             val structure = fiveMealShares.mapIndexed { mealIndex, (slot, _) ->
-                slot.name to chooseFoods(bank, slot, dayIndex, mealIndex)
+                slot.name to chooseFoods(bank, slot, dayIndex + foodOffset, mealIndex)
             }
             var solved = MealPortionSolver.solve(target, structure)
             // Se il solver segnala una giornata non centrabile, l'AI reagisce come in

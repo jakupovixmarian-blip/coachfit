@@ -1,5 +1,6 @@
 package com.fitcoach.app.domain.nutrition
 
+import com.fitcoach.app.domain.engine.EngineParameters
 import com.fitcoach.app.domain.model.EnergyResult
 import com.fitcoach.app.domain.model.Sex
 import com.fitcoach.app.domain.model.TrainingExperience
@@ -18,40 +19,72 @@ import kotlin.math.roundToInt
  */
 object EnergyCalculator {
 
-    /** Fattori di attivita per livello di esperienza e giorni di allenamento. */
+    /** Spostamento di PAL per ogni 2.500 passi sopra o sotto i 5.000 di riferimento. */
+    private const val STEPS_TO_PAL = 0.03
+
+    /**
+     * Fattore di attivita (PAL) del profilo.
+     *
+     * Le bande sono quelle FAO/WHO/UNU 2004 (Table 5.3): 1,40-1,69 per uno stile
+     * sedentario o poco attivo, 1,70-1,99 per uno attivo o moderatamente attivo,
+     * 2,00-2,40 per uno molto attivo. Il numero di allenamenti settimanali decide
+     * la banda, e la correzione NEAT sposta il valore DENTRO la banda, mai fuori.
+     *
+     * Prima qui c'erano 1,2 / 1,375 / 1,55 / 1,725: valori di comodo senza fonte,
+     * che non corrispondono a nessuna banda pubblicata. In particolare 1,375 sta
+     * sotto il minimo FAO per una persona che si allena 2-3 volte a settimana, e
+     * quindi sottostimava il fabbisogno.
+     */
     fun activityFactor(profile: UserProfile): Double {
         profile.activityFactorOverride?.let { return it }
-        val base = when (profile.trainingDaysPerWeek) {
-            0, 1 -> 1.2
-            2, 3 -> 1.375
-            4, 5 -> 1.55
-            else -> 1.725
+
+        val min: Double
+        val max: Double
+        when (profile.trainingDaysPerWeek) {
+            0, 1 -> {
+                min = EngineParameters.palSedentaryMin.value
+                max = EngineParameters.palSedentaryMax.value
+            }
+            2, 3 -> {
+                min = EngineParameters.palModerateMin.value
+                max = EngineParameters.palModerateMax.value
+            }
+            4, 5 -> {
+                min = EngineParameters.palModerateMax.value
+                max = EngineParameters.palVigorousMin.value
+            }
+            else -> {
+                min = EngineParameters.palVigorousMin.value
+                max = EngineParameters.palVigorousMax.value
+            }
         }
-        // L'esperienza avanzata tende ad avere NEAT piu alto; correzione piccola e documentata.
-        val experienceAdj = when (profile.experience) {
-            TrainingExperience.BEGINNER -> 0.0
-            TrainingExperience.INTERMEDIATE -> 0.025
-            TrainingExperience.ADVANCED -> 0.05
-        }
-        return (base + experienceAdj + neatAdjustment(profile)).coerceIn(1.1, 2.1)
+
+        // Punto di partenza: centro della banda. Le correzioni spostano dentro.
+        val base = (min + max) / 2.0
+        return (base + neatAdjustment(profile)).coerceIn(min, max)
     }
 
     /**
-     * Correzione NEAT (attivita non sportiva) derivata dallo stile di vita reale:
-     * tipo di lavoro, passi giornalieri, trasporto, attivita sportive extra.
-     * Restituisce un delta da sommare al fattore di attivita base.
+     * Correzione NEAT (attivita' non sportiva) dentro la banda PAL.
+     *
+     * Restituisce un delta da sommare al centro della banda. Il valore resta
+     * comunque limitato dalla banda stessa in [activityFactor]: qui non si esce
+     * mai dall'intervallo pubblicato.
+     *
+     * Le quantificazioni per passi e trasporto NON hanno una fonte primaria: sono
+     * `CONVENTION`, e il registro lo dichiara. Servono a distinguere due persone
+     * con gli stessi allenamenti ma uno stile di vita diverso, non a stimare il
+     * dispendio con precisione.
      */
     fun neatAdjustment(profile: UserProfile): Double {
         var adj = profile.workType.neatAdjustment
 
-        // Passi giornalieri: riferimento 5000 passi = neutro; ogni 2500 passi
-        // oltre o sotto muove il fattore di circa 0.03 (documentato, prudente).
         profile.dailySteps?.let { steps ->
-            val stepDelta = (steps - 5000) / 2500.0 * 0.03
+            // 5.000 passi = riferimento neutro; ogni 2.500 passi muove di 0,03.
+            val stepDelta = (steps - 5000) / 2500.0 * STEPS_TO_PAL
             adj += stepDelta.coerceIn(-0.10, 0.15)
         }
 
-        // Trasporto attivo.
         adj += when (profile.transportMode) {
             com.fitcoach.app.domain.model.TransportMode.WALK -> 0.06
             com.fitcoach.app.domain.model.TransportMode.BIKE -> 0.05
@@ -60,12 +93,10 @@ object EnergyCalculator {
             com.fitcoach.app.domain.model.TransportMode.NONE -> -0.01
         }
 
-        // Camminate pianificate (minuti/settimana).
         if (profile.walkingMinutesPerWeek > 0) {
             adj += (profile.walkingMinutesPerWeek / 60.0 / 7.0 * 0.02).coerceAtMost(0.06)
         }
 
-        // Sport aggiuntivi (gia' parzialmente catturati dal fattore base, quota ridotta).
         adj += (profile.extraSportSessionsPerWeek * 0.015).coerceAtMost(0.08)
 
         return adj

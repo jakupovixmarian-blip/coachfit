@@ -9,6 +9,8 @@ import com.fitcoach.app.domain.coach.tools.SubmitFullProgramTool
 import com.fitcoach.app.domain.model.Exercise
 import com.fitcoach.app.domain.model.FoodItem
 import com.fitcoach.app.domain.model.UserProfile
+import com.fitcoach.app.domain.knowledge.CorpusPrompt
+import com.fitcoach.app.domain.knowledge.InvictusKnowledge
 import com.fitcoach.app.domain.knowledge.KnowledgeCorpus
 import com.fitcoach.app.domain.nutrition.BreakfastConstraint
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
@@ -359,6 +361,20 @@ class AiProgramGenerationService @Inject constructor(
         appendLine("Consegnalo con lo strumento submit_full_program: la verifica e il salvataggio avvengono li.")
         appendLine()
         appendLine(KnowledgeCorpus.promptBlock())
+        appendLine()
+        // Il corpus Invictus non e' piu' solo una libreria consultabile: le regole
+        // delle categorie pertinenti allo scope arrivano nel prompt, cosi' il
+        // modello non puo' generare "senza aver visto la fonte". Se una categoria
+        // resta fuori per budget, il blocco lo dichiara.
+        appendLine(
+            CorpusPrompt.block(
+                when (scope) {
+                    ProgramGenerationEngine.Scope.NUTRITION -> listOf(InvictusKnowledge.Area.NUTRIZIONE)
+                    ProgramGenerationEngine.Scope.WORKOUT -> listOf(InvictusKnowledge.Area.ALLENAMENTO)
+                    ProgramGenerationEngine.Scope.BOTH -> InvictusKnowledge.Area.entries.toList()
+                }
+            )
+        )
     }
 
     companion object {

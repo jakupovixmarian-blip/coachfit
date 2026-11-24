@@ -15,6 +15,8 @@ import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.MealSlots
 import com.fitcoach.app.domain.workout.CatalogBounds
 import com.fitcoach.app.domain.workout.EquipmentFit
+import com.fitcoach.app.domain.workout.TrainingPolicy
+import com.fitcoach.app.domain.workout.TrainingPolicyChecks
 import com.fitcoach.app.domain.workout.VolumeGuidelines
 import kotlin.math.abs
 
@@ -254,6 +256,13 @@ object ProposalChecker {
                 violations += "giorno workout ${day.dayIndex}: nessun esercizio di isolamento " +
                     "(${resolved.size} esercizi, tutti multiarticolari). Aggiungi almeno un " +
                     "isolamento per i gruppi che restano scoperti."
+            }
+            // Esperienza e obiettivo devono CAMBIARE la scheda, non solo il
+            // prompt. Prima un neofita poteva ricevere la stessa scheda di un
+            // avanzato: le soglie di volume producevano avvisi, e l'obiettivo
+            // non entrava in nessun controllo.
+            violations += TrainingPolicyChecks.dayViolations(day.dayIndex, day, profile) { name ->
+                findExercise(name)
             }
             day.exercises.forEach { item ->
                 // Un JSON con nomi di campo diversi produceva esercizi con nome

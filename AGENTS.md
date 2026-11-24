@@ -1123,3 +1123,56 @@ Ora la transform riceve la riga originale e `id = 0L` si applica al risultato.
 Corollario: le modifiche "puntuali" del piano non avevano alcun test. Un test
 su `updateDayTargetsAsNewPlanVersion` / `updateDayTypeAsNewPlanVersion` deve
 verificare che il valore sia **cambiato**, non solo che la funzione torni true.
+
+## Ciclizzazione: carboidrati e grassi si vincolano a vicenda
+
+La guida InVictus dice due cose che si contraddicono se prese alla lettera:
+"giornate con alto apporto calorico **e** glucidico" nei giorni ON, e "giorno
+OFF: piu' spazio agli alimenti lipidici". Entrambe sono vere, ma i grassi in
+piu' nei giorni OFF erodono il vantaggio calorico dei giorni ON.
+
+Con 2 giorni HIGH e 2 LOW il piano finiva con i LOW **6 kcal sopra** gli HIGH:
+la prima richiesta era violata senza che nessun test se ne accorgesse. Ora lo
+scarto dei grassi e' limitato dal vincolo che i giorni ON conservino almeno
+100 kcal di vantaggio (`MIN_KCAL_GAP_ON_VS_OFF`). Su tre profili reali:
+
+| Profilo | HIGH | LOW | Grassi HIGH / LOW |
+|---|---|---|---|
+| Cut 60 kg | 1.902 kcal / 249 g C | 1.703 kcal / 179 g C | 20% / 27% |
+| Recomp 78 kg | 2.602 kcal / 364 g C | 2.475 kcal / 294 g C | 20% / 27% |
+| Iper 95 kg | 3.592 kcal / 538 g C | 3.499 kcal / 463 g C | 21% / 28% |
+
+Trappola: il pavimento dei grassi e' una **quota delle calorie del giorno**, ma
+le calorie del giorno contengono i grassi stessi. Va risolto, non assegnato:
+`F = s * (P*4 + C*4) / ((1-s)*9)`. Assegnare `minFatGrams(kcalMedie)` prima di
+conoscere i macro del giorno lascia il 20% non rispettato di 1-2 g.
+
+Trappola 2: confrontare i grassi in **grammi** tra giorni diversi e' fuorviante.
+Un giorno HIGH da 2.602 kcal con il 20% di grassi ne ha 58 g; un giorno LOW da
+2.475 kcal con il 27% ne ha 75 g. La quota dice "piu' grassi negli OFF", i
+grammi assoluti dipendono dalle calorie del giorno. Su alcune combinazioni di
+arrotondamento i grammi dei due giorni coincidono o si invertono pur essendo
+corretta la quota. La proprieta' documentata e' la **quota**: testare quella.
+
+## I fattori di attivita non erano in nessuna banda pubblicata
+
+Il motore usava `1,2 / 1,375 / 1,55 / 1,725`. Sono i moltiplicatori piu'
+diffusi nei calcolatori online, e nessuno appartiene alle bande FAO/WHO/UNU 2004
+(`1,40-1,69` / `1,70-1,99` / `2,00-2,40`). In pratica `1,375` stava **sotto** il
+minimo FAO per chi si allena 2-3 volte a settimana: il fabbisogno era
+sottostimato. Ora la banda la sceglie `trainingDaysPerWeek`, la correzione NEAT
+sposta il valore **dentro** la banda, e il pavimento e' 1,2 x BMR (Black 1996:
+dispendio di una persona non deambulante).
+
+Se un test asserisce un PAL esatto, asserisce un numero senza fonte: farlo
+confrontare con `EnergyCalculator.activityFactor(profile)` e con i limiti della
+banda, non con una costante scritta a mano.
+
+## Deficit: la percentuale non basta, serve il tasso di calo
+
+`weeklyAdjustmentFraction` (CUT -20%) e' una convenzione. Il vincolo
+verificabile e' Helms 2014: 0,5-1% del peso a settimana. Un deficit del 20% su
+un peso basso puo' chiedere l'1,4%, cioe' perdita di massa magra.
+`impliedWeeklyLossPercent` converte il deficit in velocita' di calo; se supera
+l'1% il warning contiene `TOO_FAST_MARKER` e `isValid` diventa **false**.
+Un warning che non invalida il piano non e' un controllo di sicurezza.

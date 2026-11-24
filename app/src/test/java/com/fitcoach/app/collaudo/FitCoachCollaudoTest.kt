@@ -25,6 +25,7 @@ import com.fitcoach.app.domain.model.MealSlot
 import com.fitcoach.app.domain.model.Sex
 import com.fitcoach.app.domain.model.WeightRecord
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
+import com.fitcoach.app.domain.engine.EngineParameters
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import com.fitcoach.app.domain.nutrition.FoodSeedData
 import com.fitcoach.app.domain.workout.EquipmentFit
@@ -156,7 +157,13 @@ class FitCoachCollaudoTest {
         val energy = EnergyCalculator.compute(profile)!!
         assertThat(energy.bmrFormula).isEqualTo("Katch-McArdle")
         assertThat(energy.bmr).isWithin(1.0).of(370.0 + 21.6 * (75.0 * (1 - 0.19)))
-        assertThat(energy.tdee).isWithin(1.0).of(energy.bmr * 1.574)
+        // Il fattore di attivita' e' quello che il motore applica davvero, e deve
+        // stare in una banda FAO/WHO/UNU (1,40-1,69 per uno stile sedentario o
+        // poco attivo). Il vecchio 1,574 non apparteneva a nessuna banda.
+        val pal = energy.tdee / energy.bmr
+        assertThat(pal).isWithin(0.001).of(EnergyCalculator.activityFactor(profile))
+        assertThat(pal).isAtLeast(EngineParameters.palSedentaryMin.value)
+        assertThat(pal).isAtMost(EngineParameters.palVigorousMax.value)
         assertThat(energy.notes.any { it.contains("stima") || it.contains("stimato") }).isTrue()
     }
 

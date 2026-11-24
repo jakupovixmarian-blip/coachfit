@@ -1561,17 +1561,6 @@ object InvictusKnowledge {
         Rule(
             category = Category.INTENSITY,
             statement =
-                "In general, studies have demonstrated increases in strength and muscle size after short " +
-                "term (1-3 weeks), high-frequency low-intensity BFR training, non-failure, but not after " +
-                "control conditions (non-BFR; equalized training volume). ",
-            articleTitle = "Physiological adaptations and myocellular stress in short-term, high-frequency blood flow restriction training: A scoping review",
-            url = "https://pubmed.ncbi.nlm.nih.gov/36584157/",
-            publishedDate = "2022",
-            kind = SourceKind.INDIVIDUAL_STUDY
-        ),
-        Rule(
-            category = Category.INTENSITY,
-            statement =
                 "Si può calcolare moltiplicando le serie per le ripetizioni allenanti (ovvero con un " +
                 "buffer massimo di 3, se il nostro cedimento arriva a 10 ripetizioni, contano solo le " +
                 "serie dove arriviamo almeno a 7). ",
@@ -2366,6 +2355,16 @@ object InvictusKnowledge {
         Rule(
             category = Category.REPS,
             statement =
+                "Triceps brachii (TB) muscle thickness was assessed using ultrasonography at 60% (TB60) " +
+                "and 70% (TB70) of the upper arm length, and the sum of both sites was calculated (∑TB). ",
+            articleTitle = "Progressive Overload Affects the Magnitude of Muscle Hypertrophy",
+            url = "https://pubmed.ncbi.nlm.nih.gov/41718594/",
+            publishedDate = "2026",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.REPS,
+            statement =
                 "Subjects were tested pre- and post-study for: 1 repetition maximum (RM) strength in the " +
                 "bench press and squat, upper body muscle endurance, and muscle thickness of the elbow " +
                 "flexors, elbow extensors, and lateral thigh. ",
@@ -2382,6 +2381,38 @@ object InvictusKnowledge {
             articleTitle = "Resistance training prescription for muscle strength and hypertrophy in healthy adults: a systematic review and Bayesian network meta-analysis",
             url = "https://pubmed.ncbi.nlm.nih.gov/37414459/",
             publishedDate = "2023",
+            kind = SourceKind.SYSTEMATIC_REVIEW
+        ),
+        Rule(
+            category = Category.REPS,
+            statement =
+                "Our results revealed that during both low-load training and walking, the addition of BFR " +
+                "elicits significantly greater improvements in muscular strength with pooled effect sizes " +
+                "(ES) of 2.16 (95% CI 1.61 to 2.70) and 3.09 (95% CI 2.04 to 4.14), respectively. ",
+            articleTitle = "Effects of Blood Flow Restriction Training on Muscular Strength and Hypertrophy in Older Individuals: A Systematic Review and Meta-Analysis",
+            url = "https://pubmed.ncbi.nlm.nih.gov/30306467/",
+            publishedDate = "2019",
+            kind = SourceKind.SYSTEMATIC_REVIEW
+        ),
+        Rule(
+            category = Category.REPS,
+            statement =
+                "Muscle mass was also increased when comparing walking with and without BFR [ES 1.82 (95% " +
+                "CI 1.32 to 2.32)]. ",
+            articleTitle = "Effects of Blood Flow Restriction Training on Muscular Strength and Hypertrophy in Older Individuals: A Systematic Review and Meta-Analysis",
+            url = "https://pubmed.ncbi.nlm.nih.gov/30306467/",
+            publishedDate = "2019",
+            kind = SourceKind.SYSTEMATIC_REVIEW
+        ),
+        Rule(
+            category = Category.REPS,
+            statement =
+                "In comparison with high-load training, LL-BFR promotes similar muscle hypertrophy [ES " +
+                "0.21 (95% CI - 0.14 to 0.56)] but lower strength gains [ES - 0.42 (95% CI - 0.70 to - " +
+                "0.14)]. ",
+            articleTitle = "Effects of Blood Flow Restriction Training on Muscular Strength and Hypertrophy in Older Individuals: A Systematic Review and Meta-Analysis",
+            url = "https://pubmed.ncbi.nlm.nih.gov/30306467/",
+            publishedDate = "2019",
             kind = SourceKind.SYSTEMATIC_REVIEW
         ),
         Rule(
@@ -2901,49 +2932,6 @@ object InvictusKnowledge {
         Rule(
             category = Category.PROGRESSION,
             statement =
-                "Triceps brachii (TB) muscle thickness was assessed using ultrasonography at 60% (TB60) " +
-                "and 70% (TB70) of the upper arm length, and the sum of both sites was calculated (∑TB). ",
-            articleTitle = "Progressive Overload Affects the Magnitude of Muscle Hypertrophy",
-            url = "https://pubmed.ncbi.nlm.nih.gov/41718594/",
-            publishedDate = "2026",
-            kind = SourceKind.INDIVIDUAL_STUDY
-        ),
-        Rule(
-            category = Category.PROGRESSION,
-            statement =
-                "Daily insulin dose reductions were observed within the Diactive-1 group (mean difference " +
-                "[MD] -0.10 units/kg, 95% CI -0.18 to -0.01) and when compared with usual care (MD -0.17 " +
-                "units/kg, 95% CI -0.26 to -0.07). ",
-            articleTitle = "Effect of Diactive-1 mHealth-Supported Progressive Resistance Training on Insulin Requirements, Glycemic Stability, and Muscular Strength in Children and Adolescents With Type 1 Diabetes: A Parallel-G",
-            url = "https://pubmed.ncbi.nlm.nih.gov/40802196/",
-            publishedDate = "2025",
-            kind = SourceKind.INDIVIDUAL_STUDY
-        ),
-        Rule(
-            category = Category.PROGRESSION,
-            statement =
-                "Finally, handgrip strength (MD 2.90 kg, 95% CI 1.57-4.22), one-repetition maximum " +
-                "strength (MD 1.34, 95% CI 0.21-2.46), and muscular power (MD 0.97, 95% CI 0.01-1.93) " +
-                "increased. ",
-            articleTitle = "Effect of Diactive-1 mHealth-Supported Progressive Resistance Training on Insulin Requirements, Glycemic Stability, and Muscular Strength in Children and Adolescents With Type 1 Diabetes: A Parallel-G",
-            url = "https://pubmed.ncbi.nlm.nih.gov/40802196/",
-            publishedDate = "2025",
-            kind = SourceKind.INDIVIDUAL_STUDY
-        ),
-        Rule(
-            category = Category.PROGRESSION,
-            statement =
-                "Similarly, there were similar effects found for the interventions with progressive " +
-                "increase in load (RR = 0.53; 95%CI = 0.37-0.74) and the interventions with constant " +
-                "loads (RR = 0.46; 95%CI = 0.36-0.58). ",
-            articleTitle = "Exercise interventions to prevent hamstring injuries in athletes: A systematic review and meta-analysis",
-            url = "https://pubmed.ncbi.nlm.nih.gov/31680644/",
-            publishedDate = "2020",
-            kind = SourceKind.SYSTEMATIC_REVIEW
-        ),
-        Rule(
-            category = Category.PROGRESSION,
-            statement =
                 "Objective To compare the effects of strength training with load progression after 4 " +
                 "weeks on sleep parameters and mental health in college students. ",
             articleTitle = "Examining the Effects of Strength Training with Load Progression on Sleep Parameters and Mental Health in College Students",
@@ -2972,6 +2960,18 @@ object InvictusKnowledge {
             articleTitle = "Blood Flow Restriction Training for Subacromial Pain: Two Case Reports",
             url = "https://pubmed.ncbi.nlm.nih.gov/36582265/",
             publishedDate = "2022",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.PROGRESSION,
+            statement =
+                "Thirty volunteers (men = 16 and women = 14; age = 23.3 ± 1.7 years; body mass = 63.9 ± " +
+                "13.3 kg; height = 167.9 ± 9.2 cm; body mass index [BMI] = 22.5 ± 3.4 kg·m-2) performed " +
+                "14 static back-rows at 7 different lengths of the straps in 2 different elbow positions " +
+                "(flexed and extended). ",
+            articleTitle = "Evaluation of Training Load During Suspension Exercise",
+            url = "https://pubmed.ncbi.nlm.nih.gov/30893278/",
+            publishedDate = "2021",
             kind = SourceKind.INDIVIDUAL_STUDY
         ),
         Rule(
@@ -3118,6 +3118,18 @@ object InvictusKnowledge {
         Rule(
             category = Category.PERIODIZATION,
             statement =
+                "Existing literature shows that exercise performance towards 2-3 sets of 1-2 exercises " +
+                "per major muscle group, performing 5-8 repetitions or achieving intensities of 50-80% of " +
+                "1RM, 2-3 times per week should be recommended, followed by training principles such as " +
+                "periodization and progression. ",
+            articleTitle = "A Review on Aging, Sarcopenia, Falls, and Resistance Training in Community-Dwelling Older Adults",
+            url = "https://pubmed.ncbi.nlm.nih.gov/35055695/",
+            publishedDate = "2022",
+            kind = SourceKind.INDIVIDUAL_STUDY
+        ),
+        Rule(
+            category = Category.PERIODIZATION,
+            statement =
                 "However, voluntary strength was enhanced by lifting heavier loads (≥80% one-repetition " +
                 "maximum), through a complete range of motion, for 2-3 sets, at the beginning of training " +
                 "sessions, and ≥2 sessions/wk. ",
@@ -3133,18 +3145,6 @@ object InvictusKnowledge {
             articleTitle = "American College of Sports Medicine Position Stand. Resistance Training Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults: An Overview of Reviews",
             url = "https://pubmed.ncbi.nlm.nih.gov/41843416/",
             publishedDate = "2026",
-            kind = SourceKind.INDIVIDUAL_STUDY
-        ),
-        Rule(
-            category = Category.PERIODIZATION,
-            statement =
-                "Existing literature shows that exercise performance towards 2-3 sets of 1-2 exercises " +
-                "per major muscle group, performing 5-8 repetitions or achieving intensities of 50-80% of " +
-                "1RM, 2-3 times per week should be recommended, followed by training principles such as " +
-                "periodization and progression. ",
-            articleTitle = "A Review on Aging, Sarcopenia, Falls, and Resistance Training in Community-Dwelling Older Adults",
-            url = "https://pubmed.ncbi.nlm.nih.gov/35055695/",
-            publishedDate = "2022",
             kind = SourceKind.INDIVIDUAL_STUDY
         ),
         Rule(
@@ -10066,11 +10066,123 @@ object InvictusKnowledge {
         Rule(
             category = Category.CARB_CYCLING,
             statement =
-                "Durante la fase di ricomposizione conviene tenere un volume leggermente inferiore " +
-                "intorno alle 12 – 20 serie a settimana . ",
-            articleTitle = "Ricomposizione corporea: la guida completa",
-            url = "https://www.projectinvictus.it/ricomposizione-corporea/",
-            publishedDate = "2026-08-18",
+                "Il Carb cycling più che una “dieta” è una strategia, motivo per cui va applicata " +
+                "solamente quando necessario: non è la ciclizzazione dei carboidrati in sé a promuovere " +
+                "la ricomposizione corporea, bensì il contesto di allenamento e calorico in cui questa " +
+                "strategia viene applicata. ",
+            articleTitle = "Cos’è il Carb cycling e come funziona?",
+            url = "https://www.projectinvictus.it/carb-cycling-come-applicarla/",
+            publishedDate = "2024-01-14",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CARB_CYCLING,
+            statement =
+                "A parità di taglio calorico, ciclizzare i glucidi non fa “dimagrire” di più rispetto ad " +
+                "uno stesso piano alimentare non ciclizzato. Il Carb cycling deve essere, quindi, una " +
+                "strategia che va adottata se permette una maggiore aderenza al piano alimentare (sarà " +
+                "l’aderenza a far ottenere i risultati). ",
+            articleTitle = "Cos’è il Carb cycling e come funziona?",
+            url = "https://www.projectinvictus.it/carb-cycling-come-applicarla/",
+            publishedDate = "2024-01-14",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CARB_CYCLING,
+            statement =
+                "Ripartisci le calorie tra i macronutrienti (carboidrati, grassi, proteine), stabilendo " +
+                "quanti grammi di ciascun macro devi assumere in media a settimana. Differenzia i giorni " +
+                "tra quelli ad alto quantitativo glucidico e medio/alto lipidico, in modo che la media " +
+                "settimanale calorica e di macronutrienti sia quella iniziale. ",
+            articleTitle = "Cos’è il Carb cycling e come funziona?",
+            url = "https://www.projectinvictus.it/carb-cycling-come-applicarla/",
+            publishedDate = "2024-01-14",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CARB_CYCLING,
+            statement =
+                "Fai combaciare le giornate con alto apporto calorico e glucidico con quelle di " +
+                "allenamento (giorno ON), quando la spesa energetica è maggiore. ",
+            articleTitle = "Cos’è il Carb cycling e come funziona?",
+            url = "https://www.projectinvictus.it/carb-cycling-come-applicarla/",
+            publishedDate = "2024-01-14",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CARB_CYCLING,
+            statement =
+                "I giorni ad alto apporto glucidico hanno 50-100 g d i carboidrati in più rispetto a " +
+                "quelli a basso apporto glucidico. ",
+            articleTitle = "Cos’è il Carb cycling e come funziona?",
+            url = "https://www.projectinvictus.it/carb-cycling-come-applicarla/",
+            publishedDate = "2024-01-14",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CARB_CYCLING,
+            statement =
+                "Giorno ON: sono da preferire alimenti ricchi di carboidrati e quantità maggiori di " +
+                "questi, preferendo fonti proteiche povere di grassi e limitando le fonti lipidiche " +
+                "(senza eliminarle). ",
+            articleTitle = "Cos’è il Carb cycling e come funziona?",
+            url = "https://www.projectinvictus.it/carb-cycling-come-applicarla/",
+            publishedDate = "2024-01-14",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CARB_CYCLING,
+            statement =
+                "Giorno OFF: viene dato più spazio agli alimenti lipidici come la frutta secca, il pesce " +
+                "grasso e, senza esagerare, uova, latticini. Le fonti glucidiche sono presenti ma in " +
+                "quantità più ridotta. ",
+            articleTitle = "Cos’è il Carb cycling e come funziona?",
+            url = "https://www.projectinvictus.it/carb-cycling-come-applicarla/",
+            publishedDate = "2024-01-14",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CARB_CYCLING,
+            statement =
+                "Contro del Carb cycling: non considera che un muscolo si adatta e “cresce” nei giorni " +
+                "senza allenamento; può peggiorare il recupero dato i minori introiti nei giorni OFF. ",
+            articleTitle = "Cos’è il Carb cycling e come funziona?",
+            url = "https://www.projectinvictus.it/carb-cycling-come-applicarla/",
+            publishedDate = "2024-01-14",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CARB_CYCLING,
+            statement =
+                "In fase di massa (bulk), il Carb cycling nel bodybuilding permette di veicolare le alte " +
+                "quote glucidiche verso la cellula muscolare piuttosto che verso la cellula grassa, " +
+                "portando ad un minor accumulo di massa grassa, a patto che l’allenamento sia ben " +
+                "programmato e ti porti a migliorare la prestazione nel tempo. ",
+            articleTitle = "Cos’è il Carb cycling e come funziona?",
+            url = "https://www.projectinvictus.it/carb-cycling-come-applicarla/",
+            publishedDate = "2024-01-14",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CARB_CYCLING,
+            statement =
+                "Se l’introito glucidico e calorico risulta alto anche nei giorni OFF, puoi introdurre " +
+                "delle sessioni di attività cardiovascolare, nel caso in cui tu non voglia tenere una " +
+                "differenza troppo marcata tra giorni ON e OFF a livello calorico. ",
+            articleTitle = "Cos’è il Carb cycling e come funziona?",
+            url = "https://www.projectinvictus.it/carb-cycling-come-applicarla/",
+            publishedDate = "2024-01-14",
+            kind = SourceKind.DIVULGATIVE
+        ),
+        Rule(
+            category = Category.CARB_CYCLING,
+            statement =
+                "Nella dieta in definizione la percentuale di nutrienti dedicata ai glucidi diminuisce, " +
+                "più o meno notevolmente, in risposta all’abbassamento calorico e all’incremento " +
+                "proteico. ",
+            articleTitle = "Cos’è il Carb cycling e come funziona?",
+            url = "https://www.projectinvictus.it/carb-cycling-come-applicarla/",
+            publishedDate = "2024-01-14",
             kind = SourceKind.DIVULGATIVE
         ),
         Rule(
@@ -10125,16 +10237,6 @@ object InvictusKnowledge {
             articleTitle = "Natural Peaking: Diario di una trasformazione corporea",
             url = "https://www.projectinvictus.it/natural-peaking-teoria-pratica/",
             publishedDate = "2016-10-31",
-            kind = SourceKind.DIVULGATIVE
-        ),
-        Rule(
-            category = Category.CARB_CYCLING,
-            statement =
-                "Oltre a potenziare una dieta ipocalorica di ricomposizione, una dose elevata di BCAA " +
-                "durante gli allenamenti (30-40 g) tende a ridurre significativamente il DOMS. ",
-            articleTitle = "BCAA sempre e comunque utili?",
-            url = "https://www.projectinvictus.it/bcaa-sempre-e-comunque-utili/",
-            publishedDate = "2014-03-13",
             kind = SourceKind.DIVULGATIVE
         ),
         Rule(

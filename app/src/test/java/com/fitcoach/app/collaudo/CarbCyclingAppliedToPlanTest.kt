@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.math.abs
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
@@ -145,7 +146,14 @@ class CarbCyclingAppliedToPlanTest {
 
         val plan = nutrition.getActivePlan()!!
         val somma = plan.days.sumOf { it.targetKcal }
-        assertThat(plan.weeklyCalories).isWithin(1.0).of(cycling.weeklyKcal)
+        // I macro sono in grammi interi: la somma dei 7 giorni non puo' coincidere
+        // al decimale col target teorico (granularita' 4 kcal/giorno). Il piano
+        // deve dichiarare cio' che contiene, cioe' weeklyKcalFromTarget.
+        assertThat(plan.weeklyCalories).isWithin(1.0).of(cycling.weeklyKcalFromTarget)
+        assertThat(plan.weeklyCalories).isWithin(1.0).of(somma)
+        // Lo scarto dal target teorico resta rumore di arrotondamento, non un errore.
+        assertThat(abs(cycling.weeklyKcalFromTarget - cycling.weeklyKcal))
+            .isLessThan(30.0)
         assertThat(plan.weeklyKcalBalance).isWithin(1.0).of(somma - energy.tdee * 7)
     }
 }

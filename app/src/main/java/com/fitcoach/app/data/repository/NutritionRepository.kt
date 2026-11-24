@@ -107,8 +107,12 @@ class NutritionRepository @Inject constructor(
                 isActive = true,
                 bmr = energy.bmr,
                 tdee = energy.tdee,
-                weeklyCalories = cycling.weeklyKcal,
-                weeklyKcalBalance = cycling.weeklyKcal - energy.tdee * 7,
+                // Il totale dichiarato deve essere quello che i giorni contengono
+                // davvero: i macro sono in grammi interi, quindi la somma dei
+                // giorni non coincide al decimale col target teorico. Dichiarare
+                // il teorico renderebbe il bilancio settimanale falso di 2-20 kcal.
+                weeklyCalories = cycling.weeklyKcalFromTarget,
+                weeklyKcalBalance = cycling.weeklyKcalFromTarget - energy.tdee * 7,
                 bmrFormula = energy.bmrFormula,
                 tdeeFormula = energy.tdeeFormula,
                 highCarbDays = cycling.highDays,
@@ -166,8 +170,12 @@ class NutritionRepository @Inject constructor(
                 isActive = true,
                 bmr = energy.bmr,
                 tdee = energy.tdee,
-                weeklyCalories = cycling.weeklyKcal,
-                weeklyKcalBalance = cycling.weeklyKcal - energy.tdee * 7,
+                // Il totale dichiarato deve essere quello che i giorni contengono
+                // davvero: i macro sono in grammi interi, quindi la somma dei
+                // giorni non coincide al decimale col target teorico. Dichiarare
+                // il teorico renderebbe il bilancio settimanale falso di 2-20 kcal.
+                weeklyCalories = cycling.weeklyKcalFromTarget,
+                weeklyKcalBalance = cycling.weeklyKcalFromTarget - energy.tdee * 7,
                 bmrFormula = energy.bmrFormula,
                 tdeeFormula = energy.tdeeFormula,
                 highCarbDays = cycling.highDays,
@@ -582,8 +590,8 @@ class NutritionRepository @Inject constructor(
                     highCarbDays = cycling.highDays,
                     mediumCarbDays = cycling.mediumDays,
                     lowCarbDays = cycling.lowDays,
-                    weeklyCalories = cycling.weeklyKcal,
-                    weeklyKcalBalance = cycling.weeklyKcal - tdee * 7
+                    weeklyCalories = cycling.weeklyKcalFromTarget,
+                    weeklyKcalBalance = cycling.weeklyKcalFromTarget - tdee * 7
                 )
             )
         }

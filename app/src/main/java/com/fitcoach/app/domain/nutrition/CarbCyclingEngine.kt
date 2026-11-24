@@ -2,6 +2,7 @@ package com.fitcoach.app.domain.nutrition
 
 import com.fitcoach.app.domain.model.CarbCyclingPlan
 import com.fitcoach.app.domain.model.CarbDayTarget
+import com.fitcoach.app.domain.engine.EngineParameters
 import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.model.EnergyResult
 import com.fitcoach.app.domain.model.Goal
@@ -22,15 +23,53 @@ import kotlin.math.roundToInt
  */
 object CarbCyclingEngine {
 
-    const val KCAL_PER_G_PROTEIN = 4.0
-    const val KCAL_PER_G_CARB = 4.0
-    const val KCAL_PER_G_FAT = 9.0
+    // I valori vengono dal registro: un solo posto dove cambiarli, con la fonte
+    // dichiarata accanto. Vedi EngineParameters.
+    val KCAL_PER_G_PROTEIN get() = EngineParameters.kcalPerGramProtein.value
+    val KCAL_PER_G_CARB get() = EngineParameters.kcalPerGramCarb.value
+    val KCAL_PER_G_FAT get() = EngineParameters.kcalPerGramFat.value
 
     /** Tolleranza di coerenza kcal vs macro (kcal). */
     const val KCAL_TOLERANCE = 15.0
 
-    /** Minimo di grassi per kg per sicurezza ormonale. */
-    const val MIN_FAT_G_PER_KG = 0.6
+    /**
+     * Marcatore del calo troppo rapido.
+     *
+     * Il piano non e' valido se chiede di perdere piu' dell'1% del peso a
+     * settimana: e' un vincolo di sicurezza, non un consiglio. Il testo del
+     * warning lo contiene, quindi [build] lo riconosce senza duplicare la
+     * logica di calcolo.
+     */
+    const val TOO_FAST_MARKER = "Calo troppo rapido"
+
+    /** Energia di 1 kg di massa corporea: 7.700 kcal. */
+    private const val KCAL_PER_KG_BODY_MASS = 7700.0
+
+    /**
+     * Pavimento dei grassi in grammi, calcolato dalle calorie del giorno.
+     *
+     * Prima era un g/kg fisso (0,6, poi 0,8): entrambi numeri senza una fonte
+     * primaria. Il pavimento dipende dalle calorie, non dal peso: Helms 2014
+     * indica il 15-30% delle calorie dai grassi, e Whittaker & Wu 2021 mostrano
+     * che sotto il 20% la testosterone cala.
+     */
+    /**
+     * Quota dei grassi sulle calorie rimanenti (dopo le proteine).
+     *
+     * Il 0,30 cade dentro il 15-30% delle calorie indicato da Helms 2014.
+     */
+    private const val UNIT_FAT_SHARE = 0.30
+
+    private const val TOTAL_DAYS = 7
+
+    /** Scarto massimo dei grassi rispetto al riferimento, per tipo di giornata. */
+    private const val MAX_FAT_SPREAD = 0.20
+
+    /** Vantaggio minimo in kcal che i giorni ON devono conservare sui giorni OFF. */
+    private const val MIN_KCAL_GAP_ON_VS_OFF = 100.0
+
+    fun minFatGrams(dailyKcal: Double, weightKg: Double?): Double =
+        EngineParameters.minFatGrams(dailyKcal, weightKg ?: 0.0)
 
     /**
      * Verifica se il carb cycling e giustificato per questo profilo.
@@ -61,7 +100,8 @@ object CarbCyclingEngine {
         val proteinG = weight * proteinPerKg(profile.goal)
         val warnings = mutableListOf<String>()
 
-        val target = solveDay(CarbDayType.MEDIUM, dailyKcal, proteinG, weight * MIN_FAT_G_PER_KG, 0.4, warnings, profile)
+        val fatG = referenceFatGrams(dailyKcal, proteinG, profile.weightKg)
+        val target = solveDay(CarbDayType.MEDIUM, dailyKcal, proteinG, fatG, warnings, profile)
         val targets = linkedMapOf(CarbDayType.MEDIUM to target)
         val floor = safetyFloor(profile, energy)
         if (target.kcal < floor) {
@@ -83,7 +123,14 @@ object CarbCyclingEngine {
         )
     }
 
-    /** Deficit/surplus settimanale come frazione del TDEE, per obiettivo. */
+    /**
+     * Deficit/surplus settimanale come frazione del TDEE, per obiettivo.
+     *
+     * Sono convenzioni, non prescrizioni della letteratura: Helms non dice
+     * "-20%", dice "0,5-1% del peso a settimana". Il vincolo reale si verifica a
+     * valle con [impliedWeeklyLossPercent], che confronta il deficit proposto con
+     * il peso della persona.
+     */
     fun weeklyAdjustmentFraction(goal: Goal): Double = when (goal) {
         Goal.CUT -> -0.20
         Goal.RECOMP -> -0.08
@@ -92,25 +139,39 @@ object CarbCyclingEngine {
         Goal.STRENGTH -> 0.05
     }
 
-    /** Proteine g/kg per obiettivo. */
-    fun proteinPerKg(goal: Goal): Double = when (goal) {
-        Goal.CUT -> 2.2
-        Goal.RECOMP -> 2.0
-        Goal.HYPERTROPHY -> 1.8
-        Goal.MAINTENANCE -> 1.6
-        Goal.STRENGTH -> 1.8
+    /**
+     * Calo settimanale implicito, in percentuale del peso corporeo.
+     *
+     * Converte il deficit calorico in velocita' di calo: un deficit di 500 kcal
+     * al giorno sono 3.500 kcal a settimana, cioe' circa 0,45 kg di massa
+     * grassa (7.700 kcal per kg). Se il risultato esce da 0,5-1% il motore lo
+     * segnala, perche' vuol dire che sta chiedendo un calo troppo rapido.
+     *
+     * @return percentuale del peso a settimana, o null se manca il peso.
+     */
+    fun impliedWeeklyLossPercent(
+        tdee: Double,
+        weeklyAdjustmentFraction: Double,
+        weightKg: Double?
+    ): Double? {
+        if (weightKg == null || weightKg <= 0 || weeklyAdjustmentFraction >= 0) return null
+        val weeklyDeficit = tdee * 7 * -weeklyAdjustmentFraction
+        val kgPerWeek = weeklyDeficit / KCAL_PER_KG_BODY_MASS
+        return kgPerWeek / weightKg * 100.0
     }
+
+    /** Proteine g/kg per obiettivo. */
+    fun proteinPerKg(goal: Goal): Double = EngineParameters.proteinPerKg(goal).value
 
     /**
      * Limite minimo calorico di sicurezza: non scendere sotto BMR*0.85
      * e mai sotto 1200 kcal (donne) / 1500 kcal (uomini).
      */
     fun safetyFloor(profile: UserProfile, energy: EnergyResult): Double {
-        val sexFloor = when (profile.sex) {
-            com.fitcoach.app.domain.model.Sex.FEMALE -> 1200.0
-            else -> 1500.0
-        }
-        return maxOf(energy.bmr * 0.85, sexFloor)
+        return maxOf(
+            energy.bmr * EngineParameters.bmrFloorFactor.value,
+            EngineParameters.kcalFloor(profile.sex).value
+        )
     }
 
     /**
@@ -171,9 +232,10 @@ object CarbCyclingEngine {
         highDays: Int = effectiveDistribution(profile).first,
         mediumDays: Int = effectiveDistribution(profile).second,
         lowDays: Int = effectiveDistribution(profile).third,
-        carbShareHigh: Double = 1.0,
-        carbShareMedium: Double = 0.65,
-        carbShareLow: Double = 0.35,
+        // Escursione in GRAMMI tra MEDIUM e gli estremi (50-100 g documentati).
+        // Sostituisce le vecchie quote percentuali, che erano una convenzione
+        // interna e producevano escursioni del 69% invece di 50-100 g.
+        carbSwingGrams: Double = EngineParameters.carbCyclingSwingGrams.value,
         proteinPerKgOverride: Double? = null,
         weeklyAdjustmentOverride: Double? = null
     ): CarbCyclingPlan {
@@ -193,32 +255,125 @@ object CarbCyclingEngine {
         val proteinG = weight * proteinPerKg
 
         // 3) Grassi minimi di sicurezza
-        val minFatG = weight * MIN_FAT_G_PER_KG
+        // 0 = il pavimento viene calcolato dentro solveDay sulle kcal del giorno.
+        val minFatG = 0.0
 
-        // 4) Calorie giornaliere per tipo, poi risoluzione carboidrati.
-        //    Le calorie dei giorni HIGH sono sopra la media, LOW sotto, mantenendo
-        //    esattamente il totale settimanale.
-        val highKcal = dailyAvg * (1 + 0.15 * carbShareHigh)
-        val lowKcal = dailyAvg * (1 - 0.18 * carbShareLow)
-        val mediumKcal = computeBalancingKcal(
-            weeklyKcal, highKcal, highDays, lowKcal, lowDays, mediumDays
-        )
+        // 4) Calorie giornaliere per tipo.
+        //
+        //    La ciclizzazione si fa sui CARBOIDRATI, in grammi: il giorno MEDIUM e'
+        //    il riferimento, HIGH aggiunge carbSwingGrams e LOW li toglie. Le
+        //    calorie del giorno seguono di conseguenza (4 kcal per grammo), cosi'
+        //    l'escursione resta nei 50-100 g documentati qualunque sia il profilo.
+        //    Prima le calorie venivano spostate con quote percentuali, e il peso
+        //    relativo dei grassi faceva esplodere l'escursione al 69%.
+        // Carboidrati e grassi si muovono in direzioni opposte, ma non con la
+        // stessa forza: e' questo che va bilanciato.
+        //
+        // La guida chiede due cose insieme:
+        //  - "giornate con alto apporto calorico E glucidico" nei giorni ON;
+        //  - "giorno OFF: piu' spazio agli alimenti lipidici".
+        // Se i grassi salgono troppo nei giorni OFF, le loro calorie superano
+        // quelle dei giorni ON e la prima richiesta salta: e' successo davvero,
+        // con 2 giorni HIGH e 2 LOW i LOW finivano 6 kcal sopra.
+        //
+        // L'escursione dei carboidrati vale +(75 g * 4) = 300 kcal. Ogni punto
+        // di scarto sui grassi ne toglie 18 (2 * 9 g). Quindi lo scarto massimo
+        // ammissibile si ricava: si sceglie il piu' piccolo tra il 20% del
+        // riferimento e il valore che lascia almeno 100 kcal di vantaggio ai
+        // giorni ON.
+        val fatRef = referenceFatGrams(dailyAvg, proteinG, profile.weightKg)
+        val carbSwingKcal = carbSwingGrams * EngineParameters.kcalPerGramCarb.value
+        val maxSpreadForOrder = if (fatRef > 0) {
+            (carbSwingKcal - MIN_KCAL_GAP_ON_VS_OFF) / (2.0 * KCAL_PER_G_FAT * fatRef)
+        } else 0.0
+        val spread = maxSpreadForOrder.coerceIn(0.0, MAX_FAT_SPREAD)
+
+        val fatHigh = (fatRef * (1.0 - spread))
+            .coerceIn(minFatGrams(dailyAvg, profile.weightKg), maxFatGrams(dailyAvg))
+        val fatLow = (fatRef * (1.0 + spread))
+            .coerceIn(minFatGrams(dailyAvg, profile.weightKg), maxFatGrams(dailyAvg))
+        val fatForMedium = if (mediumDays > 0) {
+            (fatRef * TOTAL_DAYS - fatHigh * highDays - fatLow * lowDays) / mediumDays
+        } else 0.0
+        val fatMedium = fatForMedium
+            .coerceIn(minFatGrams(dailyAvg, profile.weightKg), maxFatGrams(dailyAvg))
+        if (mediumDays > 0 && abs(fatMedium - fatForMedium) > 1.0) {
+            warnings += "La ciclizzazione dei grassi non permette di mantenere esatta la media " +
+                "settimanale: il giorno MEDIUM tocca un limite di sicurezza."
+        }
+
+        // I carboidrati settimanali sono quelli che restano dopo proteine e grassi.
+        val weeklyFatG = fatHigh * highDays + fatMedium * mediumDays + fatLow * lowDays
+        val weeklyCarbG = ((weeklyKcal - proteinG * KCAL_PER_G_PROTEIN * totalDays -
+            weeklyFatG * KCAL_PER_G_FAT) / KCAL_PER_G_CARB).coerceAtLeast(0.0)
+        val baseCarbG = weeklyCarbG / totalDays
+        val carbHighG = baseCarbG + carbSwingGrams / 2.0
+        val carbLowG = baseCarbG - carbSwingGrams / 2.0
+        val carbMediumG = if (mediumDays > 0) {
+            (weeklyCarbG - carbHighG * highDays - carbLowG * lowDays) / mediumDays
+        } else 0.0
 
         val targets = linkedMapOf<CarbDayType, CarbDayTarget>()
-        targets[CarbDayType.HIGH] = solveDay(
-            CarbDayType.HIGH, highKcal, proteinG, minFatG, carbShareHigh, warnings, profile
-        )
-        targets[CarbDayType.MEDIUM] = solveDay(
-            CarbDayType.MEDIUM, mediumKcal, proteinG, minFatG, carbShareMedium, warnings, profile
-        )
-        targets[CarbDayType.LOW] = solveDay(
-            CarbDayType.LOW, lowKcal, proteinG, minFatG, carbShareLow, warnings, profile
-        )
+        listOf(
+            Triple(CarbDayType.HIGH, carbHighG, fatHigh),
+            Triple(CarbDayType.MEDIUM, carbMediumG, fatMedium),
+            Triple(CarbDayType.LOW, carbLowG, fatLow)
+        ).forEach { (type, carbG, fatG) ->
+            var carbs = carbG
+            val minCarbG = profile.weightKg?.let { it * 0.5 } ?: 40.0
+            if (type == CarbDayType.LOW && carbs < minCarbG) {
+                warnings += "${type.label}: carboidrati alzati al minimo (${minCarbG.roundToInt()} g)."
+                carbs = minCarbG
+            }
+            val pR = proteinG.roundToInt().toDouble()
+            var cR = carbs.roundToInt().toDouble()
+            var fR = fatG.roundToInt().toDouble()
 
-        // 5) Validazione bilancio settimanale e floor di sicurezza
+            // Arrotondare ai grammi puo' portare i grassi appena sotto il
+            // pavimento del 20%: si recupera dai carboidrati, cosi' le calorie
+            // del giorno restano quelle previste.
+            val dayKcal = pR * KCAL_PER_G_PROTEIN + cR * KCAL_PER_G_CARB + fR * KCAL_PER_G_FAT
+            val floorG = minFatGrams(dayKcal, weight).roundToInt().toDouble()
+            if (fR < floorG) {
+                val missing = floorG - fR
+                val carbCut = (missing * KCAL_PER_G_FAT / KCAL_PER_G_CARB).roundToInt().toDouble()
+                val newCarbs = cR - carbCut
+                if (newCarbs >= minCarbG) {
+                    fR = floorG
+                    cR = newCarbs
+                } else {
+                    // Non c'e' spazio nei carboidrati: alza i grassi e accetta
+                    // qualche kcal in piu'.
+                    fR = floorG
+                }
+            }
+            targets[type] = CarbDayTarget(
+                type = type,
+                kcal = pR * KCAL_PER_G_PROTEIN + cR * KCAL_PER_G_CARB + fR * KCAL_PER_G_FAT,
+                protein = pR,
+                carbs = cR,
+                fat = fR
+            )
+        }
+
+        // Arrotondamento ai grammi: si riassorbe sul giorno MEDIUM, che e' quello
+        // di riferimento e non ha un target proprio da rispettare.
+        rebalanceRounding(targets, weeklyKcal, highDays, mediumDays, lowDays)
+
         val weeklyFromTarget = targets[CarbDayType.HIGH]!!.kcal * highDays +
             targets[CarbDayType.MEDIUM]!!.kcal * mediumDays +
             targets[CarbDayType.LOW]!!.kcal * lowDays
+
+        // Il deficit non deve chiedere un calo piu' rapido di quello documentato.
+        impliedWeeklyLossPercent(energy.tdee, adjFraction, profile.weightKg)?.let { pct ->
+            val maxPct = EngineParameters.weeklyWeightLossMaxPct.value
+            if (pct > maxPct) {
+                warnings += "Calo troppo rapido: il deficit implica " +
+                    "${"%.2f".format(pct)}% del peso a settimana, oltre il limite di " +
+                    "$maxPct% indicato da Helms 2014 (rischio di perdere massa magra). " +
+                    "Valuta un deficit piu' contenuto."
+            }
+        }
 
         val floor = safetyFloor(profile, energy)
         targets.forEach { (type, t) ->
@@ -235,7 +390,9 @@ object CarbCyclingEngine {
         }
 
         val isValid = warnings.none {
-            it.contains("sotto la soglia di sicurezza") || it.contains("differisce")
+            it.contains("sotto la soglia di sicurezza") ||
+                it.contains("differisce") ||
+                it.contains(TOO_FAST_MARKER)
         }
 
         return CarbCyclingPlan(
@@ -272,39 +429,88 @@ object CarbCyclingEngine {
     }
 
     /**
-     * Risolve i macro di un giorno dati kcal, proteine e grassi minimi.
-     * I grassi partono dal minimo e vengono aumentati nei giorni LOW per compensare
-     * la riduzione dei carboidrati (senza superare il 40% delle kcal).
+     * Assorbe il residuo di arrotondamento sui carboidrati del giorno MEDIUM.
+     *
+     * I macro sono grammi interi, quindi la somma dei giorni non coincide con il
+     * bilancio pianificato. Correggerla qui evita che l'utente veda un piano che
+     * dichiara 2.500 kcal e ne contiene 2.470.
+     */
+    private fun rebalanceRounding(
+        targets: MutableMap<CarbDayType, CarbDayTarget>,
+        weeklyKcal: Double,
+        highDays: Int,
+        mediumDays: Int,
+        lowDays: Int
+    ) {
+        val current = targets[CarbDayType.HIGH]!!.kcal * highDays +
+            targets[CarbDayType.MEDIUM]!!.kcal * mediumDays +
+            targets[CarbDayType.LOW]!!.kcal * lowDays
+        val diff = weeklyKcal - current
+        val pivot = if (mediumDays > 0) CarbDayType.MEDIUM else CarbDayType.HIGH
+        val pivotDays = if (mediumDays > 0) mediumDays else highDays
+        if (pivotDays <= 0) return
+        val shiftG = (diff / (pivotDays * KCAL_PER_G_CARB)).roundToInt().toDouble()
+        if (shiftG == 0.0) return
+        val t = targets.getValue(pivot)
+        val newCarbs = (t.carbs + shiftG).coerceAtLeast(0.0)
+        targets[pivot] = t.copy(
+            carbs = newCarbs,
+            kcal = t.protein * KCAL_PER_G_PROTEIN + newCarbs * KCAL_PER_G_CARB +
+                t.fat * KCAL_PER_G_FAT
+        )
+    }
+
+    /** Grassi della giornata di riferimento, in grammi. */
+    private fun referenceFatGrams(
+        referenceKcal: Double,
+        proteinG: Double,
+        weightKg: Double?
+    ): Double {
+        val remaining = (referenceKcal - proteinG * KCAL_PER_G_PROTEIN).coerceAtLeast(0.0)
+        val byShare = remaining * UNIT_FAT_SHARE / KCAL_PER_G_FAT
+        val floor = minFatGrams(referenceKcal, weightKg)
+        val cap = maxFatGrams(referenceKcal)
+        return byShare.coerceIn(floor, maxOf(floor, cap))
+    }
+
+    /** Tetto dei grassi: il 30% delle calorie del giorno (Helms 2014). */
+    private fun maxFatGrams(dailyKcal: Double): Double =
+        dailyKcal * EngineParameters.maxFatKcalShare.value / KCAL_PER_G_FAT
+
+    /**
+     * Grammi di grassi che valgono `share` delle calorie del giorno, con i
+     * carboidrati non ancora calcolati.
+     *
+     * Ricava le kcal residue da proteine e grassi e ripartisce: e' l'unico modo
+     * perche' il pavimento resti rispettato anche quando le kcal del giorno
+     * dipendono dai macro stessi.
+     */
+    private fun fatAtShare(dailyKcal: Double, proteinG: Double, share: Double): Double {
+        val nonFatKcal = (dailyKcal - proteinG * KCAL_PER_G_PROTEIN).coerceAtLeast(0.0)
+        return nonFatKcal * share / (1.0 - share) / KCAL_PER_G_FAT
+    }
+
+    /**
+     * Risolve i macro di un giorno dati kcal, proteine e grassi.
+     *
+     * I grassi arrivano gia' calcolati e sono gli stessi per tutti i tipi di
+     * giornata: la ciclizzazione muove i carboidrati, non i grassi.
      */
     private fun solveDay(
         type: CarbDayType,
         kcal: Double,
         proteinG: Double,
-        minFatG: Double,
-        carbShare: Double,
+        referenceFatG: Double,
         warnings: MutableList<String>,
         profile: UserProfile
     ): CarbDayTarget {
         val proteinKcal = proteinG * KCAL_PER_G_PROTEIN
-        val remainingKcal = (kcal - proteinKcal).coerceAtLeast(0.0)
-
-        // Nei giorni LOW i grassi salgono, nei giorni HIGH restano al minimo.
-        val fatShareOfRemaining = when (type) {
-            CarbDayType.HIGH -> 0.28
-            CarbDayType.MEDIUM -> 0.34
-            CarbDayType.LOW -> 0.52
-        }
-        var fatG = (remainingKcal * fatShareOfRemaining / KCAL_PER_G_FAT)
-            .coerceAtLeast(minFatG)
-
-        // Cap grassi al 45% delle kcal totali per evitare diete sbilanciate.
-        val maxFatG = kcal * 0.45 / KCAL_PER_G_FAT
-        if (fatG > maxFatG) fatG = maxFatG
-
+        var fatG = referenceFatG
         var carbKcal = kcal - proteinKcal - fatG * KCAL_PER_G_FAT
+        val fatFloor = minFatGrams(kcal, profile.weightKg)
         if (carbKcal < 0) {
             // Riduci i grassi per fare spazio ai carboidrati minimi.
-            fatG = minFatG
+            fatG = fatFloor
             carbKcal = (kcal - proteinKcal - fatG * KCAL_PER_G_FAT).coerceAtLeast(0.0)
         }
         var carbG = carbKcal / KCAL_PER_G_CARB

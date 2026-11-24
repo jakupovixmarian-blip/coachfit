@@ -180,7 +180,8 @@ class CoachChatRegenerationIntegrationTest {
     private suspend fun proposal(
         scope: String,
         setsPerExercise: Int = 4,
-        technique: String = "NONE"
+        technique: String = "NONE",
+        foodOffset: Int = 0
     ): String {
         val foods = FoodFilter.allowedFoods(foodRepository.getAll(), profile)
         val exercises = exerciseRepository.getAll()
@@ -188,7 +189,8 @@ class CoachChatRegenerationIntegrationTest {
             profile, foods, exercises,
             WorkoutPlanBuilder.defaultTrainingDays(profile.trainingDaysPerWeek),
             setsPerExercise = setsPerExercise,
-            technique = technique
+            technique = technique,
+            foodOffset = foodOffset
         )
         return SimulatedAiPrograms.json(json, built, scope)
     }
@@ -236,6 +238,11 @@ class CoachChatRegenerationIntegrationTest {
 
     @Test
     fun `conferma rigenera solo la scheda quando l'ambito e WORKOUT`() = runTest {
+        // Il profilo della classe e' un neofita: un DROP_SET gli viene respinto dal
+        // controllo di livello, che e' il comportamento corretto. Qui serve una
+        // tecnica ammessa per verificare l'isolamento dello scope, quindi si usa
+        // un profilo avanzato.
+        userRepository.save(profile.copy(experience = TrainingExperience.ADVANCED))
         assertThat(coordinator(ScriptedApi(GenerationScript.consultationsThen(
             toolCallResponse("submit_full_program", proposal("BOTH")),
             textResponse("Programma generato.")
@@ -292,6 +299,27 @@ class CoachChatRegenerationIntegrationTest {
         assertThat(result).isInstanceOf(com.fitcoach.app.data.repository.ApplyResult.Applied::class.java)
         assertThat(nutritionRepository.getActivePlan()!!.id).isNotEqualTo(originalNutritionId)
         assertThat(workoutRepository.getActivePlan()!!.id).isEqualTo(originalWorkoutId)
+    }
+
+    @Test
+    fun `ambito BOTH con sola nutrizione cambiata non viene segnalato come identico`() = runTest {
+        // Caso limite: la richiesta riguarda solo il cibo. La scheda resta la
+        // stessa, ma la nutrizione cambia: non e' un falso successo.
+        coordinator(ScriptedApi(GenerationScript.consultationsThen(
+            toolCallResponse("submit_full_program", proposal("BOTH")),
+            textResponse("Programma generato.")
+        ))).generate(profile)
+
+        val changeId = askCoachToRegenerate("BOTH")
+        val exec = buildExecutor(
+            ScriptedApi(GenerationScript.consultationsThen(
+                toolCallResponse("submit_full_program", proposal("BOTH", foodOffset = 3)),
+                textResponse("Programma rigenerato.")
+            ))
+        )
+        val result = exec.apply(changeId)
+        assertThat(result)
+            .isInstanceOf(com.fitcoach.app.data.repository.ApplyResult.Applied::class.java)
     }
 
     @Test

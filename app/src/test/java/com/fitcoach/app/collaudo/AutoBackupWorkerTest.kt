@@ -55,16 +55,65 @@ class AutoBackupWorkerTest {
         WorkManager.getInstance(context).cancelAllWork()
     }
 
-    private fun lavori(): List<WorkInfo> {
+    /**
+     * Stato dei lavori, atteso che l'operazione asincrona sia stata applicata.
+     *
+     * `enqueueUniquePeriodicWork` e `cancelUniqueWork` girano sull'executor di
+     * WorkManager: tornano prima che la scrittura sia visibile. Leggere subito
+     * produce un test che passa o fallisce a seconda del carico della macchina
+     * (visto in suite completa, mai in isolamento). Qui si attende la condizione
+     * invece di sperare che sia gia' vera.
+     *
+     * @param atteso predicato che descrive lo stato finale; se non si avvera
+     *   entro il timeout il test fallisce con l'ultimo stato osservato.
+     */
+    private fun lavori(
+        timeoutMs: Long = 5_000,
+        atteso: (List<WorkInfo>) -> Boolean = { true }
+    ): List<WorkInfo> {
         val wm = WorkManager.getInstance(context)
-        return wm.getWorkInfosForUniqueWork(AutoBackupWorker.WORK_NAME).get()
+        val scadenza = System.currentTimeMillis() + timeoutMs
+        var ultimo: List<WorkInfo> = emptyList()
+        while (System.currentTimeMillis() < scadenza) {
+            ultimo = wm.getWorkInfosForUniqueWork(AutoBackupWorker.WORK_NAME).get()
+            if (atteso(ultimo)) return ultimo
+            Thread.sleep(20)
+        }
+        return ultimo
+    }
+
+    /**
+     * Lavori una volta che il numero non cambia piu'.
+     *
+     * Serve quando il test deve dimostrare un'assenza (es. "non duplica"):
+     * attendere la comparsa del primo lavoro non dice niente sul secondo.
+     */
+    private fun lavoriStabili(
+        timeoutMs: Long = 5_000,
+        lettureStabili: Int = 3
+    ): List<WorkInfo> {
+        val wm = WorkManager.getInstance(context)
+        val scadenza = System.currentTimeMillis() + timeoutMs
+        var ultimo: List<WorkInfo> = emptyList()
+        var stabili = 0
+        while (System.currentTimeMillis() < scadenza) {
+            val ora = wm.getWorkInfosForUniqueWork(AutoBackupWorker.WORK_NAME).get()
+            if (ora.size == ultimo.size && ora.isNotEmpty()) {
+                if (++stabili >= lettureStabili) return ora
+            } else {
+                stabili = 0
+            }
+            ultimo = ora
+            Thread.sleep(20)
+        }
+        return ultimo
     }
 
     @Test
     fun `attivare l'interruttore accoda un lavoro periodico unico`() {
         AutoBackupWorker.enqueue(context, enabled = true)
 
-        val lavori = lavori()
+        val lavori = lavori { it.any { w -> w.state == WorkInfo.State.ENQUEUED } }
         assertThat(lavori).hasSize(1)
         assertThat(lavori.first().state).isEqualTo(WorkInfo.State.ENQUEUED)
     }
@@ -74,7 +123,12 @@ class AutoBackupWorkerTest {
         AutoBackupWorker.enqueue(context, enabled = true)
         AutoBackupWorker.enqueue(context, enabled = true)
 
-        assertThat(lavori()).hasSize(1)
+        // Qui non basta attendere "il lavoro esiste": il secondo enqueue potrebbe
+        // non essere ancora stato applicato, e il test passerebbe senza aver
+        // verificato nulla. Si attende che il numero di lavori sia stabile, cioe'
+        // che entrambe le operazioni siano concluse.
+        val lavori = lavoriStabili()
+        assertThat(lavori).hasSize(1)
     }
 
     @Test
@@ -84,8 +138,11 @@ class AutoBackupWorkerTest {
 
         // WorkManager conserva la riga storica con stato CANCELLED: il lavoro
         // non e' piu' schedulato, ma la voce non sparisce dalla tabella.
-        assertThat(lavori().map { it.state }).containsExactly(WorkInfo.State.CANCELLED)
-        assertThat(lavori().none { it.state == WorkInfo.State.ENQUEUED }).isTrue()
+        val lavori = lavori { l ->
+            l.isNotEmpty() && l.none { it.state == WorkInfo.State.ENQUEUED }
+        }
+        assertThat(lavori.map { it.state }).containsExactly(WorkInfo.State.CANCELLED)
+        assertThat(lavori.none { it.state == WorkInfo.State.ENQUEUED }).isTrue()
     }
 
     @Test

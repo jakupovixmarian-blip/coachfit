@@ -577,13 +577,140 @@ Cosa questo corpus **non** è:
   Dove serve autorità si confronta con la letteratura indicizzata (PubMed, OpenAlex,
   Crossref — API pubbliche senza chiave) e con `ScientificSourceSeedData`.
 
-#### Il corpus si consulta, non si versa nel prompt
+#### Il corpus entra nel prompt, ma selezionato
 
-Il corpus è **dato dell'app**, non testo del prompt. Metterlo nel contesto di generazione
-lo trasforma in un elenco interminabile: su un modello piccolo (`qwen3.5-35b-a3b`) un
+Il corpus è **dato dell'app** e la fonte che l'app dichiara di usare: se non entra nel
+prompt, il modello genera schede e diete senza averlo visto, e i validatori controllano
+numeri che nessuna regola collega alla fonte. Per questo `CorpusPrompt` porta nel contesto
+di generazione le regole delle categorie pertinenti allo scope.
+
+**Quanto**, però, è una scelta misurata, non una preferenza. Il corpus intero sono 1.046
+regole (~189.000 caratteri, ~47.000 token): su un modello piccolo (`qwen3.5-35b-a3b`) un
 contesto gonfiato produce programmi non validi — slot dei pasti vuoti, struttura fuori
 schema. Verificato: la stessa generazione passa col contesto di base e fallisce con
-~45.000 caratteri di corpus appesi in fondo.
+~45.000 caratteri di corpus appesi in fondo. Misurato qui:
+
+| regole per categoria | entrambe le aree | sola nutrizione | solo allenamento |
+|---|---|---|---|
+| 3 | 23.922 | 16.224 | 19.377 |
+| 2 | 23.743 | 11.229 | 13.333 |
+| 1 | **12.797** | 5.991 | 6.981 |
+
+Il default è **1 regola per categoria**: il modello vede che la fonte esiste e da dove
+viene ogni parametro, senza rompere la generazione. La selezione è deterministica
+(`CorpusPrompt.score`): si tengono le regole con numeri e unità di misura, si scartano
+prosa, ricette e rumore, e ogni categoria dell'area è rappresentata — anche
+`SUBSTITUTION`, che ha una sola regola senza cifre e resterebbe fuori. Se il budget
+(`MAX_BLOCK_CHARS`) taglia delle categorie, il blocco lo dichiara al modello.
+
+Per la profondità resta `consult_invictus`: le regole nel prompt sono il punto di
+partenza, non il sostituto della consultazione.
+
+#### I motori deterministici si fondano su letteratura primaria, non sulla prosa
+
+La prosa del corpus serve all'AI. Un motore che calcola calorie non può leggerla: dovrebbe
+interpretarla, e i numeri del corpus spesso si contraddicono tra loro (i grassi minimi sono
+"0,8 g/kg" in una regola e "0,5 g/kg" in un'altra). Ma un motore che usa numeri **senza
+fonte** è altrettanto opaco, ed è così che è entrata in produzione una soglia di grassi di
+**0,6 g/kg che nessuna delle 1.046 regole conteneva**.
+
+Il primo tentativo è stato agganciare i parametri alle regole del corpus. Non basta: il
+corpus è **1000 regole divulgative su 1046**. Articoli, diari di atleti, resoconti
+personali. La regola che sembrava più solida ("20-25% di differenza nella ciclizzazione
+ON-OFF") veniva da *un diario del 2016 su un singolo atleta*, ed era l'unica fonte di
+quella frase: la pipeline l'aveva conteggiata tre volte solo perché la stessa frase
+appartiene a tre categorie. Un numero che sembra sostenuto da tre regole e in realtà ne ha
+una sola, per giunta divulgativa.
+
+Quindi il registro ha due livelli:
+
+| Livello | File | A cosa serve |
+|---|---|---|
+| Prosa | `InvictusKnowledge` (1046 regole) | spiegare *perché* all'utente, nella chat |
+| Numeri | `EngineEvidence` + `EngineParameters` | fissare le soglie dei motori |
+
+`EngineEvidence` contiene sei fonti primarie, ognuna con PMID, citazione completa e **la
+frase esatta** da cui viene il numero. I numeri sono stati letti dagli abstract tramite
+l'API E-utilities di PubMed, non citati a memoria.
+
+| Fonte | Tipo | Numero usato |
+|---|---|---|
+| Morton 2018, PMID 28698222 | meta-analisi, 49 RCT, 1863 soggetti | proteine saturano a **1,62 g/kg** |
+| Jäger 2017, PMID 28642676 | position stand ISSN | base **1,4-2,0 g/kg** |
+| Aragon 2017, PMID 28630601 | position stand ISSN | in deficit **2,3-3,1 g/kg di massa magra** |
+| Helms 2014, PMID 24864135 | revisione preparazione contest | grassi **15-30% delle calorie**; calo 0,5-1%/settimana |
+| Whittaker & Wu 2021, PMID 33741447 | meta-analisi | sotto il 20% di grassi la testosterone cala |
+| Xu 2023, PMID 37229479 | meta-analisi, 20 trial, 1511 soggetti | restrizione intermittente ≈ continua |
+| Black 1996, PMID 8641250 | analisi di 574 misure con acqua doppiamente marcata | limiti del dispendio: **1,2-4,5 × BMR** |
+| FAO/WHO/UNU 2004, Table 5.3 | riferimento istituzionale | bande PAL: **1,40-1,69**, **1,70-1,99**, **2,00-2,40** |
+
+Le origini ammesse sono: `PRIMARY`, `PRIMARY_RANGE`, `ATWATER` (fisica, 4-4-9 kcal/g),
+`CLINICAL` (soglia di sicurezza), `CONVENTION` (scelta nostra, dichiarata). L'origine
+`CORPUS` **è stata rimossa dall'enum**: un test verifica che non venga reintrodotta.
+
+#### Le correzioni che i numeri hanno imposto
+
+**1. I grassi non sono un g/kg fisso.** Helms indica 15-30% *delle calorie*: il pavimento
+si calcola dal target della persona, non dal suo peso. Tenere "0,8 g/kg" ignora che a 1.500
+kcal quello è il 30% e a 3.000 kcal è il 15%. Il pavimento effettivo è
+`max(15% delle kcal, 20% delle kcal)` — il secondo limite perché sotto il 20% la
+testosterone cala.
+
+**2. La ciclizzazione va in grammi, e i grassi devono ciclizzare anche loro.** Il corpus
+documenta "50-100 g in più nei giorni alti". Il motore usava quote percentuali
+(1,0/0,65/0,35), che su 400 g di carboidrati producono escursioni enormi.
+
+La correzione non era "grassi costanti": la guida InVictus dice il contrario. *"Giorno ON:
+limitando le fonti lipidiche (senza eliminarle)"*, *"giorno OFF: viene dato più spazio agli
+alimenti lipidici come la frutta secca, il pesce grasso"*. Quindi i grassi **ciclizzano**:
+al pavimento del 20% nei giorni ON, al tetto del 30% nei giorni OFF, con la media
+settimanale che resta quella iniziale.
+
+La prima implementazione sbagliava comunque, per due motivi trovati dai test:
+
+- *Ordine delle calorie.* Facendo salire troppo i grassi nei giorni OFF, quei giorni
+  superavano i giorni ON di calorie — contraddicendo "giornate con alto apporto calorico E
+  glucidico" nei giorni ON. Con 2 giorni HIGH e 2 LOW i LOW finivano 6 kcal sopra. Lo
+  scarto dei grassi ora è limitato dal vincolo che i giorni ON conservino almeno 100 kcal di
+  vantaggio.
+- *Pavimento dei grassi.* Il pavimento è una quota delle calorie del giorno, ma le calorie
+  del giorno dipendono dai grassi stessi: è un'equazione, non un'assegnazione. Va risolta
+  (`F = s·(P·4 + C·4) / ((1-s)·9)`), altrimenti il 20% non è mai rispettato davvero.
+
+Risultato su tre profili reali (escursione 70-75 g, dentro i 50-100 documentati):
+
+| Profilo | HIGH | MEDIUM | LOW | Grassi HIGH / OFF |
+|---|---|---|---|---|
+| Cut 60 kg | 1.902 kcal, 249 g C | 1.829 kcal, 233 g C | 1.703 kcal, 179 g C | 20% / 27% |
+| Recomp 78 kg | 2.602 kcal, 364 g C | 2.536 kcal, 352 g C | 2.475 kcal, 294 g C | 20% / 27% |
+| Iper 95 kg | 3.592 kcal, 538 g C | 3.574 kcal, 520 g C | 3.499 kcal, 463 g C | 21% / 28% |
+
+**3. I fattori di attività non erano in nessuna banda pubblicata.** Il motore usava
+`1,2 / 1,375 / 1,55 / 1,725`. Nessuno di questi appartiene alle bande FAO/WHO/UNU 2004
+(`1,40-1,69` sedentario, `1,70-1,99` attivo, `2,00-2,40` molto attivo), che sono il
+riferimento istituzionale per stimare il fabbisogno. In pratica `1,375` stava **sotto** il
+minimo FAO per chi si allena 2-3 volte a settimana: il fabbisogno era sottostimato. Ora il
+numero di allenamenti sceglie la banda, la correzione NEAT sposta il valore *dentro* la
+banda, e il limite inferiore è 1,2 × BMR (Black 1996: è il dispendio di una persona non
+deambulante).
+
+Questo cambia i target calorici verso l'alto. È voluto: prima il numero non aveva fonte.
+
+**4. Il bilancio settimanale non poteva tornare al decimale.** I macro sono in grammi
+interi, quindi la somma dei 7 giorni differisce dal target teorico di ~20 kcal su 13.445
+(granularità: 1 g di carboidrati = 4 kcal). Il piano ora dichiara `weeklyKcalFromTarget`,
+cioè ciò che i giorni contengono davvero. Un bilancio calcolato su un totale che l'utente
+non mangia è un numero falso.
+
+#### Cosa il corpus non può dare, e va dichiarato
+
+- **Massimo 3 giorni LOW consecutivi**: la sola indicazione è divulgativa. Resta
+  `CONVENTION`, prudenziale, mai presentata come prova.
+- **Pavimento calorico 1200/1500 kcal**: soglia clinica esterna, marcata `CLINICAL`.
+- **Carb cycling efficace?** Il corpus stesso dice che "a parità di calorie e
+  macronutrienti" i risultati sono "stessi identici". Xu 2023 lo conferma: differenze
+  piccole. La ciclizzazione serve all'aderenza, non alla fisiologia — e il motore non deve
+  raccontare il contrario.
 
 L'interfaccia è lo strumento `consult_invictus`, sullo stesso modello di `list_foods` e
 `list_exercises`: il modello vede nome, descrizione e schema, e chiede solo la parte che

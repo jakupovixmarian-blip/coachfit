@@ -85,8 +85,13 @@ class CarbCyclingEngineTest {
         val plan = CarbCyclingEngine.build(
             aggressive, energy, weeklyAdjustmentOverride = -0.5
         )
-        // Il piano segnala il problema di sicurezza.
-        assertThat(plan.warnings.any { it.contains("soglia di sicurezza") }).isTrue()
+        // Con un deficit del 50% il piano deve rifiutarsi di essere valido e
+        // spiegare perche': o per il pavimento calorico, o per il tasso di calo
+        // oltre l'1%/settimana di Helms. Entrambi sono motivi di sicurezza.
+        assertThat(plan.warnings).isNotEmpty()
+        assertThat(plan.warnings.any {
+            it.contains("soglia di sicurezza") || it.contains("Helms")
+        }).isTrue()
         assertThat(plan.isValid).isFalse()
     }
 
@@ -108,8 +113,13 @@ class CarbCyclingEngineTest {
     @Test
     fun `fat never below safety minimum`() {
         val plan = CarbCyclingEngine.build(profile, energy)
-        val minFat = 80.0 * CarbCyclingEngine.MIN_FAT_G_PER_KG
-        plan.targets.values.forEach { assertThat(it.fat).isAtLeast(minFat - 1.0) }
+        // Il pavimento dipende dalle kcal del giorno (15-30% da Helms 2014),
+        // non da un g/kg fisso. Ogni giorno deve rispettarlo sul proprio target.
+        plan.targets.values.forEach { t ->
+            val floor = CarbCyclingEngine.minFatGrams(t.kcal, 80.0)
+            assertThat(t.fat).isAtLeast(floor - 1.0)
+            assertThat(t.fat * 9 / t.kcal).isAtMost(0.31)
+        }
     }
 
     @Test

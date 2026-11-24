@@ -216,8 +216,16 @@ class CoachActionExecutor @Inject constructor(
                 // che l'utente vedeva. Meglio segnalarlo, cosi' la richiesta si
                 // puo' riformulare invece di credere che sia andata.
                 val afterSignature = workoutSignature(result.workoutPlanId)
-                val unchangedWorkout = scope != ProgramGenerationCoordinator.Scope.NUTRITION &&
+                val workoutUnchanged = scope != ProgramGenerationCoordinator.Scope.NUTRITION &&
                     beforeSignature != null && beforeSignature == afterSignature
+                // Con ambito BOTH la richiesta puo' riguardare solo la nutrizione:
+                // in quel caso una scheda uguale e' corretta. Si segnala solo se
+                // NON e' cambiato nulla in nessuna delle due parti.
+                val nutritionChanged = before.nutritionPlanId != null &&
+                    result.nutritionPlanId != null &&
+                    nutritionSignature(before.nutritionPlanId) != nutritionSignature(result.nutritionPlanId)
+                val unchangedWorkout = workoutUnchanged &&
+                    (scope == ProgramGenerationCoordinator.Scope.WORKOUT || !nutritionChanged)
                 if (unchangedWorkout) {
                     ApplyResult.Failed(
                         "La rigenerazione ha prodotto una scheda identica alla precedente: la richiesta " +
@@ -258,6 +266,21 @@ class CoachActionExecutor @Inject constructor(
                 "${item.sets}x${item.minReps}-${item.maxReps}" +
                 ":rir${item.targetRir}:${item.intensityTechnique}"
         }
+    }
+
+    /** Firma dei pasti: alimenti e grammature per giorno. */
+    private suspend fun nutritionSignature(planId: Long?): String? {
+        val id = planId ?: return null
+        val days = dayDao.getForPlan(id).sortedBy { it.dayIndex }
+        if (days.isEmpty()) return null
+        val meals = mealDao.getForDays(days.map { it.id })
+        if (meals.isEmpty()) return null
+        val entries = entryDao.getForMeals(meals.map { it.id })
+        val dayOfMeal: Map<Long, Long> = meals.associate { it.id to it.nutritionDayId }
+        val dayIndexById = days.associate { it.id to it.dayIndex }
+        return entries
+            .sortedWith(compareBy({ dayIndexById[dayOfMeal[it.mealId] ?: -1] ?: Int.MAX_VALUE }, { it.foodName }))
+            .joinToString("|") { "${dayIndexById[dayOfMeal[it.mealId] ?: -1]}:${it.foodName}:${it.grams}" }
     }
 
     private fun parseScope(raw: String?): ProgramGenerationCoordinator.Scope? =
