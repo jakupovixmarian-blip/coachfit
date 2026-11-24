@@ -35,3 +35,6 @@ __pycache__/
 
 # Cache locale di download (APK/toolchain): non va versionata
 .download/
+
+# APK servito localmente per il download, non versionare
+.apk-share/
