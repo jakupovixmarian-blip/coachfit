@@ -114,6 +114,12 @@ data class EnergyResult(
     val tdeeFormula: String,
     val leanMassKg: Double?,
     val weeklyCalories: Double,
+    /**
+     * PAL applicato. Il TDEE non basta a spiegare la stima: senza il fattore,
+     * chi legge non puo' distinguere "BMR alto" da "fattore alto" e finisce per
+     * attribuire il numero alla causa sbagliata.
+     */
+    val activityFactor: Double = 0.0,
     val notes: List<String> = emptyList()
 )
 

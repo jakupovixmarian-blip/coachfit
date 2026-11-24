@@ -3,6 +3,7 @@ package com.fitcoach.app.domain.coach.tools
 import com.fitcoach.app.data.repository.UserRepository
 import com.fitcoach.app.domain.model.CarbDayType
 import com.fitcoach.app.domain.nutrition.CarbCyclingEngine
+import com.fitcoach.app.domain.engine.EngineParameters
 import com.fitcoach.app.domain.nutrition.EnergyCalculator
 import kotlinx.serialization.json.JsonObject
 import javax.inject.Inject
@@ -52,6 +53,20 @@ class ComputeEnergyTargetsTool @Inject constructor(
                 "tdee" to JsonOut.num(energy.tdee),
                 "formulaBmr" to JsonOut.str(energy.bmrFormula),
                 "formulaTdee" to JsonOut.str(energy.tdeeFormula),
+                // Il fattore va esposto in chiaro. Prima il modello vedeva solo
+                // il TDEE e lo attribuiva al fattore sbagliato: con 5 allenamenti
+                // e 0 passi leggeva 3.348 kcal, poi proponeva di "correggerlo"
+                // a 2.150 con un 1,275 inventato, sotto il pavimento FAO (1,40).
+                "fattoreAttivita" to JsonOut.num(energy.activityFactor),
+                // Limiti entro cui una stima resta plausibile: il pavimento e'
+                // 1,2 x BMR (Black 1996, persona non deambulante), il tetto 2,40
+                // (FAO). Un target fuori da qui non e' una correzione, e' un errore.
+                "palUsatoInBanda" to JsonOut.bool(
+                    energy.activityFactor >= EngineParameters.palPhysiologicalFloor.value &&
+                        energy.activityFactor <= EngineParameters.palSustainableCeiling.value
+                ),
+                "palMinimoFisiologico" to JsonOut.num(EngineParameters.palPhysiologicalFloor.value),
+                "palMassimoSostenibile" to JsonOut.num(EngineParameters.palSustainableCeiling.value),
                 "massaMagraKg" to JsonOut.num(energy.leanMassKg),
                 "kcalSettimanali" to JsonOut.num(energy.weeklyCalories),
                 "proteineGPerKg" to JsonOut.num(CarbCyclingEngine.proteinPerKg(effective.goal)),

@@ -27,8 +27,20 @@ object EnergyCalculator {
      *
      * Le bande sono quelle FAO/WHO/UNU 2004 (Table 5.3): 1,40-1,69 per uno stile
      * sedentario o poco attivo, 1,70-1,99 per uno attivo o moderatamente attivo,
-     * 2,00-2,40 per uno molto attivo. Il numero di allenamenti settimanali decide
-     * la banda, e la correzione NEAT sposta il valore DENTRO la banda, mai fuori.
+     * 2,00-2,40 per uno molto attivo.
+     *
+     * ATTENZIONE al mappaggio: la tabella classifica lo STILE DI VITA, non il
+     * numero di allenamenti. Un impiegato che si allena 4 volte a settimana e
+     * cammina 0 passi ha uno stile sedentario; chi lavora in cantiere e non si
+     * allena ha uno stile molto attivo. Per questo il numero di allenamenti NON
+     * puo' decidere da solo la banda: sceglie il punto di partenza, e la
+     * correzione NEAT lo sposta dentro la banda.
+     *
+     * Il caso 4-5 usava [1,99, 2,00], largo 0,01: la correzione restava sempre
+     * schiacciata a 1,99 e un lavoro d'ufficio senza passi non aveva alcun
+     * effetto. Il TDEE di un impiegato sedentario usciva a 3.348 kcal. La banda
+     * ora e' 1,70-2,00, cioe' "attivo" nel senso FAO (si allena), con il lavoro
+     * d'ufficio che abbassa il valore verso il limite moderato.
      *
      * Prima qui c'erano 1,2 / 1,375 / 1,55 / 1,725: valori di comodo senza fonte,
      * che non corrispondono a nessuna banda pubblicata. In particolare 1,375 sta
@@ -50,11 +62,11 @@ object EnergyCalculator {
                 max = EngineParameters.palModerateMax.value
             }
             4, 5 -> {
-                min = EngineParameters.palModerateMax.value
+                min = EngineParameters.palModerateMin.value
                 max = EngineParameters.palVigorousMin.value
             }
             else -> {
-                min = EngineParameters.palVigorousMin.value
+                min = EngineParameters.palModerateMax.value
                 max = EngineParameters.palVigorousMax.value
             }
         }
@@ -167,6 +179,7 @@ object EnergyCalculator {
             tdeeFormula = "BMR x fattore attivita (${"%.3f".format(factor)})",
             leanMassKg = leanMass,
             weeklyCalories = weekly,
+            activityFactor = factor,
             notes = notes
         )
     }
