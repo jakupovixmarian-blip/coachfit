@@ -379,7 +379,7 @@ class NutritionViewModel @Inject constructor(
         ) }
     }
 
-    fun closeEditDay() { _state.value = _state.value.copy(editingDay = null) }
+    fun closeEditDay() { _state.update { it.copy(editingDay = null) } }
 
     fun updateDayTargetFields(kcal: String, protein: String, carbs: String, fat: String) {
         _state.update { it.copy(
@@ -543,8 +543,8 @@ class NutritionViewModel @Inject constructor(
         }
     }
 
-    fun openEditDayType(day: NutritionDay) { _state.value = _state.value.copy(editingDayType = day) }
-    fun closeEditDayType() { _state.value = _state.value.copy(editingDayType = null) }
+    fun openEditDayType(day: NutritionDay) { _state.update { it.copy(editingDayType = day) } }
+    fun closeEditDayType() { _state.update { it.copy(editingDayType = null) } }
 
     fun saveEditDayType(type: com.fitcoach.app.domain.model.CarbDayType) {
         val day = _state.value.editingDayType ?: return
@@ -567,9 +567,9 @@ class NutritionViewModel @Inject constructor(
         _state.update { it.copy( editingMeal = meal, editMealTime = meal.time ) }
     }
 
-    fun closeEditMeal() { _state.value = _state.value.copy(editingMeal = null, editMealTime = "") }
+    fun closeEditMeal() { _state.update { it.copy(editingMeal = null, editMealTime = "") } }
 
-    fun updateEditMealTime(value: String) { _state.value = _state.value.copy(editMealTime = value) }
+    fun updateEditMealTime(value: String) { _state.update { it.copy(editMealTime = value) } }
 
     fun saveEditMeal() {
         val meal = _state.value.editingMeal ?: return
