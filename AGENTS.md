@@ -1111,3 +1111,15 @@ Trappola dei test: `createManualPlan` crea pasti **vuoti**, quindi un test su
 quello non puo' accorgersi del difetto. `CarbCyclingMealsRescaleTest` costruisce
 un piano con alimenti reali (e li inserisce nel catalogo `food_database`,
 altrimenti il riscalamento non trova nulla).
+
+## La trappola vera: clonePlanVersion azzerava l'id prima delle transform
+
+`clonePlanVersion` faceva `dayTransform(oldDay.copy(id = 0L, planId = ...))`.
+Ogni chiamante identifica la riga da modificare con `day.id == dayId`, quindi
+quel confronto era **sempre falso**: cambiare target, tipo o orario produceva
+una copia identica del piano e l'app rispondeva comunque "aggiornato".
+Ora la transform riceve la riga originale e `id = 0L` si applica al risultato.
+
+Corollario: le modifiche "puntuali" del piano non avevano alcun test. Un test
+su `updateDayTargetsAsNewPlanVersion` / `updateDayTypeAsNewPlanVersion` deve
+verificare che il valore sia **cambiato**, non solo che la funzione torni true.
