@@ -25,6 +25,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -67,6 +68,12 @@ data class NutritionUiState(
     val editingDayType: NutritionDay? = null,
     val editingMeal: Meal? = null,
     val editMealTime: String = "",
+    // Distribuzione personalizzata delle giornate carb cycling (§5.2).
+    val editingCarbDistribution: Boolean = false,
+    val editHighDays: String = "",
+    val editMediumDays: String = "",
+    val editLowDays: String = "",
+    val carbDistributionError: String? = null,
     // Piani salvati (AI e manuali): per scegliere quale avviare.
     val plans: List<NutritionPlan> = emptyList(),
     val editingPlan: NutritionPlan? = null,
@@ -114,29 +121,29 @@ class NutritionViewModel @Inject constructor(
             // un'app rimasta aperta oltre la mezzanotte resterebbe su ieri.
             val oggi = NutritionDiaryRepository.todayEpochDay()
             val plan = nutritionRepository.getActivePlan()
-            _state.value = _state.value.copy(
-                loading = false,
-                plan = plan,
-                epochDay = oggi,
-                selectedDayIndex = _state.value.selectedDayIndex.coerceIn(0, 6)
-            )
+            _state.update { it.copy(
+                    loading = false,
+                    plan = plan,
+                    epochDay = oggi,
+                    selectedDayIndex = it.selectedDayIndex.coerceIn(0, 6)
+            ) }
             // Lette dopo l'aggiornamento della data: selectedEpochDay dipende da epochDay.
             val checks = diaryRepository.planChecks(_state.value.selectedEpochDay)
                 .mapValues { it.value.id }
-            _state.value = _state.value.copy(
-                checks = checks,
-                plans = nutritionRepository.getAllPlans()
-            )
+            _state.update { it.copy(
+                    checks = checks,
+                    plans = nutritionRepository.getAllPlans()
+            ) }
         }
     }
 
     fun selectDay(index: Int) {
-        _state.value = _state.value.copy(selectedDayIndex = index.coerceIn(0, 6))
+        _state.update { it.copy( selectedDayIndex = index.coerceIn(0, 6) ) }
         // Le spunte appartengono a una data: cambiando giorno cambia il diario.
         viewModelScope.launch {
             val checks = diaryRepository.planChecks(_state.value.selectedEpochDay)
                 .mapValues { it.value.id }
-            _state.value = _state.value.copy(checks = checks)
+            _state.update { it.copy( checks = checks ) }
         }
     }
 
@@ -147,7 +154,7 @@ class NutritionViewModel @Inject constructor(
             val data = _state.value.selectedEpochDay
             diaryRepository.togglePlanEntry(entry, meal.slot, meal.time, data)
             val checks = diaryRepository.planChecks(data).mapValues { it.value.id }
-            _state.value = _state.value.copy(checks = checks)
+            _state.update { it.copy( checks = checks ) }
         }
     }
 
@@ -155,10 +162,10 @@ class NutritionViewModel @Inject constructor(
         viewModelScope.launch {
             val profile = userRepository.get()
             if (profile == null || !profile.isComplete) {
-                _state.value = _state.value.copy(message = "Completa prima il profilo.")
+                _state.update { it.copy( message = "Completa prima il profilo." ) }
                 return@launch
             }
-            _state.value = _state.value.copy(generating = true, message = null)
+            _state.update { it.copy( generating = true, message = null ) }
             // La generazione tocca rete, database e motori matematici: un errore
             // qui non deve chiudere l'app. Viene registrato e mostrato, cosi
             // l'utente vede cosa e successo invece di un crash.
@@ -181,7 +188,7 @@ class NutritionViewModel @Inject constructor(
                     "Dettagli in Impostazioni > Diagnostica."
             }
             val plan = runCatching { nutritionRepository.getActivePlan() }.getOrNull()
-            _state.value = _state.value.copy(generating = false, plan = plan ?: _state.value.plan, message = message)
+            _state.update { it.copy( generating = false, plan = plan ?: it.plan, message = message ) }
             runCatching { refreshPlanList() }
         }
     }
@@ -196,14 +203,14 @@ class NutritionViewModel @Inject constructor(
         viewModelScope.launch {
             val profile = userRepository.get()
             if (profile == null || !profile.isComplete) {
-                _state.value = _state.value.copy(message = "Completa prima il profilo (età, altezza, peso).")
+                _state.update { it.copy( message = "Completa prima il profilo (età, altezza, peso)." ) }
                 return@launch
             }
             val energy = com.fitcoach.app.domain.nutrition.EnergyCalculator.compute(profile)
             if (energy == null) {
-                _state.value = _state.value.copy(
-                    message = "Servono peso, altezza, età e sesso per stimare il fabbisogno."
-                )
+                _state.update { it.copy(
+                        message = "Servono peso, altezza, età e sesso per stimare il fabbisogno."
+                ) }
                 return@launch
             }
             val cycling = com.fitcoach.app.domain.nutrition.CarbCyclingEngine.build(profile, energy)
@@ -221,13 +228,13 @@ class NutritionViewModel @Inject constructor(
                 trainingDayIndices = trainingDayIndices(profile)
             )
             val plan = nutritionRepository.getActivePlan()
-            _state.value = _state.value.copy(
-                plan = plan,
-                selectedDayIndex = NutritionDiaryEngine.dayIndexFor(
-                    NutritionDiaryRepository.todayEpochDay()
-                ),
-                message = "Piano manuale creato. Aggiungi gli alimenti ai pasti."
-            )
+            _state.update { it.copy(
+                    plan = plan,
+                    selectedDayIndex = NutritionDiaryEngine.dayIndexFor(
+                        NutritionDiaryRepository.todayEpochDay()
+                    ),
+                    message = "Piano manuale creato. Aggiungi gli alimenti ai pasti."
+            ) }
             refreshPlanList()
         }
     }
@@ -241,50 +248,50 @@ class NutritionViewModel @Inject constructor(
         viewModelScope.launch {
             nutritionRepository.setActivePlan(planId)
             val plan = nutritionRepository.getActivePlan()
-            _state.value = _state.value.copy(
-                plan = plan,
-                selectedDayIndex = NutritionDiaryEngine.dayIndexFor(
-                    NutritionDiaryRepository.todayEpochDay()
-                ),
-                message = "Piano attivato."
-            )
+            _state.update { it.copy(
+                    plan = plan,
+                    selectedDayIndex = NutritionDiaryEngine.dayIndexFor(
+                        NutritionDiaryRepository.todayEpochDay()
+                    ),
+                    message = "Piano attivato."
+            ) }
             refreshPlanList()
         }
     }
 
     fun openRenamePlan(plan: NutritionPlan) {
-        _state.value = _state.value.copy(editingPlan = plan)
+        _state.update { it.copy( editingPlan = plan ) }
     }
 
     fun closeRenamePlan() {
-        _state.value = _state.value.copy(editingPlan = null)
+        _state.update { it.copy( editingPlan = null ) }
     }
 
     fun renamePlan(name: String) {
         val plan = _state.value.editingPlan ?: return
         viewModelScope.launch {
             if (nutritionRepository.renamePlan(plan.id, name)) {
-                _state.value = _state.value.copy(editingPlan = null, message = "Piano rinominato.")
+                _state.update { it.copy( editingPlan = null, message = "Piano rinominato." ) }
                 load()
             } else {
-                _state.value = _state.value.copy(message = "Inserisci un nome valido.")
+                _state.update { it.copy( message = "Inserisci un nome valido." ) }
             }
         }
     }
 
     fun askDeletePlan(plan: NutritionPlan) {
-        _state.value = _state.value.copy(deletingPlan = plan)
+        _state.update { it.copy( deletingPlan = plan ) }
     }
 
     fun closeDeletePlan() {
-        _state.value = _state.value.copy(deletingPlan = null)
+        _state.update { it.copy( deletingPlan = null ) }
     }
 
     fun deletePlan() {
         val plan = _state.value.deletingPlan ?: return
         viewModelScope.launch {
             nutritionRepository.deletePlan(plan.id)
-            _state.value = _state.value.copy(deletingPlan = null, message = "Piano eliminato.")
+            _state.update { it.copy( deletingPlan = null, message = "Piano eliminato." ) }
             load()
         }
     }
@@ -294,45 +301,45 @@ class NutritionViewModel @Inject constructor(
         viewModelScope.launch {
             val newId = nutritionRepository.duplicatePlan(plan.id)
             if (newId == null) {
-                _state.value = _state.value.copy(message = "Impossibile duplicare il piano.")
+                _state.update { it.copy( message = "Impossibile duplicare il piano." ) }
                 return@launch
             }
             val active = nutritionRepository.getActivePlan()
-            _state.value = _state.value.copy(
-                plan = active,
-                selectedDayIndex = NutritionDiaryEngine.dayIndexFor(
-                    NutritionDiaryRepository.todayEpochDay()
-                ),
-                message = "Copia creata e attivata."
-            )
+            _state.update { it.copy(
+                    plan = active,
+                    selectedDayIndex = NutritionDiaryEngine.dayIndexFor(
+                        NutritionDiaryRepository.todayEpochDay()
+                    ),
+                    message = "Copia creata e attivata."
+            ) }
             refreshPlanList()
         }
     }
 
     private suspend fun refreshPlanList() {
-        _state.value = _state.value.copy(plans = nutritionRepository.getAllPlans())
+        _state.update { it.copy( plans = nutritionRepository.getAllPlans() ) }
     }
 
     fun openEditEntry(entry: MealEntry) {
-        _state.value = _state.value.copy(
-            editingEntry = entry,
-            editEntryGrams = if (entry.grams % 1.0 == 0.0) entry.grams.toInt().toString() else entry.grams.toString()
-        )
+        _state.update { it.copy(
+                editingEntry = entry,
+                editEntryGrams = if (entry.grams % 1.0 == 0.0) entry.grams.toInt().toString() else entry.grams.toString()
+        ) }
     }
 
     fun closeEditEntry() {
-        _state.value = _state.value.copy(editingEntry = null, editEntryGrams = "")
+        _state.update { it.copy( editingEntry = null, editEntryGrams = "" ) }
     }
 
     fun updateEditEntryGrams(value: String) {
-        _state.value = _state.value.copy(editEntryGrams = value)
+        _state.update { it.copy( editEntryGrams = value ) }
     }
 
     fun saveEditEntry() {
         val entry = _state.value.editingEntry ?: return
         val grams = _state.value.editEntryGrams.replace(',', '.').toDoubleOrNull()
         if (grams == null || grams <= 0.0 || grams > 10_000.0) {
-            _state.value = _state.value.copy(message = "Inserisci una quantita valida (0-10000 g).")
+            _state.update { it.copy( message = "Inserisci una quantita valida (0-10000 g)." ) }
             return
         }
         viewModelScope.launch {
@@ -350,34 +357,166 @@ class NutritionViewModel @Inject constructor(
                 diaryEpochDay = _state.value.epochDay
             )
             if (!updated) {
-                _state.value = _state.value.copy(message = "Impossibile creare la nuova versione del piano.")
+                _state.update { it.copy( message = "Impossibile creare la nuova versione del piano." ) }
                 return@launch
             }
-            _state.value = _state.value.copy(
-                editingEntry = null,
-                editEntryGrams = "",
-                message = "Quantita aggiornata: ${grams.toInt()} g."
-            )
+            _state.update { it.copy(
+                    editingEntry = null,
+                    editEntryGrams = "",
+                    message = "Quantita aggiornata: ${grams.toInt()} g."
+            ) }
             load()
         }
     }
 
     fun openEditDay(day: NutritionDay) {
-        _state.value = _state.value.copy(
-            editingDay = day,
-            editDayKcal = day.targetKcal.toString(),
-            editDayProtein = day.targetProtein.toString(),
-            editDayCarbs = day.targetCarbs.toString(),
-            editDayFat = day.targetFat.toString()
-        )
+        _state.update { it.copy(
+                editingDay = day,
+                editDayKcal = day.targetKcal.toString(),
+                editDayProtein = day.targetProtein.toString(),
+                editDayCarbs = day.targetCarbs.toString(),
+                editDayFat = day.targetFat.toString()
+        ) }
     }
 
     fun closeEditDay() { _state.value = _state.value.copy(editingDay = null) }
 
     fun updateDayTargetFields(kcal: String, protein: String, carbs: String, fat: String) {
-        _state.value = _state.value.copy(
-            editDayKcal = kcal, editDayProtein = protein, editDayCarbs = carbs, editDayFat = fat
+        _state.update { it.copy(
+                editDayKcal = kcal, editDayProtein = protein, editDayCarbs = carbs, editDayFat = fat
+        ) }
+    }
+
+    /**
+     * Apre l'editor della distribuzione HIGH/MEDIUM/LOW precompilando i valori
+     * attualmente in uso, cosi' l'utente parte da una terna coerente.
+     */
+    fun openCarbDistributionEditor() {
+        val plan = _state.value.plan ?: return
+        _state.update {
+            it.copy(
+                editingCarbDistribution = true,
+                editHighDays = plan.highCarbDays.toString(),
+                editMediumDays = plan.mediumCarbDays.toString(),
+                editLowDays = plan.lowCarbDays.toString(),
+                carbDistributionError = null
+            )
+        }
+    }
+
+    fun closeCarbDistributionEditor() {
+        _state.update { it.copy(editingCarbDistribution = false, carbDistributionError = null) }
+    }
+
+    fun updateCarbDistributionFields(high: String, medium: String, low: String) {
+        _state.update {
+            it.copy(
+                editHighDays = high,
+                editMediumDays = medium,
+                editLowDays = low,
+                carbDistributionError = null
+            )
+        }
+    }
+
+    /**
+     * Salva la terna scelta. La validazione e' qui e non solo nel motore:
+     * l'utente deve sapere subito perche' un valore viene rifiutato, invece di
+     * vedere il piano invariato senza spiegazione.
+     */
+    fun saveCarbDistribution() {
+        val high = _state.value.editHighDays.trim().toIntOrNull()
+        val medium = _state.value.editMediumDays.trim().toIntOrNull()
+        val low = _state.value.editLowDays.trim().toIntOrNull()
+        if (high == null || medium == null || low == null) {
+            _state.update { it.copy(carbDistributionError = "Inserisci tre numeri interi.") }
+            return
+        }
+        if (high < 0 || medium < 0 || low < 0) {
+            _state.update { it.copy(carbDistributionError = "I valori non possono essere negativi.") }
+            return
+        }
+        if (high + medium + low != 7) {
+            _state.update {
+                it.copy(
+                    carbDistributionError =
+                    "La somma deve essere 7 giorni (ora è ${high + medium + low})."
+                )
+            }
+            return
+        }
+        viewModelScope.launch {
+            val profile = userRepository.get()
+            if (profile == null) {
+                _state.update { it.copy(carbDistributionError = "Profilo non disponibile.") }
+                return@launch
+            }
+            val updated = profile.copy(
+                carbHighDaysOverride = high,
+                carbMediumDaysOverride = medium,
+                carbLowDaysOverride = low
+            )
+            userRepository.save(updated)
+            val message = applyCarbCycling(updated)
+            _state.update {
+                it.copy(
+                    editingCarbDistribution = false,
+                    carbDistributionError = null,
+                    message = message
+                )
+            }
+        }
+    }
+
+    /**
+     * Applica subito la distribuzione al piano attivo con i motori
+     * deterministici. Se il piano non esiste o mancano i dati energetici,
+     * l'impostazione resta salvata e verra' usata alla prossima generazione.
+     */
+    private suspend fun applyCarbCycling(
+        profile: com.fitcoach.app.domain.model.UserProfile
+    ): String {
+        val plan = _state.value.plan ?: return "Distribuzione salvata. Verra' applicata al prossimo piano."
+        val energy = com.fitcoach.app.domain.nutrition.EnergyCalculator.compute(profile)
+            ?: return "Distribuzione salvata. Verra' applicata al prossimo piano."
+        val cycling = com.fitcoach.app.domain.nutrition.CarbCyclingEngine.build(profile, energy)
+        val dayTypes = com.fitcoach.app.domain.nutrition.CarbCyclingEngine.assignDayTypes(
+            highDays = cycling.highDays,
+            mediumDays = cycling.mediumDays,
+            lowDays = cycling.lowDays,
+            trainingDayIndices = trainingDayIndices(profile)
         )
+        val ok = nutritionRepository.applyCarbCyclingAsNewPlanVersion(
+            planId = plan.id,
+            cycling = cycling,
+            dayTypes = dayTypes,
+            tdee = energy.tdee,
+            diaryEpochDay = NutritionDiaryRepository.todayEpochDay()
+        )
+        if (!ok) return "Distribuzione salvata. Verra' applicata al prossimo piano."
+        load()
+        return "Distribuzione applicata al piano."
+    }
+
+    /** Ripristina la distribuzione automatica derivata dai giorni di allenamento. */
+    fun resetCarbDistribution() {
+        viewModelScope.launch {
+            val profile = userRepository.get() ?: return@launch
+            val updated = profile.copy(
+                carbHighDaysOverride = null,
+                carbMediumDaysOverride = null,
+                carbLowDaysOverride = null
+            )
+            userRepository.save(updated)
+            val message = applyCarbCycling(updated)
+            _state.update {
+                it.copy(
+                    editingCarbDistribution = false,
+                    carbDistributionError = null,
+                    message = message
+                )
+            }
+        }
     }
 
     fun saveEditDay() {
@@ -388,7 +527,7 @@ class NutritionViewModel @Inject constructor(
         val fat = _state.value.editDayFat.replace(',', '.').toDoubleOrNull()
         val planId = _state.value.plan?.id
         if (planId == null || kcal == null || protein == null || carbs == null || fat == null) {
-            _state.value = _state.value.copy(message = "Inserisci tutti i target numerici.")
+            _state.update { it.copy( message = "Inserisci tutti i target numerici." ) }
             return
         }
         viewModelScope.launch {
@@ -396,10 +535,10 @@ class NutritionViewModel @Inject constructor(
                 planId, day.id, kcal, protein, carbs, fat, _state.value.epochDay
             )
             if (!ok) {
-                _state.value = _state.value.copy(message = "Target non validi o piano non disponibile.")
+                _state.update { it.copy( message = "Target non validi o piano non disponibile." ) }
                 return@launch
             }
-            _state.value = _state.value.copy(editingDay = null, message = "Target della giornata aggiornati.")
+            _state.update { it.copy( editingDay = null, message = "Target della giornata aggiornati." ) }
             load()
         }
     }
@@ -416,16 +555,16 @@ class NutritionViewModel @Inject constructor(
                 planId, day.id, type, _state.value.epochDay
             )
             if (ok) {
-                _state.value = _state.value.copy(editingDayType = null, message = "Tipo giornata aggiornato.")
+                _state.update { it.copy( editingDayType = null, message = "Tipo giornata aggiornato." ) }
                 load()
             } else {
-                _state.value = _state.value.copy(message = "Impossibile aggiornare il tipo giornata.")
+                _state.update { it.copy( message = "Impossibile aggiornare il tipo giornata." ) }
             }
         }
     }
 
     fun openEditMeal(meal: Meal) {
-        _state.value = _state.value.copy(editingMeal = meal, editMealTime = meal.time)
+        _state.update { it.copy( editingMeal = meal, editMealTime = meal.time ) }
     }
 
     fun closeEditMeal() { _state.value = _state.value.copy(editingMeal = null, editMealTime = "") }
@@ -436,7 +575,7 @@ class NutritionViewModel @Inject constructor(
         val meal = _state.value.editingMeal ?: return
         val planId = _state.value.plan?.id
         if (planId == null) {
-            _state.value = _state.value.copy(message = "Piano non disponibile.")
+            _state.update { it.copy( message = "Piano non disponibile." ) }
             return
         }
         viewModelScope.launch {
@@ -444,10 +583,10 @@ class NutritionViewModel @Inject constructor(
                 planId, meal.id, meal.slot, _state.value.editMealTime, _state.value.epochDay
             )
             if (!ok) {
-                _state.value = _state.value.copy(message = "Orario non valido: usa HH:mm.")
+                _state.update { it.copy( message = "Orario non valido: usa HH:mm." ) }
                 return@launch
             }
-            _state.value = _state.value.copy(editingMeal = null, message = "Orario pasto aggiornato.")
+            _state.update { it.copy( editingMeal = null, message = "Orario pasto aggiornato." ) }
             load()
         }
     }
@@ -463,14 +602,14 @@ class NutritionViewModel @Inject constructor(
             } else {
                 all.take(8)
             }
-            _state.value = _state.value.copy(
-                substitutionEntry = entry,
-                substitutes = subs,
-                substituteStatuses = emptyMap(),
-                substituteEvaluating = subs.isNotEmpty(),
-                preview = null,
-                previewFood = null
-            )
+            _state.update { it.copy(
+                    substitutionEntry = entry,
+                    substitutes = subs,
+                    substituteStatuses = emptyMap(),
+                    substituteEvaluating = subs.isNotEmpty(),
+                    preview = null,
+                    previewFood = null
+            ) }
             evaluateSubstitutes(entry, subs)
         }
     }
@@ -497,24 +636,24 @@ class NutritionViewModel @Inject constructor(
         )
         // Aggiorna solo se il dialogo e ancora aperto sulla stessa voce.
         if (_state.value.substitutionEntry?.id == entry.id) {
-            _state.value = _state.value.copy(
-                substitutes = ordered,
-                substituteStatuses = statuses,
-                substituteEvaluating = false
-            )
+            _state.update { it.copy(
+                    substitutes = ordered,
+                    substituteStatuses = statuses,
+                    substituteEvaluating = false
+            ) }
         }
     }
 
     fun cancelSubstitution() {
-        _state.value = _state.value.copy(
-            substitutionEntry = null, substitutes = emptyList(), preview = null, previewFood = null,
-            substituteStatuses = emptyMap(), substituteEvaluating = false,
-            foodSearchQuery = "", foodSearchResults = emptyList(), foodSearchNote = null
-        )
+        _state.update { it.copy(
+                substitutionEntry = null, substitutes = emptyList(), preview = null, previewFood = null,
+                substituteStatuses = emptyMap(), substituteEvaluating = false,
+                foodSearchQuery = "", foodSearchResults = emptyList(), foodSearchNote = null
+        ) }
     }
 
     fun updateFoodSearch(query: String) {
-        _state.value = _state.value.copy(foodSearchQuery = query, foodSearchNote = null)
+        _state.update { it.copy( foodSearchQuery = query, foodSearchNote = null ) }
     }
 
     /**
@@ -525,21 +664,21 @@ class NutritionViewModel @Inject constructor(
     fun searchFoods() {
         val query = _state.value.foodSearchQuery.trim()
         if (query.length < 2) {
-            _state.value = _state.value.copy(
-                foodSearchResults = emptyList(),
-                foodSearchNote = "Digita almeno 2 caratteri."
-            )
+            _state.update { it.copy(
+                    foodSearchResults = emptyList(),
+                    foodSearchNote = "Digita almeno 2 caratteri."
+            ) }
             return
         }
         viewModelScope.launch {
-            _state.value = _state.value.copy(foodSearchLoading = true, foodSearchNote = null)
+            _state.update { it.copy( foodSearchLoading = true, foodSearchNote = null ) }
             val outcome = runCatching { foodSearchRepository.search(query) }.getOrNull()
-            _state.value = _state.value.copy(
-                foodSearchLoading = false,
-                foodSearchResults = outcome?.results.orEmpty(),
-                foodSearchNote = outcome?.note
-                    ?: if (outcome == null) "Ricerca non disponibile: controlla la connessione." else null
-            )
+            _state.update { it.copy(
+                    foodSearchLoading = false,
+                    foodSearchResults = outcome?.results.orEmpty(),
+                    foodSearchNote = outcome?.note
+                        ?: if (outcome == null) "Ricerca non disponibile: controlla la connessione." else null
+            ) }
         }
     }
 
@@ -551,7 +690,7 @@ class NutritionViewModel @Inject constructor(
         viewModelScope.launch {
             val entry = _state.value.substitutionEntry ?: return@launch
             val result = substitutionRepository.preview(entry.id, _state.value.selectedDayIndex, substitute)
-            _state.value = _state.value.copy(preview = result, previewFood = substitute)
+            _state.update { it.copy( preview = result, previewFood = substitute ) }
         }
     }
 
@@ -562,7 +701,7 @@ class NutritionViewModel @Inject constructor(
             val substitute = _state.value.previewFood ?: return@launch
             val result = _state.value.preview ?: return@launch
             if (result.status == FoodSubstitutionEngine.Status.INCOMPATIBLE) {
-                _state.value = _state.value.copy(message = "Sostituzione non compatibile con i vincoli del piano.")
+                _state.update { it.copy( message = "Sostituzione non compatibile con i vincoli del piano." ) }
                 return@launch
             }
             runCatching {
@@ -574,16 +713,16 @@ class NutritionViewModel @Inject constructor(
                     result = result
                 )
             }.onFailure {
-                _state.value = _state.value.copy(message = "Errore nell'applicazione: ${it.message}")
+                _state.update { it.copy( message = "Errore nell'applicazione: ${it.message}" ) }
                 return@launch
             }
-            _state.value = _state.value.copy(
-                substitutionEntry = null,
-                substitutes = emptyList(),
-                preview = null,
-                previewFood = null,
-                message = "Sostituzione applicata: ${substitute.name} (${result.substituteGrams.toInt()} g)."
-            )
+            _state.update { it.copy(
+                    substitutionEntry = null,
+                    substitutes = emptyList(),
+                    preview = null,
+                    previewFood = null,
+                    message = "Sostituzione applicata: ${substitute.name} (${result.substituteGrams.toInt()} g)."
+            ) }
             load()
         }
     }
@@ -591,35 +730,35 @@ class NutritionViewModel @Inject constructor(
     fun confirmMeal(mealId: Long, confirmed: Boolean) {
         viewModelScope.launch {
             nutritionRepository.confirmMeal(mealId, confirmed)
-            _state.value = _state.value.copy(
-                message = if (confirmed) "Pasto confermato." else "Conferma rimossa."
-            )
+            _state.update { it.copy(
+                    message = if (confirmed) "Pasto confermato." else "Conferma rimossa."
+            ) }
             load()
         }
     }
 
     fun consumeMessage() {
-        _state.value = _state.value.copy(message = null)
+        _state.update { it.copy( message = null ) }
     }
 
     /** Apre il riquadro per aggiungere manualmente un alimento a un pasto. */
     fun openAddFood(meal: Meal) {
-        _state.value = _state.value.copy(
-            addFoodToMeal = meal, addFoodGrams = "", selectedFoodToAdd = null,
-            foodSearchQuery = "", foodSearchResults = emptyList(), foodSearchNote = null
-        )
+        _state.update { it.copy(
+                addFoodToMeal = meal, addFoodGrams = "", selectedFoodToAdd = null,
+                foodSearchQuery = "", foodSearchResults = emptyList(), foodSearchNote = null
+        ) }
     }
 
     fun closeAddFood() {
-        _state.value = _state.value.copy(addFoodToMeal = null, selectedFoodToAdd = null, addFoodGrams = "")
+        _state.update { it.copy( addFoodToMeal = null, selectedFoodToAdd = null, addFoodGrams = "" ) }
     }
 
     fun updateAddFoodGrams(value: String) {
-        _state.value = _state.value.copy(addFoodGrams = value.filter { c -> c.isDigit() || c == ',' || c == '.' })
+        _state.update { it.copy( addFoodGrams = value.filter { c -> c.isDigit() || c == ',' || c == '.' } ) }
     }
 
     fun selectFoodToAdd(food: FoodItem) {
-        _state.value = _state.value.copy(selectedFoodToAdd = food)
+        _state.update { it.copy( selectedFoodToAdd = food ) }
     }
 
     /** Conferma l'aggiunta manuale dell'alimento scelto con i grammi indicati. */
@@ -628,19 +767,19 @@ class NutritionViewModel @Inject constructor(
             val meal = _state.value.addFoodToMeal ?: return@launch
             val food = _state.value.selectedFoodToAdd
             if (food == null) {
-                _state.value = _state.value.copy(message = "Seleziona un alimento da aggiungere.")
+                _state.update { it.copy( message = "Seleziona un alimento da aggiungere." ) }
                 return@launch
             }
             val grams = _state.value.addFoodGrams.replace(',', '.').toDoubleOrNull()
             if (grams == null || grams <= 0 || grams > 3000) {
-                _state.value = _state.value.copy(message = "Inserisci una quantita valida in grammi.")
+                _state.update { it.copy( message = "Inserisci una quantita valida in grammi." ) }
                 return@launch
             }
             nutritionRepository.addEntryToMeal(meal.id, food, grams, food.defaultUnit)
-            _state.value = _state.value.copy(
-                addFoodToMeal = null, selectedFoodToAdd = null, addFoodGrams = "",
-                message = "${food.name} aggiunto a ${meal.slot.label}."
-            )
+            _state.update { it.copy(
+                    addFoodToMeal = null, selectedFoodToAdd = null, addFoodGrams = "",
+                    message = "${food.name} aggiunto a ${meal.slot.label}."
+            ) }
             load()
         }
     }
@@ -649,7 +788,7 @@ class NutritionViewModel @Inject constructor(
     fun removeEntry(entry: MealEntry) {
         viewModelScope.launch {
             nutritionRepository.removeEntry(entry)
-            _state.value = _state.value.copy(message = "${entry.foodName} rimosso dal piano.")
+            _state.update { it.copy( message = "${entry.foodName} rimosso dal piano." ) }
             load()
         }
     }

@@ -11,6 +11,7 @@ import com.fitcoach.app.data.repository.NutritionRepository
 import com.fitcoach.app.data.repository.SeedInitializer
 import com.fitcoach.app.data.repository.WorkoutRepository
 import com.fitcoach.app.notifications.NotificationScheduler
+import com.fitcoach.app.work.AutoBackupWorker
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -67,6 +68,7 @@ open class FitCoachApplication : Application(), Configuration.Provider {
                 val prefs = preferencesRepository.getOrCreate()
                 val records = notificationRepository.getAll()
                 notificationScheduler.scheduleAll(prefs, records)
+                AutoBackupWorker.enqueue(this@FitCoachApplication, prefs.autoBackupEnabled)
             }.onFailure { Log.e("FitCoachApp", "Avvio non completato", it) }
         }
     }

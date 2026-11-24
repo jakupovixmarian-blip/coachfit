@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import android.content.Intent
 import androidx.compose.runtime.Composable
@@ -270,6 +271,29 @@ fun SettingsScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
+                        Spacer(Modifier.height(10.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    "Backup automatico giornaliero",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    "Un backup al giorno, conservati gli ultimi 5. " +
+                                        "Solo con batteria e spazio sufficienti.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary
+                                )
+                            }
+                            Switch(
+                                checked = backupState.autoBackupEnabled,
+                                onCheckedChange = backupViewModel::setAutoBackup
+                            )
+                        }
                         Spacer(Modifier.height(10.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(

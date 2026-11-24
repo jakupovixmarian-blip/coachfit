@@ -70,6 +70,7 @@ import com.fitcoach.app.ui.components.SectionCard
 import com.fitcoach.app.ui.components.SectionHeader
 import com.fitcoach.app.ui.theme.CarbsColor
 import com.fitcoach.app.ui.theme.Emerald
+import com.fitcoach.app.ui.theme.ErrorRed
 import com.fitcoach.app.ui.theme.HighCarbColor
 import com.fitcoach.app.ui.theme.LowCarbColor
 import com.fitcoach.app.ui.theme.MediumCarbColor
@@ -232,6 +233,10 @@ fun NutritionScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (plan.weeklyKcalBalance < 0) CarbsColor else Emerald
                     )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(onClick = viewModel::openCarbDistributionEditor) {
+                        Text("Personalizza giornate")
+                    }
                 }
             }
         }
@@ -348,6 +353,19 @@ fun NutritionScreen(
             current = dayToEdit.dayType,
             onSelect = viewModel::saveEditDayType,
             onDismiss = viewModel::closeEditDayType
+        )
+    }
+
+    if (state.editingCarbDistribution) {
+        CarbDistributionDialog(
+            high = state.editHighDays,
+            medium = state.editMediumDays,
+            low = state.editLowDays,
+            error = state.carbDistributionError,
+            onChange = viewModel::updateCarbDistributionFields,
+            onConfirm = viewModel::saveCarbDistribution,
+            onReset = viewModel::resetCarbDistribution,
+            onDismiss = viewModel::closeCarbDistributionEditor
         )
     }
 
@@ -531,6 +549,56 @@ private fun DayTargetDialog(
         },
         confirmButton = { TextButton(onClick = onConfirm) { Text("Salva nuova versione") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } }
+    )
+}
+
+@Composable
+private fun CarbDistributionDialog(
+    high: String,
+    medium: String,
+    low: String,
+    error: String?,
+    onChange: (String, String, String) -> Unit,
+    onConfirm: () -> Unit,
+    onReset: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Distribuzione giornate") },
+        text = {
+            Column {
+                Text(
+                    "Scegli quante giornate HIGH, MEDIUM e LOW nella settimana. " +
+                        "La somma deve essere 7.",
+                    style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    high, { onChange(it, medium, low) },
+                    label = { Text("Giorni HIGH") }, singleLine = true
+                )
+                OutlinedTextField(
+                    medium, { onChange(high, it, low) },
+                    label = { Text("Giorni MEDIUM") }, singleLine = true
+                )
+                OutlinedTextField(
+                    low, { onChange(high, medium, it) },
+                    label = { Text("Giorni LOW") }, singleLine = true
+                )
+                if (error != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(error, style = MaterialTheme.typography.bodySmall, color = ErrorRed)
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Salva") } },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onReset) { Text("Automatica") }
+                TextButton(onClick = onDismiss) { Text("Annulla") }
+            }
+        }
     )
 }
 

@@ -371,6 +371,86 @@ class NutritionViewModelAdversarialTest {
         assertNull("Il messaggio non deve ripetersi al ricomponimento", vm.state.value.message)
     }
 
+    // ---------- Distribuzione giornate personalizzata (sez. 5.2) ----------
+
+    @Test
+    fun `salvare una terna valida aggiorna subito il piano attivo`() = runTest {
+        creaPianoManuale()
+        vm.load()
+        attendi { vm.state.value.plan != null }
+        assertNotNull("Serve un piano attivo per applicare la terna", vm.state.value.plan)
+
+        vm.openCarbDistributionEditor()
+        vm.updateCarbDistributionFields("3", "3", "1")
+        vm.saveCarbDistribution()
+        attendi { vm.state.value.plan?.highCarbDays == 3 }
+
+        val piano = vm.state.value.plan!!
+        assertEquals("HIGH deve essere applicato al piano", 3, piano.highCarbDays)
+        assertEquals(3, piano.mediumCarbDays)
+        assertEquals(1, piano.lowCarbDays)
+        assertEquals(
+            "I sette giorni devono essere effettivamente ripartiti",
+            3, piano.days.count { it.dayType == com.fitcoach.app.domain.model.CarbDayType.HIGH }
+        )
+    }
+
+    @Test
+    fun `una terna che non somma sette non viene salvata ne applicata`() = runTest {
+        creaPianoManuale()
+        vm.load()
+        attendi { vm.state.value.plan != null }
+        val highPrima = vm.state.value.plan!!.highCarbDays
+
+        vm.openCarbDistributionEditor()
+        vm.updateCarbDistributionFields("2", "2", "2")
+        vm.saveCarbDistribution()
+
+        assertNotNull("L'utente deve sapere perche' non salva", vm.state.value.carbDistributionError)
+        assertTrue(vm.state.value.editingCarbDistribution)
+        assertEquals(
+            "Il piano non deve cambiare con una terna invalida",
+            highPrima, vm.state.value.plan!!.highCarbDays
+        )
+    }
+
+    @Test
+    fun `una terna con valori non numerici viene rifiutata`() = runTest {
+        creaPianoManuale()
+        vm.load()
+        attendi { vm.state.value.plan != null }
+
+        vm.openCarbDistributionEditor()
+        vm.updateCarbDistributionFields("tre", "2", "2")
+        vm.saveCarbDistribution()
+
+        assertNotNull(vm.state.value.carbDistributionError)
+        assertTrue(vm.state.value.editingCarbDistribution)
+    }
+
+    @Test
+    fun `ripristinare la distribuzione automatica la applica al piano`() = runTest {
+        creaPianoManuale()
+        vm.load()
+        attendi { vm.state.value.plan != null }
+
+        vm.openCarbDistributionEditor()
+        vm.updateCarbDistributionFields("5", "1", "1")
+        vm.saveCarbDistribution()
+        attendi { vm.state.value.plan?.highCarbDays == 5 }
+
+        vm.resetCarbDistribution()
+        attendi { vm.state.value.plan?.highCarbDays != 5 }
+
+        val profilo = userRepository.get()!!
+        assertNull("L'override deve essere azzerato", profilo.carbHighDaysOverride)
+        assertEquals(
+            "Il piano torna alla distribuzione derivata dagli allenamenti",
+            com.fitcoach.app.domain.nutrition.CarbCyclingEngine.distributeDays(4).first,
+            vm.state.value.plan!!.highCarbDays
+        )
+    }
+
     // ---------- Helper ----------
 
     private fun entryDiProva(grams: Double) = MealEntry(

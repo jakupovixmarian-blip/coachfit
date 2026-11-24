@@ -394,3 +394,17 @@ val MIGRATION_16_17 = object : Migration(16, 17) {
         db.execSQL("ALTER TABLE user_profile ADD COLUMN gearInventoryJson TEXT NOT NULL DEFAULT ''")
     }
 }
+
+/**
+ * Personalizzazione delle giornate carb cycling (sez. 5.2) e interruttore del
+ * backup automatico. Un solo gradino: la v18 non e' mai stata pubblicata, quindi
+ * non esiste un database installato da aggiornare a meta' strada.
+ */
+val MIGRATION_17_18 = object : Migration(17, 18) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE user_profile ADD COLUMN carbHighDaysOverride INTEGER")
+        db.execSQL("ALTER TABLE user_profile ADD COLUMN carbMediumDaysOverride INTEGER")
+        db.execSQL("ALTER TABLE user_profile ADD COLUMN carbLowDaysOverride INTEGER")
+        db.execSQL("ALTER TABLE user_preferences ADD COLUMN autoBackupEnabled INTEGER NOT NULL DEFAULT 1")
+    }
+}

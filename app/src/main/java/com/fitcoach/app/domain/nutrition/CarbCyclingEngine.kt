@@ -140,6 +140,25 @@ object CarbCyclingEngine {
     }
 
     /**
+     * Distribuzione effettiva: quella scelta dall'utente se valida, altrimenti
+     * quella derivata dai giorni di allenamento.
+     *
+     * La terna utente è accettata solo se tutti e tre i valori sono presenti,
+     * non negativi e sommano a 7. Una terna parziale o incoerente viene
+     * ignorata per intero: applicarne una parte produrrebbe un piano con
+     * un numero di giornate diverso da sette.
+     */
+    fun effectiveDistribution(profile: UserProfile): Triple<Int, Int, Int> {
+        val high = profile.carbHighDaysOverride
+        val medium = profile.carbMediumDaysOverride
+        val low = profile.carbLowDaysOverride
+        val valid = high != null && medium != null && low != null &&
+            high >= 0 && medium >= 0 && low >= 0 && high + medium + low == 7
+        return if (valid) Triple(high, medium, low)
+        else distributeDays(profile.trainingDaysPerWeek)
+    }
+
+    /**
      * Costruisce il piano di carb cycling.
      *
      * @param kcalShareHigh quota relativa dei carboidrati nei giorni HIGH (default 1.0)
@@ -149,9 +168,9 @@ object CarbCyclingEngine {
     fun build(
         profile: UserProfile,
         energy: EnergyResult,
-        highDays: Int = distributeDays(profile.trainingDaysPerWeek).first,
-        mediumDays: Int = distributeDays(profile.trainingDaysPerWeek).second,
-        lowDays: Int = distributeDays(profile.trainingDaysPerWeek).third,
+        highDays: Int = effectiveDistribution(profile).first,
+        mediumDays: Int = effectiveDistribution(profile).second,
+        lowDays: Int = effectiveDistribution(profile).third,
         carbShareHigh: Double = 1.0,
         carbShareMedium: Double = 0.65,
         carbShareLow: Double = 0.35,

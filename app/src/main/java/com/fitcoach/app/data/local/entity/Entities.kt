@@ -62,6 +62,9 @@ data class UserProfileEntity(
     val activityFactorOverride: Double? = null,
     val calorieTargetOverride: Double? = null,
     val mealsPerDay: Int = 5,
+    val carbHighDaysOverride: Int? = null,
+    val carbMediumDaysOverride: Int? = null,
+    val carbLowDaysOverride: Int? = null,
 
     // Stile di vita
     val workType: WorkType = WorkType.SEDENTARY,
@@ -151,7 +154,9 @@ data class UserPreferencesEntity(
     /** Avviso sonoro al termine del recupero tra le serie. */
     val restAlarmSound: Boolean = true,
     /** Vibrazione al termine del recupero tra le serie. */
-    val restAlarmVibration: Boolean = true
+    val restAlarmVibration: Boolean = true,
+    /** Backup automatico periodico del database (WorkManager). */
+    val autoBackupEnabled: Boolean = true
 )
 
 // -------------------- NUTRIZIONE --------------------

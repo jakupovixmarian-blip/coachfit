@@ -383,7 +383,9 @@ class CoachAndSettingsAdversarialTest {
     fun `un ripristino da file non valido viene rifiutato senza toccare i dati`() = runTest {
         db.userProfileDao().upsert(Mappers.run { profilo().toEntity() })
         val backupRepo = com.fitcoach.app.data.repository.DatabaseBackupRepository(context, db)
-        val vm = com.fitcoach.app.ui.settings.BackupViewModel(context, backupRepo)
+        val vm = com.fitcoach.app.ui.settings.BackupViewModel(
+            context, backupRepo, PreferencesRepository(db.userPreferencesDao())
+        )
         val finto = java.io.File(context.cacheDir, "finto.db").apply {
             writeText("questo non e' un database")
         }

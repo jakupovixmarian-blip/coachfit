@@ -52,7 +52,8 @@ class PreferencesRepository @Inject constructor(
         locale = locale,
         unitsMetric = unitsMetric,
         restAlarmSound = restAlarmSound,
-        restAlarmVibration = restAlarmVibration
+        restAlarmVibration = restAlarmVibration,
+        autoBackupEnabled = autoBackupEnabled
     )
 
     private fun UserPreferences.toEntity() = UserPreferencesEntity(
@@ -75,7 +76,8 @@ class PreferencesRepository @Inject constructor(
         locale = locale,
         unitsMetric = unitsMetric,
         restAlarmSound = restAlarmSound,
-        restAlarmVibration = restAlarmVibration
+        restAlarmVibration = restAlarmVibration,
+        autoBackupEnabled = autoBackupEnabled
     )
 
     private fun encodeSchedules(schedules: List<MealSchedule>): String =

@@ -36,6 +36,16 @@ data class UserProfile(
     val calorieTargetOverride: Double? = null,
     val mealsPerDay: Int = 5,
 
+    /**
+     * Numero di giornate HIGH/MEDIUM/LOW impostato dall'utente. Se null il
+     * motore usa la distribuzione derivata dai giorni di allenamento.
+     * La terna viene validata insieme: valori incoerenti (somma diversa da 7)
+     * vengono ignorati invece di produrre un piano sbilanciato.
+     */
+    val carbHighDaysOverride: Int? = null,
+    val carbMediumDaysOverride: Int? = null,
+    val carbLowDaysOverride: Int? = null,
+
     // ---- Budget mensile ----
     /** Budget alimentare mensile in EUR (il vincolo effettivo richiesto dalla spec). */
     val monthlyFoodBudgetEur: Double? = null,
@@ -203,5 +213,7 @@ data class UserPreferences(
     val locale: String = "it",
     val unitsMetric: Boolean = true,
     val restAlarmSound: Boolean = true,
-    val restAlarmVibration: Boolean = true
+    val restAlarmVibration: Boolean = true,
+    /** Backup automatico periodico del database (WorkManager). */
+    val autoBackupEnabled: Boolean = true
 )

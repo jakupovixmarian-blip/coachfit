@@ -373,7 +373,11 @@ interno compatto* (USDA) **+** *API on-demand* (Open Food Facts/USDA) con **cach
   calorie/macro e bilancio settimanale (nessun deficit estremo nei giorni LOW). Il carb
   cycling viene **applicato solo quando è giustificato** dal profilo (obiettivo e numero di
   allenamenti); altrimenti si usa una distribuzione uniforme. Fornisce anche i target che
-  l'AI usa per costruire i pasti.
+  l'AI usa per costruire i pasti. La terna HIGH/MEDIUM/LOW è **personalizzabile**
+  (Alimentazione → *Personalizza giornate*): viene accettata solo se completa, non negativa
+  e con somma 7, altrimenti si torna alla distribuzione derivata dagli allenamenti. Il
+  salvataggio **riapplica subito** i nuovi target al piano attivo con i motori
+  deterministici, quindi funziona anche offline, senza attendere una rigenerazione AI.
 - `MealPlanGenerator` – restano gli **helper matematici** riutilizzati (grammi per macro,
   sostituzione equivalente, macro dominante, totali pasto). La costruzione autonoma del
   piano è stata **rimossa**: la struttura dei 7 giorni la decide l'AI.

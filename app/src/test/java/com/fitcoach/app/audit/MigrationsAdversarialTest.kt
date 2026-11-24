@@ -21,6 +21,7 @@ import com.fitcoach.app.data.local.MIGRATION_13_14
 import com.fitcoach.app.data.local.MIGRATION_14_15
 import com.fitcoach.app.data.local.MIGRATION_15_16
 import com.fitcoach.app.data.local.MIGRATION_16_17
+import com.fitcoach.app.data.local.MIGRATION_17_18
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -65,7 +66,8 @@ class MigrationsAdversarialTest {
         MIGRATION_13_14 to (13 to 14),
         MIGRATION_14_15 to (14 to 15),
         MIGRATION_15_16 to (15 to 16),
-        MIGRATION_16_17 to (16 to 17)
+        MIGRATION_16_17 to (16 to 17),
+        MIGRATION_17_18 to (17 to 18)
     )
 
     @Test

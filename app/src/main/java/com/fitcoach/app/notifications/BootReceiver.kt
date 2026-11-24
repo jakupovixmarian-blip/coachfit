@@ -7,7 +7,9 @@ import android.util.Log
 import com.fitcoach.app.data.repository.NotificationRepository
 import com.fitcoach.app.domain.device.BleSessionService
 import com.fitcoach.app.data.repository.PreferencesRepository
+import com.fitcoach.app.work.AutoBackupWorker
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,6 +25,10 @@ class BootReceiver : BroadcastReceiver() {
     @Inject lateinit var notificationScheduler: NotificationScheduler
     @Inject lateinit var preferencesRepository: PreferencesRepository
     @Inject lateinit var notificationRepository: NotificationRepository
+
+    @Inject
+    @ApplicationContext
+    lateinit var appContext: Context
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action ?: return
@@ -59,6 +65,10 @@ class BootReceiver : BroadcastReceiver() {
             val prefs = preferencesRepository.getOrCreate()
             val records = notificationRepository.getAll()
             notificationScheduler.scheduleAll(prefs, records)
+            // WorkManager ripristina da solo le richieste periodiche dopo il
+            // riavvio, ma la chiamata e' idempotente (KEEP): serve solo se
+            // l'utente ha cambiato l'interruttore mentre il lavoro non c'era.
+            AutoBackupWorker.enqueue(appContext, prefs.autoBackupEnabled)
         } catch (t: Throwable) {
             Log.e("BootReceiver", "Ripristino notifiche non riuscito", t)
         }

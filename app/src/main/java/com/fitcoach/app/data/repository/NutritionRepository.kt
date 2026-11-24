@@ -373,6 +373,52 @@ class NutritionRepository @Inject constructor(
         return true
     }
 
+    /**
+     * Riapplica la ciclicita dei carboidrati al piano attivo senza passare
+     * dall'AI: cambia tipo di giornata e target dei sette giorni, lasciando
+     * intatti pasti e alimenti gia' scelti. Serve perche' la distribuzione
+     * personalizzata (sez. 5.2) deve valere anche offline: senza questo,
+     * l'utente salverebbe la terna e vedrebbe il piano invariato fino alla
+     * prossima generazione con rete.
+     */
+    suspend fun applyCarbCyclingAsNewPlanVersion(
+        planId: Long,
+        cycling: CarbCyclingPlan,
+        dayTypes: List<com.fitcoach.app.domain.model.CarbDayType>,
+        tdee: Double,
+        diaryEpochDay: Long
+    ): Boolean {
+        val result = clonePlanVersion(
+            planId = planId,
+            dayTransform = { day ->
+                val type = dayTypes.getOrNull(day.dayIndex) ?: day.dayType
+                val target = cycling.targets[type]
+                if (target == null) day.copy(dayType = type)
+                else day.copy(
+                    dayType = type,
+                    targetKcal = target.kcal,
+                    targetProtein = target.protein,
+                    targetCarbs = target.carbs,
+                    targetFat = target.fat
+                )
+            }
+        ) ?: return false
+        val newPlanId = result.first
+        planDao.getById(newPlanId)?.let { plan ->
+            planDao.update(
+                plan.copy(
+                    highCarbDays = cycling.highDays,
+                    mediumCarbDays = cycling.mediumDays,
+                    lowCarbDays = cycling.lowDays,
+                    weeklyCalories = cycling.weeklyKcal,
+                    weeklyKcalBalance = cycling.weeklyKcal - tdee * 7
+                )
+            )
+        }
+        relinkCurrentDiary(result.second, newPlanId, diaryEpochDay)
+        return true
+    }
+
     suspend fun updateDayTypeAsNewPlanVersion(
         planId: Long,
         dayId: Long,

@@ -7,6 +7,8 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fitcoach.app.data.repository.DatabaseBackupRepository
+import com.fitcoach.app.data.repository.PreferencesRepository
+import com.fitcoach.app.work.AutoBackupWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,36 +20,76 @@ import javax.inject.Inject
 
 data class BackupUiState(
     val working: Boolean = false,
-    val message: String? = null
+    val message: String? = null,
+    val autoBackupEnabled: Boolean = true
 )
 
 @HiltViewModel
 class BackupViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val repository: DatabaseBackupRepository
+    private val repository: DatabaseBackupRepository,
+    private val preferencesRepository: PreferencesRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(BackupUiState())
     val state: StateFlow<BackupUiState> = _state.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            runCatching {
+                val prefs = preferencesRepository.getOrCreate()
+                _state.value = _state.value.copy(autoBackupEnabled = prefs.autoBackupEnabled)
+            }
+        }
+    }
+
+    /**
+     * Attiva o disattiva il backup automatico. Il lavoro WorkManager viene
+     * accodato o annullato subito: rimandarlo all'avvio successivo farebbe
+     * credere all'utente che il backup sia attivo quando non lo e'.
+     */
+    fun setAutoBackup(enabled: Boolean) {
+        viewModelScope.launch {
+            runCatching {
+                val prefs = preferencesRepository.getOrCreate()
+                preferencesRepository.save(prefs.copy(autoBackupEnabled = enabled))
+                AutoBackupWorker.enqueue(context, enabled)
+                _state.value = _state.value.copy(
+                    autoBackupEnabled = enabled,
+                    message = if (enabled) "Backup automatico attivo." else "Backup automatico disattivato."
+                )
+            }.onFailure {
+                _state.value = _state.value.copy(
+                    message = "Impostazione non salvata: ${it.message ?: it::class.simpleName}"
+                )
+            }
+        }
+    }
+
     fun createBackup() {
         viewModelScope.launch {
-            _state.value = BackupUiState(working = true)
+            _state.value = _state.value.copy(working = true, message = null)
             try {
                 shareBackup(repository.createBackup())
             } catch (t: Throwable) {
-                _state.value = BackupUiState(message = "Backup non riuscito: ${t.message}")
+                _state.value = _state.value.copy(
+                    working = false,
+                    message = "Backup non riuscito: ${t.message}"
+                )
             }
         }
     }
 
     fun restoreBackup(uri: Uri) {
         viewModelScope.launch {
-            _state.value = BackupUiState(working = true)
+            _state.value = _state.value.copy(working = true, message = null)
             try {
                 repository.restoreBackup(uri)
                 restartApplication()
             } catch (t: Throwable) {
-                _state.value = BackupUiState(message = "Ripristino non riuscito: ${t.message}")
+                _state.value = _state.value.copy(
+                    working = false,
+                    message = "Ripristino non riuscito: ${t.message}"
+                )
             }
         }
     }
@@ -62,7 +104,7 @@ class BackupViewModel @Inject constructor(
         context.startActivity(Intent.createChooser(intent, "Salva backup FitCoach").apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         })
-        _state.value = BackupUiState(message = "Backup creato: ${file.name}")
+        _state.value = _state.value.copy(working = false, message = "Backup creato: ${file.name}")
     }
 
     private fun restartApplication() {
