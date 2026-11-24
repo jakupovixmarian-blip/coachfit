@@ -1176,3 +1176,38 @@ un peso basso puo' chiedere l'1,4%, cioe' perdita di massa magra.
 `impliedWeeklyLossPercent` converte il deficit in velocita' di calo; se supera
 l'1% il warning contiene `TOO_FAST_MARKER` e `isValid` diventa **false**.
 Un warning che non invalida il piano non e' un controllo di sicurezza.
+
+## La banda PAL collassa se la sceglie il numero di allenamenti
+
+Il mappaggio 4-5 allenamenti -> `[palModerateMax, palVigorousMin]` dava
+`[1,99, 2,00]`: **0,01** di intervallo. La correzione NEAT (`-0,05` lavoro
+sedentario, fino a `-0,10` per zero passi, `-0,11` in totale) veniva quindi
+sempre tagliata da `coerceIn`, e un impiegato con 5 allenamenti e 0 passi
+otteneva PAL `1,990` e TDEE `3.348` kcal su BMR `1.682`.
+
+La tabella FAO/WHO/UNU 2004 classifica lo **stile di vita**, non i giorni di
+palestra. I giorni di allenamento possono scegliere il punto di partenza dentro
+la banda, non la banda. Ogni caso deve avere un intervallo abbastanza largo
+perche' la correzione NEAT produca un effetto misurabile: se `max - min` e'
+inferiore a circa `0,10`, la correzione e' inefficace per costruzione.
+
+Il test `lifestyle shifts activity factor even with many training days` esiste
+per questo: confronta due profili con gli stessi allenamenti ma stile di vita
+diverso e pretende una differenza > `0,10`. Se le bande tornano a collassare,
+quel test diventa rosso.
+
+## Un numero "corretto" dall'AI puo' essere peggiore dell'originale
+
+Nello stesso caso il coach propose `2.150 kcal` con "fattore attivita' 1,275".
+`1,275` sta sotto il minimo FAO (`1,40`) e sotto `1,2 x BMR` non e' possibile
+scendere nemmeno da non deambulanti: il target implicava un fabbisogno
+inferiore a quello di una persona a letto. Nessun cancello lo fermava, perche'
+`safetyFloor` e' `BMR x 0,85` = `1.430` kcal.
+
+Due conseguenze per il codice:
+- lo strumento `energy` espone `fattoreAttivita`, `palMinimoFisiologico` e
+  `palMassimoSostenibile`: il modello non deve dedurre il fattore dal TDEE;
+- prima di accettare una proposta che cambia il target calorico, confrontare il
+  **fattore implicito** (`target / bmr`) con i limiti, non solo le kcal con il
+  floor. Un target di `2.150` su BMR `1.682` e' "sopra il floor" ma sotto il
+  fabbisogno sedentario.
