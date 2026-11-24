@@ -367,12 +367,14 @@ class NutritionRepository @Inject constructor(
         planId: Long,
         dayTypesByIndex: Map<Int, com.fitcoach.app.domain.model.CarbDayType>,
         cycling: CarbCyclingPlan
-    ) {
+    ): Int {
+        var updated = 0
         dayDao.getForPlan(planId).forEach { day ->
             val type = dayTypesByIndex[day.dayIndex] ?: day.dayType
             val target = cycling.targets[type] ?: return@forEach
-            rescaleDay(day.id, target)
+            updated += rescaleDay(day.id, target)
         }
+        return updated
     }
 
     /**
@@ -382,10 +384,10 @@ class NutritionRepository @Inject constructor(
     private suspend fun rescaleDay(
         dayId: Long,
         target: com.fitcoach.app.domain.model.CarbDayTarget
-    ) {
+    ): Int {
         val foodDao = db.foodDao()
         val meals = mealDao.getForDay(dayId)
-        if (meals.isEmpty()) return
+        if (meals.isEmpty()) return 0
 
         val structure = mutableListOf<Pair<String, List<com.fitcoach.app.domain.model.FoodItem>>>()
         val initial = mutableMapOf<String, Double>()
@@ -397,6 +399,13 @@ class NutritionRepository @Inject constructor(
                     ?: foodDao.getByNormalizedName(
                         com.fitcoach.app.domain.model.FoodItem.normalizeName(entry.foodName)
                     )?.toDomain()
+                    // Terza via: la voce del pasto porta gia' grammi e macro,
+                    // quindi la densita' per 100 g e' ricavabile dalla voce
+                    // stessa. Senza questo, un piano generato da una versione
+                    // precedente (o con alimenti poi rimossi dal catalogo)
+                    // usciva da qui senza riscalare nulla, e l'app diceva
+                    // comunque "applicato".
+                    ?: densityFromEntry(entry)
                 if (food != null && entry.grams > 0.0) {
                     // La grammatura attuale e' il punto di partenza: il solver la
                     // corregge comunque, ma partire da li' evita di stravolgere
@@ -407,12 +416,13 @@ class NutritionRepository @Inject constructor(
             }
             if (foods.isNotEmpty()) structure += meal.slot.name to foods
         }
-        if (structure.isEmpty()) return
+        if (structure.isEmpty()) return 0
 
         val solved = com.fitcoach.app.domain.nutrition.MealPortionSolver
             .solve(target, structure, initial)
         val solvedBySlot = solved.meals.associateBy { it.slot }
 
+        var updated = 0
         meals.forEach { meal ->
             val solvedMeal = solvedBySlot[meal.slot.name] ?: return@forEach
             val byName = solvedMeal.entries.groupBy { it.foodName }
@@ -432,8 +442,31 @@ class NutritionRepository @Inject constructor(
                     carbs = solvedEntry.carbs,
                     fat = solvedEntry.fat
                 )
+                updated++
             }
         }
+        return updated
+    }
+
+    /**
+     * Ricava la densita' per 100 g dalla voce del pasto (grammi e macro gia'
+     * salvati), cosi' il riscalamento funziona anche quando l'alimento non e'
+     * piu' nel catalogo. Restituisce null se la voce non ha grammi utili.
+     */
+    private fun densityFromEntry(entry: MealEntryEntity): com.fitcoach.app.domain.model.FoodItem? {
+        if (entry.grams <= 0.0) return null
+        val factor = 100.0 / entry.grams
+        return com.fitcoach.app.domain.model.FoodItem(
+            id = entry.foodItemId,
+            name = entry.foodName,
+            category = "",
+            kcalPer100g = entry.kcal * factor,
+            proteinPer100g = entry.protein * factor,
+            carbsPer100g = entry.carbs * factor,
+            fatPer100g = entry.fat * factor,
+            defaultUnit = entry.unit,
+            source = "voce del piano"
+        )
     }
 
     private suspend fun relinkCurrentDiary(
@@ -509,25 +542,39 @@ class NutritionRepository @Inject constructor(
         tdee: Double,
         diaryEpochDay: Long
     ): Boolean {
-        val result = clonePlanVersion(
-            planId = planId,
-            dayTransform = { day ->
-                val type = dayTypes.getOrNull(day.dayIndex) ?: day.dayType
-                val target = cycling.targets[type]
-                if (target == null) day.copy(dayType = type)
-                else day.copy(
-                    dayType = type,
-                    targetKcal = target.kcal,
-                    targetProtein = target.protein,
-                    targetCarbs = target.carbs,
-                    targetFat = target.fat
-                )
-            },
-            afterClone = { newPlanId, _ ->
-                val types = dayDao.getForPlan(newPlanId).associate { it.dayIndex to it.dayType }
-                rescalePlanEntries(newPlanId, types, cycling)
-            }
-        ) ?: return false
+        // Il ricalcolo delle porzioni puo' fallire: in quel caso il clone viene
+        // annullato e il piano precedente resta attivo. Restituire true
+        // mostrerebbe target nuovi con grammature vecchie.
+        val result = runCatching {
+            clonePlanVersion(
+                planId = planId,
+                dayTransform = { day ->
+                    val type = dayTypes.getOrNull(day.dayIndex) ?: day.dayType
+                    val target = cycling.targets[type]
+                    if (target == null) day.copy(dayType = type)
+                    else day.copy(
+                        dayType = type,
+                        targetKcal = target.kcal,
+                        targetProtein = target.protein,
+                        targetCarbs = target.carbs,
+                        targetFat = target.fat
+                    )
+                },
+                afterClone = { newPlanId, _ ->
+                    val types = dayDao.getForPlan(newPlanId).associate { it.dayIndex to it.dayType }
+                    val rescaleCount = rescalePlanEntries(newPlanId, types, cycling)
+                    // Un piano con alimenti ma nessuna voce riscalata significa che
+                    // il ricalcolo non ha potuto lavorare: dichiarare "applicato"
+                    // mostrerebbe target nuovi sopra porzioni vecchie.
+                    val entries = dayDao.getForPlan(newPlanId).sumOf { day ->
+                        mealDao.getForDay(day.id).sumOf { entryDao.getForMeal(it.id).size }
+                    }
+                    if (entries > 0 && rescaleCount == 0) {
+                        throw IllegalStateException("Ricalcolo porzioni non riuscito")
+                    }
+                }
+            )
+        }.getOrNull() ?: return false
         val newPlanId = result.first
         planDao.getById(newPlanId)?.let { plan ->
             planDao.update(

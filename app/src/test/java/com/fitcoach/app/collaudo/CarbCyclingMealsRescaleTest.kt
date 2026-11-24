@@ -257,6 +257,51 @@ class CarbCyclingMealsRescaleTest {
         assertThat(kotlin.math.abs(kcalDopo - nuovoTarget) / nuovoTarget).isLessThan(0.10)
     }
 
+    /**
+     * Il riscalamento non deve dipendere dal catalogo alimenti: un piano
+     * generato da una versione precedente, o con alimenti poi rimossi, deve
+     * comunque essere riscalato. Prima di questo test la funzione usciva in
+     * silenzio e restituiva true, quindi l'app diceva "applicato" lasciando le
+     * grammature identiche.
+     */
+    @Test
+    fun `riscala anche se gli alimenti non sono piu nel catalogo`() = runTest {
+        val planId = creaPianoConAlimenti()
+        val prima = nutrition.getActivePlan()!!
+        val grammiPrima = grammiPerGiorno(prima)
+        assertThat(grammiPrima.sum()).isGreaterThan(0.0)
+
+        // Simula un catalogo che non contiene piu quegli alimenti.
+        db.openHelper.writableDatabase.execSQL("DELETE FROM food_database")
+        assertThat(db.foodDao().getAll()).isEmpty()
+
+        val custom = profilo.copy(
+            carbHighDaysOverride = 4, carbMediumDaysOverride = 3, carbLowDaysOverride = 0
+        )
+        users.save(custom)
+        val energy = EnergyCalculator.compute(custom)!!
+        val cycling = CarbCyclingEngine.build(custom, energy)
+        val ok = nutrition.applyCarbCyclingAsNewPlanVersion(
+            planId = planId,
+            cycling = cycling,
+            dayTypes = CarbCyclingEngine.assignDayTypes(4, 3, 0, (0..3).toList()),
+            tdee = energy.tdee,
+            diaryEpochDay = 20_000L
+        )
+
+        assertThat(ok).isTrue()
+        val dopo = nutrition.getActivePlan()!!
+        // I pasti restano, le grammature no: senza la densita' ricavata dalla
+        // voce il piano tornava identico pur dichiarando successo.
+        assertThat(dopo.days.sumOf { d -> d.meals.sumOf { it.entries.size } })
+            .isEqualTo(prima.days.sumOf { d -> d.meals.sumOf { it.entries.size } })
+        assertThat(grammiPerGiorno(dopo)).isNotEqualTo(grammiPrima)
+        dopo.days.forEach { day ->
+            val kcal = day.meals.sumOf { m -> m.entries.sumOf { it.kcal } }
+            assertThat(kotlin.math.abs(kcal - day.targetKcal) / day.targetKcal).isLessThan(0.10)
+        }
+    }
+
     @Test
     fun `cambiare il tipo di un giorno porta il target del tipo giusto`() = runTest {
         val planId = creaPianoConAlimenti()
